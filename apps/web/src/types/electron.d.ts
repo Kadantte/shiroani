@@ -1,4 +1,9 @@
-import type { UpdateInfo, UpdateDownloadProgress, UpdateChannel } from '@shiroani/shared';
+import type {
+  UpdateInfo,
+  UpdateDownloadProgress,
+  UpdateChannel,
+  BrowserTab,
+} from '@shiroani/shared';
 
 /**
  * Electron API exposed via contextBridge
@@ -38,35 +43,36 @@ interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
   };
   browser?: {
-    /** Create a new browser view for a tab */
-    createView: (tabId: string, url: string) => Promise<void>;
-    /** Destroy a browser view */
-    destroyView: (tabId: string) => Promise<void>;
-    /** Show a specific browser view */
-    showView: (tabId: string) => Promise<void>;
-    /** Navigate a browser view to a URL */
+    /** Create a new browser tab, optionally navigating to a URL */
+    createTab: (url?: string) => Promise<string>;
+    /** Close a browser tab */
+    closeTab: (tabId: string) => Promise<void>;
+    /** Switch to a browser tab */
+    switchTab: (tabId: string) => Promise<void>;
+    /** Navigate a browser tab to a URL */
     navigate: (tabId: string, url: string) => Promise<void>;
-    /** Go back in browser view history */
+    /** Go back in browser tab history */
     goBack: (tabId: string) => Promise<void>;
-    /** Go forward in browser view history */
+    /** Go forward in browser tab history */
     goForward: (tabId: string) => Promise<void>;
-    /** Reload the browser view */
-    reload: (tabId: string) => Promise<void>;
-    /** Set adblock enabled/disabled */
-    setAdblock: (enabled: boolean) => Promise<void>;
-    /** Listen for navigation state changes */
-    onNavigationStateChanged: (
-      callback: (
-        tabId: string,
-        state: {
-          url: string;
-          title: string;
-          canGoBack: boolean;
-          canGoForward: boolean;
-          isLoading: boolean;
-        }
-      ) => void
-    ) => () => void;
+    /** Reload the browser tab */
+    refresh: (tabId: string) => Promise<void>;
+    /** Get all browser tabs */
+    getTabs: () => Promise<BrowserTab[]>;
+    /** Get the active tab ID */
+    getActiveTab: () => Promise<string | null>;
+    /** Toggle adblock enabled/disabled */
+    toggleAdblock: (enabled: boolean) => Promise<void>;
+    /** Resize the active tab view to the given bounds */
+    resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
+    /** Hide all browser views (when switching to another app section) */
+    hide: () => Promise<void>;
+    /** Show the active browser view (when switching back to browser) */
+    show: () => Promise<void>;
+    /** Listen for tab state updates */
+    onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
+    /** Listen for tab close events */
+    onTabClosed: (callback: (tabId: string) => void) => () => void;
   };
   updater?: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
