@@ -1,63 +1,224 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { createLogger } from '@shiroani/shared';
+import { Injectable } from '@nestjs/common';
+import {
+  createLogger,
+  type AnimeEntry,
+  type AnimeStatus,
+  type LibraryAddPayload,
+  type LibraryUpdatePayload,
+  type LibraryStatsResult,
+} from '@shiroani/shared';
+import { DatabaseService } from '../database';
 
 const logger = createLogger('LibraryService');
 
-/**
- * LibraryService manages the user's local anime library backed by SQLite.
- *
- * TODO: Implement the following:
- *
- * Database setup (using better-sqlite3):
- * - Initialize SQLite database at app.getPath('userData')/library.db
- * - Create tables on first run:
- *   - library_entries: id, anilist_id, title, cover_image, status (watching/completed/planned/dropped/paused),
- *     progress (episodes watched), score, notes, added_at, updated_at
- *   - watch_history: id, anilist_id, episode_number, watched_at, source_url
- *
- * CRUD operations:
- * - addToLibrary(entry): Insert or update a library entry
- * - removeFromLibrary(anilistId): Delete an entry
- * - updateProgress(anilistId, episode): Update watch progress
- * - updateStatus(anilistId, status): Update watching status
- * - updateScore(anilistId, score): Update user rating
- * - getLibrary(filters?): Get all entries, optionally filtered by status
- * - getEntry(anilistId): Get a single library entry
- * - searchLibrary(query): Search library by title
- *
- * Watch history:
- * - addWatchHistoryEntry(anilistId, episode, sourceUrl): Log a watched episode
- * - getWatchHistory(anilistId): Get watch history for an anime
- *
- * Export/Import:
- * - exportLibrary(): Export library as JSON (for backup)
- * - importLibrary(data): Import library from JSON
- */
-@Injectable()
-export class LibraryService implements OnModuleInit, OnModuleDestroy {
-  // TODO: private db: Database.Database;
+/** Raw row shape returned by better-sqlite3 for the anime_library table. */
+interface AnimeLibraryRow {
+  id: number;
+  anilist_id: number | null;
+  title: string;
+  title_romaji: string | null;
+  title_native: string | null;
+  cover_image: string | null;
+  total_episodes: number | null;
+  status: string;
+  current_episode: number;
+  score: number | null;
+  notes: string | null;
+  resume_url: string | null;
+  added_at: string;
+  updated_at: string;
+}
 
-  constructor() {
+/** Map a database row to the shared AnimeEntry type. */
+function rowToEntry(row: AnimeLibraryRow): AnimeEntry {
+  return {
+    id: row.id,
+    anilistId: row.anilist_id ?? undefined,
+    title: row.title,
+    titleRomaji: row.title_romaji ?? undefined,
+    titleNative: row.title_native ?? undefined,
+    coverImage: row.cover_image ?? undefined,
+    episodes: row.total_episodes ?? undefined,
+    status: row.status as AnimeStatus,
+    currentEpisode: row.current_episode,
+    score: row.score ?? undefined,
+    notes: row.notes ?? undefined,
+    resumeUrl: row.resume_url ?? undefined,
+    addedAt: row.added_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+@Injectable()
+export class LibraryService {
+  constructor(private readonly databaseService: DatabaseService) {
     logger.info('LibraryService initialized');
   }
 
-  onModuleInit() {
-    // TODO: Initialize SQLite database
-    // const dbPath = join(app.getPath('userData'), 'library.db');
-    // this.db = new Database(dbPath);
-    // this.createTables();
-    logger.info('LibraryService module initialized');
+  /** Get all library entries, optionally filtered by status. */
+  getAllEntries(status?: AnimeStatus): AnimeEntry[] {
+    const db = this.databaseService.db;
+
+    if (status) {
+      const rows = db
+        .prepare('SELECT * FROM anime_library WHERE status = ? ORDER BY updated_at DESC')
+        .all(status) as AnimeLibraryRow[];
+      return rows.map(rowToEntry);
+    }
+
+    const rows = db
+      .prepare('SELECT * FROM anime_library ORDER BY updated_at DESC')
+      .all() as AnimeLibraryRow[];
+    return rows.map(rowToEntry);
   }
 
-  onModuleDestroy() {
-    // TODO: Close SQLite database
-    // this.db?.close();
-    logger.info('LibraryService module destroyed');
+  /** Get a single entry by its primary key. */
+  getEntryById(id: number): AnimeEntry | undefined {
+    const db = this.databaseService.db;
+    const row = db.prepare('SELECT * FROM anime_library WHERE id = ?').get(id) as
+      | AnimeLibraryRow
+      | undefined;
+    return row ? rowToEntry(row) : undefined;
   }
 
-  // TODO: Implement CRUD methods
+  /** Get a single entry by its AniList ID. */
+  getEntryByAnilistId(anilistId: number): AnimeEntry | undefined {
+    const db = this.databaseService.db;
+    const row = db.prepare('SELECT * FROM anime_library WHERE anilist_id = ?').get(anilistId) as
+      | AnimeLibraryRow
+      | undefined;
+    return row ? rowToEntry(row) : undefined;
+  }
 
-  // TODO: Implement watch history methods
+  /** Insert a new anime into the library. Returns the created entry. */
+  addEntry(payload: LibraryAddPayload): AnimeEntry {
+    const db = this.databaseService.db;
 
-  // TODO: Implement export/import
+    const result = db
+      .prepare(
+        `INSERT INTO anime_library
+          (anilist_id, title, title_romaji, title_native, cover_image, total_episodes, status, resume_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        payload.anilistId ?? null,
+        payload.title,
+        payload.titleRomaji ?? null,
+        payload.titleNative ?? null,
+        payload.coverImage ?? null,
+        payload.episodes ?? null,
+        payload.status ?? 'plan_to_watch',
+        payload.resumeUrl ?? null
+      );
+
+    const entry = this.getEntryById(Number(result.lastInsertRowid))!;
+    logger.info(`Added "${entry.title}" to library (id=${entry.id})`);
+    return entry;
+  }
+
+  /** Update an existing anime entry. Returns the updated entry or undefined if not found. */
+  updateEntry(id: number, updates: Omit<LibraryUpdatePayload, 'id'>): AnimeEntry | undefined {
+    const db = this.databaseService.db;
+
+    const setClauses: string[] = [];
+    const values: (string | number | null)[] = [];
+
+    if (updates.status !== undefined) {
+      setClauses.push('status = ?');
+      values.push(updates.status);
+    }
+    if (updates.currentEpisode !== undefined) {
+      setClauses.push('current_episode = ?');
+      values.push(updates.currentEpisode);
+    }
+    if (updates.score !== undefined) {
+      setClauses.push('score = ?');
+      values.push(updates.score);
+    }
+    if (updates.notes !== undefined) {
+      setClauses.push('notes = ?');
+      values.push(updates.notes);
+    }
+    if (updates.resumeUrl !== undefined) {
+      setClauses.push('resume_url = ?');
+      values.push(updates.resumeUrl);
+    }
+
+    if (setClauses.length === 0) {
+      return this.getEntryById(id);
+    }
+
+    setClauses.push("updated_at = datetime('now')");
+    values.push(id);
+
+    db.prepare(`UPDATE anime_library SET ${setClauses.join(', ')} WHERE id = ?`).run(...values);
+
+    const entry = this.getEntryById(id);
+    if (entry) {
+      logger.debug(`Updated entry id=${id}`);
+    }
+    return entry;
+  }
+
+  /** Remove an anime from the library. Returns true if a row was deleted. */
+  removeEntry(id: number): boolean {
+    const db = this.databaseService.db;
+    const result = db.prepare('DELETE FROM anime_library WHERE id = ?').run(id);
+    const deleted = result.changes > 0;
+    if (deleted) {
+      logger.info(`Removed entry id=${id} from library`);
+    }
+    return deleted;
+  }
+
+  /** Update episode progress and set updated_at. Returns the updated entry. */
+  updateProgress(id: number, episode: number): AnimeEntry | undefined {
+    const db = this.databaseService.db;
+    db.prepare(
+      "UPDATE anime_library SET current_episode = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(episode, id);
+
+    return this.getEntryById(id);
+  }
+
+  /** Full-text search across title, title_romaji, and title_native. */
+  searchLibrary(query: string): AnimeEntry[] {
+    const db = this.databaseService.db;
+    const pattern = `%${query}%`;
+    const rows = db
+      .prepare(
+        `SELECT * FROM anime_library
+         WHERE title LIKE ? OR title_romaji LIKE ? OR title_native LIKE ?
+         ORDER BY updated_at DESC`
+      )
+      .all(pattern, pattern, pattern) as AnimeLibraryRow[];
+    return rows.map(rowToEntry);
+  }
+
+  /** Get counts of entries grouped by status. */
+  getStats(): LibraryStatsResult {
+    const db = this.databaseService.db;
+    const rows = db
+      .prepare('SELECT status, COUNT(*) as count FROM anime_library GROUP BY status')
+      .all() as { status: string; count: number }[];
+
+    const stats: LibraryStatsResult = {
+      watching: 0,
+      completed: 0,
+      plan_to_watch: 0,
+      on_hold: 0,
+      dropped: 0,
+      total: 0,
+    };
+
+    for (const row of rows) {
+      const key = row.status as keyof Omit<LibraryStatsResult, 'total'>;
+      if (key in stats) {
+        stats[key] = row.count;
+      }
+      stats.total += row.count;
+    }
+
+    return stats;
+  }
 }
