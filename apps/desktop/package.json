@@ -21,8 +21,8 @@
     "package:win": "pnpm build && electron-builder --win",
     "package:mac": "pnpm build && electron-builder --mac",
     "package:linux": "pnpm build && electron-builder --linux",
-    "postinstall": "electron-rebuild -f -w better-sqlite3",
-    "rebuild": "electron-rebuild -f -w better-sqlite3"
+    "postinstall": "electron-builder install-app-deps",
+    "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.3.2",
@@ -36,7 +36,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.4.22",
     "@shiroani/shared": "workspace:*",
-    "better-sqlite3": "^11.8.1",
+    "better-sqlite3": "^12.6.2",
     "cross-fetch": "^4.1.0",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.3",

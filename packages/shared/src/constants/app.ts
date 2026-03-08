@@ -20,10 +20,10 @@ export const APP_NAME_LOWER = 'shiroani';
 // =============================================================================
 
 /** Localhost address */
-export const LOCALHOST = 'http://localhost';
+export const LOCALHOST = '127.0.0.1';
 
 /** Vite dev server port */
-export const VITE_DEV_PORT = 5173;
+export const VITE_DEV_PORT = 15174;
 
 // =============================================================================
 // Links
