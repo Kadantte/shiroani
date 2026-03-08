@@ -2,11 +2,11 @@ import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
-  WebSocketServer,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
-import { Server } from 'socket.io';
-import { createLogger } from '@shiroani/shared';
+import { Socket } from 'socket.io';
+import { createLogger, ScheduleEvents, extractErrorMessage } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
 import { ScheduleService } from './schedule.service';
@@ -16,46 +16,39 @@ const logger = createLogger('ScheduleGateway');
 @WebSocketGateway({ cors: CORS_CONFIG })
 @UseGuards(WsThrottlerGuard)
 export class ScheduleGateway {
-  @WebSocketServer()
-  server!: Server;
-
   constructor(private readonly scheduleService: ScheduleService) {
     logger.info('ScheduleGateway initialized');
-    void this.scheduleService;
   }
 
-  @SubscribeMessage('schedule:get-airing')
-  async handleGetAiring(@MessageBody() _payload: { page?: number; perPage?: number }) {
-    // TODO: Call scheduleService.getAiringSchedule() and return results
-    logger.debug('schedule:get-airing received');
-    return { schedule: [], pageInfo: { total: 0, currentPage: 1, hasNextPage: false } };
+  @SubscribeMessage(ScheduleEvents.GET_DAILY)
+  async handleGetDaily(
+    @MessageBody() payload: { date: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    logger.debug(`${ScheduleEvents.GET_DAILY} received for date: ${payload.date}`);
+    try {
+      const result = await this.scheduleService.getDaily(payload.date);
+      client.emit(ScheduleEvents.DAILY_RESULT, result);
+      return result;
+    } catch (error) {
+      logger.error(`Failed to get daily schedule: ${extractErrorMessage(error)}`);
+      return { date: payload.date, entries: [], error: extractErrorMessage(error) };
+    }
   }
 
-  @SubscribeMessage('schedule:get-today')
-  async handleGetToday() {
-    // TODO: Call scheduleService.getAiringToday() and return results
-    logger.debug('schedule:get-today received');
-    return { schedule: [] };
-  }
-
-  @SubscribeMessage('schedule:get-week')
-  async handleGetWeek() {
-    // TODO: Call scheduleService.getAiringThisWeek() and return results
-    logger.debug('schedule:get-week received');
-    return { schedule: [] };
-  }
-
-  @SubscribeMessage('schedule:get-next-airing')
-  async handleGetNextAiring(@MessageBody() _payload: { anilistId: number }) {
-    // TODO: Call scheduleService.getNextAiring(payload.anilistId) and return result
-    logger.debug('schedule:get-next-airing received');
-    return { nextAiring: null, error: 'Not implemented' };
-  }
-
-  @SubscribeMessage('schedule:get-upcoming-library')
-  async handleGetUpcomingLibrary(@MessageBody() _payload: { anilistIds: number[] }) {
-    // TODO: Call scheduleService.getUpcomingForLibrary(payload.anilistIds)
-    logger.debug('schedule:get-upcoming-library received');
-    return { upcoming: [] };
+  @SubscribeMessage(ScheduleEvents.GET_WEEKLY)
+  async handleGetWeekly(
+    @MessageBody() payload: { startDate: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    logger.debug(`${ScheduleEvents.GET_WEEKLY} received from: ${payload.startDate}`);
+    try {
+      const result = await this.scheduleService.getWeekly(payload.startDate);
+      client.emit(ScheduleEvents.WEEKLY_RESULT, result);
+      return result;
+    } catch (error) {
+      logger.error(`Failed to get weekly schedule: ${extractErrorMessage(error)}`);
+      return { schedule: {}, error: extractErrorMessage(error) };
+    }
   }
 }

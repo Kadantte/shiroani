@@ -1,40 +1,108 @@
 import { Injectable } from '@nestjs/common';
-import { createLogger } from '@shiroani/shared';
+import { createLogger, extractErrorMessage } from '@shiroani/shared';
+import type { AiringAnime } from '@shiroani/shared';
+import { AnimeService } from '../anime/anime.service';
+import type { AniListAiringSchedule } from '../anime/types';
 
 const logger = createLogger('ScheduleService');
 
-/**
- * ScheduleService fetches and manages airing schedule data from AniList.
- *
- * TODO: Implement the following:
- *
- * Schedule fetching:
- * - getAiringSchedule(page?: number, perPage?: number): Fetch currently airing anime schedule
- * - getAiringToday(): Fetch anime airing today
- * - getAiringThisWeek(): Fetch anime airing this week
- * - getNextAiring(anilistId: number): Get next airing episode info for a specific anime
- *
- * Schedule caching:
- * - Cache schedule data with a 15-minute TTL to avoid excessive API calls
- * - Auto-refresh schedule in background on a cron (every 30 minutes)
- *
- * Notifications:
- * - getUpcomingForLibrary(libraryIds: number[]): Get upcoming episodes for anime in user's library
- * - Emit internal events when new episodes air for library anime
- *
- * AniList GraphQL queries:
- * - Use AiringSchedule query with airingAt_greater / airingAt_lesser filters
- * - Include media details (title, coverImage, episodes, etc.) in the response
- */
 @Injectable()
 export class ScheduleService {
-  constructor() {
+  constructor(private readonly animeService: AnimeService) {
     logger.info('ScheduleService initialized');
   }
 
-  // TODO: Implement AniList airing schedule queries
+  /**
+   * Get airing anime for a specific day (ISO date string YYYY-MM-DD).
+   * Returns AiringAnime[] mapped from AniList data.
+   */
+  async getDaily(date: string): Promise<{ date: string; entries: AiringAnime[] }> {
+    logger.debug(`Fetching daily schedule for ${date}`);
+    try {
+      const startOfDay = new Date(`${date}T00:00:00`);
+      const endOfDay = new Date(`${date}T23:59:59`);
 
-  // TODO: Implement schedule caching
+      const result = await this.animeService.getAiringSchedule(startOfDay, endOfDay, 1, 50);
+      const entries = result.airingSchedules.map(mapAiringScheduleToAiringAnime);
 
-  // TODO: Implement background refresh with @nestjs/schedule cron
+      logger.debug(`Found ${entries.length} airing anime for ${date}`);
+      return { date, entries };
+    } catch (error) {
+      logger.error(`Failed to fetch daily schedule for ${date}: ${extractErrorMessage(error)}`);
+      return { date, entries: [] };
+    }
+  }
+
+  /**
+   * Get airing anime for a full week starting from startDate (ISO date string YYYY-MM-DD).
+   * Returns a map of date -> AiringAnime[].
+   */
+  async getWeekly(startDate: string): Promise<{ schedule: Record<string, AiringAnime[]> }> {
+    logger.debug(`Fetching weekly schedule from ${startDate}`);
+    try {
+      const start = new Date(`${startDate}T00:00:00`);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      end.setHours(23, 59, 59);
+
+      // Fetch all entries for the week (up to 50 per page, paginate if needed)
+      let allSchedules: AniListAiringSchedule[] = [];
+      let page = 1;
+      let hasNext = true;
+
+      while (hasNext && page <= 5) {
+        const result = await this.animeService.getAiringSchedule(start, end, page, 50);
+        allSchedules = allSchedules.concat(result.airingSchedules);
+        hasNext = result.pageInfo.hasNextPage;
+        page++;
+      }
+
+      // Group by date
+      const schedule: Record<string, AiringAnime[]> = {};
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        const key = d.toISOString().split('T')[0];
+        schedule[key] = [];
+      }
+
+      for (const entry of allSchedules) {
+        const d = new Date(entry.airingAt * 1000);
+        const key = d.toISOString().split('T')[0];
+        if (schedule[key]) {
+          schedule[key].push(mapAiringScheduleToAiringAnime(entry));
+        }
+      }
+
+      const totalEntries = Object.values(schedule).reduce((sum, arr) => sum + arr.length, 0);
+      logger.debug(`Found ${totalEntries} airing anime for week starting ${startDate}`);
+      return { schedule };
+    } catch (error) {
+      logger.error(`Failed to fetch weekly schedule: ${extractErrorMessage(error)}`);
+      return { schedule: {} };
+    }
+  }
+}
+
+/**
+ * Map AniList airing schedule entry to our shared AiringAnime type.
+ */
+function mapAiringScheduleToAiringAnime(entry: AniListAiringSchedule): AiringAnime {
+  const media = entry.media;
+  return {
+    id: entry.id,
+    airingAt: entry.airingAt,
+    episode: entry.episode,
+    media: {
+      id: media.id,
+      title: media.title,
+      coverImage: media.coverImage || {},
+      episodes: media.episodes,
+      status: media.status,
+      format: media.format,
+      genres: media.genres || [],
+      averageScore: media.averageScore,
+      popularity: media.popularity,
+    },
+  };
 }
