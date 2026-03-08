@@ -1,0 +1,61 @@
+/**
+ * Application Constants
+ *
+ * Centralized constants for the ShiroAni application.
+ * Use these instead of hardcoding values throughout the codebase.
+ */
+
+// =============================================================================
+// App Identity
+// =============================================================================
+
+/** Application name (display) */
+export const APP_NAME = 'ShiroAni';
+
+/** Application name (lowercase, for paths/IDs) */
+export const APP_NAME_LOWER = 'shiroani';
+
+// =============================================================================
+// Network
+// =============================================================================
+
+/** Localhost address */
+export const LOCALHOST = 'http://localhost';
+
+/** Vite dev server port */
+export const VITE_DEV_PORT = 5173;
+
+// =============================================================================
+// Links
+// =============================================================================
+
+/** GitHub repo owner */
+export const GITHUB_REPO_OWNER = 'Shironex';
+
+/** GitHub repo name */
+export const GITHUB_REPO_NAME = 'shiroani';
+
+/** GitHub releases page URL */
+export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases`;
+
+// =============================================================================
+// Logging
+// =============================================================================
+
+/** Log file prefix */
+export const LOG_FILE_PREFIX = 'shiroani';
+
+/** Maximum log file size before rotation (10MB) */
+export const LOG_MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+/** Maximum age of log files before cleanup (7 days in ms) */
+export const LOG_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Log flush interval in milliseconds */
+export const LOG_FLUSH_INTERVAL_MS = 100;
+
+/** Maximum buffered log entries before forced flush */
+export const LOG_BUFFER_MAX_ENTRIES = 50;
+
+/** Log cleanup interval (1 hour in ms) */
+export const LOG_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
