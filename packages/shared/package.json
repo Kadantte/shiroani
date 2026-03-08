@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build --clean && tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
