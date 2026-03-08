@@ -1,0 +1,59 @@
+{
+  "name": "shiroani",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ShiroAni — Your personal anime browser and tracker",
+  "license": "MIT",
+  "packageManager": "pnpm@10.9.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "better-sqlite3"
+    ]
+  },
+  "scripts": {
+    "dev": "pnpm build:packages && concurrently -k -n web,desktop -c cyan,yellow \"pnpm dev:web\" \"wait-on http://localhost:15174 && pnpm --filter @shiroani/desktop dev\"",
+    "dev:debug": "LOG_LEVEL=debug pnpm dev",
+    "dev:web": "pnpm --filter @shiroani/web dev",
+    "build": "pnpm build:packages && pnpm --filter @shiroani/web build && pnpm --filter @shiroani/desktop build",
+    "build:packages": "pnpm --filter @shiroani/shared build",
+    "package": "pnpm build && pnpm --filter @shiroani/desktop package",
+    "package:win": "pnpm build && pnpm --filter @shiroani/desktop package:win",
+    "package:mac": "pnpm build && pnpm --filter @shiroani/desktop package:mac",
+    "package:linux": "pnpm build && pnpm --filter @shiroani/desktop package:linux",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm build:packages && pnpm -r run test",
+    "typecheck": "pnpm build:packages && pnpm --filter @shiroani/web typecheck && pnpm --filter @shiroani/desktop typecheck",
+    "rebuild": "pnpm --filter @shiroani/desktop rebuild",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "wait-on": "^9.0.4"
+  }
+}
