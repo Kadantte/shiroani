@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
 import { LibraryModule } from './library';
 import { BrowserModule } from './browser';
@@ -26,6 +27,7 @@ import { ScheduleModule } from './schedule';
         limit: 500, // max 500 requests per 10 seconds
       },
     ]),
+    DatabaseModule,
     AnimeModule,
     LibraryModule,
     BrowserModule,
