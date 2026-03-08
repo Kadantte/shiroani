@@ -6,7 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { createLogger } from '@shiroani/shared';
+import { AnimeEvents, createLogger, extractErrorMessage } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
 import { AnimeService } from './anime.service';
@@ -21,43 +21,110 @@ export class AnimeGateway {
 
   constructor(private readonly animeService: AnimeService) {
     logger.info('AnimeGateway initialized');
-    void this.animeService;
   }
 
-  // TODO: Implement WebSocket event handlers
-
-  @SubscribeMessage('anime:search')
-  async handleSearch(@MessageBody() _payload: { query: string; page?: number }) {
-    // TODO: Call animeService.searchAnime() and return results
-    logger.debug('anime:search received');
-    return { results: [], pageInfo: { total: 0, currentPage: 1, hasNextPage: false } };
+  @SubscribeMessage(AnimeEvents.SEARCH)
+  async handleSearch(@MessageBody() payload: { query: string; page?: number }) {
+    logger.debug(`anime:search received — query="${payload.query}", page=${payload.page ?? 1}`);
+    try {
+      const result = await this.animeService.searchAnime(payload.query, payload.page);
+      return { results: result.media, pageInfo: result.pageInfo };
+    } catch (error) {
+      logger.error(`anime:search failed: ${extractErrorMessage(error)}`);
+      return {
+        results: [],
+        pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+        error: extractErrorMessage(error),
+      };
+    }
   }
 
-  @SubscribeMessage('anime:get-details')
-  async handleGetDetails(@MessageBody() _payload: { anilistId: number }) {
-    // TODO: Call animeService.getAnimeById() and return details
-    logger.debug('anime:get-details received');
-    return { anime: null, error: 'Not implemented' };
+  @SubscribeMessage(AnimeEvents.GET_DETAILS)
+  async handleGetDetails(@MessageBody() payload: { anilistId: number }) {
+    logger.debug(`anime:get-details received — id=${payload.anilistId}`);
+    try {
+      const anime = await this.animeService.getAnimeDetails(payload.anilistId);
+      return { anime };
+    } catch (error) {
+      logger.error(`anime:get-details failed: ${extractErrorMessage(error)}`);
+      return { anime: null, error: extractErrorMessage(error) };
+    }
+  }
+
+  @SubscribeMessage(AnimeEvents.GET_AIRING)
+  async handleGetAiring(
+    @MessageBody() payload: { startDate: string; endDate: string; page?: number }
+  ) {
+    logger.debug(`anime:get-airing received — ${payload.startDate} to ${payload.endDate}`);
+    try {
+      const startDate = new Date(payload.startDate);
+      const endDate = new Date(payload.endDate);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return {
+          airingSchedules: [],
+          pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+          error: 'Invalid date format. Use ISO 8601 strings.',
+        };
+      }
+
+      const result = await this.animeService.getAiringSchedule(startDate, endDate, payload.page);
+      return { airingSchedules: result.airingSchedules, pageInfo: result.pageInfo };
+    } catch (error) {
+      logger.error(`anime:get-airing failed: ${extractErrorMessage(error)}`);
+      return {
+        airingSchedules: [],
+        pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+        error: extractErrorMessage(error),
+      };
+    }
   }
 
   @SubscribeMessage('anime:get-trending')
-  async handleGetTrending(@MessageBody() _payload: { page?: number }) {
-    // TODO: Call animeService.getTrendingAnime() and return results
-    logger.debug('anime:get-trending received');
-    return { results: [], pageInfo: { total: 0, currentPage: 1, hasNextPage: false } };
+  async handleGetTrending(@MessageBody() payload: { page?: number }) {
+    logger.debug(`anime:get-trending received — page=${payload.page ?? 1}`);
+    try {
+      const result = await this.animeService.getTrending(payload.page);
+      return { results: result.media, pageInfo: result.pageInfo };
+    } catch (error) {
+      logger.error(`anime:get-trending failed: ${extractErrorMessage(error)}`);
+      return {
+        results: [],
+        pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+        error: extractErrorMessage(error),
+      };
+    }
   }
 
   @SubscribeMessage('anime:get-popular')
-  async handleGetPopular(@MessageBody() _payload: { page?: number }) {
-    // TODO: Call animeService.getPopularAnime() and return results
-    logger.debug('anime:get-popular received');
-    return { results: [], pageInfo: { total: 0, currentPage: 1, hasNextPage: false } };
+  async handleGetPopular(@MessageBody() payload: { page?: number }) {
+    logger.debug(`anime:get-popular received — page=${payload.page ?? 1}`);
+    try {
+      const result = await this.animeService.getPopularThisSeason(payload.page);
+      return { results: result.media, pageInfo: result.pageInfo };
+    } catch (error) {
+      logger.error(`anime:get-popular failed: ${extractErrorMessage(error)}`);
+      return {
+        results: [],
+        pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+        error: extractErrorMessage(error),
+      };
+    }
   }
 
   @SubscribeMessage('anime:get-seasonal')
-  async handleGetSeasonal(@MessageBody() _payload: { year: number; season: string }) {
-    // TODO: Call animeService.getSeasonalAnime() and return results
-    logger.debug('anime:get-seasonal received');
-    return { results: [], pageInfo: { total: 0, currentPage: 1, hasNextPage: false } };
+  async handleGetSeasonal(@MessageBody() payload: { year: number; season: string; page?: number }) {
+    logger.debug(`anime:get-seasonal received — ${payload.season} ${payload.year}`);
+    try {
+      const result = await this.animeService.getPopularThisSeason(payload.page);
+      return { results: result.media, pageInfo: result.pageInfo };
+    } catch (error) {
+      logger.error(`anime:get-seasonal failed: ${extractErrorMessage(error)}`);
+      return {
+        results: [],
+        pageInfo: { total: 0, currentPage: 1, lastPage: 1, hasNextPage: false },
+        error: extractErrorMessage(error),
+      };
+    }
   }
 }
