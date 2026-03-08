@@ -1,54 +1,20 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import type { BrowserTab } from '@shiroani/shared';
+import { createLogger } from '@shiroani/shared';
 
-// TODO: Import browser-related types from @shiroani/shared
-// import { type BrowserTab } from '@shiroani/shared';
-
-/**
- * Browser tab state
- *
- * TODO: Replace with proper type from shared package
- */
-interface BrowserTab {
-  id: string;
-  url: string;
-  title: string;
-  isLoading: boolean;
-  canGoBack: boolean;
-  canGoForward: boolean;
-}
+const logger = createLogger('BrowserStore');
 
 /**
- * Browser store state
- *
- * TODO: Define the following state fields:
- * - tabs: BrowserTab[] — Array of open browser tabs
- * - activeTabId: string | null — Currently active tab
- * - isAddressBarFocused: boolean — Whether the address bar is focused
- * - bookmarks: string[] — Bookmarked URLs
- * - history: { url: string; title: string; visitedAt: number }[] — Navigation history
+ * Browser store state and actions
  */
 interface BrowserState {
   tabs: BrowserTab[];
   activeTabId: string | null;
   isAddressBarFocused: boolean;
+  adblockEnabled: boolean;
 }
 
-/**
- * Browser store actions
- *
- * TODO: Define the following actions:
- * - openTab(url?: string): void — Open a new tab (default to homepage)
- * - closeTab(tabId: string): void — Close a tab
- * - switchTab(tabId: string): void — Switch to a tab
- * - navigate(url: string): void — Navigate active tab to URL
- * - goBack(): void — Navigate back in active tab
- * - goForward(): void — Navigate forward in active tab
- * - reload(): void — Reload active tab
- * - updateTabState(tabId: string, updates: Partial<BrowserTab>): void — Update tab metadata
- * - reorderTabs(fromIndex: number, toIndex: number): void — Reorder tabs via drag
- * - setAddressBarFocused(focused: boolean): void — Track address bar focus
- */
 interface BrowserActions {
   openTab: (url?: string) => void;
   closeTab: (tabId: string) => void;
@@ -59,18 +25,14 @@ interface BrowserActions {
   reload: () => void;
   updateTabState: (tabId: string, updates: Partial<BrowserTab>) => void;
   setAddressBarFocused: (focused: boolean) => void;
+  setAdblockEnabled: (enabled: boolean) => void;
+  toggleAdblock: () => void;
+  initListeners: () => () => void;
 }
 
 type BrowserStore = BrowserState & BrowserActions;
 
-let nextTabId = 1;
-
-function createTabId(): string {
-  return `tab-${nextTabId++}`;
-}
-
-// TODO: Replace with actual default homepage URL
-const DEFAULT_URL = 'about:blank';
+const DEFAULT_URL = 'https://anilist.co';
 
 export const useBrowserStore = create<BrowserStore>()(
   devtools(
@@ -79,89 +41,68 @@ export const useBrowserStore = create<BrowserStore>()(
       tabs: [],
       activeTabId: null,
       isAddressBarFocused: false,
+      adblockEnabled: true,
 
       // Actions
       openTab: (url?: string) => {
-        const id = createTabId();
-        const newTab: BrowserTab = {
-          id,
-          url: url ?? DEFAULT_URL,
-          title: 'New Tab',
-          isLoading: true,
-          canGoBack: false,
-          canGoForward: false,
-        };
-        set(
-          state => ({
-            tabs: [...state.tabs, newTab],
-            activeTabId: id,
-          }),
-          undefined,
-          'browser/openTab'
-        );
-        // TODO: Tell Electron to create a new BrowserView/webview for this tab
+        const targetUrl = url ?? DEFAULT_URL;
+        window.electronAPI?.browser
+          ?.createTab(targetUrl)
+          .then((tabId: string) => {
+            logger.debug(`Tab created: ${tabId}`);
+            // The tab-updated event from the main process will populate the tab state
+          })
+          .catch((err: Error) => {
+            logger.error('Failed to create browser tab:', err.message);
+          });
       },
 
       closeTab: (tabId: string) => {
-        const { tabs, activeTabId } = get();
-        const index = tabs.findIndex(t => t.id === tabId);
-        if (index === -1) return;
-
-        const newTabs = tabs.filter(t => t.id !== tabId);
-        let newActiveId = activeTabId;
-
-        if (activeTabId === tabId) {
-          // Switch to adjacent tab
-          if (newTabs.length > 0) {
-            newActiveId = newTabs[Math.min(index, newTabs.length - 1)].id;
-          } else {
-            newActiveId = null;
-          }
-        }
-
-        set({ tabs: newTabs, activeTabId: newActiveId }, undefined, 'browser/closeTab');
-        // TODO: Tell Electron to destroy the BrowserView/webview for this tab
+        window.electronAPI?.browser?.closeTab(tabId).catch((err: Error) => {
+          logger.error('Failed to close browser tab:', err.message);
+        });
+        // The tab-closed event from the main process will update the store
       },
 
       switchTab: (tabId: string) => {
         set({ activeTabId: tabId }, undefined, 'browser/switchTab');
-        // TODO: Tell Electron to show the BrowserView for this tab
+        window.electronAPI?.browser?.switchTab(tabId).catch((err: Error) => {
+          logger.error('Failed to switch browser tab:', err.message);
+        });
       },
 
       navigate: (url: string) => {
-        const { activeTabId, tabs } = get();
+        const { activeTabId } = get();
         if (!activeTabId) return;
 
-        set(
-          {
-            tabs: tabs.map(t => (t.id === activeTabId ? { ...t, url, isLoading: true } : t)),
-          },
-          undefined,
-          'browser/navigate'
-        );
-        // TODO: Tell Electron to navigate the webview to the URL
+        // URL normalization is handled by BrowserManager on the main process side
+        window.electronAPI?.browser?.navigate(activeTabId, url).catch((err: Error) => {
+          logger.error('Failed to navigate:', err.message);
+        });
       },
 
       goBack: () => {
-        // TODO: Tell Electron to go back in the active webview
+        const { activeTabId } = get();
+        if (!activeTabId) return;
+        window.electronAPI?.browser?.goBack(activeTabId).catch((err: Error) => {
+          logger.error('Failed to go back:', err.message);
+        });
       },
 
       goForward: () => {
-        // TODO: Tell Electron to go forward in the active webview
+        const { activeTabId } = get();
+        if (!activeTabId) return;
+        window.electronAPI?.browser?.goForward(activeTabId).catch((err: Error) => {
+          logger.error('Failed to go forward:', err.message);
+        });
       },
 
       reload: () => {
-        const { activeTabId, tabs } = get();
+        const { activeTabId } = get();
         if (!activeTabId) return;
-
-        set(
-          {
-            tabs: tabs.map(t => (t.id === activeTabId ? { ...t, isLoading: true } : t)),
-          },
-          undefined,
-          'browser/reload'
-        );
-        // TODO: Tell Electron to reload the active webview
+        window.electronAPI?.browser?.refresh(activeTabId).catch((err: Error) => {
+          logger.error('Failed to reload:', err.message);
+        });
       },
 
       updateTabState: (tabId: string, updates: Partial<BrowserTab>) => {
@@ -176,6 +117,82 @@ export const useBrowserStore = create<BrowserStore>()(
 
       setAddressBarFocused: (focused: boolean) => {
         set({ isAddressBarFocused: focused }, undefined, 'browser/setAddressBarFocused');
+      },
+
+      setAdblockEnabled: (enabled: boolean) => {
+        set({ adblockEnabled: enabled }, undefined, 'browser/setAdblockEnabled');
+        window.electronAPI?.browser?.toggleAdblock(enabled).catch((err: Error) => {
+          logger.error('Failed to toggle adblock:', err.message);
+        });
+      },
+
+      toggleAdblock: () => {
+        const enabled = !get().adblockEnabled;
+        get().setAdblockEnabled(enabled);
+      },
+
+      initListeners: () => {
+        const browser = window.electronAPI?.browser;
+        if (!browser) {
+          logger.warn('Browser API not available - skipping listener init');
+          return () => {};
+        }
+
+        logger.debug('Initializing browser listeners');
+
+        // Listen for tab state updates from the main process
+        const cleanupTabUpdated = browser.onTabUpdated((tab: BrowserTab) => {
+          const { tabs } = get();
+          const existing = tabs.find(t => t.id === tab.id);
+
+          if (existing) {
+            // Update existing tab
+            get().updateTabState(tab.id, tab);
+          } else {
+            // New tab created (e.g. from popup interception or initial creation)
+            set(
+              state => ({
+                tabs: [...state.tabs, tab],
+                activeTabId: tab.id,
+              }),
+              undefined,
+              'browser/tabAdded'
+            );
+          }
+        });
+
+        // Listen for tab close events from the main process
+        const cleanupTabClosed = browser.onTabClosed((tabId: string) => {
+          const { tabs, activeTabId } = get();
+          const index = tabs.findIndex(t => t.id === tabId);
+          if (index === -1) return;
+
+          const newTabs = tabs.filter(t => t.id !== tabId);
+          let newActiveId = activeTabId;
+
+          if (activeTabId === tabId) {
+            if (newTabs.length > 0) {
+              newActiveId = newTabs[Math.min(index, newTabs.length - 1)].id;
+            } else {
+              newActiveId = null;
+            }
+          }
+
+          set({ tabs: newTabs, activeTabId: newActiveId }, undefined, 'browser/tabClosed');
+
+          // Switch to the new active tab if needed
+          if (newActiveId && newActiveId !== activeTabId) {
+            window.electronAPI?.browser?.switchTab(newActiveId).catch((err: Error) => {
+              logger.error('Failed to switch tab after close:', err.message);
+            });
+          }
+        });
+
+        return () => {
+          logger.debug('Cleaning up browser listeners');
+          cleanupTabUpdated();
+          cleanupTabClosed();
+        };
       },
     }),
     { name: 'browser' }
