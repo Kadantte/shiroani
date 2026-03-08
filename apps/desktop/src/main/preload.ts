@@ -1,5 +1,10 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import type { UpdateInfo, UpdateDownloadProgress, UpdateChannel } from '@shiroani/shared';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type {
+  UpdateInfo,
+  UpdateDownloadProgress,
+  UpdateChannel,
+  BrowserTab,
+} from '@shiroani/shared';
 
 export interface ElectronAPI {
   window: {
@@ -36,18 +41,21 @@ export interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
   };
   browser: {
-    openTab: (url: string) => Promise<{ tabId: string }>;
+    createTab: (url?: string) => Promise<string>;
     closeTab: (tabId: string) => Promise<void>;
+    switchTab: (tabId: string) => Promise<void>;
     navigate: (tabId: string, url: string) => Promise<void>;
     goBack: (tabId: string) => Promise<void>;
     goForward: (tabId: string) => Promise<void>;
     refresh: (tabId: string) => Promise<void>;
+    getTabs: () => Promise<BrowserTab[]>;
+    getActiveTab: () => Promise<string | null>;
     toggleAdblock: (enabled: boolean) => Promise<void>;
-    onNavigationUpdate: (
-      callback: (tabId: string, url: string, canGoBack: boolean, canGoForward: boolean) => void
-    ) => () => void;
-    onTabTitleUpdate: (callback: (tabId: string, title: string) => void) => () => void;
-    onTabLoading: (callback: (tabId: string, isLoading: boolean) => void) => () => void;
+    resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
+    hide: () => Promise<void>;
+    show: () => Promise<void>;
+    onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
+    onTabClosed: (callback: (tabId: string) => void) => () => void;
   };
   updater: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
@@ -103,49 +111,34 @@ const electronAPI: ElectronAPI = {
     readLogFile: (fileName: string) => ipcRenderer.invoke('app:read-log-file', fileName),
   },
   browser: {
-    openTab: (url: string) =>
-      ipcRenderer.invoke('browser:open-tab', url) as Promise<{ tabId: string }>,
+    createTab: (url?: string) => ipcRenderer.invoke('browser:create-tab', url) as Promise<string>,
     closeTab: (tabId: string) => ipcRenderer.invoke('browser:close-tab', tabId) as Promise<void>,
+    switchTab: (tabId: string) => ipcRenderer.invoke('browser:switch-tab', tabId) as Promise<void>,
     navigate: (tabId: string, url: string) =>
       ipcRenderer.invoke('browser:navigate', tabId, url) as Promise<void>,
     goBack: (tabId: string) => ipcRenderer.invoke('browser:go-back', tabId) as Promise<void>,
     goForward: (tabId: string) => ipcRenderer.invoke('browser:go-forward', tabId) as Promise<void>,
     refresh: (tabId: string) => ipcRenderer.invoke('browser:refresh', tabId) as Promise<void>,
+    getTabs: () => ipcRenderer.invoke('browser:get-tabs') as Promise<BrowserTab[]>,
+    getActiveTab: () => ipcRenderer.invoke('browser:get-active-tab') as Promise<string | null>,
     toggleAdblock: (enabled: boolean) =>
       ipcRenderer.invoke('browser:toggle-adblock', enabled) as Promise<void>,
-    onNavigationUpdate: (
-      callback: (tabId: string, url: string, canGoBack: boolean, canGoForward: boolean) => void
-    ) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        tabId: string,
-        url: string,
-        canGoBack: boolean,
-        canGoForward: boolean
-      ) => {
-        callback(tabId, url, canGoBack, canGoForward);
-      };
-      ipcRenderer.on('browser:navigation-update', listener);
+    resize: (bounds: { x: number; y: number; width: number; height: number }) =>
+      ipcRenderer.invoke('browser:resize', bounds) as Promise<void>,
+    hide: () => ipcRenderer.invoke('browser:hide') as Promise<void>,
+    show: () => ipcRenderer.invoke('browser:show') as Promise<void>,
+    onTabUpdated: (callback: (tab: BrowserTab) => void) => {
+      const handler = (_event: IpcRendererEvent, tab: BrowserTab) => callback(tab);
+      ipcRenderer.on('browser:tab-updated', handler);
       return () => {
-        ipcRenderer.removeListener('browser:navigation-update', listener);
+        ipcRenderer.removeListener('browser:tab-updated', handler);
       };
     },
-    onTabTitleUpdate: (callback: (tabId: string, title: string) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, tabId: string, title: string) => {
-        callback(tabId, title);
-      };
-      ipcRenderer.on('browser:tab-title-update', listener);
+    onTabClosed: (callback: (tabId: string) => void) => {
+      const handler = (_event: IpcRendererEvent, tabId: string) => callback(tabId);
+      ipcRenderer.on('browser:tab-closed', handler);
       return () => {
-        ipcRenderer.removeListener('browser:tab-title-update', listener);
-      };
-    },
-    onTabLoading: (callback: (tabId: string, isLoading: boolean) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, tabId: string, isLoading: boolean) => {
-        callback(tabId, isLoading);
-      };
-      ipcRenderer.on('browser:tab-loading', listener);
-      return () => {
-        ipcRenderer.removeListener('browser:tab-loading', listener);
+        ipcRenderer.removeListener('browser:tab-closed', handler);
       };
     },
   },

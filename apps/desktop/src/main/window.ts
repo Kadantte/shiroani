@@ -4,6 +4,7 @@ import { registerIpcHandlers } from './ipc-handlers';
 import { VITE_DEV_PORT } from '@shiroani/shared';
 import { logger } from './logger';
 import { getBackendPort } from './backend-port';
+import { BrowserManager } from './browser-manager';
 
 /**
  * Set Content Security Policy for the renderer process
@@ -61,7 +62,7 @@ export function isExternalUrlAllowed(url: string): boolean {
   }
 }
 
-export async function createMainWindow(): Promise<BrowserWindow> {
+export async function createMainWindow(browserManager: BrowserManager): Promise<BrowserWindow> {
   const isDev = process.env.NODE_ENV === 'development';
 
   // Set up Content Security Policy before creating the window
@@ -108,8 +109,11 @@ export async function createMainWindow(): Promise<BrowserWindow> {
     },
   });
 
+  // Set main window on browser manager so views can be attached
+  browserManager.setMainWindow(mainWindow);
+
   // Register all IPC handlers
-  registerIpcHandlers(mainWindow);
+  registerIpcHandlers(mainWindow, browserManager);
 
   // Block all new window creation, open external links in browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

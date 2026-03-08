@@ -12,6 +12,7 @@ import { corsOriginCallback } from '../modules/shared/cors.config';
 import { NestLoggerAdapter } from '../modules/shared/nest-logger';
 import { LOCALHOST } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
+import { BrowserManager } from './browser-manager';
 
 // Allow E2E tests to isolate userData by setting ELECTRON_USER_DATA_DIR.
 // Must run before app.ready so electron-store and other userData consumers
@@ -24,6 +25,7 @@ export let mainWindow: BrowserWindow | null = null;
 let nestApp: INestApplication | null = null;
 let isShuttingDown = false;
 let cleanupDone = false;
+const browserManager = new BrowserManager();
 
 async function bootstrapNestApp(): Promise<void> {
   try {
@@ -83,13 +85,16 @@ async function bootstrap(): Promise<void> {
   }
 
   await bootstrapNestApp();
-  mainWindow = await createMainWindow();
+  browserManager.init();
+  mainWindow = await createMainWindow(browserManager);
   initializeAutoUpdater(mainWindow, process.env.NODE_ENV === 'development');
 
-  // Initialize adblocker after window creation
+  // Initialize adblocker after window creation, then enable on browser session
   try {
     await initializeAdblock();
     logger.info('Adblocker initialized successfully');
+    await browserManager.enableAdblock();
+    logger.info('Adblock enabled on browser session');
   } catch (error) {
     logger.warn('Failed to initialize adblocker:', error);
   }
@@ -135,7 +140,7 @@ app.on('activate', async () => {
   } else if (BrowserWindow.getAllWindows().length === 0) {
     // NestJS is already running, clean up old IPC handlers and recreate the window
     cleanupIpcHandlers();
-    mainWindow = await createMainWindow();
+    mainWindow = await createMainWindow(browserManager);
     initializeAutoUpdater(mainWindow, process.env.NODE_ENV === 'development');
   }
 });
@@ -155,6 +160,11 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    try {
+      browserManager.destroy();
+    } catch (error) {
+      logger.warn('Browser manager cleanup failed during shutdown', error);
+    }
     try {
       await flushLogs();
     } catch (error) {

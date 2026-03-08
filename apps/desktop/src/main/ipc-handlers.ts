@@ -13,17 +13,21 @@ import {
   registerBrowserHandlers,
   cleanupBrowserHandlers,
 } from './ipc';
+import { BrowserManager } from './browser-manager';
 
 /**
  * Register all IPC handlers for the application
  */
-export function registerIpcHandlers(mainWindow: BrowserWindow): void {
+export function registerIpcHandlers(
+  mainWindow: BrowserWindow,
+  browserManager: BrowserManager
+): void {
   registerWindowHandlers(mainWindow);
   registerDialogHandlers(mainWindow);
   registerStoreHandlers();
   registerAppHandlers();
   registerUpdaterHandlers();
-  registerBrowserHandlers(mainWindow);
+  registerBrowserHandlers(mainWindow, browserManager);
 }
 
 /**
