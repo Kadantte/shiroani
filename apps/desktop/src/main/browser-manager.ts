@@ -10,6 +10,7 @@ interface ManagedTab {
   view: WebContentsView;
   url: string;
   title: string;
+  favicon?: string;
   isLoading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
@@ -115,10 +116,8 @@ export class BrowserManager {
     this.tabs.set(tabId, tab);
     this.attachWebContentsListeners(tabId, view);
 
-    // If this is the first tab or no active tab, make it active
-    if (this.activeTabId === null) {
-      this.switchTab(tabId);
-    }
+    // Always switch to the newly created tab
+    this.switchTab(tabId);
 
     // Navigate to the URL
     if (url) {
@@ -231,7 +230,7 @@ export class BrowserManager {
     if (!tab || tab.view.webContents.isDestroyed()) return;
 
     if (tab.view.webContents.canGoBack()) {
-      tab.view.webContents.goBack();
+      tab.view.webContents.navigationHistory.goBack();
     }
   }
 
@@ -243,7 +242,7 @@ export class BrowserManager {
     if (!tab || tab.view.webContents.isDestroyed()) return;
 
     if (tab.view.webContents.canGoForward()) {
-      tab.view.webContents.goForward();
+      tab.view.webContents.navigationHistory.goForward();
     }
   }
 
@@ -374,8 +373,8 @@ export class BrowserManager {
     wc.on('did-navigate', (_event, url) => {
       this.updateTabState(tabId, {
         url,
-        canGoBack: wc.canGoBack(),
-        canGoForward: wc.canGoForward(),
+        canGoBack: wc.navigationHistory.canGoBack(),
+        canGoForward: wc.navigationHistory.canGoForward(),
       });
     });
 
@@ -383,14 +382,21 @@ export class BrowserManager {
     wc.on('did-navigate-in-page', (_event, url) => {
       this.updateTabState(tabId, {
         url,
-        canGoBack: wc.canGoBack(),
-        canGoForward: wc.canGoForward(),
+        canGoBack: wc.navigationHistory.canGoBack(),
+        canGoForward: wc.navigationHistory.canGoForward(),
       });
     });
 
     // Page title changed
     wc.on('page-title-updated', (_event, title) => {
       this.updateTabState(tabId, { title });
+    });
+
+    // Favicon updated
+    wc.on('page-favicon-updated', (_event, favicons) => {
+      if (favicons.length > 0) {
+        this.updateTabState(tabId, { favicon: favicons[0] });
+      }
     });
 
     // Loading started
@@ -402,8 +408,8 @@ export class BrowserManager {
     wc.on('did-stop-loading', () => {
       this.updateTabState(tabId, {
         isLoading: false,
-        canGoBack: wc.canGoBack(),
-        canGoForward: wc.canGoForward(),
+        canGoBack: wc.navigationHistory.canGoBack(),
+        canGoForward: wc.navigationHistory.canGoForward(),
       });
     });
 
@@ -432,13 +438,16 @@ export class BrowserManager {
    */
   private updateTabState(
     tabId: string,
-    update: Partial<Pick<ManagedTab, 'url' | 'title' | 'isLoading' | 'canGoBack' | 'canGoForward'>>
+    update: Partial<
+      Pick<ManagedTab, 'url' | 'title' | 'favicon' | 'isLoading' | 'canGoBack' | 'canGoForward'>
+    >
   ): void {
     const tab = this.tabs.get(tabId);
     if (!tab) return;
 
     if (update.url !== undefined) tab.url = update.url;
     if (update.title !== undefined) tab.title = update.title;
+    if (update.favicon !== undefined) tab.favicon = update.favicon;
     if (update.isLoading !== undefined) tab.isLoading = update.isLoading;
     if (update.canGoBack !== undefined) tab.canGoBack = update.canGoBack;
     if (update.canGoForward !== undefined) tab.canGoForward = update.canGoForward;
@@ -477,6 +486,7 @@ export class BrowserManager {
       id: tab.id,
       url: tab.url,
       title: tab.title,
+      favicon: tab.favicon,
       isLoading: tab.isLoading,
       canGoBack: tab.canGoBack,
       canGoForward: tab.canGoForward,

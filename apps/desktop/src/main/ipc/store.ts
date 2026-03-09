@@ -24,6 +24,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'preferences.updateChannel',
   // Custom backgrounds
   'custom-backgrounds',
+  // Browser settings (homepage, adblock)
+  'browser-settings',
   // Window state
   'window.bounds',
   'window.maximized',

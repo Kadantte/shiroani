@@ -5,6 +5,7 @@ import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
+import { useBrowserStore } from '@/stores/useBrowserStore';
 
 const logger = createLogger('AppInit');
 
@@ -68,6 +69,18 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
 
         // Init updater listeners (IPC-based)
         cleanupUpdate = initUpdateListeners();
+
+        // Restore persisted browser settings (homepage)
+        try {
+          const browserSettings = await window.electronAPI?.store?.get<{ homepage?: string }>(
+            'browser-settings'
+          );
+          if (browserSettings?.homepage) {
+            useBrowserStore.getState().setDefaultUrl(browserSettings.homepage);
+          }
+        } catch {
+          // Non-critical — use default homepage
+        }
 
         setReady(true);
       } catch (err) {

@@ -27,12 +27,13 @@ interface BrowserActions {
   setAddressBarFocused: (focused: boolean) => void;
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
+  setDefaultUrl: (url: string) => void;
   initListeners: () => () => void;
 }
 
 type BrowserStore = BrowserState & BrowserActions;
 
-const DEFAULT_URL = 'https://anilist.co';
+let defaultUrl = 'https://anilist.co';
 
 export const useBrowserStore = create<BrowserStore>()(
   devtools(
@@ -45,7 +46,7 @@ export const useBrowserStore = create<BrowserStore>()(
 
       // Actions
       openTab: (url?: string) => {
-        const targetUrl = url ?? DEFAULT_URL;
+        const targetUrl = url ?? defaultUrl;
         window.electronAPI?.browser
           ?.createTab(targetUrl)
           .then((tabId: string) => {
@@ -129,6 +130,11 @@ export const useBrowserStore = create<BrowserStore>()(
       toggleAdblock: () => {
         const enabled = !get().adblockEnabled;
         get().setAdblockEnabled(enabled);
+      },
+
+      setDefaultUrl: (url: string) => {
+        defaultUrl = url || 'https://anilist.co';
+        logger.debug('Default URL updated:', defaultUrl);
       },
 
       initListeners: () => {

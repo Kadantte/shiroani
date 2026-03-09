@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Palette,
   Globe,
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { darkThemes, lightThemes, type ThemeOption } from '@/lib/theme';
@@ -72,17 +73,18 @@ function ThemeSwatch({
 }
 
 function AppearanceSection() {
-  const { theme, setTheme, setPreviewTheme, customBackground, setCustomBackground } =
-    useSettingsStore();
-
-  const handleSelectBackground = useCallback(async () => {
-    const path = await window.electronAPI?.dialog?.openFile({
-      filters: [{ name: 'Obrazy', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }],
-    });
-    if (path) {
-      setCustomBackground(path);
-    }
-  }, [setCustomBackground]);
+  const {
+    theme,
+    setTheme,
+    setPreviewTheme,
+    customBackground,
+    backgroundOpacity,
+    backgroundBlur,
+    pickCustomBackground,
+    removeCustomBackground,
+    setBackgroundOpacity,
+    setBackgroundBlur,
+  } = useSettingsStore();
 
   return (
     <div className="space-y-6">
@@ -130,40 +132,115 @@ function AppearanceSection() {
       {/* Custom background */}
       <div>
         <h3 className="text-sm font-medium mb-1">Tlo</h3>
-        <p className="text-xs text-muted-foreground mb-3">Ustaw wlasne tlo (obraz lub GIF)</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Ustaw wlasne tlo aplikacji (obraz lub GIF)
+        </p>
 
         {customBackground && (
           <div className="mb-3 rounded-lg overflow-hidden border border-border h-24">
-            <img
-              src={`file://${customBackground}`}
-              alt="Tlo"
-              className="w-full h-full object-cover"
-            />
+            <img src={customBackground} alt="Podglad tla" className="w-full h-full object-cover" />
           </div>
         )}
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSelectBackground}>
+          <Button variant="outline" size="sm" onClick={pickCustomBackground}>
             <Image className="w-4 h-4" />
-            Wybierz tlo
+            Wybierz obraz
           </Button>
           {customBackground && (
-            <Button variant="ghost" size="sm" onClick={() => setCustomBackground(null)}>
+            <Button variant="ghost" size="sm" onClick={removeCustomBackground}>
               <RotateCcw className="w-4 h-4" />
-              Przywroc domyslne
+              Usun tlo
             </Button>
           )}
         </div>
+
+        {/* Opacity & blur sliders - only shown when a background is set */}
+        {customBackground && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-muted-foreground">Przezroczystosc</label>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {Math.round(backgroundOpacity * 100)}%
+                </span>
+              </div>
+              <Slider
+                value={[backgroundOpacity]}
+                onValueChange={([v]) => setBackgroundOpacity(v)}
+                min={0.02}
+                max={0.5}
+                step={0.01}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-muted-foreground">Rozmycie</label>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {backgroundBlur}px
+                </span>
+              </div>
+              <Slider
+                value={[backgroundBlur]}
+                onValueChange={([v]) => setBackgroundBlur(v)}
+                min={0}
+                max={20}
+                step={1}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+const BROWSER_SETTINGS_KEY = 'browser-settings';
+
+interface BrowserSettings {
+  homepage: string;
+  adblockEnabled: boolean;
+}
+
 function BrowserSection() {
   const { adblockEnabled, setAdblockEnabled } = useSettingsStore();
   const [homepage, setHomepage] = useState('https://anilist.co');
-  const [userAgent, setUserAgent] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load persisted browser settings on mount
+  useEffect(() => {
+    window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY).then(settings => {
+      if (settings) {
+        setHomepage(settings.homepage || 'https://anilist.co');
+        if (typeof settings.adblockEnabled === 'boolean') {
+          setAdblockEnabled(settings.adblockEnabled);
+        }
+      }
+      setLoaded(true);
+    });
+  }, [setAdblockEnabled]);
+
+  const handleSave = async () => {
+    const settings: BrowserSettings = {
+      homepage: homepage.trim() || 'https://anilist.co',
+      adblockEnabled,
+    };
+
+    await window.electronAPI?.store?.set(BROWSER_SETTINGS_KEY, settings);
+
+    // Update the browser store's default URL
+    useBrowserStore.getState().setDefaultUrl(settings.homepage);
+
+    // Toggle adblock on the actual browser session
+    window.electronAPI?.browser?.toggleAdblock(settings.adblockEnabled);
+
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  if (!loaded) return null;
 
   return (
     <div className="space-y-6">
@@ -194,26 +271,11 @@ function BrowserSection() {
 
       <Separator />
 
-      {/* Advanced */}
-      <div>
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {showAdvanced ? 'Ukryj zaawansowane' : 'Pokaz zaawansowane'}
-        </button>
-        {showAdvanced && (
-          <div className="mt-3 space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">User Agent</label>
-            <Input
-              value={userAgent}
-              onChange={e => setUserAgent(e.target.value)}
-              placeholder="Domyslny"
-              className="h-8 text-xs font-mono"
-            />
-          </div>
-        )}
-      </div>
+      {/* Save button */}
+      <Button size="sm" onClick={handleSave}>
+        {saved ? <Check className="w-4 h-4" /> : null}
+        {saved ? 'Zapisano' : 'Zapisz'}
+      </Button>
     </div>
   );
 }
