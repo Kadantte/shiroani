@@ -31,6 +31,11 @@ export interface ElectronAPI {
       buttons?: string[];
     }) => Promise<number>;
   };
+  background: {
+    pick: () => Promise<{ fileName: string; url: string } | null>;
+    remove: (fileName: string) => Promise<void>;
+    getUrl: (fileName: string) => Promise<string | null>;
+  };
   app: {
     getPath: (name: string) => Promise<string>;
     getVersion: () => Promise<string>;
@@ -100,6 +105,14 @@ const electronAPI: ElectronAPI = {
     openDirectory: (options?: unknown) => ipcRenderer.invoke('dialog:open-directory', options),
     openFile: (options?: unknown) => ipcRenderer.invoke('dialog:open-file', options),
     message: options => ipcRenderer.invoke('dialog:message', options),
+  },
+  background: {
+    pick: () =>
+      ipcRenderer.invoke('background:pick') as Promise<{ fileName: string; url: string } | null>,
+    remove: (fileName: string) =>
+      ipcRenderer.invoke('background:remove', fileName) as Promise<void>,
+    getUrl: (fileName: string) =>
+      ipcRenderer.invoke('background:get-url', fileName) as Promise<string | null>,
   },
   app: {
     getPath: (name: string) => ipcRenderer.invoke('app:get-path', name),

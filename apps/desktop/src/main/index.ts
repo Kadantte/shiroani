@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, protocol } from 'electron';
 import { NestFactory } from '@nestjs/core';
 import { type INestApplication } from '@nestjs/common';
 import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
@@ -13,6 +13,22 @@ import { NestLoggerAdapter } from '../modules/shared/nest-logger';
 import { LOCALHOST } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser-manager';
+import { registerBackgroundProtocol } from './ipc/background';
+
+// Register custom protocol scheme for background images.
+// Must be called before app.ready.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'shiroani-bg',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: false,
+      stream: true,
+    },
+  },
+]);
 
 // Allow E2E tests to isolate userData by setting ELECTRON_USER_DATA_DIR.
 // Must run before app.ready so electron-store and other userData consumers
@@ -83,6 +99,9 @@ async function bootstrap(): Promise<void> {
   } else {
     logger.info('[security] Running in development mode -- fuses not applied (build-time only)');
   }
+
+  // Register custom protocol for serving background images from userData
+  registerBackgroundProtocol();
 
   await bootstrapNestApp();
   browserManager.init();

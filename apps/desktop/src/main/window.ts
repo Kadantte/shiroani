@@ -20,8 +20,8 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
         : "script-src 'self'",
       // Allow styles from same origin and inline (needed for CSS-in-JS)
       "style-src 'self' 'unsafe-inline'",
-      // Allow images from same origin, data URIs, and anime CDNs
-      "img-src 'self' data: blob: https://*.anilist.co https://*.myanimelist.net https://cdn.myanimelist.net https://s4.anilist.co https://img1.ak.crunchyroll.com https://*.kitsu.io",
+      // Allow images from any HTTPS source (favicons, anime covers, user-browsed sites)
+      "img-src 'self' data: blob: shiroani-bg: https: http:",
       // Allow fonts from same origin
       "font-src 'self' data:",
       // Allow connections to localhost (WebSocket and API) and AniList GraphQL

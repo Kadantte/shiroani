@@ -18,3 +18,10 @@ export { registerUpdaterHandlers, cleanupUpdaterHandlers } from './updater';
 
 // Browser handlers
 export { registerBrowserHandlers, cleanupBrowserHandlers } from './browser';
+
+// Background handlers
+export {
+  registerBackgroundHandlers,
+  cleanupBackgroundHandlers,
+  registerBackgroundProtocol,
+} from './background';

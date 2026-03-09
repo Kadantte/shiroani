@@ -12,6 +12,8 @@ import {
   cleanupUpdaterHandlers,
   registerBrowserHandlers,
   cleanupBrowserHandlers,
+  registerBackgroundHandlers,
+  cleanupBackgroundHandlers,
 } from './ipc';
 import { BrowserManager } from './browser-manager';
 
@@ -28,6 +30,7 @@ export function registerIpcHandlers(
   registerAppHandlers();
   registerUpdaterHandlers();
   registerBrowserHandlers(mainWindow, browserManager);
+  registerBackgroundHandlers(mainWindow);
 }
 
 /**
@@ -40,4 +43,5 @@ export function cleanupIpcHandlers(): void {
   cleanupAppHandlers();
   cleanupUpdaterHandlers();
   cleanupBrowserHandlers();
+  cleanupBackgroundHandlers();
 }

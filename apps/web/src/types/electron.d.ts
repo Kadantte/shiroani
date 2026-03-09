@@ -74,6 +74,14 @@ interface ElectronAPI {
     /** Listen for tab close events */
     onTabClosed: (callback: (tabId: string) => void) => () => void;
   };
+  background?: {
+    /** Open file dialog, copy image to userData/backgrounds, return fileName and protocol URL */
+    pick: () => Promise<{ fileName: string; url: string } | null>;
+    /** Remove a background image file from userData/backgrounds */
+    remove: (fileName: string) => Promise<void>;
+    /** Get the protocol URL for a background image file (null if file doesn't exist) */
+    getUrl: (fileName: string) => Promise<string | null>;
+  };
   updater?: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
     startDownload: () => Promise<void>;
