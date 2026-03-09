@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Globe, BookOpen, Calendar, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON } from '@/lib/platform';
 
 import { TitleBar } from '@/components/shared/TitleBar';
+import { NavigationDock } from '@/components/shared/NavigationDock';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { BrowserView } from '@/components/browser/BrowserView';
 import { LibraryView } from '@/components/library/LibraryView';
@@ -11,67 +11,10 @@ import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { SplashScreen } from '@/components/splash';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
-import { useAppStore, type ActiveView } from '@/stores/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
-
-interface NavItem {
-  id: ActiveView;
-  label: string;
-  Icon: typeof Globe;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { id: 'browser', label: 'Internet', Icon: Globe },
-  { id: 'library', label: 'Biblioteka', Icon: BookOpen },
-  { id: 'schedule', label: 'Plan', Icon: Calendar },
-];
-
-const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Ustawienia', Icon: Settings };
-
-function NavButton({
-  item,
-  isActive,
-  onClick,
-}: {
-  item: NavItem;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-current={isActive ? 'page' : undefined}
-      aria-label={item.label}
-      className={cn(
-        'relative w-full flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg',
-        'transition-all duration-200',
-        isActive
-          ? 'text-primary'
-          : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-      )}
-    >
-      {/* Active indicator bar */}
-      <div
-        className={cn(
-          'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-primary',
-          'transition-all duration-200',
-          isActive ? 'h-6 opacity-100' : 'h-0 opacity-0'
-        )}
-      />
-      <item.Icon className={cn('w-[18px] h-[18px]', isActive && 'drop-shadow-sm')} />
-      <span
-        className={cn(
-          'text-[9px] leading-tight font-medium truncate max-w-full px-0.5',
-          isActive ? 'text-primary' : 'text-muted-foreground'
-        )}
-      >
-        {item.label}
-      </span>
-    </button>
-  );
-}
 
 function App() {
   const activeView = useAppStore(s => s.activeView);
@@ -124,51 +67,25 @@ function App() {
           {/* Custom title bar for frameless window — hidden in fullscreen */}
           {IS_ELECTRON && !isFullScreen && <TitleBar />}
 
-          <div className="flex-1 flex overflow-hidden relative z-[1]">
-            {/* Sidebar navigation — hidden in fullscreen */}
-            {!isFullScreen && (
-              <nav
-                aria-label="Nawigacja glowna"
-                className={cn(
-                  'w-[68px] flex flex-col items-center px-1 py-2 gap-0.5 border-r border-border shrink-0',
-                  hasBg ? 'bg-sidebar/60 backdrop-blur-sm' : 'bg-sidebar'
-                )}
-              >
-                {NAV_ITEMS.map(item => (
-                  <NavButton
-                    key={item.id}
-                    item={item}
-                    isActive={activeView === item.id}
-                    onClick={() => navigateTo(item.id)}
-                  />
-                ))}
-
-                <div className="flex-1" />
-
-                <NavButton
-                  item={SETTINGS_ITEM}
-                  isActive={activeView === 'settings'}
-                  onClick={() => navigateTo('settings')}
-                />
-              </nav>
+          {/* Content area — full width, with bottom padding for the dock */}
+          <main
+            id="main-content"
+            className={cn(
+              'flex-1 flex overflow-hidden relative z-[1]',
+              hasBg ? 'bg-transparent' : 'bg-background',
+              !isFullScreen && 'pb-20'
             )}
+          >
+            <ErrorBoundary>
+              {activeView === 'browser' && <BrowserView />}
+              {activeView === 'library' && <LibraryView />}
+              {activeView === 'schedule' && <ScheduleView />}
+              {activeView === 'settings' && <SettingsView />}
+            </ErrorBoundary>
+          </main>
 
-            {/* Content area renders the active view */}
-            <main
-              id="main-content"
-              className={cn(
-                'flex-1 flex overflow-hidden',
-                hasBg ? 'bg-transparent' : 'bg-background'
-              )}
-            >
-              <ErrorBoundary>
-                {activeView === 'browser' && <BrowserView />}
-                {activeView === 'library' && <LibraryView />}
-                {activeView === 'schedule' && <ScheduleView />}
-                {activeView === 'settings' && <SettingsView />}
-              </ErrorBoundary>
-            </main>
-          </div>
+          {/* Floating dock navigation — hidden in fullscreen */}
+          {!isFullScreen && <NavigationDock hasBg={hasBg} />}
         </div>
       )}
     </>
