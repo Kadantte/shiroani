@@ -24,10 +24,6 @@ import type { AnimeStatus } from '@shiroani/shared';
 import { STATUS_OPTIONS } from '@/lib/constants';
 import { SCRAPE_METADATA_SCRIPT } from '@/lib/scrape-metadata';
 
-const ADD_STATUSES = STATUS_OPTIONS.filter(opt =>
-  (['watching', 'plan_to_watch', 'on_hold'] as AnimeStatus[]).includes(opt.value)
-);
-
 interface AddToLibraryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -86,6 +82,16 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
   const handleAdd = useCallback(() => {
     if (!editableTitle.trim()) {
       toast.error('Tytul nie moze byc pusty');
+      return;
+    }
+
+    const entries = useLibraryStore.getState().entries;
+    const titleMatch = entries.some(
+      e => e.title.toLowerCase() === editableTitle.trim().toLowerCase()
+    );
+    const urlMatch = url && entries.some(e => e.resumeUrl && e.resumeUrl === url);
+    if (titleMatch || urlMatch) {
+      toast.error('To anime jest już w bibliotece');
       return;
     }
 
@@ -198,7 +204,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ADD_STATUSES.map(opt => (
+                {STATUS_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
