@@ -31,6 +31,7 @@ export function BrowserView() {
     adblockEnabled,
     isFullScreen,
     openTab,
+    getDefaultUrl,
     closeTab,
     switchTab,
     navigate,
@@ -324,7 +325,7 @@ export function BrowserView() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8"
-                onClick={() => navigate('https://anilist.co')}
+                onClick={() => navigate(getDefaultUrl())}
               >
                 <Home className="w-4 h-4" />
               </Button>

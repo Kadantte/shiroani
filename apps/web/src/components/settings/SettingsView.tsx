@@ -20,7 +20,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { darkThemes, lightThemes, type ThemeOption } from '@/lib/theme';
 import type { Theme } from '@shiroani/shared';
-import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
+import { APP_NAME, DEFAULT_HOMEPAGE_URL, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 
 type SettingsSection = 'appearance' | 'browser' | 'updates' | 'about';
@@ -205,7 +205,7 @@ interface BrowserSettings {
 
 function BrowserSection() {
   const { adblockEnabled, setAdblockEnabled } = useSettingsStore();
-  const [homepage, setHomepage] = useState('https://anilist.co');
+  const [homepage, setHomepage] = useState(DEFAULT_HOMEPAGE_URL);
   const [saved, setSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -213,7 +213,7 @@ function BrowserSection() {
   useEffect(() => {
     window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY).then(settings => {
       if (settings) {
-        setHomepage(settings.homepage || 'https://anilist.co');
+        setHomepage(settings.homepage || DEFAULT_HOMEPAGE_URL);
         if (typeof settings.adblockEnabled === 'boolean') {
           setAdblockEnabled(settings.adblockEnabled);
         }
@@ -224,7 +224,7 @@ function BrowserSection() {
 
   const handleSave = async () => {
     const settings: BrowserSettings = {
-      homepage: homepage.trim() || 'https://anilist.co',
+      homepage: homepage.trim() || DEFAULT_HOMEPAGE_URL,
       adblockEnabled,
     };
 
@@ -264,7 +264,7 @@ function BrowserSection() {
         <Input
           value={homepage}
           onChange={e => setHomepage(e.target.value)}
-          placeholder="https://anilist.co"
+          placeholder="https://ogladajanime.pl"
           className="h-8 text-xs"
         />
       </div>

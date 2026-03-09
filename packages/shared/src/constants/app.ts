@@ -38,6 +38,9 @@ export const GITHUB_REPO_NAME = 'shiroani';
 /** GitHub releases page URL */
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases`;
 
+/** Default homepage when user has not configured a custom URL */
+export const DEFAULT_HOMEPAGE_URL = 'https://ogladajanime.pl';
+
 // =============================================================================
 // Logging
 // =============================================================================

@@ -83,8 +83,8 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   const handleOpenInBrowser = useCallback(() => {
     if (entry?.resumeUrl) {
       openTab(entry.resumeUrl);
-    } else if (entry?.anilistId) {
-      openTab(`https://anilist.co/anime/${entry.anilistId}`);
+    } else {
+      openTab(useBrowserStore.getState().getDefaultUrl());
     }
     onOpenChange(false);
     navigateTo('browser');

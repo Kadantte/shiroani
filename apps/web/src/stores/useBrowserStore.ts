@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { BrowserTab } from '@shiroani/shared';
-import { createLogger } from '@shiroani/shared';
+import { createLogger, DEFAULT_HOMEPAGE_URL } from '@shiroani/shared';
 
 const logger = createLogger('BrowserStore');
 
@@ -29,12 +29,13 @@ interface BrowserActions {
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
   setDefaultUrl: (url: string) => void;
+  getDefaultUrl: () => string;
   initListeners: () => () => void;
 }
 
 type BrowserStore = BrowserState & BrowserActions;
 
-let defaultUrl = 'https://anilist.co';
+let defaultUrl = DEFAULT_HOMEPAGE_URL;
 
 export const useBrowserStore = create<BrowserStore>()(
   devtools(
@@ -135,9 +136,11 @@ export const useBrowserStore = create<BrowserStore>()(
       },
 
       setDefaultUrl: (url: string) => {
-        defaultUrl = url || 'https://anilist.co';
+        defaultUrl = url || DEFAULT_HOMEPAGE_URL;
         logger.debug('Default URL updated:', defaultUrl);
       },
+
+      getDefaultUrl: () => defaultUrl,
 
       initListeners: () => {
         const browser = window.electronAPI?.browser;
