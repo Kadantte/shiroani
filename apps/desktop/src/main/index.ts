@@ -15,6 +15,13 @@ import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
+import {
+  createMascotOverlay,
+  destroyMascotOverlay,
+  setMainWindow,
+  updateMascotVisibilityForWindowState,
+} from './overlay';
+import { createContextMenuWindow, destroyContextMenu } from './context-menu';
 
 // Register custom protocol scheme for background images.
 // Must be called before app.ready.
@@ -124,6 +131,29 @@ async function bootstrap(): Promise<void> {
 
   // Restore previously open browser tabs from last session
   browserManager.restoreTabs();
+
+  // Set up mascot overlay with main window reference
+  setMainWindow(mainWindow);
+
+  // Create the pre-hidden context menu window for the mascot overlay
+  try {
+    createContextMenuWindow();
+  } catch (error) {
+    logger.warn('Failed to create context menu window:', error);
+  }
+
+  // Create the mascot overlay (Windows only, non-blocking)
+  try {
+    createMascotOverlay();
+  } catch (error) {
+    logger.warn('Failed to create mascot overlay:', error);
+  }
+
+  // Wire window state changes to mascot visibility mode
+  mainWindow.on('minimize', () => updateMascotVisibilityForWindowState(false));
+  mainWindow.on('restore', () => updateMascotVisibilityForWindowState(true));
+  mainWindow.on('show', () => updateMascotVisibilityForWindowState(true));
+  mainWindow.on('hide', () => updateMascotVisibilityForWindowState(false));
 }
 
 // Global error handling
@@ -186,6 +216,16 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    try {
+      destroyContextMenu();
+    } catch (error) {
+      logger.warn('Context menu cleanup failed during shutdown', error);
+    }
+    try {
+      destroyMascotOverlay();
+    } catch (error) {
+      logger.warn('Mascot overlay cleanup failed during shutdown', error);
+    }
     try {
       cleanupNotificationService();
     } catch (error) {

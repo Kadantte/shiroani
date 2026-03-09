@@ -10,9 +10,10 @@
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
+    "predev": "node-gyp rebuild 2>/dev/null || echo Native addon build skipped (non-Windows or missing deps)",
     "dev": "tsc -p tsconfig.build.json && cross-env NODE_ENV=development electron .",
     "build:dev": "tsc -p tsconfig.build.json",
-    "build": "tsc -p tsconfig.build.json && node scripts/copy-renderer.mjs",
+    "build": "pnpm native:build && tsc -p tsconfig.build.json && node scripts/copy-renderer.mjs",
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "test": "jest",
     "test:cov": "jest --coverage",
@@ -21,6 +22,8 @@
     "package:win": "pnpm build && electron-builder --win",
     "package:mac": "pnpm build && electron-builder --mac",
     "package:linux": "pnpm build && electron-builder --linux",
+    "native:build": "node-gyp rebuild",
+    "native:clean": "node-gyp clean",
     "postinstall": "electron-builder install-app-deps",
     "rebuild": "electron-builder install-app-deps"
   },
@@ -36,6 +39,7 @@
     "@nestjs/websockets": "^10.4.22",
     "@shiroani/shared": "workspace:*",
     "better-sqlite3": "^12.6.2",
+    "node-addon-api": "^8.6.0",
     "cross-fetch": "^4.1.0",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.3",

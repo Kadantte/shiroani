@@ -31,3 +31,15 @@ mkdirSync(dirname(rendererDist), { recursive: true });
 cpSync(webDist, rendererDist, { recursive: true });
 
 console.log('Renderer files copied to:', rendererDist);
+
+// Copy standalone renderer files (context menu, etc.)
+const standaloneFiles = ['context-menu.html'];
+const srcRenderer = resolve(__dirname, '../src/renderer');
+
+for (const file of standaloneFiles) {
+  const src = resolve(srcRenderer, file);
+  if (existsSync(src)) {
+    cpSync(src, resolve(rendererDist, file));
+    console.log(`Copied ${file} to renderer output`);
+  }
+}

@@ -30,6 +30,12 @@ const ALLOWED_STORE_KEYS = new Set([
   // Window state
   'window.bounds',
   'window.maximized',
+  // Mascot overlay
+  'settings.mascotEnabled',
+  'settings.mascotSize',
+  'settings.mascotVisibilityMode',
+  'settings.mascotPositionLocked',
+  'settings.mascotPosition',
 ]);
 
 /**

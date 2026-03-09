@@ -28,3 +28,6 @@ export {
 
 // Notification handlers
 export { registerNotificationHandlers, cleanupNotificationHandlers } from './notifications';
+
+// Overlay handlers
+export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';

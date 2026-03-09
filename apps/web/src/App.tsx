@@ -90,6 +90,18 @@ function App() {
     }
   }, [ready, restoreBackground]);
 
+  // Listen for navigation events from the main process (e.g. mascot overlay context menu)
+  useEffect(() => {
+    const unsub = window.electronAPI?.overlay?.onNavigate?.((view: string) => {
+      if (view === 'schedule' || view === 'library' || view === 'settings' || view === 'browser') {
+        navigateTo(view);
+      }
+    });
+    return () => {
+      unsub?.();
+    };
+  }, [navigateTo]);
+
   const hasBg = !!customBackground;
 
   return (

@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
-import { Palette, Globe, Download, Info, Bell } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Palette, Globe, Download, Info, Bell, Cat } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IS_WINDOWS } from '@/lib/platform';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { BrowserSection } from '@/components/settings/BrowserSection';
 import { UpdatesSection } from '@/components/settings/UpdatesSection';
 import { AboutSection } from '@/components/settings/AboutSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
+import { MascotSection } from '@/components/settings/MascotSection';
 
-type SettingsSection = 'appearance' | 'browser' | 'notifications' | 'updates' | 'about';
+type SettingsSection = 'appearance' | 'browser' | 'notifications' | 'mascot' | 'updates' | 'about';
 
-const SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
+const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
   { id: 'appearance', label: 'Wyglad', Icon: Palette },
   { id: 'browser', label: 'Przegladarka', Icon: Globe },
   { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
+  { id: 'mascot', label: 'Maskotka', Icon: Cat },
   { id: 'updates', label: 'Aktualizacje', Icon: Download },
   { id: 'about', label: 'O aplikacji', Icon: Info },
 ];
@@ -20,6 +23,9 @@ const SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] =
 export function SettingsView() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('appearance');
   const [version, setVersion] = useState('');
+
+  // Hide mascot section on non-Windows platforms (native overlay is Windows-only)
+  const SECTIONS = useMemo(() => ALL_SECTIONS.filter(s => s.id !== 'mascot' || IS_WINDOWS), []);
 
   // Fetch app version once for both UpdatesSection and AboutSection
   useEffect(() => {
@@ -54,6 +60,7 @@ export function SettingsView() {
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}
           {activeSection === 'notifications' && <NotificationsSection />}
+          {activeSection === 'mascot' && <MascotSection />}
           {activeSection === 'updates' && <UpdatesSection version={version} />}
           {activeSection === 'about' && <AboutSection version={version} />}
         </div>

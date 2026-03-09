@@ -7,7 +7,17 @@
     "buildResources": "resources"
   },
   "files": ["dist/**/*", "package.json", "!**/*.map", "!**/*.d.ts", "!dist/**/*.d.ts"],
-  "asarUnpack": ["**/node_modules/better-sqlite3/**"],
+  "asarUnpack": ["**/node_modules/better-sqlite3/**", "**/build/Release/*.node"],
+  "extraResources": [
+    {
+      "from": "build/Release/desktop_overlay.node",
+      "to": "native/desktop_overlay.node"
+    },
+    {
+      "from": "resources/mascot",
+      "to": "mascot"
+    }
+  ],
   "artifactName": "${productName}-${version}-${arch}.${ext}",
   "nodeGypRebuild": false,
   "npmRebuild": false,

@@ -106,6 +106,22 @@ interface ElectronAPI {
     updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
   };
+  overlay?: {
+    show: () => Promise<{ success: boolean }>;
+    hide: () => Promise<{ success: boolean }>;
+    toggle: () => Promise<{ success: boolean; visible: boolean }>;
+    getStatus: () => Promise<{ enabled: boolean; visible: boolean; x: number; y: number }>;
+    setEnabled: (enabled: boolean) => Promise<{ success: boolean; enabled: boolean }>;
+    isEnabled: () => Promise<boolean>;
+    setSize: (size: number) => Promise<{ success: boolean; size: number }>;
+    getSize: () => Promise<number>;
+    setVisibilityMode: (mode: string) => Promise<{ success: boolean; mode: string }>;
+    getVisibilityMode: () => Promise<string>;
+    setPositionLocked: (locked: boolean) => Promise<{ success: boolean; locked: boolean }>;
+    isPositionLocked: () => Promise<boolean>;
+    resetPosition: () => Promise<{ success: boolean }>;
+    onNavigate: (callback: (view: string) => void) => () => void;
+  };
   platform: NodeJS.Platform;
 }
 
