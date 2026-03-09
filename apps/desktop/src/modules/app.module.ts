@@ -4,7 +4,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
 import { LibraryModule } from './library';
-import { BrowserModule } from './browser';
 import { ScheduleModule } from './schedule';
 
 @Module({
@@ -30,7 +29,6 @@ import { ScheduleModule } from './schedule';
     DatabaseModule,
     AnimeModule,
     LibraryModule,
-    BrowserModule,
     ScheduleModule,
   ],
   controllers: [],

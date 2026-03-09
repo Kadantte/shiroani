@@ -1,8 +1,7 @@
 import { ipcMain } from 'electron';
-import Store from 'electron-store';
 import { createLogger } from '@shiroani/shared';
+import { store } from '../store';
 
-const store = new Store();
 const logger = createLogger('IPC:Store');
 
 /**

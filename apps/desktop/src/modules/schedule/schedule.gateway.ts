@@ -6,9 +6,10 @@ import {
 } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { createLogger, ScheduleEvents, extractErrorMessage } from '@shiroani/shared';
+import { createLogger, ScheduleEvents } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
+import { handleGatewayRequest } from '../shared/gateway-handler';
 import { ScheduleService } from './schedule.service';
 
 const logger = createLogger('ScheduleGateway');
@@ -25,15 +26,16 @@ export class ScheduleGateway {
     @MessageBody() payload: { date: string },
     @ConnectedSocket() client: Socket
   ) {
-    logger.debug(`${ScheduleEvents.GET_DAILY} received for date: ${payload.date}`);
-    try {
-      const result = await this.scheduleService.getDaily(payload.date);
-      client.emit(ScheduleEvents.DAILY_RESULT, result);
-      return result;
-    } catch (error) {
-      logger.error(`Failed to get daily schedule: ${extractErrorMessage(error)}`);
-      return { date: payload.date, entries: [], error: extractErrorMessage(error) };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: `${ScheduleEvents.GET_DAILY} for date: ${payload.date}`,
+      defaultResult: { date: payload.date, entries: [] },
+      handler: async () => {
+        const result = await this.scheduleService.getDaily(payload.date);
+        client.emit(ScheduleEvents.DAILY_RESULT, result);
+        return result;
+      },
+    });
   }
 
   @SubscribeMessage(ScheduleEvents.GET_WEEKLY)
@@ -41,14 +43,15 @@ export class ScheduleGateway {
     @MessageBody() payload: { startDate: string },
     @ConnectedSocket() client: Socket
   ) {
-    logger.debug(`${ScheduleEvents.GET_WEEKLY} received from: ${payload.startDate}`);
-    try {
-      const result = await this.scheduleService.getWeekly(payload.startDate);
-      client.emit(ScheduleEvents.WEEKLY_RESULT, result);
-      return result;
-    } catch (error) {
-      logger.error(`Failed to get weekly schedule: ${extractErrorMessage(error)}`);
-      return { schedule: {}, error: extractErrorMessage(error) };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: `${ScheduleEvents.GET_WEEKLY} from: ${payload.startDate}`,
+      defaultResult: { schedule: {} },
+      handler: async () => {
+        const result = await this.scheduleService.getWeekly(payload.startDate);
+        client.emit(ScheduleEvents.WEEKLY_RESULT, result);
+        return result;
+      },
+    });
   }
 }

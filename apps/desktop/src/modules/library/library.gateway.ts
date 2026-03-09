@@ -8,7 +8,6 @@ import { UseGuards } from '@nestjs/common';
 import { Server } from 'socket.io';
 import {
   createLogger,
-  extractErrorMessage,
   LibraryEvents,
   type AnimeStatus,
   type LibraryAddPayload,
@@ -16,6 +15,7 @@ import {
 } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
+import { handleGatewayRequest } from '../shared/gateway-handler';
 import { LibraryService } from './library.service';
 
 const logger = createLogger('LibraryGateway');
@@ -32,63 +32,63 @@ export class LibraryGateway {
 
   @SubscribeMessage(LibraryEvents.GET_ALL)
   handleGetAll(@MessageBody() payload: { status?: AnimeStatus }) {
-    try {
-      logger.debug('library:get-all received', payload);
-      const entries = this.libraryService.getAllEntries(payload?.status);
-      return { entries, error: undefined };
-    } catch (error) {
-      const message = extractErrorMessage(error);
-      logger.error('Failed to get library entries', message);
-      return { entries: [], error: message };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: 'library:get-all',
+      defaultResult: { entries: [] },
+      handler: async () => {
+        const entries = this.libraryService.getAllEntries(payload?.status);
+        return { entries };
+      },
+    });
   }
 
   @SubscribeMessage(LibraryEvents.ADD)
   handleAdd(@MessageBody() payload: LibraryAddPayload) {
-    try {
-      logger.debug('library:add received', payload);
-      const entry = this.libraryService.addEntry(payload);
-      this.server.emit(LibraryEvents.UPDATED, { entry, action: 'added' });
-      return { entry, error: undefined };
-    } catch (error) {
-      const message = extractErrorMessage(error);
-      logger.error('Failed to add library entry', message);
-      return { entry: null, error: message };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: 'library:add',
+      defaultResult: { entry: null },
+      handler: async () => {
+        const entry = this.libraryService.addEntry(payload);
+        this.server.emit(LibraryEvents.UPDATED, { entry, action: 'added' });
+        return { entry };
+      },
+    });
   }
 
   @SubscribeMessage(LibraryEvents.UPDATE)
   handleUpdate(@MessageBody() payload: LibraryUpdatePayload) {
-    try {
-      logger.debug('library:update received', payload);
-      const { id, ...updates } = payload;
-      const entry = this.libraryService.updateEntry(id, updates);
-      if (!entry) {
-        return { entry: null, error: `Entry with id ${id} not found` };
-      }
-      this.server.emit(LibraryEvents.UPDATED, { entry, action: 'updated' });
-      return { entry, error: undefined };
-    } catch (error) {
-      const message = extractErrorMessage(error);
-      logger.error('Failed to update library entry', message);
-      return { entry: null, error: message };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: 'library:update',
+      defaultResult: { entry: null },
+      handler: async () => {
+        const { id, ...updates } = payload;
+        const entry = this.libraryService.updateEntry(id, updates);
+        if (!entry) {
+          return { entry: null, error: `Entry with id ${id} not found` };
+        }
+        this.server.emit(LibraryEvents.UPDATED, { entry, action: 'updated' });
+        return { entry };
+      },
+    });
   }
 
   @SubscribeMessage(LibraryEvents.REMOVE)
   handleRemove(@MessageBody() payload: { id: number }) {
-    try {
-      logger.debug('library:remove received', payload);
-      const deleted = this.libraryService.removeEntry(payload.id);
-      if (!deleted) {
-        return { success: false, error: `Entry with id ${payload.id} not found` };
-      }
-      this.server.emit(LibraryEvents.UPDATED, { id: payload.id, action: 'removed' });
-      return { success: true, error: undefined };
-    } catch (error) {
-      const message = extractErrorMessage(error);
-      logger.error('Failed to remove library entry', message);
-      return { success: false, error: message };
-    }
+    return handleGatewayRequest({
+      logger,
+      action: 'library:remove',
+      defaultResult: { success: false },
+      handler: async () => {
+        const deleted = this.libraryService.removeEntry(payload.id);
+        if (!deleted) {
+          return { success: false, error: `Entry with id ${payload.id} not found` };
+        }
+        this.server.emit(LibraryEvents.UPDATED, { id: payload.id, action: 'removed' });
+        return { success: true };
+      },
+    });
   }
 }
