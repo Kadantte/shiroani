@@ -90,6 +90,57 @@ async function persistBackgroundSettings(settings: BackgroundSettings | null): P
   }
 }
 
+/** Module-level debounce timer for persistence */
+let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Debounced version of persistBackgroundSettings (300ms).
+ * Cancels any pending persistence before scheduling a new one.
+ */
+function debouncedPersistBackgroundSettings(settings: BackgroundSettings | null): void {
+  if (persistDebounceTimer) clearTimeout(persistDebounceTimer);
+  persistDebounceTimer = setTimeout(() => {
+    persistDebounceTimer = null;
+    persistBackgroundSettings(settings);
+  }, 300);
+}
+
+/**
+ * Apply a background property change: update store, apply to DOM, debounce persistence.
+ */
+function applyBackgroundProperty(
+  get: () => BackgroundStore,
+  set: (partial: Partial<BackgroundState>, replace?: false, action?: string) => void,
+  property: 'opacity' | 'blur',
+  value: number
+): void {
+  const clamped =
+    property === 'opacity' ? Math.max(0, Math.min(1, value)) : Math.max(0, Math.min(20, value));
+
+  const stateKey = property === 'opacity' ? 'backgroundOpacity' : 'backgroundBlur';
+  logger.debug(property === 'opacity' ? 'setBackgroundOpacity' : 'setBackgroundBlur', clamped);
+  set(
+    { [stateKey]: clamped } as Partial<BackgroundState>,
+    undefined,
+    `background/set${property === 'opacity' ? 'Opacity' : 'Blur'}`
+  );
+
+  const state = get();
+  const opacity = property === 'opacity' ? clamped : state.backgroundOpacity;
+  const blur = property === 'blur' ? clamped : state.backgroundBlur;
+
+  applyBackgroundToDOM(state.customBackground, opacity, blur);
+
+  if (state.customBackgroundFileName && state.customBackground) {
+    debouncedPersistBackgroundSettings({
+      fileName: state.customBackgroundFileName,
+      url: state.customBackground,
+      opacity,
+      blur,
+    });
+  }
+}
+
 /**
  * Background store using Zustand
  */
@@ -174,41 +225,11 @@ export const useBackgroundStore = create<BackgroundStore>()(
       },
 
       setBackgroundOpacity: (opacity: number) => {
-        const clamped = Math.max(0, Math.min(1, opacity));
-        logger.debug('setBackgroundOpacity', clamped);
-        set({ backgroundOpacity: clamped }, undefined, 'background/setOpacity');
-
-        const state = get();
-        applyBackgroundToDOM(state.customBackground, clamped, state.backgroundBlur);
-
-        // Persist updated settings
-        if (state.customBackgroundFileName && state.customBackground) {
-          persistBackgroundSettings({
-            fileName: state.customBackgroundFileName,
-            url: state.customBackground,
-            opacity: clamped,
-            blur: state.backgroundBlur,
-          });
-        }
+        applyBackgroundProperty(get, set, 'opacity', opacity);
       },
 
       setBackgroundBlur: (blur: number) => {
-        const clamped = Math.max(0, Math.min(20, blur));
-        logger.debug('setBackgroundBlur', clamped);
-        set({ backgroundBlur: clamped }, undefined, 'background/setBlur');
-
-        const state = get();
-        applyBackgroundToDOM(state.customBackground, state.backgroundOpacity, clamped);
-
-        // Persist updated settings
-        if (state.customBackgroundFileName && state.customBackground) {
-          persistBackgroundSettings({
-            fileName: state.customBackgroundFileName,
-            url: state.customBackground,
-            opacity: state.backgroundOpacity,
-            blur: clamped,
-          });
-        }
+        applyBackgroundProperty(get, set, 'blur', blur);
       },
 
       restoreBackground: async () => {

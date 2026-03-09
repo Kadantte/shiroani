@@ -111,12 +111,15 @@ export interface AniListAiringSchedule {
 // GraphQL Response Shapes
 // ============================================
 
-export interface SearchAnimeResponse {
+/** Shared shape for paginated media queries (search, trending, popular, etc.) */
+export type PaginatedMediaResponse = {
   Page: {
     pageInfo: AniListPageInfo;
     media: AniListMedia[];
   };
-}
+};
+
+export type SearchAnimeResponse = PaginatedMediaResponse;
 
 export interface AnimeDetailsResponse {
   Media: AniListMedia;
@@ -129,19 +132,9 @@ export interface AiringScheduleResponse {
   };
 }
 
-export interface TrendingAnimeResponse {
-  Page: {
-    pageInfo: AniListPageInfo;
-    media: AniListMedia[];
-  };
-}
+export type TrendingAnimeResponse = PaginatedMediaResponse;
 
-export interface PopularThisSeasonResponse {
-  Page: {
-    pageInfo: AniListPageInfo;
-    media: AniListMedia[];
-  };
-}
+export type PopularThisSeasonResponse = PaginatedMediaResponse;
 
 // ============================================
 // Media Season

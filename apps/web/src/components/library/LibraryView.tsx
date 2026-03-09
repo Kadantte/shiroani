@@ -1,11 +1,10 @@
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Search, LayoutGrid, List, BookOpen, Globe, SearchX, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useLibraryStore } from '@/stores/useLibraryStore';
-import { useScheduleStore, toLocalDate } from '@/stores/useScheduleStore';
+import { TooltipButton } from '@/components/ui/tooltip-button';
+import { useLibraryStore, getFilteredEntries } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
 import { LibraryStats } from '@/components/library/LibraryStats';
@@ -13,11 +12,11 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
 import { STATUS_FILTER_OPTIONS } from '@/lib/constants';
 import { CountdownBadge } from '@/components/library/CountdownBadge';
+import { useNextAiringMap } from '@/hooks/useNextAiringMap';
 import type { AnimeEntry } from '@shiroani/shared';
 
 export function LibraryView() {
   const {
-    entries,
     activeFilter,
     searchQuery,
     viewMode,
@@ -29,47 +28,14 @@ export function LibraryView() {
     openDetail,
     closeDetail,
     removeFromLibrary,
-    getFilteredEntries,
   } = useLibraryStore();
 
   const [showStats, setShowStats] = useState(false);
 
-  const schedule = useScheduleStore(s => s.schedule);
-  const fetchWeekly = useScheduleStore(s => s.fetchWeekly);
-
   const { openTab } = useBrowserStore();
   const navigateTo = useAppStore(s => s.navigateTo);
 
-  // Ensure schedule data is loaded for the current week
-  useEffect(() => {
-    if (Object.keys(schedule).length === 0) {
-      const now = new Date();
-      const dow = now.getDay();
-      const diff = dow === 0 ? -6 : 1 - dow;
-      const monday = new Date(now);
-      monday.setDate(now.getDate() + diff);
-      fetchWeekly(toLocalDate(monday));
-    }
-  }, [schedule, fetchWeekly]);
-
-  // Build a map of anilistId -> nearest future airing info
-  const nextAiringMap = useMemo(() => {
-    const map = new Map<number, { airingAt: number; episode: number }>();
-    const nowUnix = Math.floor(Date.now() / 1000);
-
-    for (const dayEntries of Object.values(schedule)) {
-      for (const airing of dayEntries) {
-        if (airing.airingAt <= nowUnix) continue;
-        const mediaId = airing.media.id;
-        const existing = map.get(mediaId);
-        if (!existing || airing.airingAt < existing.airingAt) {
-          map.set(mediaId, { airingAt: airing.airingAt, episode: airing.episode });
-        }
-      }
-    }
-
-    return map;
-  }, [schedule]);
+  const nextAiringMap = useNextAiringMap();
 
   // Navigate to the browser view and open the resume URL
   const handleContinue = useCallback(
@@ -81,10 +47,7 @@ export function LibraryView() {
     [openTab, navigateTo]
   );
 
-  const filteredEntries = useMemo(
-    () => getFilteredEntries(),
-    [getFilteredEntries, entries, activeFilter, searchQuery]
-  );
+  const filteredEntries = useLibraryStore(getFilteredEntries);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -94,46 +57,34 @@ export function LibraryView() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-foreground">Moja Biblioteka</h1>
           <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={showStats ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="w-8 h-8"
-                  onClick={() => setShowStats(v => !v)}
-                >
-                  <BarChart3 className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Statystyki</TooltipContent>
-            </Tooltip>
+            <TooltipButton
+              variant={showStats ? 'secondary' : 'ghost'}
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setShowStats(v => !v)}
+              tooltip="Statystyki"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </TooltipButton>
             <div className="w-px h-4 bg-border mx-0.5" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="w-8 h-8"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Widok siatki</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="w-8 h-8"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Widok listy</TooltipContent>
-            </Tooltip>
+            <TooltipButton
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setViewMode('grid')}
+              tooltip="Widok siatki"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </TooltipButton>
+            <TooltipButton
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setViewMode('list')}
+              tooltip="Widok listy"
+            >
+              <List className="w-4 h-4" />
+            </TooltipButton>
           </div>
         </div>
 

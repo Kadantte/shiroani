@@ -24,12 +24,7 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
-import { STATUS_CONFIG } from '@/lib/constants';
-
-const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({
-  value: value as AnimeStatus,
-  label,
-}));
+import { STATUS_OPTIONS } from '@/lib/constants';
 
 interface AnimeDetailModalProps {
   entry: AnimeEntry | null;

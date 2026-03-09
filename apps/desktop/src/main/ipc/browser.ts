@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { createLogger } from '@shiroani/shared';
-import { BrowserManager } from '../browser-manager';
+import { BrowserManager } from '../browser/browser-manager';
 
 const logger = createLogger('IPC:Browser');
 

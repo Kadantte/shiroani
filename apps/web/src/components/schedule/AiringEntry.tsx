@@ -1,0 +1,75 @@
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { formatTime, getAnimeTitle, getCoverUrl } from './schedule-utils';
+import type { AiringAnime } from '@shiroani/shared';
+
+export interface AiringEntryProps {
+  anime: AiringAnime;
+}
+
+/** A single airing entry row used in the daily view */
+export function AiringEntry({ anime }: AiringEntryProps) {
+  const title = getAnimeTitle(anime.media);
+  const coverUrl = getCoverUrl(anime.media);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-3 p-2.5 rounded-lg',
+        'bg-card/60 backdrop-blur-sm border border-border-glass',
+        'hover:bg-card/80 transition-colors duration-150'
+      )}
+    >
+      {/* Time */}
+      <div className="shrink-0 w-12 text-center">
+        <span className="text-xs font-mono font-medium text-primary">
+          {formatTime(anime.airingAt)}
+        </span>
+      </div>
+
+      {/* Cover thumbnail */}
+      {coverUrl ? (
+        <img
+          src={coverUrl}
+          alt={title}
+          className="w-10 h-14 rounded object-cover shrink-0"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-10 h-14 rounded bg-muted shrink-0" />
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium truncate">{title}</h4>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-muted-foreground">
+            Odc. {anime.episode}
+            {anime.media.episodes ? `/${anime.media.episodes}` : ''}
+          </span>
+          {anime.media.format && (
+            <Badge variant="secondary" className="text-2xs py-0 h-4">
+              {anime.media.format}
+            </Badge>
+          )}
+        </div>
+        {anime.media.genres.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {anime.media.genres.slice(0, 3).map(genre => (
+              <span key={genre} className="text-2xs text-muted-foreground/70">
+                {genre}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Score */}
+      {anime.media.averageScore != null && (
+        <span className="text-xs font-medium text-muted-foreground shrink-0">
+          {(anime.media.averageScore / 10).toFixed(1)}
+        </span>
+      )}
+    </div>
+  );
+}

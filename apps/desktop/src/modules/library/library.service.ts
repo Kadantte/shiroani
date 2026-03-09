@@ -12,7 +12,7 @@ import { DatabaseService } from '../database';
 const logger = createLogger('LibraryService');
 
 /** Raw row shape returned by better-sqlite3 for the anime_library table. */
-interface AnimeLibraryRow {
+export interface AnimeLibraryRow {
   id: number;
   anilist_id: number | null;
   title: string;
@@ -30,7 +30,7 @@ interface AnimeLibraryRow {
 }
 
 /** Map a database row to the shared AnimeEntry type. */
-function rowToEntry(row: AnimeLibraryRow): AnimeEntry {
+export function rowToEntry(row: AnimeLibraryRow): AnimeEntry {
   return {
     id: row.id,
     anilistId: row.anilist_id ?? undefined,
@@ -174,30 +174,6 @@ export class LibraryService {
       logger.info(`Removed entry id=${id} from library`);
     }
     return deleted;
-  }
-
-  /** Update episode progress and set updated_at. Returns the updated entry. */
-  updateProgress(id: number, episode: number): AnimeEntry | undefined {
-    const db = this.databaseService.db;
-    db.prepare(
-      "UPDATE anime_library SET current_episode = ?, updated_at = datetime('now') WHERE id = ?"
-    ).run(episode, id);
-
-    return this.getEntryById(id);
-  }
-
-  /** Full-text search across title, title_romaji, and title_native. */
-  searchLibrary(query: string): AnimeEntry[] {
-    const db = this.databaseService.db;
-    const pattern = `%${query}%`;
-    const rows = db
-      .prepare(
-        `SELECT * FROM anime_library
-         WHERE title LIKE ? OR title_romaji LIKE ? OR title_native LIKE ?
-         ORDER BY updated_at DESC`
-      )
-      .all(pattern, pattern, pattern) as AnimeLibraryRow[];
-    return rows.map(rowToEntry);
   }
 
   /** Get counts of entries grouped by status. */

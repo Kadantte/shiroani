@@ -93,12 +93,17 @@ export class AnimeService {
     );
 
     try {
-      const data = await this.anilistClient.query<AiringScheduleResponse>(AIRING_SCHEDULE_QUERY, {
-        airingAt_greater: airingAtGreater,
-        airingAt_lesser: airingAtLesser,
-        page,
-        perPage,
-      });
+      const cacheKey = `airing:${airingAtGreater}:${airingAtLesser}:${page}`;
+      const data = await this.anilistClient.cachedQuery<AiringScheduleResponse>(
+        cacheKey,
+        AIRING_SCHEDULE_QUERY,
+        {
+          airingAt_greater: airingAtGreater,
+          airingAt_lesser: airingAtLesser,
+          page,
+          perPage,
+        }
+      );
       return {
         airingSchedules: data.Page.airingSchedules,
         pageInfo: data.Page.pageInfo,
@@ -113,10 +118,15 @@ export class AnimeService {
    * Get currently trending anime with pagination.
    */
   async getTrending(page = 1, perPage = DEFAULT_PER_PAGE): Promise<PaginatedMediaResult> {
-    return this.queryPagedMedia('Fetching trending anime', TRENDING_ANIME_QUERY, {
-      page,
-      perPage,
-    });
+    return this.queryPagedMedia(
+      'Fetching trending anime',
+      TRENDING_ANIME_QUERY,
+      {
+        page,
+        perPage,
+      },
+      `trending:${page}`
+    );
   }
 
   /**
@@ -130,7 +140,8 @@ export class AnimeService {
     return this.queryPagedMedia(
       `Fetching popular anime for ${season} ${seasonYear}`,
       POPULAR_THIS_SEASON_QUERY,
-      { season, seasonYear, page, perPage }
+      { season, seasonYear, page, perPage },
+      `popular:${season}:${seasonYear}:${page}`
     );
   }
 
@@ -146,7 +157,8 @@ export class AnimeService {
     return this.queryPagedMedia(
       `Fetching seasonal anime for ${season} ${year}`,
       POPULAR_THIS_SEASON_QUERY,
-      { season: season.toUpperCase(), seasonYear: year, page, perPage }
+      { season: season.toUpperCase(), seasonYear: year, page, perPage },
+      `seasonal:${season.toUpperCase()}:${year}:${page}`
     );
   }
 
@@ -157,16 +169,18 @@ export class AnimeService {
   private async queryPagedMedia(
     description: string,
     query: string,
-    variables: Record<string, unknown>
+    variables: Record<string, unknown>,
+    cacheKey?: string
   ): Promise<PaginatedMediaResult> {
     const page = (variables.page as number) ?? 1;
     logger.debug(`${description} (page ${page})`);
 
+    type PagedResponse = TrendingAnimeResponse | PopularThisSeasonResponse | SearchAnimeResponse;
+
     try {
-      const data = await this.anilistClient.query<TrendingAnimeResponse | PopularThisSeasonResponse | SearchAnimeResponse>(
-        query,
-        variables
-      );
+      const data = cacheKey
+        ? await this.anilistClient.cachedQuery<PagedResponse>(cacheKey, query, variables)
+        : await this.anilistClient.query<PagedResponse>(query, variables);
       return {
         media: data.Page.media,
         pageInfo: data.Page.pageInfo,

@@ -11,11 +11,25 @@ export const STATUS_CONFIG: Record<AnimeStatus, { label: string; color: string }
   dropped: { label: 'Porzucone', color: 'bg-status-error' },
 };
 
+// All statuses as selectable options
+export const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({
+  value: value as AnimeStatus,
+  label,
+}));
+
 // For filter dropdowns that need an "all" option
 export const STATUS_FILTER_OPTIONS = [
   { value: 'all' as const, label: 'Wszystkie' },
-  ...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({
-    value: value as AnimeStatus,
-    label,
-  })),
+  ...STATUS_OPTIONS,
+];
+
+export const DAY_NAMES_SHORT = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+export const DAY_NAMES_FULL = [
+  'Poniedzialek',
+  'Wtorek',
+  'Sroda',
+  'Czwartek',
+  'Piatek',
+  'Sobota',
+  'Niedziela',
 ];

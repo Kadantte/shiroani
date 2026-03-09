@@ -28,6 +28,9 @@
     "test": "pnpm build:packages && pnpm -r run test",
     "typecheck": "pnpm build:packages && pnpm --filter @shiroani/web typecheck && pnpm --filter @shiroani/desktop typecheck",
     "rebuild": "pnpm --filter @shiroani/desktop rebuild",
+    "version:patch": "node scripts/bump-version.mjs patch",
+    "version:minor": "node scripts/bump-version.mjs minor",
+    "version:major": "node scripts/bump-version.mjs major",
     "prepare": "husky"
   },
   "engines": {

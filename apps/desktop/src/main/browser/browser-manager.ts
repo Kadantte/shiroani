@@ -1,21 +1,12 @@
 import { BrowserWindow, WebContentsView, session } from 'electron';
 import { createLogger } from '@shiroani/shared';
 import type { BrowserTab } from '@shiroani/shared';
-import { enableBlockingInSession, disableBlockingInSession } from './adblock';
-import { store } from './store';
-
-interface PersistedTabState {
-  urls: string[];
-  activeIndex: number;
-}
+import { enableBlockingInSession, disableBlockingInSession } from '../adblock';
+import { normalizeUrl } from './url-utils';
+import { saveTabState, loadPersistedTabs } from './tab-persistence';
+import { attachWebContentsListeners } from './tab-events';
 
 const logger = createLogger('BrowserManager');
-
-/** Width of the app sidebar in pixels */
-const SIDEBAR_WIDTH = 68;
-
-/** Combined height of title bar + tab bar + toolbar in pixels */
-const CHROME_HEIGHT = 108;
 
 interface ManagedTab {
   id: string;
@@ -127,7 +118,17 @@ export class BrowserManager {
     };
 
     this.tabs.set(tabId, tab);
-    this.attachWebContentsListeners(tabId, view);
+
+    attachWebContentsListeners(tabId, view, {
+      onTabStateUpdate: (id, update) => this.updateTabState(id, update),
+      onNewTabRequested: newUrl => this.createTab(newUrl),
+      getMainWindow: () => this.mainWindow,
+      getTabView: id => this.tabs.get(id)?.view,
+      setFullScreen: value => {
+        this.isFullScreen = value;
+      },
+      sendToRenderer: (channel, ...args) => this.sendToRenderer(channel, ...args),
+    });
 
     // Always switch to the newly created tab
     this.switchTab(tabId);
@@ -229,9 +230,9 @@ export class BrowserManager {
 
     if (tab.view.webContents.isDestroyed()) return;
 
-    const normalizedUrl = this.normalizeUrl(url);
-    tab.view.webContents.loadURL(normalizedUrl).catch(err => {
-      logger.warn(`Failed to load URL "${normalizedUrl}" in tab ${tabId}:`, err.message);
+    const normalized = normalizeUrl(url);
+    tab.view.webContents.loadURL(normalized).catch(err => {
+      logger.warn(`Failed to load URL "${normalized}" in tab ${tabId}:`, err.message);
     });
   }
 
@@ -368,22 +369,10 @@ export class BrowserManager {
    */
   saveTabState(): void {
     const tabEntries = Array.from(this.tabs.values());
-    const urls = tabEntries.map(t => t.url).filter(url => url && url !== 'about:blank');
-
-    if (urls.length === 0) {
-      store.delete('browser-tabs');
-      return;
-    }
-
+    const urls = tabEntries.map(t => t.url);
     const activeIndex = this.activeTabId ? tabEntries.findIndex(t => t.id === this.activeTabId) : 0;
 
-    const state: PersistedTabState = {
-      urls,
-      activeIndex: Math.max(0, activeIndex),
-    };
-
-    store.set('browser-tabs', state);
-    logger.debug(`Saved ${urls.length} tab(s) to persistent storage`);
+    saveTabState(urls, activeIndex);
   }
 
   /**
@@ -391,8 +380,8 @@ export class BrowserManager {
    * Returns true if tabs were restored.
    */
   restoreTabs(): boolean {
-    const saved = store.get('browser-tabs') as PersistedTabState | undefined;
-    if (!saved?.urls?.length) return false;
+    const saved = loadPersistedTabs();
+    if (!saved) return false;
 
     logger.info(`Restoring ${saved.urls.length} tab(s) from previous session`);
 
@@ -439,115 +428,6 @@ export class BrowserManager {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
-
-  /**
-   * Attach webContents event listeners for navigation state tracking.
-   */
-  private attachWebContentsListeners(tabId: string, view: WebContentsView): void {
-    const wc = view.webContents;
-
-    // Navigation completed
-    wc.on('did-navigate', (_event, url) => {
-      this.updateTabState(tabId, {
-        url,
-        canGoBack: wc.navigationHistory.canGoBack(),
-        canGoForward: wc.navigationHistory.canGoForward(),
-      });
-    });
-
-    // In-page navigation (hash changes, pushState)
-    wc.on('did-navigate-in-page', (_event, url) => {
-      this.updateTabState(tabId, {
-        url,
-        canGoBack: wc.navigationHistory.canGoBack(),
-        canGoForward: wc.navigationHistory.canGoForward(),
-      });
-    });
-
-    // Page title changed
-    wc.on('page-title-updated', (_event, title) => {
-      this.updateTabState(tabId, { title });
-    });
-
-    // Favicon updated
-    wc.on('page-favicon-updated', (_event, favicons) => {
-      if (favicons.length > 0) {
-        this.updateTabState(tabId, { favicon: favicons[0] });
-      }
-    });
-
-    // Loading started
-    wc.on('did-start-loading', () => {
-      this.updateTabState(tabId, { isLoading: true });
-    });
-
-    // Loading stopped
-    wc.on('did-stop-loading', () => {
-      this.updateTabState(tabId, {
-        isLoading: false,
-        canGoBack: wc.navigationHistory.canGoBack(),
-        canGoForward: wc.navigationHistory.canGoForward(),
-      });
-    });
-
-    // Load failed
-    wc.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-      // Ignore aborted loads (e.g. navigating away before page finishes)
-      if (errorCode === -3) return;
-      logger.warn(
-        `Tab ${tabId} failed to load "${validatedURL}": ${errorDescription} (code: ${errorCode})`
-      );
-      this.updateTabState(tabId, { isLoading: false });
-    });
-
-    // HTML5 fullscreen (e.g. video players)
-    wc.on('enter-html-full-screen', () => {
-      if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-      this.isFullScreen = true;
-      this.mainWindow.setFullScreen(true);
-      // Notify renderer to hide chrome (sidebar, tabs, toolbar)
-      this.sendToRenderer('browser:fullscreen-change', true);
-      // Resize view to cover entire window
-      const { width, height } = this.mainWindow.getBounds();
-      const tab = this.tabs.get(tabId);
-      if (tab) {
-        tab.view.setBounds({ x: 0, y: 0, width, height });
-      }
-      logger.debug(`Tab ${tabId} entered fullscreen`);
-    });
-
-    wc.on('leave-html-full-screen', () => {
-      if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-      this.isFullScreen = false;
-      this.mainWindow.setFullScreen(false);
-      // Notify renderer to restore chrome
-      this.sendToRenderer('browser:fullscreen-change', false);
-
-      // Temporarily shrink the view to approximate UI chrome dimensions
-      // while waiting for the renderer's ResizeObserver to report correct bounds.
-      const tab = this.tabs.get(tabId);
-      if (tab) {
-        const { width, height } = this.mainWindow.getBounds();
-        tab.view.setBounds({
-          x: SIDEBAR_WIDTH,
-          y: CHROME_HEIGHT,
-          width: Math.max(0, width - SIDEBAR_WIDTH),
-          height: Math.max(0, height - CHROME_HEIGHT),
-        });
-      }
-
-      logger.debug(`Tab ${tabId} left fullscreen`);
-    });
-
-    // Intercept new window requests and open as new tabs
-    wc.setWindowOpenHandler(({ url }) => {
-      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-        // Create a new tab with this URL
-        this.createTab(url);
-      }
-      return { action: 'deny' };
-    });
-  }
 
   /**
    * Update internal tab state and send update to renderer.
@@ -607,28 +487,5 @@ export class BrowserManager {
       canGoBack: tab.canGoBack,
       canGoForward: tab.canGoForward,
     };
-  }
-
-  /**
-   * Normalize a URL input:
-   * - If it already has a protocol, use it as-is
-   * - If it looks like a domain (contains a dot), prepend https://
-   * - Otherwise treat as a search query
-   */
-  private normalizeUrl(input: string): string {
-    const trimmed = input.trim();
-
-    // Already has a protocol
-    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) {
-      return trimmed;
-    }
-
-    // Looks like a domain (contains a dot and no spaces)
-    if (trimmed.includes('.') && !trimmed.includes(' ')) {
-      return `https://${trimmed}`;
-    }
-
-    // Treat as a search query
-    return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
   }
 }

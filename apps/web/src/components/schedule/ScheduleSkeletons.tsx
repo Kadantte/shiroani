@@ -1,16 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const DAY_NAMES_SHORT = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Ndz'];
-const DAY_NAMES_FULL = [
-  'Poniedzialek',
-  'Wtorek',
-  'Sroda',
-  'Czwartek',
-  'Piatek',
-  'Sobota',
-  'Niedziela',
-];
+import { DAY_NAMES_SHORT, DAY_NAMES_FULL } from '@/lib/constants';
 
 /** Varied title widths for natural-looking skeletons */
 const TITLE_WIDTHS = ['w-[70%]', 'w-[55%]', 'w-[80%]', 'w-[62%]', 'w-[75%]', 'w-[48%]'];

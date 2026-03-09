@@ -1,5 +1,5 @@
 import { Notification, BrowserWindow, nativeImage } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createLogger, getWeekStart, toLocalDate } from '@shiroani/shared';
 import type { INestApplication } from '@nestjs/common';
 import type { AiringAnime, NotificationSettings } from '@shiroani/shared';
 import { ScheduleService } from '../modules/schedule/schedule.service';
@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 let checkInterval: ReturnType<typeof setInterval> | null = null;
+let initialTimeout: ReturnType<typeof setTimeout> | null = null;
 let scheduleService: ScheduleService | null = null;
 let libraryService: LibraryService | null = null;
 let targetWindow: BrowserWindow | null = null;
@@ -47,19 +48,6 @@ function saveSettings(settings: NotificationSettings): void {
   store.set(STORE_KEY, settings);
 }
 
-/** Get the current week's Monday as YYYY-MM-DD */
-function getCurrentWeekMonday(): string {
-  const now = new Date();
-  const dow = now.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, '0');
-  const d = String(monday.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 /** Fetch and cache the weekly schedule */
 async function getScheduleData(): Promise<AiringAnime[]> {
   const now = Date.now();
@@ -70,7 +58,7 @@ async function getScheduleData(): Promise<AiringAnime[]> {
   if (!scheduleService) return [];
 
   try {
-    const monday = getCurrentWeekMonday();
+    const monday = toLocalDate(getWeekStart());
     const result = await scheduleService.getWeekly(monday);
     const allAiring: AiringAnime[] = [];
     for (const entries of Object.values(result.schedule)) {
@@ -209,7 +197,10 @@ function startChecking(): void {
   );
 
   // Run an initial check shortly after starting
-  setTimeout(() => checkAndNotify(), 10_000);
+  initialTimeout = setTimeout(() => {
+    initialTimeout = null;
+    checkAndNotify();
+  }, 10_000);
 
   checkInterval = setInterval(() => {
     checkAndNotify();
@@ -218,6 +209,10 @@ function startChecking(): void {
 
 /** Stop the periodic check interval */
 function stopChecking(): void {
+  if (initialTimeout) {
+    clearTimeout(initialTimeout);
+    initialTimeout = null;
+  }
   if (checkInterval) {
     clearInterval(checkInterval);
     checkInterval = null;

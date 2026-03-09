@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
@@ -8,12 +7,6 @@ import { ScheduleModule } from './schedule';
 
 @Module({
   imports: [
-    EventEmitterModule.forRoot({
-      wildcard: true,
-      delimiter: '.',
-      maxListeners: 20,
-      verboseMemoryLeak: true,
-    }),
     ThrottlerModule.forRoot([
       {
         name: 'short',

@@ -50,8 +50,6 @@ interface LibraryActions {
   selectEntry: (entry: AnimeEntry | null) => void;
   openDetail: (entry: AnimeEntry) => void;
   closeDetail: () => void;
-  /** @deprecated Use the standalone getFilteredEntries selector instead */
-  getFilteredEntries: () => AnimeEntry[];
   initListeners: () => void;
   cleanupListeners: () => void;
 }
@@ -229,50 +227,6 @@ export const useLibraryStore = create<LibraryStore>()(
 
         closeDetail: () => {
           set({ isDetailOpen: false, selectedEntry: null }, undefined, 'library/closeDetail');
-        },
-
-        getFilteredEntries: () => {
-          const { entries, activeFilter, searchQuery, sortBy, sortOrder } = get();
-
-          let filtered = entries;
-
-          // Filter by status
-          if (activeFilter !== 'all') {
-            filtered = filtered.filter(e => e.status === activeFilter);
-          }
-
-          // Filter by search
-          if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(
-              e =>
-                e.title.toLowerCase().includes(query) ||
-                e.titleRomaji?.toLowerCase().includes(query) ||
-                e.titleNative?.toLowerCase().includes(query)
-            );
-          }
-
-          // Sort
-          const sorted = [...filtered].sort((a, b) => {
-            let cmp = 0;
-            switch (sortBy) {
-              case 'title':
-                cmp = a.title.localeCompare(b.title);
-                break;
-              case 'score':
-                cmp = (a.score ?? 0) - (b.score ?? 0);
-                break;
-              case 'progress':
-                cmp = a.currentEpisode - b.currentEpisode;
-                break;
-              case 'updatedAt':
-                cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-                break;
-            }
-            return sortOrder === 'asc' ? cmp : -cmp;
-          });
-
-          return sorted;
         },
 
         initListeners,

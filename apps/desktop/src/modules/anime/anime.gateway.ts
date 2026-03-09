@@ -69,7 +69,7 @@ export class AnimeGateway {
     });
   }
 
-  @SubscribeMessage('anime:get-trending')
+  @SubscribeMessage(AnimeEvents.GET_TRENDING)
   async handleGetTrending(@MessageBody() payload: { page?: number }) {
     return handleGatewayRequest({
       logger,
@@ -82,7 +82,7 @@ export class AnimeGateway {
     });
   }
 
-  @SubscribeMessage('anime:get-popular')
+  @SubscribeMessage(AnimeEvents.GET_POPULAR)
   async handleGetPopular(@MessageBody() payload: { page?: number }) {
     return handleGatewayRequest({
       logger,
@@ -95,10 +95,8 @@ export class AnimeGateway {
     });
   }
 
-  @SubscribeMessage('anime:get-seasonal')
-  async handleGetSeasonal(
-    @MessageBody() payload: { year: number; season: string; page?: number }
-  ) {
+  @SubscribeMessage(AnimeEvents.GET_SEASONAL)
+  async handleGetSeasonal(@MessageBody() payload: { year: number; season: string; page?: number }) {
     return handleGatewayRequest({
       logger,
       action: `anime:get-seasonal — ${payload.season} ${payload.year}`,

@@ -1,6 +1,6 @@
 import { BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 export interface MenuState {
   visible: boolean;
@@ -79,7 +79,9 @@ export function createContextMenuWindow(): void {
     }
   });
 
-  // Register IPC handlers for the context menu
+  // Register IPC handlers for the context menu.
+  // Remove any existing listener first to prevent accumulation if called twice.
+  ipcMain.removeAllListeners('menu:select');
   ipcMain.on('menu:select', (_event, action: string) => {
     hideContextMenu();
     if (onMenuSelect) {

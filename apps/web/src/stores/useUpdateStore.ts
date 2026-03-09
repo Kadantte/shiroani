@@ -14,6 +14,27 @@ function isValidChannel(value: unknown): value is UpdateChannel {
   return value === 'stable' || value === 'beta';
 }
 
+/**
+ * Call an updater API method with standardized guard and error logging.
+ * Returns undefined if the updater API is not available.
+ */
+function callUpdaterAPI<T>(
+  action: string,
+  fn: (
+    updater: NonNullable<NonNullable<typeof window.electronAPI>['updater']>
+  ) => Promise<T> | undefined
+): Promise<T | undefined> {
+  const updater = window.electronAPI?.updater;
+  if (!updater) {
+    logger.warn('Updater API not available');
+    return Promise.resolve(undefined);
+  }
+  return (fn(updater) ?? Promise.resolve(undefined))?.catch((err: Error) => {
+    logger.error(`Failed to ${action}:`, err.message);
+    return undefined;
+  });
+}
+
 interface UpdateState {
   status: UpdateStatus;
   updateInfo: UpdateInfo | null;
@@ -46,56 +67,39 @@ export const useUpdateStore = create<UpdateStore>()(
 
       // Actions
       checkForUpdates: () => {
-        const updater = window.electronAPI?.updater;
-        if (!updater) {
-          logger.warn('Updater API not available');
-          return;
-        }
         set({ status: 'checking', error: null }, undefined, 'update/checkForUpdatesStart');
-        updater
-          .checkForUpdates()
-          .then(result => {
+        callUpdaterAPI('check for updates', updater =>
+          updater.checkForUpdates().then(result => {
             if (!result.enabled) {
               logger.info('Auto-updater not enabled (dev mode)');
               set({ status: 'idle', error: null }, undefined, 'update/updaterNotEnabled');
             }
+            return result;
           })
-          .catch((err: Error) => {
-            logger.error('Failed to check for updates:', err);
-            set({ status: 'error', error: err.message }, undefined, 'update/checkForUpdatesError');
-          });
+        ).catch((err: Error) => {
+          set({ status: 'error', error: err.message }, undefined, 'update/checkForUpdatesError');
+        });
       },
 
       startDownload: () => {
-        const updater = window.electronAPI?.updater;
-        if (!updater) return;
         set(
           { status: 'downloading', progress: null, error: null },
           undefined,
           'update/startDownload'
         );
-        updater.startDownload().catch((err: Error) => {
-          logger.error('Failed to start download:', err);
+        callUpdaterAPI('start download', updater => updater.startDownload()).catch((err: Error) => {
           set({ status: 'error', error: err.message }, undefined, 'update/downloadError');
         });
       },
 
       installNow: () => {
-        const updater = window.electronAPI?.updater;
-        if (!updater) return;
-        updater.installNow().catch((err: Error) => {
-          logger.error('Failed to install update:', err);
-          set({ status: 'error', error: err.message }, undefined, 'update/installError');
-        });
+        callUpdaterAPI('install update', updater => updater.installNow());
       },
 
       setChannel: (channel: UpdateChannel) => {
-        const updater = window.electronAPI?.updater;
-        if (!updater) return;
         set({ isChannelSwitching: true, channel }, undefined, 'update/setChannelStart');
-        updater
-          .setChannel(channel)
-          .then(result => {
+        callUpdaterAPI('set update channel', u =>
+          u.setChannel(channel).then(result => {
             const newChannel = isValidChannel(result) ? result : DEFAULT_UPDATE_CHANNEL;
             set(
               {
@@ -110,18 +114,18 @@ export const useUpdateStore = create<UpdateStore>()(
               'update/setChannelSuccess'
             );
             // Trigger a re-check on the new channel
-            updater.checkForUpdates().catch((err: Error) => {
+            u.checkForUpdates().catch((err: Error) => {
               logger.error('Failed to re-check after channel switch:', err);
             });
+            return result;
           })
-          .catch((err: Error) => {
-            logger.error('Failed to set update channel:', err);
-            set(
-              { isChannelSwitching: false, status: 'error', error: err.message },
-              undefined,
-              'update/setChannelError'
-            );
-          });
+        ).catch((err: Error) => {
+          set(
+            { isChannelSwitching: false, status: 'error', error: err.message },
+            undefined,
+            'update/setChannelError'
+          );
+        });
       },
 
       initListeners: () => {

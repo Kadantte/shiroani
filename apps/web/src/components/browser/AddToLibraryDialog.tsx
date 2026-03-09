@@ -21,14 +21,12 @@ import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { toast } from 'sonner';
 import type { AnimeStatus } from '@shiroani/shared';
-import { STATUS_CONFIG } from '@/lib/constants';
+import { STATUS_OPTIONS } from '@/lib/constants';
 import { SCRAPE_METADATA_SCRIPT } from '@/lib/scrape-metadata';
 
-const ADD_STATUSES: AnimeStatus[] = ['watching', 'plan_to_watch', 'on_hold'];
-const STATUS_OPTIONS = ADD_STATUSES.map(value => ({
-  value,
-  label: STATUS_CONFIG[value].label,
-}));
+const ADD_STATUSES = STATUS_OPTIONS.filter(opt =>
+  (['watching', 'plan_to_watch', 'on_hold'] as AnimeStatus[]).includes(opt.value)
+);
 
 interface AddToLibraryDialogProps {
   open: boolean;
@@ -91,20 +89,24 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       return;
     }
 
-    addToLibrary({
-      title: editableTitle.trim(),
-      status,
-      currentEpisode: currentEpisode > 0 ? currentEpisode : undefined,
-      episodes: totalEpisodes > 0 ? totalEpisodes : undefined,
-      coverImage: coverImage.trim() || undefined,
-      resumeUrl: url || undefined,
-    });
+    try {
+      addToLibrary({
+        title: editableTitle.trim(),
+        status,
+        currentEpisode: currentEpisode > 0 ? currentEpisode : undefined,
+        episodes: totalEpisodes > 0 ? totalEpisodes : undefined,
+        coverImage: coverImage.trim() || undefined,
+        resumeUrl: url || undefined,
+      });
 
-    toast.success('Dodano do biblioteki', {
-      description: editableTitle.trim(),
-    });
+      toast.success('Dodano do biblioteki', {
+        description: editableTitle.trim(),
+      });
 
-    onOpenChange(false);
+      onOpenChange(false);
+    } catch {
+      toast.error('Nie udalo sie dodac do biblioteki');
+    }
   }, [
     editableTitle,
     status,
@@ -196,7 +198,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {STATUS_OPTIONS.map(opt => (
+                {ADD_STATUSES.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>

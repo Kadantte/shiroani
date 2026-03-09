@@ -18,8 +18,8 @@ import {
   cleanupNotificationHandlers,
   registerOverlayHandlers,
   cleanupOverlayHandlers,
-} from './ipc';
-import { BrowserManager } from './browser-manager';
+} from './';
+import { BrowserManager } from '../browser/browser-manager';
 
 /**
  * Register all IPC handlers for the application

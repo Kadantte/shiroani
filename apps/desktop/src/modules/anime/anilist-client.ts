@@ -3,6 +3,13 @@ import { createLogger, extractErrorMessage } from '@shiroani/shared';
 
 const logger = createLogger('AniListClient');
 
+const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
 interface GraphQLError {
   message: string;
   status: number;
@@ -21,15 +28,56 @@ interface GraphQLResponse<T> {
  * - Configurable max retries
  * - Structured error handling for GraphQL and network errors
  * - Uses Node.js built-in fetch (Node 22+)
+ * - In-memory TTL cache for reducing redundant API calls
  */
 @Injectable()
 export class AniListClient {
   private readonly endpoint = 'https://graphql.anilist.co';
   private readonly maxRetries = 3;
   private readonly defaultRetryDelayMs = 2000;
+  private readonly cache = new Map<string, CacheEntry<unknown>>();
 
   constructor() {
     logger.info('AniListClient initialized');
+  }
+
+  /**
+   * Execute a GraphQL query with in-memory TTL caching.
+   * Returns cached data if a valid (non-expired) entry exists for the given key.
+   *
+   * @param cacheKey - Unique key identifying this query + variables combination
+   * @param query - The GraphQL query string
+   * @param variables - Optional variables for the query
+   * @param ttlMs - Cache TTL in milliseconds (default: 5 minutes)
+   */
+  async cachedQuery<T>(
+    cacheKey: string,
+    query: string,
+    variables?: Record<string, unknown>,
+    ttlMs = DEFAULT_CACHE_TTL_MS
+  ): Promise<T> {
+    const cached = this.cache.get(cacheKey) as CacheEntry<T> | undefined;
+    if (cached && cached.expiresAt > Date.now()) {
+      logger.debug(`Cache hit for key: ${cacheKey}`);
+      return cached.data;
+    }
+
+    const data = await this.query<T>(query, variables);
+
+    this.cache.set(cacheKey, { data, expiresAt: Date.now() + ttlMs });
+    return data;
+  }
+
+  /**
+   * Clear all cached entries, or a specific key.
+   */
+  clearCache(cacheKey?: string): void {
+    if (cacheKey) {
+      this.cache.delete(cacheKey);
+    } else {
+      this.cache.clear();
+    }
+    logger.debug(cacheKey ? `Cache cleared for key: ${cacheKey}` : 'Cache cleared');
   }
 
   /**
@@ -52,6 +100,7 @@ export class AniListClient {
             Accept: 'application/json',
           },
           body: JSON.stringify({ query, variables }),
+          signal: AbortSignal.timeout(15_000),
         });
 
         // Handle rate limiting (429)
@@ -89,8 +138,10 @@ export class AniListClient {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(extractErrorMessage(error));
 
-        // Only retry on network errors or rate limits, not on GraphQL/data errors
+        // Only retry on network errors, timeouts, or rate limits — not on GraphQL/data errors
         const isRetryable =
+          lastError.name === 'TimeoutError' ||
+          lastError.name === 'AbortError' ||
           lastError.message.includes('rate limit') ||
           lastError.message.includes('fetch failed') ||
           lastError.message.includes('ECONNRESET') ||

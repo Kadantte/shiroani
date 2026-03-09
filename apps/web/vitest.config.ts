@@ -14,7 +14,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     clearMocks: true,
-    passWithNoTests: true,
+    passWithNoTests: true, // TODO: set to false once test coverage is established
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {

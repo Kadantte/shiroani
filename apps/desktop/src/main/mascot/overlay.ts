@@ -1,8 +1,14 @@
 import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
-import { logger } from './logger';
-import { store } from './store';
+import { logger } from '../logger';
+import { store } from '../store';
 import { showContextMenu, setMenuSelectHandler, type MenuState } from './context-menu';
+import { handleOverlayAction, registerVisibilitySetter } from './mascot-actions';
+import {
+  isMascotPositionLocked,
+  registerPositionCallbacks,
+  clearPositionCallbacks,
+} from './mascot-position';
 
 type MascotVisibilityMode = 'always' | 'tray-only';
 
@@ -113,53 +119,6 @@ export function setMascotEnabled(enabled: boolean): void {
     createMascotOverlay();
   } else {
     destroyMascotOverlay();
-  }
-}
-
-/**
- * Handle an overlay action from the context menu or tray.
- */
-function handleOverlayAction(action: string): void {
-  logger.info(`Handling overlay action: ${action}`);
-  switch (action) {
-    case 'quit':
-      app.quit();
-      break;
-    case 'open-app':
-      mainWindow?.show();
-      mainWindow?.focus();
-      break;
-    case 'navigate:schedule':
-      mainWindow?.show();
-      mainWindow?.focus();
-      mainWindow?.webContents.send('navigate', 'schedule');
-      break;
-    case 'navigate:library':
-      mainWindow?.show();
-      mainWindow?.focus();
-      mainWindow?.webContents.send('navigate', 'library');
-      break;
-    case 'navigate:settings':
-      mainWindow?.show();
-      mainWindow?.focus();
-      mainWindow?.webContents.send('navigate', 'settings');
-      break;
-    case 'lock-position':
-      setMascotPositionLocked(!isMascotPositionLocked());
-      break;
-    case 'unlock-position':
-      store.set('settings.mascotPositionLocked', false);
-      if (process.platform === 'win32' && addon) addon.setPositionLocked(false);
-      if (process.platform === 'darwin' && mascotWindow && !mascotWindow.isDestroyed()) {
-        mascotWindow.webContents.send('mascot:position-locked', false);
-      }
-      break;
-    case 'hide':
-      setMascotVisible(false);
-      break;
-    case 'show':
-      setMascotVisible(true);
-      break;
   }
 }
 
@@ -332,6 +291,59 @@ function cleanupMacIpcHandlers(): void {
 }
 
 // ============================================================================
+// Platform-specific position callbacks
+// ============================================================================
+
+function registerWin32PositionCallbacks(): void {
+  registerPositionCallbacks({
+    setPositionLocked: locked => {
+      if (addon) addon.setPositionLocked(locked);
+    },
+    getPosition: () => (addon ? addon.getPosition() : { x: 0, y: 0 }),
+    setPosition: (x, y) => {
+      if (addon) addon.setPosition(x, y);
+    },
+    savePosition: () => {
+      if (addon) {
+        const pos = addon.getPosition();
+        if (pos.x !== 0 || pos.y !== 0) {
+          store.set('settings.mascotPosition', pos);
+        }
+      }
+    },
+  });
+}
+
+function registerDarwinPositionCallbacks(): void {
+  registerPositionCallbacks({
+    setPositionLocked: locked => {
+      if (mascotWindow && !mascotWindow.isDestroyed()) {
+        mascotWindow.webContents.send('mascot:position-locked', locked);
+      }
+    },
+    getPosition: () => {
+      if (mascotWindow && !mascotWindow.isDestroyed()) {
+        const bounds = mascotWindow.getBounds();
+        return { x: bounds.x, y: bounds.y };
+      }
+      return { x: 0, y: 0 };
+    },
+    setPosition: (x, y) => {
+      if (mascotWindow && !mascotWindow.isDestroyed()) {
+        const bounds = mascotWindow.getBounds();
+        mascotWindow.setBounds({ x, y, width: bounds.width, height: bounds.height });
+      }
+    },
+    savePosition: () => {
+      if (mascotWindow && !mascotWindow.isDestroyed()) {
+        const bounds = mascotWindow.getBounds();
+        store.set('settings.mascotPosition', { x: bounds.x, y: bounds.y });
+      }
+    },
+  });
+}
+
+// ============================================================================
 // Cross-platform entry points
 // ============================================================================
 
@@ -349,12 +361,16 @@ export function createMascotOverlay(): boolean {
     return false;
   }
 
+  // Wire up the visibility setter so mascot-actions can show/hide without circular imports
+  registerVisibilitySetter(setMascotVisible);
+
   // macOS: use BrowserWindow-based overlay
   if (process.platform === 'darwin') {
     // Register handler for context menu selections
     setMenuSelectHandler((action: string) => {
-      handleOverlayAction(action);
+      handleOverlayAction(action, mainWindow);
     });
+    registerDarwinPositionCallbacks();
     const result = createMacOverlay();
     logger.info(`Mascot overlay created (macOS BrowserWindow): ${result}`);
     return result;
@@ -372,7 +388,7 @@ export function createMascotOverlay(): boolean {
 
   try {
     setMenuSelectHandler((action: string) => {
-      handleOverlayAction(action);
+      handleOverlayAction(action, mainWindow);
     });
 
     addon!.setCallback((event: string) => {
@@ -392,8 +408,10 @@ export function createMascotOverlay(): boolean {
         return;
       }
 
-      handleOverlayAction(event);
+      handleOverlayAction(event, mainWindow);
     });
+
+    registerWin32PositionCallbacks();
 
     const size = getMascotSize();
     const savedPos = store.get('settings.mascotPosition') as { x: number; y: number } | undefined;
@@ -471,6 +489,8 @@ export function resetMascotPosition(): void {
  * Destroy the mascot overlay and release all resources.
  */
 export function destroyMascotOverlay(): void {
+  clearPositionCallbacks();
+
   if (process.platform === 'win32' && addon) {
     try {
       saveMascotPosition();
@@ -610,24 +630,7 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
 }
 
 // ============================================================================
-// Position lock
+// Position lock (re-exported from mascot-position for backward compatibility)
 // ============================================================================
 
-/**
- * Get whether the mascot position is locked.
- */
-export function isMascotPositionLocked(): boolean {
-  return store.get('settings.mascotPositionLocked') === true;
-}
-
-/**
- * Set whether the mascot position is locked and persist it.
- */
-export function setMascotPositionLocked(locked: boolean): void {
-  store.set('settings.mascotPositionLocked', locked);
-  if (process.platform === 'win32' && addon) {
-    addon.setPositionLocked(locked);
-  } else if (process.platform === 'darwin' && mascotWindow && !mascotWindow.isDestroyed()) {
-    mascotWindow.webContents.send('mascot:position-locked', locked);
-  }
-}
+export { isMascotPositionLocked, setMascotPositionLocked } from './mascot-position';

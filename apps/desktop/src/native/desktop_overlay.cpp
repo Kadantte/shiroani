@@ -19,8 +19,6 @@
 #include <cmath>
 #include <string>
 #include <cstring>
-#include <mutex>
-
 // Windows extensions for GET_X_LPARAM / GET_Y_LPARAM
 #include <windowsx.h>
 
@@ -125,8 +123,6 @@ static LARGE_INTEGER        g_animStart     = {};
 // Threadsafe function for JS callbacks
 static Napi::ThreadSafeFunction g_tsfn;
 static bool g_tsfnCreated = false;
-
-static std::mutex g_animMutex;
 
 // ============================================================================
 // Forward declarations
@@ -482,7 +478,7 @@ static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         case WM_CHANGE_POS: {
             int x = (int)(short)LOWORD(lParam);
             int y = (int)(short)HIWORD(lParam);
-            SetWindowPos(g_overlayHwnd, HWND_TOPMOST, x, y, 0, 0,
+            SetWindowPos(g_overlayHwnd, NULL, x, y, 0, 0,
                          SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
             RenderFrame();
             return 0;
@@ -513,7 +509,7 @@ static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 int newX = rc.right - g_displaySize;
                 int newY = rc.bottom - newH;
                 RebuildScaledImage();
-                SetWindowPos(g_overlayHwnd, HWND_TOPMOST, newX, newY,
+                SetWindowPos(g_overlayHwnd, NULL, newX, newY,
                              g_displaySize, newH,
                              SWP_NOACTIVATE | SWP_NOZORDER);
                 RenderFrame();

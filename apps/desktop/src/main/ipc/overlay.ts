@@ -14,7 +14,7 @@ import {
   isMascotPositionLocked,
   setMascotPositionLocked,
   resetMascotPosition,
-} from '../overlay';
+} from '../mascot/overlay';
 
 const logger = createLogger('IPC:Overlay');
 

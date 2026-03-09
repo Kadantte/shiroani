@@ -4,7 +4,7 @@ import { type INestApplication } from '@nestjs/common';
 import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
 import { AppModule } from '../modules/app.module';
 import { createMainWindow } from './window';
-import { cleanupIpcHandlers } from './ipc-handlers';
+import { cleanupIpcHandlers } from './ipc/register';
 import { logger, getLogPath, flushLogs } from './logger';
 import { initializeAutoUpdater } from './updater';
 import { initializeAdblock } from './adblock';
@@ -12,7 +12,7 @@ import { corsOriginCallback } from '../modules/shared/cors.config';
 import { NestLoggerAdapter } from '../modules/shared/nest-logger';
 import { LOCALHOST } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
-import { BrowserManager } from './browser-manager';
+import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
 import {
@@ -20,8 +20,9 @@ import {
   destroyMascotOverlay,
   setMainWindow,
   updateMascotVisibilityForWindowState,
-} from './overlay';
-import { createContextMenuWindow, destroyContextMenu } from './context-menu';
+} from './mascot/overlay';
+import { createContextMenuWindow, destroyContextMenu } from './mascot/context-menu';
+import { safeCleanup } from './cleanup-utils';
 
 // Register custom protocol scheme for background images.
 // Must be called before app.ready.
@@ -216,36 +217,12 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
-    try {
-      destroyContextMenu();
-    } catch (error) {
-      logger.warn('Context menu cleanup failed during shutdown', error);
-    }
-    try {
-      destroyMascotOverlay();
-    } catch (error) {
-      logger.warn('Mascot overlay cleanup failed during shutdown', error);
-    }
-    try {
-      cleanupNotificationService();
-    } catch (error) {
-      logger.warn('Notification service cleanup failed during shutdown', error);
-    }
-    try {
-      browserManager.saveTabState();
-    } catch (error) {
-      logger.warn('Failed to save browser tabs:', error);
-    }
-    try {
-      browserManager.destroy();
-    } catch (error) {
-      logger.warn('Browser manager cleanup failed during shutdown', error);
-    }
-    try {
-      await flushLogs();
-    } catch (error) {
-      logger.warn('Log flush failed during shutdown', error);
-    }
+    await safeCleanup('context menu', () => destroyContextMenu(), logger);
+    await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
+    await safeCleanup('notification service', () => cleanupNotificationService(), logger);
+    await safeCleanup('browser tab state', () => browserManager.saveTabState(), logger);
+    await safeCleanup('browser manager', () => browserManager.destroy(), logger);
+    await safeCleanup('log flush', () => flushLogs(), logger);
     if (nestApp) {
       await shutdownNestApp();
     }

@@ -1,10 +1,10 @@
 import { BrowserWindow, shell, session } from 'electron';
 import * as path from 'path';
-import { registerIpcHandlers } from './ipc-handlers';
+import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
 import { logger } from './logger';
 import { getBackendPort } from './backend-port';
-import { BrowserManager } from './browser-manager';
+import { BrowserManager } from './browser/browser-manager';
 
 /**
  * Set Content Security Policy for the renderer process

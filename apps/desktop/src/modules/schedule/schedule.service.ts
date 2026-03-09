@@ -1,18 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { createLogger, extractErrorMessage } from '@shiroani/shared';
+import { createLogger, extractErrorMessage, toLocalDate } from '@shiroani/shared';
 import type { AiringAnime } from '@shiroani/shared';
 import { AnimeService } from '../anime/anime.service';
 import type { AniListAiringSchedule } from '../anime/types';
 
 const logger = createLogger('ScheduleService');
-
-/** Get local ISO date string (YYYY-MM-DD) from a Date, using local timezone */
-function toLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 @Injectable()
 export class ScheduleService {
@@ -24,7 +16,7 @@ export class ScheduleService {
    * Get airing anime for a specific day (ISO date string YYYY-MM-DD).
    * Returns AiringAnime[] mapped from AniList data.
    */
-  async getDaily(date: string): Promise<{ date: string; entries: AiringAnime[] }> {
+  async getDaily(date: string): Promise<{ date: string; entries: AiringAnime[]; error?: string }> {
     logger.debug(`Fetching daily schedule for ${date}`);
     try {
       const startOfDay = new Date(`${date}T00:00:00`);
@@ -37,7 +29,7 @@ export class ScheduleService {
       return { date, entries };
     } catch (error) {
       logger.error(`Failed to fetch daily schedule for ${date}: ${extractErrorMessage(error)}`);
-      return { date, entries: [] };
+      return { date, entries: [], error: 'Failed to fetch schedule' };
     }
   }
 
@@ -45,7 +37,9 @@ export class ScheduleService {
    * Get airing anime for a full week starting from startDate (ISO date string YYYY-MM-DD).
    * Returns a map of date -> AiringAnime[].
    */
-  async getWeekly(startDate: string): Promise<{ schedule: Record<string, AiringAnime[]> }> {
+  async getWeekly(
+    startDate: string
+  ): Promise<{ schedule: Record<string, AiringAnime[]>; error?: string }> {
     logger.debug(`Fetching weekly schedule from ${startDate}`);
     try {
       const start = new Date(`${startDate}T00:00:00`);
@@ -86,7 +80,7 @@ export class ScheduleService {
       return { schedule };
     } catch (error) {
       logger.error(`Failed to fetch weekly schedule: ${extractErrorMessage(error)}`);
-      return { schedule: {} };
+      return { schedule: {}, error: 'Failed to fetch weekly schedule' };
     }
   }
 }
