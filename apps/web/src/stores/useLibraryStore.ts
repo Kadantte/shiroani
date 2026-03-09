@@ -50,6 +50,7 @@ interface LibraryActions {
   selectEntry: (entry: AnimeEntry | null) => void;
   openDetail: (entry: AnimeEntry) => void;
   closeDetail: () => void;
+  /** @deprecated Use the standalone getFilteredEntries selector instead */
   getFilteredEntries: () => AnimeEntry[];
   initListeners: () => void;
   cleanupListeners: () => void;
@@ -78,14 +79,31 @@ export const useLibraryStore = create<LibraryStore>()(
             {
               event: LibraryEvents.UPDATED,
               handler: data => {
-                const updated = data as AnimeEntry;
-                set(
-                  state => ({
-                    entries: state.entries.map(e => (e.id === updated.id ? updated : e)),
-                  }),
-                  undefined,
-                  'library/entryUpdated'
-                );
+                const { action } = data as { action: string };
+                if (action === 'added') {
+                  const { entry } = data as { entry: AnimeEntry; action: string };
+                  set(
+                    state => ({ entries: [...state.entries, entry] }),
+                    undefined,
+                    'library/entryAdded'
+                  );
+                } else if (action === 'updated') {
+                  const { entry } = data as { entry: AnimeEntry; action: string };
+                  set(
+                    state => ({
+                      entries: state.entries.map(e => (e.id === entry.id ? entry : e)),
+                    }),
+                    undefined,
+                    'library/entryUpdated'
+                  );
+                } else if (action === 'removed') {
+                  const { id } = data as { id: number; action: string };
+                  set(
+                    state => ({ entries: state.entries.filter(e => e.id !== id) }),
+                    undefined,
+                    'library/entryRemoved'
+                  );
+                }
               },
             },
           ],
@@ -259,3 +277,52 @@ export const useLibraryStore = create<LibraryStore>()(
     { name: 'library' }
   )
 );
+
+/**
+ * Selector that returns filtered and sorted library entries based on current
+ * filter, search query, and sort settings. Use with:
+ *   useLibraryStore(getFilteredEntries)
+ */
+export const getFilteredEntries = (state: LibraryState & LibraryActions): AnimeEntry[] => {
+  const { entries, activeFilter, searchQuery, sortBy, sortOrder } = state;
+
+  let filtered = entries;
+
+  // Filter by status
+  if (activeFilter !== 'all') {
+    filtered = filtered.filter(e => e.status === activeFilter);
+  }
+
+  // Filter by search
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(
+      e =>
+        e.title.toLowerCase().includes(query) ||
+        e.titleRomaji?.toLowerCase().includes(query) ||
+        e.titleNative?.toLowerCase().includes(query)
+    );
+  }
+
+  // Sort
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sortBy) {
+      case 'title':
+        cmp = a.title.localeCompare(b.title);
+        break;
+      case 'score':
+        cmp = (a.score ?? 0) - (b.score ?? 0);
+        break;
+      case 'progress':
+        cmp = a.currentEpisode - b.currentEpisode;
+        break;
+      case 'updatedAt':
+        cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        break;
+    }
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
+  return sorted;
+};

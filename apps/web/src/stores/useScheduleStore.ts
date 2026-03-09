@@ -44,7 +44,7 @@ interface ScheduleActions {
 type ScheduleStore = ScheduleState & ScheduleActions;
 
 /** Get ISO date string (YYYY-MM-DD) from a Date */
-function toISODate(date: Date): string {
+export function toISODate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
