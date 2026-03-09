@@ -117,6 +117,9 @@ async function bootstrap(): Promise<void> {
   } catch (error) {
     logger.warn('Failed to initialize adblocker:', error);
   }
+
+  // Restore previously open browser tabs from last session
+  browserManager.restoreTabs();
 }
 
 // Global error handling
@@ -179,6 +182,11 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    try {
+      browserManager.saveTabState();
+    } catch (error) {
+      logger.warn('Failed to save browser tabs:', error);
+    }
     try {
       browserManager.destroy();
     } catch (error) {

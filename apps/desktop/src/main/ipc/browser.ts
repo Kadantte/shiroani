@@ -78,6 +78,11 @@ export function registerBrowserHandlers(
     }
   );
 
+  ipcMain.handle('browser:execute-script', (_event, tabId: string, script: string) => {
+    logger.debug(`browser:execute-script invoked for tab="${tabId}"`);
+    return browserManager.executeScript(tabId, script);
+  });
+
   ipcMain.handle('browser:hide', () => {
     browserManager.hideAllViews();
   });
@@ -102,6 +107,7 @@ export function cleanupBrowserHandlers(): void {
   ipcMain.removeHandler('browser:get-active-tab');
   ipcMain.removeHandler('browser:toggle-adblock');
   ipcMain.removeHandler('browser:resize');
+  ipcMain.removeHandler('browser:execute-script');
   ipcMain.removeHandler('browser:hide');
   ipcMain.removeHandler('browser:show');
 

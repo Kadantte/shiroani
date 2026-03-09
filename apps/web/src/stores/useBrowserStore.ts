@@ -13,6 +13,7 @@ interface BrowserState {
   activeTabId: string | null;
   isAddressBarFocused: boolean;
   adblockEnabled: boolean;
+  isFullScreen: boolean;
 }
 
 interface BrowserActions {
@@ -43,6 +44,7 @@ export const useBrowserStore = create<BrowserStore>()(
       activeTabId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
+      isFullScreen: false,
 
       // Actions
       openTab: (url?: string) => {
@@ -194,10 +196,16 @@ export const useBrowserStore = create<BrowserStore>()(
           }
         });
 
+        // Listen for fullscreen enter/leave from main process
+        const cleanupFullscreen = browser.onFullscreenChange((isFullScreen: boolean) => {
+          set({ isFullScreen }, undefined, 'browser/fullscreenChange');
+        });
+
         return () => {
           logger.debug('Cleaning up browser listeners');
           cleanupTabUpdated();
           cleanupTabClosed();
+          cleanupFullscreen();
         };
       },
     }),

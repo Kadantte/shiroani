@@ -57,10 +57,12 @@ export interface ElectronAPI {
     getActiveTab: () => Promise<string | null>;
     toggleAdblock: (enabled: boolean) => Promise<void>;
     resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
+    executeScript: (tabId: string, script: string) => Promise<unknown>;
     hide: () => Promise<void>;
     show: () => Promise<void>;
     onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
     onTabClosed: (callback: (tabId: string) => void) => () => void;
+    onFullscreenChange: (callback: (isFullScreen: boolean) => void) => () => void;
   };
   updater: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
@@ -138,6 +140,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('browser:toggle-adblock', enabled) as Promise<void>,
     resize: (bounds: { x: number; y: number; width: number; height: number }) =>
       ipcRenderer.invoke('browser:resize', bounds) as Promise<void>,
+    executeScript: (tabId: string, script: string) =>
+      ipcRenderer.invoke('browser:execute-script', tabId, script) as Promise<unknown>,
     hide: () => ipcRenderer.invoke('browser:hide') as Promise<void>,
     show: () => ipcRenderer.invoke('browser:show') as Promise<void>,
     onTabUpdated: (callback: (tab: BrowserTab) => void) => {
@@ -152,6 +156,13 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.on('browser:tab-closed', handler);
       return () => {
         ipcRenderer.removeListener('browser:tab-closed', handler);
+      };
+    },
+    onFullscreenChange: (callback: (isFullScreen: boolean) => void) => {
+      const handler = (_event: IpcRendererEvent, isFullScreen: boolean) => callback(isFullScreen);
+      ipcRenderer.on('browser:fullscreen-change', handler);
+      return () => {
+        ipcRenderer.removeListener('browser:fullscreen-change', handler);
       };
     },
   },

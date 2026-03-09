@@ -65,6 +65,8 @@ interface ElectronAPI {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     /** Resize the active tab view to the given bounds */
     resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
+    /** Execute JavaScript in a tab's web contents (for scraping metadata) */
+    executeScript: (tabId: string, script: string) => Promise<unknown>;
     /** Hide all browser views (when switching to another app section) */
     hide: () => Promise<void>;
     /** Show the active browser view (when switching back to browser) */
@@ -73,6 +75,8 @@ interface ElectronAPI {
     onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
     /** Listen for tab close events */
     onTabClosed: (callback: (tabId: string) => void) => () => void;
+    /** Listen for HTML5 fullscreen enter/leave events */
+    onFullscreenChange: (callback: (isFullScreen: boolean) => void) => () => void;
   };
   background?: {
     /** Open file dialog, copy image to userData/backgrounds, return fileName and protocol URL */

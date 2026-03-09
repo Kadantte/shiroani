@@ -1,7 +1,13 @@
 import { BrowserWindow, WebContentsView, session } from 'electron';
+import Store from 'electron-store';
 import { createLogger } from '@shiroani/shared';
 import type { BrowserTab } from '@shiroani/shared';
 import { enableBlockingInSession, disableBlockingInSession } from './adblock';
+
+interface PersistedTabState {
+  urls: string[];
+  activeIndex: number;
+}
 
 const logger = createLogger('BrowserManager');
 
@@ -28,6 +34,8 @@ export class BrowserManager {
   private mainWindow: BrowserWindow | null = null;
   private browserSession: Electron.Session | null = null;
   private adblockEnabled = false;
+  private store = new Store();
+  private isFullScreen = false;
 
   /**
    * Check if adblocking is currently enabled.
@@ -280,6 +288,22 @@ export class BrowserManager {
   }
 
   /**
+   * Execute JavaScript in a tab's web contents and return the result.
+   * Used for scraping page metadata (e.g. og:image for cover images).
+   */
+  async executeScript(tabId: string, script: string): Promise<unknown> {
+    const tab = this.tabs.get(tabId);
+    if (!tab || tab.view.webContents.isDestroyed()) return null;
+
+    try {
+      return await tab.view.webContents.executeJavaScript(script);
+    } catch (err) {
+      logger.warn(`executeScript failed in tab ${tabId}:`, (err as Error).message);
+      return null;
+    }
+  }
+
+  /**
    * Hide all browser views (remove from window). Called when user switches
    * away from the browser view to another app section (library, schedule, etc.).
    * WebContentsView is a native overlay — CSS/React cannot hide it.
@@ -317,7 +341,7 @@ export class BrowserManager {
    * The renderer sends the exact bounds of the browser content area.
    */
   resizeActiveTab(bounds: { x: number; y: number; width: number; height: number }): void {
-    if (!this.activeTabId) return;
+    if (!this.activeTabId || this.isFullScreen) return;
 
     const tab = this.tabs.get(this.activeTabId);
     if (!tab) return;
@@ -331,6 +355,54 @@ export class BrowserManager {
     };
 
     tab.view.setBounds(safeBounds);
+  }
+
+  /**
+   * Save the current tab URLs and active tab index to persistent storage.
+   * Called before app quit so tabs can be restored on next launch.
+   */
+  saveTabState(): void {
+    const tabEntries = Array.from(this.tabs.values());
+    const urls = tabEntries.map(t => t.url).filter(url => url && url !== 'about:blank');
+
+    if (urls.length === 0) {
+      this.store.delete('browser-tabs');
+      return;
+    }
+
+    const activeIndex = this.activeTabId ? tabEntries.findIndex(t => t.id === this.activeTabId) : 0;
+
+    const state: PersistedTabState = {
+      urls,
+      activeIndex: Math.max(0, activeIndex),
+    };
+
+    this.store.set('browser-tabs', state);
+    logger.debug(`Saved ${urls.length} tab(s) to persistent storage`);
+  }
+
+  /**
+   * Restore tabs from persistent storage. Call after the main window is ready.
+   * Returns true if tabs were restored.
+   */
+  restoreTabs(): boolean {
+    const saved = this.store.get('browser-tabs') as PersistedTabState | undefined;
+    if (!saved?.urls?.length) return false;
+
+    logger.info(`Restoring ${saved.urls.length} tab(s) from previous session`);
+
+    const createdIds: string[] = [];
+    for (const url of saved.urls) {
+      createdIds.push(this.createTab(url));
+    }
+
+    // Switch to the previously active tab
+    const targetIndex = Math.min(saved.activeIndex, createdIds.length - 1);
+    if (targetIndex >= 0 && createdIds[targetIndex]) {
+      this.switchTab(createdIds[targetIndex]);
+    }
+
+    return true;
   }
 
   /**
@@ -421,6 +493,48 @@ export class BrowserManager {
         `Tab ${tabId} failed to load "${validatedURL}": ${errorDescription} (code: ${errorCode})`
       );
       this.updateTabState(tabId, { isLoading: false });
+    });
+
+    // HTML5 fullscreen (e.g. video players)
+    wc.on('enter-html-full-screen', () => {
+      if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+      this.isFullScreen = true;
+      this.mainWindow.setFullScreen(true);
+      // Notify renderer to hide chrome (sidebar, tabs, toolbar)
+      this.sendToRenderer('browser:fullscreen-change', true);
+      // Resize view to cover entire window
+      const { width, height } = this.mainWindow.getBounds();
+      const tab = this.tabs.get(tabId);
+      if (tab) {
+        tab.view.setBounds({ x: 0, y: 0, width, height });
+      }
+      logger.debug(`Tab ${tabId} entered fullscreen`);
+    });
+
+    wc.on('leave-html-full-screen', () => {
+      if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+      this.isFullScreen = false;
+      this.mainWindow.setFullScreen(false);
+      // Notify renderer to restore chrome
+      this.sendToRenderer('browser:fullscreen-change', false);
+
+      // Temporarily shrink the view so it doesn't cover the UI chrome
+      // while waiting for the renderer's ResizeObserver to report correct bounds.
+      // Approximate offsets: sidebar ~68px, title bar ~32px, tab bar ~36px, toolbar ~40px
+      const tab = this.tabs.get(tabId);
+      if (tab) {
+        const { width, height } = this.mainWindow.getBounds();
+        const sidebarWidth = 68;
+        const chromeHeight = 108; // title + tabs + toolbar
+        tab.view.setBounds({
+          x: sidebarWidth,
+          y: chromeHeight,
+          width: Math.max(0, width - sidebarWidth),
+          height: Math.max(0, height - chromeHeight),
+        });
+      }
+
+      logger.debug(`Tab ${tabId} left fullscreen`);
     });
 
     // Intercept new window requests and open as new tabs
