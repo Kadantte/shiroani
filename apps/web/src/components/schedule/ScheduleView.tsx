@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useScheduleStore, toLocalDate } from '@/stores/useScheduleStore';
+import { DailyViewSkeleton, WeeklyViewSkeleton, TimetableViewSkeleton } from './ScheduleSkeletons';
 import type { AiringAnime } from '@shiroani/shared';
 
 const DAY_NAMES_SHORT = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Ndz'];
@@ -228,12 +229,13 @@ export function ScheduleView() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 animate-pulse" />
-            <span className="text-sm">Ladowanie harmonogramu...</span>
-          </div>
-        </div>
+        viewMode === 'daily' ? (
+          <DailyViewSkeleton />
+        ) : viewMode === 'weekly' ? (
+          <WeeklyViewSkeleton />
+        ) : (
+          <TimetableViewSkeleton />
+        )
       ) : viewMode === 'daily' ? (
         /* Daily view */
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
