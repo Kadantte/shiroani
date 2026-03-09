@@ -87,7 +87,7 @@ export function LibraryView() {
   );
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="shrink-0 px-6 pt-5 pb-3 space-y-3 border-b border-border bg-card/30">
         {/* Title row */}

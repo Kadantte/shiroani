@@ -13,13 +13,13 @@ const STATUS_ORDER: AnimeStatus[] = [
   'dropped',
 ];
 
-/** Color mapping for inline styles (used by the segmented bar). */
-const STATUS_HEX: Record<AnimeStatus, string> = {
-  watching: '#3b82f6',
-  completed: '#22c55e',
-  plan_to_watch: '#eab308',
-  on_hold: '#f97316',
-  dropped: '#ef4444',
+/** Color mapping for inline styles (uses CSS custom-property values). */
+const STATUS_COLORS: Record<AnimeStatus, string> = {
+  watching: 'var(--status-info)',
+  completed: 'var(--status-success)',
+  plan_to_watch: 'var(--status-warning)',
+  on_hold: 'var(--status-pending)',
+  dropped: 'var(--status-error)',
 };
 
 export function LibraryStats() {
@@ -84,7 +84,7 @@ export function LibraryStats() {
                   className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full"
                   style={{
                     width: `${percent}%`,
-                    backgroundColor: STATUS_HEX[status],
+                    backgroundColor: STATUS_COLORS[status],
                     minWidth: count > 0 ? '4px' : 0,
                   }}
                   title={`${STATUS_CONFIG[status].label}: ${count}`}
@@ -101,7 +101,7 @@ export function LibraryStats() {
                 <div key={status} className="flex items-center gap-1.5">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: STATUS_HEX[status] }}
+                    style={{ backgroundColor: STATUS_COLORS[status] }}
                   />
                   <span className="text-2xs text-muted-foreground">
                     {STATUS_CONFIG[status].label}{' '}

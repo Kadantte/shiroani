@@ -1,0 +1,189 @@
+/* Demon Slayer Theme - Kimetsu no Yaiba
+ * Inspired by Tanjiro's checkered haori, flame breathing techniques,
+ * wisteria flowers, and moonlit demon battles.
+ * Near-black teal backgrounds with Tanjiro teal and flame orange accents.
+ * Dark theme.
+ */
+
+:root.demon-slayer {
+  /* Near-black with teal undertone - midnight demon hunting */
+  --background: oklch(0.06 0.02 185);
+  --background-50: oklch(0.06 0.02 185 / 0.5);
+  --background-80: oklch(0.06 0.02 185 / 0.8);
+
+  /* Clean white text */
+  --foreground: oklch(0.96 0 0);
+  --foreground-secondary: oklch(0.6 0.03 185);
+  --foreground-muted: oklch(0.45 0.03 185);
+
+  /* Card and popover backgrounds - very dark teal-grey */
+  --card: oklch(0.13 0.03 185);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.1 0.025 185);
+  --popover-foreground: oklch(0.96 0 0);
+
+  /* Brand colors - Tanjiro teal */
+  --primary: oklch(0.6 0.15 185);
+  --primary-foreground: oklch(0.96 0 0);
+  --brand-400: oklch(0.65 0.13 185);
+  --brand-500: oklch(0.6 0.15 185);
+  --brand-600: oklch(0.55 0.17 188);
+
+  /* Secondary/muted surfaces - dark teal panels */
+  --secondary: oklch(0.17 0.03 185);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.17 0.03 185);
+  --muted-foreground: oklch(0.5 0.03 185);
+  --accent: oklch(0.7 0.2 45);
+  --accent-foreground: oklch(0.06 0.02 185);
+
+  /* Destructive - blood red */
+  --destructive: oklch(0.55 0.25 20);
+
+  /* Borders - dark teal */
+  --border: oklch(0.25 0.04 185);
+  --border-glass: oklch(0.6 0.15 185 / 0.2);
+  --input: oklch(0.08 0.02 185);
+  --ring: oklch(0.6 0.15 185);
+
+  /* Chart colors - demon slayer palette */
+  --chart-1: oklch(0.6 0.15 185); /* Tanjiro teal */
+  --chart-2: oklch(0.7 0.2 45); /* Flame orange */
+  --chart-3: oklch(0.65 0.18 300); /* Wisteria purple */
+  --chart-4: oklch(0.55 0.25 20); /* Blood red */
+  --chart-5: oklch(0.75 0.12 85); /* Zenitsu gold */
+
+  /* Sidebar - dark with teal tint */
+  --sidebar: oklch(0.05 0.02 185);
+  --sidebar-foreground: oklch(0.96 0 0);
+  --sidebar-primary: oklch(0.6 0.15 185);
+  --sidebar-primary-foreground: oklch(0.96 0 0);
+  --sidebar-accent: oklch(0.17 0.03 185);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
+  --sidebar-border: oklch(0.25 0.04 185);
+  --sidebar-ring: oklch(0.6 0.15 185);
+
+  /* Action button colors - breathing techniques */
+  --action-view: oklch(0.6 0.15 185); /* Water breathing teal */
+  --action-view-hover: oklch(0.55 0.17 185);
+  --action-followup: oklch(0.7 0.2 45); /* Flame breathing orange */
+  --action-followup-hover: oklch(0.65 0.22 45);
+  --action-commit: oklch(0.6 0.18 145); /* Green */
+  --action-commit-hover: oklch(0.55 0.2 145);
+  --action-verify: oklch(0.6 0.18 145);
+  --action-verify-hover: oklch(0.55 0.2 145);
+
+  /* Running indicator - teal */
+  --running-indicator: oklch(0.6 0.15 185);
+  --running-indicator-text: oklch(0.65 0.13 185);
+
+  /* Status colors - battle-ready */
+  --status-success: oklch(0.65 0.18 145);
+  --status-success-bg: oklch(0.65 0.18 145 / 0.2);
+  --status-warning: oklch(0.7 0.2 45);
+  --status-warning-bg: oklch(0.7 0.2 45 / 0.2);
+  --status-error: oklch(0.6 0.25 20);
+  --status-error-bg: oklch(0.6 0.25 20 / 0.2);
+  --status-info: oklch(0.6 0.15 185);
+  --status-info-bg: oklch(0.6 0.15 185 / 0.2);
+  --status-pending: oklch(0.7 0.15 55);
+  --status-pending-bg: oklch(0.7 0.15 55 / 0.2);
+  --status-accent: oklch(0.65 0.15 300);
+  --status-accent-bg: oklch(0.65 0.15 300 / 0.2);
+  --status-backlog: oklch(0.55 0.02 185);
+  --status-in-progress: oklch(0.7 0.2 45);
+  --status-waiting: oklch(0.7 0.15 55);
+
+  /* Shadow tokens - deep night shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 10, 15, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 10, 15, 0.5), 0 1px 2px rgba(0, 10, 15, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 10, 15, 0.5), 0 2px 4px -1px rgba(0, 10, 15, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 10, 15, 0.5), 0 4px 6px -2px rgba(0, 10, 15, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 10, 15, 0.6), 0 10px 10px -5px rgba(0, 10, 15, 0.4);
+
+  /* Vignette */
+  --vignette-color: oklch(0.03 0.02 185 / 0.2);
+
+  /* Card-focused shadow - teal glow */
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(0.6 0.15 185 / 0.15), 0 0 0 1px oklch(0.6 0.15 185 / 0.3);
+}
+
+/* Theme-specific overrides */
+
+.demon-slayer .content-bg {
+  background: linear-gradient(
+    135deg,
+    oklch(0.06 0.02 185),
+    oklch(0.1 0.03 185),
+    oklch(0.06 0.02 185)
+  );
+}
+
+.demon-slayer .animated-outline-gradient {
+  background: conic-gradient(from 90deg at 50% 50%, #14b8a6 0%, #f97316 50%, #14b8a6 100%);
+}
+
+.demon-slayer .animated-outline-inner {
+  background: oklch(0.12 0.03 185) !important;
+  color: oklch(0.6 0.15 185) !important;
+}
+
+.demon-slayer [data-slot='button'][class*='animated-outline']:hover .animated-outline-inner {
+  background: oklch(0.18 0.04 185) !important;
+  color: oklch(0.7 0.13 185) !important;
+}
+
+.demon-slayer .slider-track {
+  background: oklch(0.2 0.03 185);
+}
+
+.demon-slayer .slider-range {
+  background: linear-gradient(to right, #14b8a6, #f97316);
+}
+
+.demon-slayer .slider-thumb {
+  background: oklch(0.14 0.03 185);
+  border-color: oklch(0.6 0.15 185);
+}
+
+.demon-slayer .xml-highlight {
+  color: oklch(0.92 0 0); /* Clean white */
+}
+
+.demon-slayer .xml-tag-bracket {
+  color: oklch(0.6 0.15 185); /* Tanjiro teal for < > */
+}
+
+.demon-slayer .xml-tag-name {
+  color: oklch(0.7 0.2 45); /* Flame orange for tag names */
+}
+
+.demon-slayer .xml-attribute-name {
+  color: oklch(0.65 0.15 300); /* Wisteria purple for attributes */
+}
+
+.demon-slayer .xml-attribute-equals {
+  color: oklch(0.55 0.02 185); /* Dim teal-gray for = */
+}
+
+.demon-slayer .xml-attribute-value {
+  color: oklch(0.7 0.15 185); /* Teal for strings */
+}
+
+.demon-slayer .xml-comment {
+  color: oklch(0.45 0.04 185); /* Muted teal for comments */
+  font-style: italic;
+}
+
+.demon-slayer .xml-cdata {
+  color: oklch(0.75 0.12 85); /* Zenitsu gold for CDATA */
+}
+
+.demon-slayer .xml-doctype {
+  color: oklch(0.6 0.18 300); /* Wisteria for DOCTYPE */
+}
+
+.demon-slayer .xml-text {
+  color: oklch(0.9 0 0); /* Off-white for text content */
+}

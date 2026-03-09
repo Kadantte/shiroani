@@ -4,76 +4,77 @@
 
 /**
  * Theme - All available color themes
- * 21 dark themes + 20 light themes = 41 total
+ * 24 dark themes + 15 light themes = 39 total
  */
 export type Theme =
-  // Dark themes (21)
+  // Dark themes (24)
   | 'dark'
+  | 'akira'
+  | 'attack-on-titan'
   | 'ayu-dark'
   | 'ayu-mirage'
   | 'catppuccin'
+  | 'chainsaw-man'
+  | 'cyberpunk-edgerunners'
+  | 'demon-slayer'
   | 'dracula'
-  | 'ember'
-  | 'forest'
-  | 'gray'
+  | 'evangelion'
+  | 'ghibli-sunset'
   | 'gruvbox'
+  | 'jujutsu-kaisen'
   | 'matcha'
-  | 'midnight'
   | 'monokai'
   | 'nord'
   | 'ocean'
   | 'onedark'
-  | 'red'
   | 'retro'
   | 'solarized'
-  | 'sunset'
+  | 'spy-family'
   | 'synthwave'
   | 'tokyonight'
-  // Light themes (20)
+  // Light themes (15)
   | 'light'
   | 'ayu-light'
-  | 'blossom'
-  | 'bluloco'
-  | 'cream'
-  | 'feather'
+  | 'bocchi'
+  | 'dragon-ball'
+  | 'ghibli-forest'
   | 'github'
   | 'gruvboxlight'
   | 'lavender'
   | 'mint'
   | 'nordlight'
-  | 'onelight'
-  | 'paper'
-  | 'peach'
-  | 'rose'
-  | 'sand'
+  | 'one-piece'
+  | 'sailor-moon'
   | 'sepia'
-  | 'sky'
-  | 'snow'
-  | 'solarizedlight';
+  | 'solarizedlight'
+  | 'your-name';
 
 /**
  * Dark themes list
  */
 export const DARK_THEMES: Theme[] = [
   'dark',
+  'akira',
+  'attack-on-titan',
   'ayu-dark',
   'ayu-mirage',
   'catppuccin',
+  'chainsaw-man',
+  'cyberpunk-edgerunners',
+  'demon-slayer',
   'dracula',
-  'ember',
-  'forest',
-  'gray',
+  'evangelion',
+  'ghibli-sunset',
   'gruvbox',
+  'jujutsu-kaisen',
   'matcha',
-  'midnight',
   'monokai',
   'nord',
   'ocean',
   'onedark',
-  'red',
   'retro',
   'solarized',
-  'sunset',
+  'spy-family',
   'synthwave',
   'tokyonight',
 ];

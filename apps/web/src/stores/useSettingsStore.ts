@@ -78,10 +78,11 @@ const DEFAULT_THEME: Theme = 'dark';
 export const useSettingsStore = create<SettingsStore>()(
   devtools(
     (set, get) => {
-      // Resolve initial theme from localStorage (instant) or fall back to default
-      const initialTheme = (
-        typeof document !== 'undefined' ? getPersistedTheme() : DEFAULT_THEME
-      ) as Theme;
+      // Resolve initial theme from localStorage (instant) or fall back to default.
+      // Validate against known themes in case user had a removed theme saved.
+      const persisted = typeof document !== 'undefined' ? getPersistedTheme() : DEFAULT_THEME;
+      const isValidTheme = themeOptions.some(t => t.value === persisted);
+      const initialTheme: Theme = isValidTheme ? (persisted as Theme) : DEFAULT_THEME;
 
       // Apply initial theme on store initialization
       if (typeof document !== 'undefined') {

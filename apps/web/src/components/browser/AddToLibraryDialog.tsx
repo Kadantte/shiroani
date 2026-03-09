@@ -119,7 +119,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="min-w-0">
           <DialogTitle className="flex items-center gap-2">
             <BookmarkPlus className="w-5 h-5 text-primary" />
             Dodaj do biblioteki
@@ -129,7 +129,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="min-w-0 space-y-4 py-2">
           {/* Cover image preview + URL */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Okladka</label>
@@ -231,7 +231,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="min-w-0">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Anuluj
           </Button>

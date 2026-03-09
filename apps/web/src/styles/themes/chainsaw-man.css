@@ -1,0 +1,206 @@
+/* Chainsaw Man Theme (Dark)
+ * Inspired by Chainsaw Man — raw brutal energy, blood, chrome, and Pochita.
+ * Primary: Blood crimson (the visceral red that defines the series)
+ * Accent: Pochita orange (his warm, loyal color)
+ * Background: Near-black with warm undertone (dark alleyways of Tokyo)
+ */
+
+:root.chainsaw-man {
+  /* Near-black with warm undertone — the grimy, brutal world */
+  --background: oklch(0.06 0.01 15);
+  --background-50: oklch(0.06 0.01 15 / 0.5);
+  --background-80: oklch(0.06 0.01 15 / 0.8);
+
+  /* Text colors — pale with warm undertone, like old paper in dim light */
+  --foreground: oklch(0.92 0.01 50);
+  --foreground-secondary: oklch(0.65 0.02 30);
+  --foreground-muted: oklch(0.48 0.02 20);
+
+  /* Card — very dark warm brown-black, like dried blood on metal */
+  --card: oklch(0.12 0.02 20);
+  --card-foreground: oklch(0.92 0.01 50);
+  --popover: oklch(0.1 0.015 18);
+  --popover-foreground: oklch(0.92 0.01 50);
+
+  /* Primary — blood crimson, the raw red of chainsaws and devils */
+  --primary: oklch(0.5 0.25 25);
+  --primary-foreground: oklch(0.95 0.01 30);
+
+  /* Brand — deep red range, arterial to venous */
+  --brand-400: oklch(0.55 0.22 25);
+  --brand-500: oklch(0.5 0.25 25);
+  --brand-600: oklch(0.45 0.27 22);
+
+  /* Secondary surfaces — dark chrome */
+  --secondary: oklch(0.16 0.02 18);
+  --secondary-foreground: oklch(0.92 0.01 50);
+
+  --muted: oklch(0.18 0.02 18);
+  --muted-foreground: oklch(0.48 0.02 20);
+
+  /* Accent — Pochita orange, warm and loyal */
+  --accent: oklch(0.22 0.03 25);
+  --accent-foreground: oklch(0.92 0.01 50);
+
+  /* Destructive — bright violent red, devil transformation */
+  --destructive: oklch(0.6 0.28 20);
+
+  /* Borders — dark with warm blood undertone */
+  --border: oklch(0.24 0.03 20);
+  --border-glass: oklch(0.5 0.25 25 / 0.25);
+
+  --input: oklch(0.1 0.015 18);
+  --ring: oklch(0.5 0.25 25);
+
+  /* Chart colors — Devils and blood palette */
+  --chart-1: oklch(0.5 0.25 25); /* Blood crimson */
+  --chart-2: oklch(0.7 0.18 55); /* Pochita orange */
+  --chart-3: oklch(0.65 0.2 140); /* Power's green */
+  --chart-4: oklch(0.6 0.2 280); /* Makima's violet */
+  --chart-5: oklch(0.75 0.12 70); /* Denji's amber */
+
+  /* Sidebar — dark blood-tinged black */
+  --sidebar: oklch(0.05 0.012 15);
+  --sidebar-foreground: oklch(0.92 0.01 50);
+  --sidebar-primary: oklch(0.5 0.25 25);
+  --sidebar-primary-foreground: oklch(0.95 0.01 30);
+  --sidebar-accent: oklch(0.16 0.02 18);
+  --sidebar-accent-foreground: oklch(0.92 0.01 50);
+  --sidebar-border: oklch(0.24 0.03 20);
+  --sidebar-ring: oklch(0.5 0.25 25);
+
+  /* Action button colors — raw and visceral */
+  --action-view: oklch(0.5 0.25 25); /* Blood red */
+  --action-view-hover: oklch(0.45 0.27 22);
+  --action-followup: oklch(0.65 0.18 55); /* Pochita orange */
+  --action-followup-hover: oklch(0.6 0.2 55);
+  --action-commit: oklch(0.6 0.18 145); /* Green */
+  --action-commit-hover: oklch(0.55 0.2 145);
+  --action-verify: oklch(0.6 0.18 145);
+  --action-verify-hover: oklch(0.55 0.2 145);
+
+  /* Running indicator — blood pulse */
+  --running-indicator: oklch(0.5 0.25 25);
+  --running-indicator-text: oklch(0.55 0.22 25);
+
+  /* Status colors — dark mode */
+  --status-success: oklch(0.65 0.2 140);
+  --status-success-bg: oklch(0.65 0.2 140 / 0.2);
+  --status-warning: oklch(0.75 0.15 70);
+  --status-warning-bg: oklch(0.75 0.15 70 / 0.2);
+  --status-error: oklch(0.6 0.28 20);
+  --status-error-bg: oklch(0.6 0.28 20 / 0.2);
+  --status-info: oklch(0.65 0.18 230);
+  --status-info-bg: oklch(0.65 0.18 230 / 0.2);
+  --status-pending: oklch(0.7 0.17 55);
+  --status-pending-bg: oklch(0.7 0.17 55 / 0.2);
+  --status-accent: oklch(0.7 0.15 190);
+  --status-accent-bg: oklch(0.7 0.15 190 / 0.2);
+  --status-backlog: oklch(0.55 0.02 20);
+  --status-in-progress: oklch(0.7 0.18 55);
+  --status-waiting: oklch(0.65 0.15 50);
+
+  /* Shadow tokens — heavy, oppressive darkness */
+  --shadow-xs: 0 1px 2px rgba(10, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(10, 0, 0, 0.5), 0 1px 2px rgba(10, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(10, 0, 0, 0.5), 0 2px 4px -1px rgba(10, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(10, 0, 0, 0.5), 0 4px 6px -2px rgba(10, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(10, 0, 0, 0.6), 0 10px 10px -5px rgba(10, 0, 0, 0.4);
+
+  /* Vignette — dark blood edge */
+  --vignette-color: oklch(0.15 0.05 15 / 0.2);
+
+  /* Card-focused shadow — crimson glow */
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(0.5 0.25 25 / 0.2), 0 0 0 1px oklch(0.5 0.25 25 / 0.3);
+}
+
+/* Theme-specific overrides */
+
+/* Content background — dark and brooding with warm undertone */
+.chainsaw-man .content-bg {
+  background: linear-gradient(
+    135deg,
+    oklch(0.06 0.01 15),
+    oklch(0.09 0.015 20),
+    oklch(0.06 0.01 15)
+  );
+}
+
+/* Animated outline — blood and chainsaw sparks */
+.chainsaw-man .animated-outline-gradient {
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    #dc2626 0%,
+    #f97316 30%,
+    #dc2626 50%,
+    #991b1b 70%,
+    #dc2626 100%
+  );
+}
+
+.chainsaw-man .animated-outline-inner {
+  background: oklch(0.1 0.015 18) !important;
+  color: #ef4444 !important;
+}
+
+.chainsaw-man [data-slot='button'][class*='animated-outline']:hover .animated-outline-inner {
+  background: oklch(0.16 0.03 20) !important;
+  color: #fca5a5 !important;
+}
+
+/* Slider — blood-red track */
+.chainsaw-man .slider-track {
+  background: oklch(0.18 0.02 18);
+}
+
+.chainsaw-man .slider-range {
+  background: linear-gradient(to right, #991b1b, #dc2626);
+}
+
+.chainsaw-man .slider-thumb {
+  background: oklch(0.12 0.02 20);
+  border-color: #dc2626;
+}
+
+/* XML syntax — raw, brutal readability */
+.chainsaw-man .xml-highlight {
+  color: oklch(0.9 0.01 50);
+}
+
+.chainsaw-man .xml-tag-bracket {
+  color: oklch(0.65 0.18 25); /* Blood red brackets */
+}
+
+.chainsaw-man .xml-tag-name {
+  color: oklch(0.6 0.22 25); /* Crimson tag names */
+}
+
+.chainsaw-man .xml-attribute-name {
+  color: oklch(0.7 0.18 55); /* Pochita orange attributes */
+}
+
+.chainsaw-man .xml-attribute-equals {
+  color: oklch(0.5 0.02 20);
+}
+
+.chainsaw-man .xml-attribute-value {
+  color: oklch(0.72 0.16 145); /* Green for strings */
+}
+
+.chainsaw-man .xml-comment {
+  color: oklch(0.45 0.04 20);
+  font-style: italic;
+}
+
+.chainsaw-man .xml-cdata {
+  color: oklch(0.65 0.14 200); /* Teal CDATA */
+}
+
+.chainsaw-man .xml-doctype {
+  color: oklch(0.6 0.18 280); /* Makima violet */
+}
+
+.chainsaw-man .xml-text {
+  color: oklch(0.88 0.01 50);
+}

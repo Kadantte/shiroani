@@ -1,0 +1,207 @@
+/* Dragon Ball Theme (Light)
+ * Inspired by Dragon Ball — Kamehameha energy, Capsule Corp tech, Saiyan power.
+ * Primary: Ki blue (Kamehameha energy blast)
+ * Accent: Super Saiyan gold
+ * Background: Clean white with slight blue tint (Capsule Corp aesthetic)
+ */
+
+:root.dragon-ball {
+  /* Bright clean white with slight blue — Capsule Corp laboratory feel */
+  --background: oklch(0.98 0.005 240);
+  --background-50: oklch(0.98 0.005 240 / 0.5);
+  --background-80: oklch(0.98 0.005 240 / 0.8);
+
+  /* Text colors — dark with cool undertone */
+  --foreground: oklch(0.18 0.02 240);
+  --foreground-secondary: oklch(0.4 0.015 240);
+  --foreground-muted: oklch(0.55 0.01 240);
+
+  /* Card and popover — pale blue-white */
+  --card: oklch(0.99 0.008 240);
+  --card-foreground: oklch(0.18 0.02 240);
+  --popover: oklch(0.99 0.008 240);
+  --popover-foreground: oklch(0.18 0.02 240);
+
+  /* Primary — Ki blue, the Kamehameha energy wave */
+  --primary: oklch(0.6 0.2 240);
+  --primary-foreground: oklch(0.99 0.005 240);
+
+  /* Brand — blue energy range */
+  --brand-400: oklch(0.65 0.18 240);
+  --brand-500: oklch(0.6 0.2 240);
+  --brand-600: oklch(0.55 0.22 245);
+
+  /* Secondary surfaces */
+  --secondary: oklch(0.96 0.008 240);
+  --secondary-foreground: oklch(0.18 0.02 240);
+
+  --muted: oklch(0.95 0.01 240);
+  --muted-foreground: oklch(0.55 0.01 240);
+
+  /* Accent — Super Saiyan gold transformation */
+  --accent: oklch(0.93 0.015 240);
+  --accent-foreground: oklch(0.18 0.02 240);
+
+  /* Destructive — power-up red, Kaioken energy */
+  --destructive: oklch(0.55 0.22 25);
+
+  /* Borders — soft blue edges */
+  --border: oklch(0.91 0.015 240);
+  --border-glass: oklch(0.6 0.2 240 / 0.15);
+
+  --input: oklch(0.98 0.008 240);
+  --ring: oklch(0.6 0.2 240);
+
+  /* Chart colors — Dragon Ball palette */
+  --chart-1: oklch(0.6 0.2 240); /* Ki blue */
+  --chart-2: oklch(0.78 0.14 85); /* Saiyan gold */
+  --chart-3: oklch(0.55 0.22 25); /* Kaioken red */
+  --chart-4: oklch(0.6 0.18 300); /* Frieza purple */
+  --chart-5: oklch(0.65 0.15 160); /* Namek green */
+
+  /* Sidebar — light Capsule Corp blue */
+  --sidebar: oklch(0.97 0.01 240);
+  --sidebar-foreground: oklch(0.18 0.02 240);
+  --sidebar-primary: oklch(0.6 0.2 240);
+  --sidebar-primary-foreground: oklch(0.99 0.005 240);
+  --sidebar-accent: oklch(0.94 0.012 240);
+  --sidebar-accent-foreground: oklch(0.18 0.02 240);
+  --sidebar-border: oklch(0.9 0.015 240);
+  --sidebar-ring: oklch(0.6 0.2 240);
+
+  /* Action button colors — Kamehameha / Saiyan themed */
+  --action-view: oklch(0.6 0.2 240); /* Ki blue */
+  --action-view-hover: oklch(0.55 0.22 245);
+  --action-followup: oklch(0.55 0.18 220); /* Deeper blue */
+  --action-followup-hover: oklch(0.5 0.2 220);
+  --action-commit: oklch(0.55 0.18 145); /* Senzu bean green */
+  --action-commit-hover: oklch(0.5 0.2 145);
+  --action-verify: oklch(0.55 0.18 145);
+  --action-verify-hover: oklch(0.5 0.2 145);
+
+  /* Running indicator — Ki energy blue */
+  --running-indicator: oklch(0.6 0.2 240);
+  --running-indicator-text: oklch(0.55 0.22 240);
+
+  /* Status colors */
+  --status-success: oklch(0.55 0.18 145);
+  --status-success-bg: oklch(0.55 0.18 145 / 0.15);
+  --status-warning: oklch(0.72 0.14 75);
+  --status-warning-bg: oklch(0.72 0.14 75 / 0.15);
+  --status-error: oklch(0.55 0.22 25);
+  --status-error-bg: oklch(0.55 0.22 25 / 0.15);
+  --status-info: oklch(0.55 0.18 230);
+  --status-info-bg: oklch(0.55 0.18 230 / 0.15);
+  --status-pending: oklch(0.65 0.15 55);
+  --status-pending-bg: oklch(0.65 0.15 55 / 0.15);
+  --status-accent: oklch(0.55 0.14 190);
+  --status-accent-bg: oklch(0.55 0.14 190 / 0.15);
+  --status-backlog: oklch(0.55 0.01 240);
+  --status-in-progress: oklch(0.72 0.14 75);
+  --status-waiting: oklch(0.65 0.12 55);
+
+  /* Shadow tokens — light mode */
+  --shadow-xs: 0 1px 2px rgba(0, 20, 60, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 20, 60, 0.1), 0 1px 2px rgba(0, 20, 60, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 20, 60, 0.1), 0 2px 4px -1px rgba(0, 20, 60, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 20, 60, 0.1), 0 4px 6px -2px rgba(0, 20, 60, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 20, 60, 0.12), 0 10px 10px -5px rgba(0, 20, 60, 0.05);
+
+  /* Vignette — subtle blue energy */
+  --vignette-color: oklch(0.6 0.2 240 / 0.05);
+
+  /* Card-focused shadow — Ki energy glow */
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(0.6 0.2 240 / 0.15), 0 0 0 1px oklch(0.6 0.2 240 / 0.25);
+}
+
+/* Theme-specific overrides */
+
+/* Content background — clean Capsule Corp gradient */
+.dragon-ball .content-bg {
+  background: linear-gradient(
+    135deg,
+    oklch(0.98 0.005 240),
+    oklch(0.97 0.01 240),
+    oklch(0.98 0.005 240)
+  );
+}
+
+/* Animated outline — Kamehameha energy swirl */
+.dragon-ball .animated-outline-gradient {
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    #3b82f6 0%,
+    #60a5fa 25%,
+    #eab308 50%,
+    #60a5fa 75%,
+    #3b82f6 100%
+  );
+}
+
+.dragon-ball .animated-outline-inner {
+  background: oklch(0.99 0.005 240) !important;
+  color: #2563eb !important;
+  border: 1px solid oklch(0.91 0.015 240);
+}
+
+.dragon-ball [data-slot='button'][class*='animated-outline']:hover .animated-outline-inner {
+  background: oklch(0.96 0.02 240) !important;
+  color: #1d4ed8 !important;
+}
+
+/* Slider — Ki energy blue track */
+.dragon-ball .slider-track {
+  background: oklch(0.92 0.01 240);
+}
+
+.dragon-ball .slider-range {
+  background: linear-gradient(to right, #3b82f6, #60a5fa);
+}
+
+.dragon-ball .slider-thumb {
+  background: oklch(0.99 0 0);
+  border-color: oklch(0.6 0.2 240);
+}
+
+/* XML syntax — Scouter readout style */
+.dragon-ball .xml-highlight {
+  color: oklch(0.25 0.02 240);
+}
+
+.dragon-ball .xml-tag-bracket {
+  color: oklch(0.45 0.15 240); /* Ki blue brackets */
+}
+
+.dragon-ball .xml-tag-name {
+  color: oklch(0.5 0.2 240); /* Deep energy blue */
+}
+
+.dragon-ball .xml-attribute-name {
+  color: oklch(0.55 0.12 85); /* Saiyan gold */
+}
+
+.dragon-ball .xml-attribute-equals {
+  color: oklch(0.4 0 0);
+}
+
+.dragon-ball .xml-attribute-value {
+  color: oklch(0.45 0.18 145); /* Namek green strings */
+}
+
+.dragon-ball .xml-comment {
+  color: oklch(0.55 0.04 240);
+  font-style: italic;
+}
+
+.dragon-ball .xml-cdata {
+  color: oklch(0.5 0.12 200);
+}
+
+.dragon-ball .xml-doctype {
+  color: oklch(0.5 0.15 300); /* Frieza purple */
+}
+
+.dragon-ball .xml-text {
+  color: oklch(0.2 0.01 240);
+}

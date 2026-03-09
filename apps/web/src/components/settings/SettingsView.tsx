@@ -27,7 +27,7 @@ export function SettingsView() {
   }, []);
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex overflow-hidden animate-fade-in">
       {/* Section navigation */}
       <div className="w-44 shrink-0 border-r border-border bg-card/30 p-3 space-y-0.5">
         {SECTIONS.map(section => (

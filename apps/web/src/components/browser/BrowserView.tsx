@@ -160,7 +160,7 @@ export function BrowserView() {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Tab bar — hidden during HTML5 fullscreen */}
       {!isFullScreen && (
         <div className="flex items-center h-9 bg-card/60 border-b border-border px-1 gap-0.5 shrink-0">

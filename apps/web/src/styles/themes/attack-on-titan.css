@@ -1,0 +1,197 @@
+/* ==============================================
+   ATTACK ON TITAN (Shingeki no Kyojin) Theme
+   Inspired by Attack on Titan — the Walls,
+   Survey Corps cloaks, ODM gear steel,
+   the grim determination of humanity's last stand,
+   and the Wings of Freedom emblem.
+   Dark theme with military olives, steel blues, and muted earth.
+   ============================================== */
+
+:root.attack-on-titan {
+  /* Military dark olive-grey — inside the Walls */
+  --background: oklch(0.08 0.01 110);
+  --background-50: oklch(0.08 0.01 110 / 0.5);
+  --background-80: oklch(0.08 0.01 110 / 0.8);
+
+  /* Text — parchment white, weathered documents */
+  --foreground: oklch(0.92 0.01 90);
+  --foreground-secondary: oklch(0.62 0.02 100);
+  --foreground-muted: oklch(0.46 0.02 100);
+
+  /* Card — dark olive-grey, military barracks */
+  --card: oklch(0.14 0.015 110);
+  --card-foreground: oklch(0.92 0.01 90);
+  --popover: oklch(0.11 0.012 110);
+  --popover-foreground: oklch(0.92 0.01 90);
+
+  /* Primary — Survey Corps blue-green, the Wings of Freedom */
+  --primary: oklch(0.55 0.12 200);
+  --primary-foreground: oklch(0.95 0 0);
+  --brand-400: oklch(0.6 0.1 200);
+  --brand-500: oklch(0.55 0.12 200);
+  --brand-600: oklch(0.48 0.14 205);
+
+  /* Secondary — dark military canvas */
+  --secondary: oklch(0.17 0.012 110);
+  --secondary-foreground: oklch(0.92 0.01 90);
+
+  --muted: oklch(0.17 0.012 110);
+  --muted-foreground: oklch(0.46 0.02 100);
+
+  /* Accent — Wings of Freedom pale blue */
+  --accent: oklch(0.22 0.02 230);
+  --accent-foreground: oklch(0.92 0.01 90);
+
+  /* Destructive — Titan amber-red, the danger beyond the Walls */
+  --destructive: oklch(0.58 0.2 35);
+
+  /* Borders — stone wall edges */
+  --border: oklch(0.25 0.015 110);
+  --border-glass: oklch(0.55 0.12 200 / 0.22);
+
+  --input: oklch(0.1 0.01 110);
+  --ring: oklch(0.55 0.12 200);
+
+  /* Charts — military and titan palette */
+  --chart-1: oklch(0.55 0.12 200); /* Survey Corps blue */
+  --chart-2: oklch(0.65 0.12 140); /* Military green */
+  --chart-3: oklch(0.7 0.15 50); /* Titan amber */
+  --chart-4: oklch(0.6 0.1 230); /* Wings of Freedom blue */
+  --chart-5: oklch(0.6 0.15 20); /* Colossal red */
+
+  /* Sidebar — deep bunker interior */
+  --sidebar: oklch(0.06 0.01 110);
+  --sidebar-foreground: oklch(0.92 0.01 90);
+  --sidebar-primary: oklch(0.55 0.12 200);
+  --sidebar-primary-foreground: oklch(0.95 0 0);
+  --sidebar-accent: oklch(0.17 0.012 110);
+  --sidebar-accent-foreground: oklch(0.92 0.01 90);
+  --sidebar-border: oklch(0.25 0.015 110);
+  --sidebar-ring: oklch(0.55 0.12 200);
+
+  /* Action buttons — military operations */
+  --action-view: oklch(0.55 0.12 200); /* Survey Corps blue */
+  --action-view-hover: oklch(0.5 0.14 205);
+  --action-followup: oklch(0.6 0.1 230); /* Wings blue */
+  --action-followup-hover: oklch(0.55 0.12 230);
+  --action-commit: oklch(0.55 0.15 140); /* Garrison green */
+  --action-commit-hover: oklch(0.5 0.17 140);
+  --action-verify: oklch(0.55 0.15 140);
+  --action-verify-hover: oklch(0.5 0.17 140);
+
+  /* Running indicator — steady corps blue */
+  --running-indicator: oklch(0.55 0.12 200);
+  --running-indicator-text: oklch(0.62 0.1 200);
+
+  /* Status colors */
+  --status-success: oklch(0.62 0.18 140);
+  --status-success-bg: oklch(0.62 0.18 140 / 0.2);
+  --status-warning: oklch(0.72 0.15 55);
+  --status-warning-bg: oklch(0.72 0.15 55 / 0.2);
+  --status-error: oklch(0.62 0.2 25);
+  --status-error-bg: oklch(0.62 0.2 25 / 0.2);
+  --status-info: oklch(0.62 0.15 220);
+  --status-info-bg: oklch(0.62 0.15 220 / 0.2);
+  --status-pending: oklch(0.68 0.14 55);
+  --status-pending-bg: oklch(0.68 0.14 55 / 0.2);
+  --status-accent: oklch(0.65 0.12 190);
+  --status-accent-bg: oklch(0.65 0.12 190 / 0.2);
+  --status-backlog: oklch(0.55 0.01 100);
+  --status-in-progress: oklch(0.72 0.15 55);
+  --status-waiting: oklch(0.68 0.14 50);
+
+  /* Shadows — grim, heavy, Wall-like weight */
+  --shadow-xs: 0 1px 2px rgba(10, 10, 5, 0.4);
+  --shadow-sm: 0 1px 3px rgba(10, 10, 5, 0.5), 0 1px 2px rgba(10, 10, 5, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(10, 10, 5, 0.5), 0 2px 4px -1px rgba(10, 10, 5, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(10, 10, 5, 0.5), 0 4px 6px -2px rgba(10, 10, 5, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(10, 10, 5, 0.6), 0 10px 10px -5px rgba(10, 10, 5, 0.4);
+
+  /* Vignette — claustrophobic, within the Walls */
+  --vignette-color: oklch(0.02 0.01 110 / 0.18);
+
+  /* Card focused shadow — cool steel blue glow */
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(0.55 0.12 200 / 0.18), 0 0 0 1px oklch(0.55 0.12 200 / 0.3);
+}
+
+/* Theme-specific overrides */
+
+.attack-on-titan .content-bg {
+  background: linear-gradient(
+    135deg,
+    oklch(0.08 0.01 110),
+    oklch(0.1 0.015 120),
+    oklch(0.08 0.01 110)
+  );
+}
+
+.attack-on-titan .animated-outline-gradient {
+  background: conic-gradient(from 90deg at 50% 50%, #2596be 0%, #6b8e6b 50%, #2596be 100%);
+}
+
+.attack-on-titan .animated-outline-inner {
+  background: oklch(0.12 0.012 110) !important;
+  color: #5ba3c9 !important;
+}
+
+.attack-on-titan [data-slot='button'][class*='animated-outline']:hover .animated-outline-inner {
+  background: oklch(0.18 0.02 200) !important;
+  color: #8ec8e8 !important;
+}
+
+.attack-on-titan .slider-track {
+  background: oklch(0.17 0.012 110);
+}
+
+.attack-on-titan .slider-range {
+  background: linear-gradient(to right, #2596be, #6b8e6b);
+}
+
+.attack-on-titan .slider-thumb {
+  background: oklch(0.14 0.015 110);
+  border-color: #2596be;
+}
+
+/* XML syntax highlighting — military dispatch */
+
+.attack-on-titan .xml-highlight {
+  color: oklch(0.88 0.01 90);
+}
+
+.attack-on-titan .xml-tag-bracket {
+  color: oklch(0.55 0.12 200); /* Survey Corps blue brackets */
+}
+
+.attack-on-titan .xml-tag-name {
+  color: oklch(0.6 0.1 200); /* Steel blue tag names */
+}
+
+.attack-on-titan .xml-attribute-name {
+  color: oklch(0.65 0.12 140); /* Military green attributes */
+}
+
+.attack-on-titan .xml-attribute-equals {
+  color: oklch(0.5 0.015 100); /* Stone grey = */
+}
+
+.attack-on-titan .xml-attribute-value {
+  color: oklch(0.72 0.14 55); /* Warm amber strings */
+}
+
+.attack-on-titan .xml-comment {
+  color: oklch(0.42 0.02 100); /* Weathered stone */
+  font-style: italic;
+}
+
+.attack-on-titan .xml-cdata {
+  color: oklch(0.6 0.1 230); /* Wings blue CDATA */
+}
+
+.attack-on-titan .xml-doctype {
+  color: oklch(0.6 0.12 200); /* Corps blue DOCTYPE */
+}
+
+.attack-on-titan .xml-text {
+  color: oklch(0.84 0.01 90); /* Parchment text */
+}

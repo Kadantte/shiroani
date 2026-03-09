@@ -138,7 +138,7 @@ export function ScheduleView() {
   const weekDays = useMemo(() => getWeekDays(), [getWeekDays, selectedDay]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="shrink-0 px-6 pt-5 pb-3 border-b border-border bg-card/30">
         <div className="flex items-center justify-between mb-3">

@@ -62,7 +62,7 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
 
         {/* Episode progress badge */}
         <div className="absolute top-2 right-2">
-          <Badge variant="secondary" className="text-2xs bg-black/70 text-white border-0">
+          <Badge variant="secondary" className="text-2xs bg-background/70 text-foreground border-0">
             {progressText}
           </Badge>
         </div>
@@ -82,14 +82,16 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
         )}
 
         {/* Bottom gradient overlay with title */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
-          <h3 className="text-sm font-medium text-white truncate-2 leading-tight">{entry.title}</h3>
-          <p className="text-2xs text-white/60 mt-0.5">{STATUS_CONFIG[entry.status].label}</p>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent p-3 pt-8">
+          <h3 className="text-sm font-medium text-foreground truncate-2 leading-tight">
+            {entry.title}
+          </h3>
+          <p className="text-2xs text-foreground/60 mt-0.5">{STATUS_CONFIG[entry.status].label}</p>
         </div>
 
         {/* Progress bar at the very bottom */}
         {entry.episodes && entry.episodes > 0 && (
-          <div className="absolute bottom-0 inset-x-0 h-1 bg-black/30">
+          <div className="absolute bottom-0 inset-x-0 h-1 bg-background/30">
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -100,7 +102,7 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
         {/* Hover overlay with action buttons */}
         <div
           className={cn(
-            'absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10',
+            'absolute inset-0 bg-gradient-to-t from-background/60 via-background/30 to-background/10',
             'backdrop-blur-[2px] flex items-center justify-center gap-2.5',
             'transition-all duration-250',
             isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'

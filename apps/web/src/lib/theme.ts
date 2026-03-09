@@ -2,30 +2,34 @@ import {
   type LucideIcon,
   Atom,
   Cat,
-  Cherry,
-  CloudSun,
   Coffee,
   Eclipse,
-  Feather,
   Flame,
-  Flower2,
   Ghost,
   Github,
-  Heart,
   Leaf,
   Moon,
-  Palmtree,
   Radio,
-  Scroll,
   Snowflake,
   Sparkles,
-  Square,
+  Star,
   Sun,
   Sunrise,
+  Skull,
+  Swords,
   Terminal,
+  TreePine,
   Trees,
   Waves,
   Wind,
+  Zap,
+  Anchor,
+  Bomb,
+  CircuitBoard,
+  Feather,
+  Guitar,
+  Shield,
+  Sparkle,
 } from 'lucide-react';
 import type { Theme } from '@shiroani/shared';
 
@@ -35,12 +39,13 @@ export interface ThemeOption {
   Icon: LucideIcon;
   testId: string;
   isDark: boolean;
+  isAnime?: boolean; // true for anime-inspired themes
   color: string; // Primary/brand color for icon display
 }
 
 // All theme options with dark/light categorization (alphabetically sorted, Dark/Light first)
 export const themeOptions: ReadonlyArray<ThemeOption> = [
-  // Dark themes (21) - alphabetical, Dark first
+  // Dark themes (24) - alphabetical, Dark first
   {
     value: 'dark',
     label: 'Dark',
@@ -48,6 +53,24 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     testId: 'dark-mode-button',
     isDark: true,
     color: '#6366f1',
+  },
+  {
+    value: 'akira',
+    label: 'Akira',
+    Icon: Bomb,
+    testId: 'akira-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#ef4444',
+  },
+  {
+    value: 'attack-on-titan',
+    label: 'Attack on Titan',
+    Icon: Shield,
+    testId: 'attack-on-titan-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#5f8ca0',
   },
   {
     value: 'ayu-dark',
@@ -74,6 +97,33 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#cba6f7',
   },
   {
+    value: 'chainsaw-man',
+    label: 'Chainsaw Man',
+    Icon: Skull,
+    testId: 'chainsaw-man-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#dc2626',
+  },
+  {
+    value: 'cyberpunk-edgerunners',
+    label: 'Cyberpunk Edgerunners',
+    Icon: CircuitBoard,
+    testId: 'cyberpunk-edgerunners-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#ec4899',
+  },
+  {
+    value: 'demon-slayer',
+    label: 'Demon Slayer',
+    Icon: Swords,
+    testId: 'demon-slayer-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#14b8a6',
+  },
+  {
     value: 'dracula',
     label: 'Dracula',
     Icon: Ghost,
@@ -82,28 +132,22 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#bd93f9',
   },
   {
-    value: 'ember',
-    label: 'Ember',
-    Icon: Sunrise,
-    testId: 'ember-mode-button',
+    value: 'evangelion',
+    label: 'Evangelion',
+    Icon: Zap,
+    testId: 'evangelion-mode-button',
     isDark: true,
-    color: '#fd971f',
-  },
-  {
-    value: 'forest',
-    label: 'Forest',
-    Icon: Leaf,
-    testId: 'forest-mode-button',
-    isDark: true,
+    isAnime: true,
     color: '#22c55e',
   },
   {
-    value: 'gray',
-    label: 'Gray',
-    Icon: Square,
-    testId: 'gray-mode-button',
+    value: 'ghibli-sunset',
+    label: 'Ghibli Sunset',
+    Icon: Sunrise,
+    testId: 'ghibli-sunset-mode-button',
     isDark: true,
-    color: '#6b7280',
+    isAnime: true,
+    color: '#eab308',
   },
   {
     value: 'gruvbox',
@@ -114,20 +158,21 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#fe8019',
   },
   {
+    value: 'jujutsu-kaisen',
+    label: 'Jujutsu Kaisen',
+    Icon: Sparkle,
+    testId: 'jujutsu-kaisen-mode-button',
+    isDark: true,
+    isAnime: true,
+    color: '#8b5cf6',
+  },
+  {
     value: 'matcha',
     label: 'Matcha',
     Icon: Leaf,
     testId: 'matcha-mode-button',
     isDark: true,
     color: '#A4B07E',
-  },
-  {
-    value: 'midnight',
-    label: 'Midnight',
-    Icon: Moon,
-    testId: 'midnight-mode-button',
-    isDark: true,
-    color: '#818cf8',
   },
   {
     value: 'monokai',
@@ -162,14 +207,6 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#61afef',
   },
   {
-    value: 'red',
-    label: 'Red',
-    Icon: Heart,
-    testId: 'red-mode-button',
-    isDark: true,
-    color: '#ef4444',
-  },
-  {
     value: 'retro',
     label: 'Retro',
     Icon: Terminal,
@@ -186,12 +223,13 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#268bd2',
   },
   {
-    value: 'sunset',
-    label: 'Sunset',
-    Icon: CloudSun,
-    testId: 'sunset-mode-button',
+    value: 'spy-family',
+    label: 'Spy × Family',
+    Icon: Sparkles,
+    testId: 'spy-family-mode-button',
     isDark: true,
-    color: '#f97316',
+    isAnime: true,
+    color: '#f9a8d4',
   },
   {
     value: 'synthwave',
@@ -209,7 +247,7 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     isDark: true,
     color: '#bb9af7',
   },
-  // Light themes (20) - alphabetical, Light first
+  // Light themes (15) - alphabetical, Light first
   {
     value: 'light',
     label: 'Light',
@@ -227,36 +265,31 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#F29718',
   },
   {
-    value: 'blossom',
-    label: 'Blossom',
-    Icon: Cherry,
-    testId: 'blossom-mode-button',
+    value: 'bocchi',
+    label: 'Bocchi the Rock',
+    Icon: Guitar,
+    testId: 'bocchi-mode-button',
     isDark: false,
+    isAnime: true,
     color: '#ec4899',
   },
   {
-    value: 'bluloco',
-    label: 'Bluloco',
-    Icon: Waves,
-    testId: 'bluloco-mode-button',
+    value: 'dragon-ball',
+    label: 'Dragon Ball',
+    Icon: Zap,
+    testId: 'dragon-ball-mode-button',
     isDark: false,
-    color: '#0099e1',
+    isAnime: true,
+    color: '#2563eb',
   },
   {
-    value: 'cream',
-    label: 'Cream',
-    Icon: Coffee,
-    testId: 'cream-mode-button',
+    value: 'ghibli-forest',
+    label: 'Ghibli Forest',
+    Icon: TreePine,
+    testId: 'ghibli-forest-mode-button',
     isDark: false,
-    color: '#b45309',
-  },
-  {
-    value: 'feather',
-    label: 'Feather',
-    Icon: Feather,
-    testId: 'feather-mode-button',
-    isDark: false,
-    color: '#FF7B2E',
+    isAnime: true,
+    color: '#22c55e',
   },
   {
     value: 'github',
@@ -299,44 +332,22 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#5e81ac',
   },
   {
-    value: 'onelight',
-    label: 'One Light',
-    Icon: Atom,
-    testId: 'onelight-mode-button',
+    value: 'one-piece',
+    label: 'One Piece',
+    Icon: Anchor,
+    testId: 'one-piece-mode-button',
     isDark: false,
-    color: '#526FFF',
+    isAnime: true,
+    color: '#2563eb',
   },
   {
-    value: 'paper',
-    label: 'Paper',
-    Icon: Scroll,
-    testId: 'paper-mode-button',
+    value: 'sailor-moon',
+    label: 'Sailor Moon',
+    Icon: Star,
+    testId: 'sailor-moon-mode-button',
     isDark: false,
-    color: '#374151',
-  },
-  {
-    value: 'peach',
-    label: 'Peach',
-    Icon: Cherry,
-    testId: 'peach-mode-button',
-    isDark: false,
-    color: '#ea580c',
-  },
-  {
-    value: 'rose',
-    label: 'Rose',
-    Icon: Flower2,
-    testId: 'rose-mode-button',
-    isDark: false,
-    color: '#e11d48',
-  },
-  {
-    value: 'sand',
-    label: 'Sand',
-    Icon: Palmtree,
-    testId: 'sand-mode-button',
-    isDark: false,
-    color: '#d97706',
+    isAnime: true,
+    color: '#ec4899',
   },
   {
     value: 'sepia',
@@ -347,28 +358,21 @@ export const themeOptions: ReadonlyArray<ThemeOption> = [
     color: '#92400e',
   },
   {
-    value: 'sky',
-    label: 'Sky',
-    Icon: Sun,
-    testId: 'sky-mode-button',
-    isDark: false,
-    color: '#0284c7',
-  },
-  {
-    value: 'snow',
-    label: 'Snow',
-    Icon: Snowflake,
-    testId: 'snow-mode-button',
-    isDark: false,
-    color: '#3b82f6',
-  },
-  {
     value: 'solarizedlight',
     label: 'Solarized Light',
     Icon: Sunrise,
     testId: 'solarizedlight-mode-button',
     isDark: false,
     color: '#268bd2',
+  },
+  {
+    value: 'your-name',
+    label: 'Your Name',
+    Icon: Sparkle,
+    testId: 'your-name-mode-button',
+    isDark: false,
+    isAnime: true,
+    color: '#6366f1',
   },
 ];
 
@@ -377,6 +381,12 @@ export const darkThemes = themeOptions.filter(t => t.isDark);
 
 // Helper: Get only light themes
 export const lightThemes = themeOptions.filter(t => !t.isDark);
+
+// Helper: Categorized theme groups
+export const animeDarkThemes = themeOptions.filter(t => t.isDark && t.isAnime);
+export const animeLightThemes = themeOptions.filter(t => !t.isDark && t.isAnime);
+export const classicDarkThemes = themeOptions.filter(t => t.isDark && !t.isAnime);
+export const classicLightThemes = themeOptions.filter(t => !t.isDark && !t.isAnime);
 
 // Helper: Get theme option by value
 export function getThemeOption(theme: Theme): ThemeOption | undefined {

@@ -40,6 +40,8 @@ function NavButton({
   return (
     <button
       onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
+      aria-label={item.label}
       className={cn(
         'relative w-full flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg',
         'transition-all duration-200',
@@ -141,6 +143,7 @@ function App() {
         {/* Sidebar navigation — hidden in fullscreen */}
         {!isFullScreen && (
           <nav
+            aria-label="Nawigacja glowna"
             className={cn(
               'w-[68px] flex flex-col items-center px-1 py-2 gap-0.5 border-r border-border shrink-0',
               hasBg ? 'bg-sidebar/60 backdrop-blur-sm' : 'bg-sidebar'
@@ -167,6 +170,7 @@ function App() {
 
         {/* Content area renders the active view */}
         <main
+          id="main-content"
           className={cn('flex-1 flex overflow-hidden', hasBg ? 'bg-transparent' : 'bg-background')}
         >
           {activeView === 'browser' && <BrowserView />}

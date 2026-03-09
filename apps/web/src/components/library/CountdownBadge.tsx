@@ -32,7 +32,7 @@ export function CountdownBadge({ airingAt, episode }: CountdownBadgeProps) {
   if (secondsLeft <= 0) return null;
 
   return (
-    <Badge className="text-2xs bg-blue-600/80 text-white border-0">
+    <Badge className="text-2xs bg-primary/80 text-primary-foreground border-0">
       Odc. {episode} za {formatCountdown(secondsLeft)}
     </Badge>
   );

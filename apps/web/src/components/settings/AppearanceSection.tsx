@@ -1,10 +1,15 @@
-import { Image, RotateCcw } from 'lucide-react';
+import { Image, Palette, RotateCcw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
-import { darkThemes, lightThemes } from '@/lib/theme';
+import {
+  animeDarkThemes,
+  animeLightThemes,
+  classicDarkThemes,
+  classicLightThemes,
+} from '@/lib/theme';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 
 export function AppearanceSection() {
@@ -25,37 +30,89 @@ export function AppearanceSection() {
         <h3 className="text-sm font-medium mb-1">Motyw</h3>
         <p className="text-xs text-muted-foreground mb-3">Wybierz motyw kolorystyczny aplikacji</p>
 
-        {/* Dark themes */}
+        {/* Anime section */}
         <div className="mb-4">
-          <h4 className="text-xs font-medium text-muted-foreground mb-2">Ciemne</h4>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-            {darkThemes.map(opt => (
-              <ThemeSwatch
-                key={opt.value}
-                option={opt}
-                isActive={theme === opt.value}
-                onSelect={setTheme}
-                onPreview={setPreviewTheme}
-                onPreviewEnd={() => setPreviewTheme(null)}
-              />
-            ))}
+          <h4 className="text-xs font-medium text-primary mb-3 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            Anime
+          </h4>
+
+          {/* Anime dark */}
+          <div className="mb-3">
+            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Ciemne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
+              {animeDarkThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Anime light */}
+          <div>
+            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Jasne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
+              {animeLightThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Light themes */}
+        <Separator className="my-3" />
+
+        {/* Classic section */}
         <div>
-          <h4 className="text-xs font-medium text-muted-foreground mb-2">Jasne</h4>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-            {lightThemes.map(opt => (
-              <ThemeSwatch
-                key={opt.value}
-                option={opt}
-                isActive={theme === opt.value}
-                onSelect={setTheme}
-                onPreview={setPreviewTheme}
-                onPreviewEnd={() => setPreviewTheme(null)}
-              />
-            ))}
+          <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Palette className="w-3 h-3" />
+            Klasyczne
+          </h4>
+
+          {/* Classic dark */}
+          <div className="mb-3">
+            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Ciemne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
+              {classicDarkThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Classic light */}
+          <div>
+            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Jasne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
+              {classicLightThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

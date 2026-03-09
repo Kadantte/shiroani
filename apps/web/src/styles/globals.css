@@ -1,4 +1,5 @@
-/* Import all theme files */
+/* Import all theme files — 24 dark + 15 light = 39 total */
+/* Classic themes */
 @import './themes/light.css';
 @import './themes/dark.css';
 @import './themes/retro.css';
@@ -11,35 +12,34 @@
 @import './themes/catppuccin.css';
 @import './themes/onedark.css';
 @import './themes/synthwave.css';
-@import './themes/red.css';
-@import './themes/sunset.css';
-@import './themes/gray.css';
-@import './themes/forest.css';
 @import './themes/ocean.css';
-@import './themes/ember.css';
 @import './themes/ayu-dark.css';
 @import './themes/ayu-mirage.css';
 @import './themes/matcha.css';
-@import './themes/midnight.css';
-@import './themes/cream.css';
 @import './themes/solarizedlight.css';
 @import './themes/github.css';
-@import './themes/paper.css';
-@import './themes/rose.css';
 @import './themes/mint.css';
 @import './themes/lavender.css';
-@import './themes/sand.css';
-@import './themes/sky.css';
-@import './themes/peach.css';
-@import './themes/snow.css';
 @import './themes/sepia.css';
 @import './themes/gruvboxlight.css';
 @import './themes/nordlight.css';
-@import './themes/blossom.css';
 @import './themes/ayu-light.css';
-@import './themes/onelight.css';
-@import './themes/bluloco.css';
-@import './themes/feather.css';
+/* Anime themes */
+@import './themes/evangelion.css';
+@import './themes/ghibli-forest.css';
+@import './themes/ghibli-sunset.css';
+@import './themes/sailor-moon.css';
+@import './themes/demon-slayer.css';
+@import './themes/akira.css';
+@import './themes/jujutsu-kaisen.css';
+@import './themes/spy-family.css';
+@import './themes/your-name.css';
+@import './themes/attack-on-titan.css';
+@import './themes/dragon-ball.css';
+@import './themes/chainsaw-man.css';
+@import './themes/bocchi.css';
+@import './themes/cyberpunk-edgerunners.css';
+@import './themes/one-piece.css';
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -229,6 +229,32 @@
   --shadow-card-focused:
     0 4px 16px -4px oklch(0.55 0.25 265 / 0.1), 0 0 0 1px oklch(0.55 0.25 265 / 0.2);
 
+  /* Shadow tokens — light mode fallback */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Action button fallbacks */
+  --action-view: oklch(0.55 0.25 265);
+  --action-view-hover: oklch(0.5 0.27 270);
+  --action-followup: oklch(0.6 0.2 230);
+  --action-followup-hover: oklch(0.55 0.22 230);
+  --action-commit: oklch(0.55 0.2 140);
+  --action-commit-hover: oklch(0.5 0.22 140);
+  --action-verify: oklch(0.55 0.2 140);
+  --action-verify-hover: oklch(0.5 0.22 140);
+
+  /* Running indicator fallback */
+  --running-indicator: oklch(0.55 0.25 265);
+  --running-indicator-text: oklch(0.6 0.22 265);
+
+  /* Status backlog/in-progress/waiting fallbacks */
+  --status-backlog: oklch(0.5 0 0);
+  --status-in-progress: oklch(0.7 0.15 70);
+  --status-waiting: oklch(0.65 0.17 50);
+
   /* Status colors */
   --status-success: oklch(0.65 0.2 140);
   --status-success-bg: oklch(0.65 0.2 140 / 0.15);
@@ -293,6 +319,32 @@
     --shadow-card-focused:
       0 4px 16px -4px oklch(0.55 0.25 265 / 0.15), 0 0 0 1px oklch(0.55 0.25 265 / 0.3);
 
+    /* Shadow tokens — dark mode */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+    /* Action button fallbacks */
+    --action-view: oklch(0.6 0.25 265);
+    --action-view-hover: oklch(0.55 0.27 270);
+    --action-followup: oklch(0.6 0.2 230);
+    --action-followup-hover: oklch(0.55 0.22 230);
+    --action-commit: oklch(0.55 0.2 140);
+    --action-commit-hover: oklch(0.5 0.22 140);
+    --action-verify: oklch(0.55 0.2 140);
+    --action-verify-hover: oklch(0.5 0.22 140);
+
+    /* Running indicator */
+    --running-indicator: oklch(0.6 0.25 265);
+    --running-indicator-text: oklch(0.65 0.22 265);
+
+    /* Status */
+    --status-backlog: oklch(0.6 0 0);
+    --status-in-progress: oklch(0.75 0.15 70);
+    --status-waiting: oklch(0.7 0.18 50);
+
     /* Status colors - Dark mode */
     --status-success: oklch(0.65 0.2 140);
     --status-success-bg: oklch(0.65 0.2 140 / 0.2);
@@ -350,7 +402,7 @@
   /* Selection */
   ::selection {
     background-color: var(--primary);
-    color: white;
+    color: var(--primary-foreground);
   }
 }
 
@@ -427,4 +479,16 @@
 /* Retro theme - no border radius */
 .retro * {
   border-radius: 0 !important;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
