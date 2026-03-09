@@ -43,19 +43,23 @@ interface ScheduleActions {
 
 type ScheduleStore = ScheduleState & ScheduleActions;
 
-/** Get ISO date string (YYYY-MM-DD) from a Date */
-export function toISODate(date: Date): string {
-  return date.toISOString().split('T')[0];
+/** Get local ISO date string (YYYY-MM-DD) from a Date, using local timezone */
+export function toLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /** Get the Monday of the current week */
 function getWeekStart(dateStr: string): string {
-  const date = new Date(dateStr);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday = 1
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dow = date.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow; // Monday = 1
   const monday = new Date(date);
   monday.setDate(date.getDate() + diff);
-  return toISODate(monday);
+  return toLocalDate(monday);
 }
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -119,7 +123,7 @@ export const useScheduleStore = create<ScheduleStore>()(
         // State
         ...initialSocketState,
         schedule: {},
-        selectedDay: toISODate(new Date()),
+        selectedDay: toLocalDate(new Date()),
         viewMode: 'daily',
         onlyInLibrary: false,
 
@@ -132,6 +136,8 @@ export const useScheduleStore = create<ScheduleStore>()(
           const { viewMode } = get();
           if (viewMode === 'daily') {
             get().fetchDaily(day);
+          } else {
+            get().fetchWeekly(getWeekStart(day));
           }
         },
 
@@ -173,12 +179,13 @@ export const useScheduleStore = create<ScheduleStore>()(
         getWeekDays: () => {
           const { selectedDay } = get();
           const start = getWeekStart(selectedDay);
+          const [y, m, d] = start.split('-').map(Number);
+          const startDate = new Date(y, m - 1, d);
           const days: string[] = [];
-          const startDate = new Date(start);
           for (let i = 0; i < 7; i++) {
-            const d = new Date(startDate);
-            d.setDate(startDate.getDate() + i);
-            days.push(toISODate(d));
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            days.push(toLocalDate(date));
           }
           return days;
         },

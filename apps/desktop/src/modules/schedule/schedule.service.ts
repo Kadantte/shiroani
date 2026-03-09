@@ -6,6 +6,14 @@ import type { AniListAiringSchedule } from '../anime/types';
 
 const logger = createLogger('ScheduleService');
 
+/** Get local ISO date string (YYYY-MM-DD) from a Date, using local timezone */
+function toLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 @Injectable()
 export class ScheduleService {
   constructor(private readonly animeService: AnimeService) {
@@ -57,18 +65,17 @@ export class ScheduleService {
         page++;
       }
 
-      // Group by date
+      // Group by local date
       const schedule: Record<string, AiringAnime[]> = {};
       for (let i = 0; i < 7; i++) {
         const d = new Date(start);
         d.setDate(d.getDate() + i);
-        const key = d.toISOString().split('T')[0];
-        schedule[key] = [];
+        schedule[toLocalDate(d)] = [];
       }
 
       for (const entry of allSchedules) {
         const d = new Date(entry.airingAt * 1000);
-        const key = d.toISOString().split('T')[0];
+        const key = toLocalDate(d);
         if (schedule[key]) {
           schedule[key].push(mapAiringScheduleToAiringAnime(entry));
         }

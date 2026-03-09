@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useScheduleStore } from '@/stores/useScheduleStore';
+import { useScheduleStore, toLocalDate } from '@/stores/useScheduleStore';
 import type { AiringAnime } from '@shiroani/shared';
 
 const DAY_NAMES_SHORT = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Ndz'];
@@ -14,18 +14,20 @@ function formatTime(timestamp: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
   return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
   d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  return toLocalDate(d);
 }
 
 function isToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().split('T')[0];
+  return dateStr === toLocalDate(new Date());
 }
 
 /** A single airing entry row */
@@ -245,14 +247,23 @@ export function ScheduleView() {
                     >
                       {DAY_NAMES_SHORT[idx]}
                     </span>
-                    <span
-                      className={cn(
-                        'flex items-center justify-center w-6 h-6 mx-auto mt-0.5 rounded-full text-xs font-semibold',
-                        isTodayDay ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                    <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                      <span
+                        className={cn(
+                          'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold',
+                          isTodayDay
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        {parseInt(day.split('-')[2], 10)}
+                      </span>
+                      {dayEntries.length > 0 && (
+                        <span className="text-[9px] text-muted-foreground/50 font-medium">
+                          ({dayEntries.length})
+                        </span>
                       )}
-                    >
-                      {new Date(day).getDate()}
-                    </span>
+                    </div>
                   </div>
 
                   {/* Day entries */}
@@ -270,9 +281,9 @@ export function ScheduleView() {
                         <div
                           key={`${anime.id}-${anime.episode}`}
                           className={cn(
-                            'p-1.5 rounded text-2xs',
-                            'bg-card/60 border border-border-glass',
-                            'hover:bg-card/80 transition-colors duration-150'
+                            'group p-1.5 rounded text-2xs',
+                            'bg-card/60 border border-border/50',
+                            'hover:bg-card/80 hover:border-border transition-colors duration-150'
                           )}
                         >
                           <div className="flex items-start gap-1.5">
@@ -280,22 +291,33 @@ export function ScheduleView() {
                               <img
                                 src={coverUrl}
                                 alt=""
-                                className="w-6 h-8 rounded-sm object-cover shrink-0"
+                                className="w-7 h-9 rounded-sm object-cover shrink-0"
                                 loading="lazy"
                               />
                             )}
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium truncate leading-tight">{title}</p>
-                              <p className="text-muted-foreground/70 mt-0.5">
-                                {formatTime(anime.airingAt)} &middot; Odc. {anime.episode}
-                              </p>
+                              <div className="flex items-center gap-1 mt-0.5 text-muted-foreground/70">
+                                <Clock className="w-2.5 h-2.5" />
+                                <span>{formatTime(anime.airingAt)}</span>
+                                <span>&middot;</span>
+                                <span>Odc. {anime.episode}</span>
+                              </div>
+                              {anime.media.averageScore != null && (
+                                <span className="text-[9px] text-muted-foreground/50">
+                                  {(anime.media.averageScore / 10).toFixed(1)}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
                       );
                     })}
                     {dayEntries.length === 0 && (
-                      <p className="text-2xs text-muted-foreground/40 text-center py-2">Brak</p>
+                      <div className="flex flex-col items-center justify-center py-4 text-muted-foreground/30">
+                        <Calendar className="w-4 h-4 mb-1" />
+                        <p className="text-2xs">Brak</p>
+                      </div>
                     )}
                   </div>
                 </div>
