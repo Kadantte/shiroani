@@ -155,7 +155,7 @@ Bookmarks system for the embedded browser with folder organization.
 
 **Priority:** Medium
 **Effort:** Medium
-**Status:** Planned
+**Status:** Done
 
 ### Description
 

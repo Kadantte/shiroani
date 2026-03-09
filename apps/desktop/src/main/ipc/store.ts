@@ -25,6 +25,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'custom-backgrounds',
   // Browser settings (homepage, adblock)
   'browser-settings',
+  // Notification settings
+  'notification-settings',
   // Window state
   'window.bounds',
   'window.maximized',

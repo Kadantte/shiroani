@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Palette, Globe, Download, Info } from 'lucide-react';
+import { Palette, Globe, Download, Info, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { BrowserSection } from '@/components/settings/BrowserSection';
 import { UpdatesSection } from '@/components/settings/UpdatesSection';
 import { AboutSection } from '@/components/settings/AboutSection';
+import { NotificationsSection } from '@/components/settings/NotificationsSection';
 
-type SettingsSection = 'appearance' | 'browser' | 'updates' | 'about';
+type SettingsSection = 'appearance' | 'browser' | 'notifications' | 'updates' | 'about';
 
 const SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
   { id: 'appearance', label: 'Wyglad', Icon: Palette },
   { id: 'browser', label: 'Przegladarka', Icon: Globe },
+  { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
   { id: 'updates', label: 'Aktualizacje', Icon: Download },
   { id: 'about', label: 'O aplikacji', Icon: Info },
 ];
@@ -51,6 +53,7 @@ export function SettingsView() {
         <div className="max-w-xl">
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}
+          {activeSection === 'notifications' && <NotificationsSection />}
           {activeSection === 'updates' && <UpdatesSection version={version} />}
           {activeSection === 'about' && <AboutSection version={version} />}
         </div>

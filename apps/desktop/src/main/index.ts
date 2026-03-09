@@ -14,6 +14,7 @@ import { LOCALHOST } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
+import { initializeNotificationService, cleanupNotificationService } from './notification-service';
 
 // Register custom protocol scheme for background images.
 // Must be called before app.ready.
@@ -107,6 +108,9 @@ async function bootstrap(): Promise<void> {
   browserManager.init();
   mainWindow = await createMainWindow(browserManager);
   initializeAutoUpdater(mainWindow, process.env.NODE_ENV === 'development');
+  if (nestApp) {
+    initializeNotificationService(mainWindow, nestApp);
+  }
 
   // Initialize adblocker after window creation, then enable on browser session
   try {
@@ -182,6 +186,11 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    try {
+      cleanupNotificationService();
+    } catch (error) {
+      logger.warn('Notification service cleanup failed during shutdown', error);
+    }
     try {
       browserManager.saveTabState();
     } catch (error) {

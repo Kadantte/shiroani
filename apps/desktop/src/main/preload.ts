@@ -4,6 +4,7 @@ import type {
   UpdateDownloadProgress,
   UpdateChannel,
   BrowserTab,
+  NotificationSettings,
 } from '@shiroani/shared';
 
 /**
@@ -92,6 +93,11 @@ export interface ElectronAPI {
     onUpdateError: (callback: (message: string) => void) => () => void;
     onChannelChanged: (callback: (channel: UpdateChannel) => void) => () => void;
   };
+  notifications: {
+    getSettings: () => Promise<NotificationSettings>;
+    updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
+    onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
+  };
   platform: NodeJS.Platform;
 }
 
@@ -173,6 +179,13 @@ const electronAPI: ElectronAPI = {
     onUpdateDownloaded: createIpcListener<UpdateInfo>('updater:update-downloaded'),
     onUpdateError: createIpcListener<string>('updater:error'),
     onChannelChanged: createIpcListener<UpdateChannel>('updater:channel-changed'),
+  },
+  notifications: {
+    getSettings: () =>
+      ipcRenderer.invoke('notifications:get-settings') as Promise<NotificationSettings>,
+    updateSettings: (updates: Partial<NotificationSettings>) =>
+      ipcRenderer.invoke('notifications:update-settings', updates) as Promise<NotificationSettings>,
+    onClicked: createIpcListener<{ mediaId: number; episode: number }>('notifications:clicked'),
   },
   platform: process.platform,
 };

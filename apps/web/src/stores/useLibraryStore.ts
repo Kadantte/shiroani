@@ -161,10 +161,15 @@ export const useLibraryStore = create<LibraryStore>()(
         },
 
         updateEntry: (payload: LibraryUpdatePayload) => {
-          // Optimistic update
+          // Optimistic update — normalize null anilistId to undefined for AnimeEntry compat
+          const { anilistId, ...rest } = payload;
+          const optimistic = {
+            ...rest,
+            ...(anilistId !== undefined ? { anilistId: anilistId ?? undefined } : {}),
+          };
           set(
             state => ({
-              entries: state.entries.map(e => (e.id === payload.id ? { ...e, ...payload } : e)),
+              entries: state.entries.map(e => (e.id === payload.id ? { ...e, ...optimistic } : e)),
             }),
             undefined,
             'library/optimisticUpdate'

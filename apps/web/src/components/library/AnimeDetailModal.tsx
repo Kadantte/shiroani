@@ -47,6 +47,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   const [score, setScore] = useState(0);
   const [notes, setNotes] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
+  const [anilistId, setAnilistId] = useState<string>('');
 
   // Sync form state when entry changes
   useEffect(() => {
@@ -56,13 +57,16 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
       setScore(entry.score ?? 0);
       setNotes(entry.notes ?? '');
       setResumeUrl(entry.resumeUrl ?? '');
+      setAnilistId(entry.anilistId ? String(entry.anilistId) : '');
     }
   }, [entry]);
 
   const handleSave = useCallback(() => {
     if (!entry) return;
+    const parsedAnilistId = anilistId.trim() ? parseInt(anilistId.trim(), 10) : null;
     updateEntry({
       id: entry.id,
+      anilistId: parsedAnilistId && !isNaN(parsedAnilistId) ? parsedAnilistId : null,
       status,
       currentEpisode,
       score: score > 0 ? score : undefined,
@@ -70,7 +74,17 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
       resumeUrl: resumeUrl.trim() || undefined,
     });
     onOpenChange(false);
-  }, [entry, status, currentEpisode, score, notes, resumeUrl, updateEntry, onOpenChange]);
+  }, [
+    entry,
+    status,
+    currentEpisode,
+    score,
+    notes,
+    resumeUrl,
+    anilistId,
+    updateEntry,
+    onOpenChange,
+  ]);
 
   const handleRemove = useCallback(() => {
     if (!entry) return;
@@ -259,6 +273,22 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
               onChange={e => setResumeUrl(e.target.value)}
               placeholder="https://..."
               className="h-8 text-xs"
+            />
+          </div>
+
+          {/* AniList ID */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">AniList ID</label>
+            <p className="text-2xs text-muted-foreground/70">
+              Wymagane do powiadomien i odliczania odcinkow
+            </p>
+            <Input
+              type="number"
+              min={1}
+              value={anilistId}
+              onChange={e => setAnilistId(e.target.value)}
+              placeholder="np. 21"
+              className="h-8 text-xs w-32"
             />
           </div>
 

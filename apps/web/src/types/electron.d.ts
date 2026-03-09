@@ -3,6 +3,7 @@ import type {
   UpdateDownloadProgress,
   UpdateChannel,
   BrowserTab,
+  NotificationSettings,
 } from '@shiroani/shared';
 
 /**
@@ -99,6 +100,11 @@ interface ElectronAPI {
     onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => () => void;
     onUpdateError: (callback: (message: string) => void) => () => void;
     onChannelChanged: (callback: (channel: UpdateChannel) => void) => () => void;
+  };
+  notifications?: {
+    getSettings: () => Promise<NotificationSettings>;
+    updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
+    onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
   };
   platform: NodeJS.Platform;
 }

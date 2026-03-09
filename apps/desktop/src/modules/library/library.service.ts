@@ -124,6 +124,10 @@ export class LibraryService {
     const setClauses: string[] = [];
     const values: (string | number | null)[] = [];
 
+    if (updates.anilistId !== undefined) {
+      setClauses.push('anilist_id = ?');
+      values.push(updates.anilistId);
+    }
     if (updates.status !== undefined) {
       setClauses.push('status = ?');
       values.push(updates.status);

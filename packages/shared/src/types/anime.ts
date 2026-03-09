@@ -66,6 +66,7 @@ export interface LibraryAddPayload {
 
 export interface LibraryUpdatePayload {
   id: number;
+  anilistId?: number | null;
   status?: AnimeStatus;
   currentEpisode?: number;
   score?: number;
@@ -80,4 +81,14 @@ export interface LibraryStatsResult {
   on_hold: number;
   dropped: number;
   total: number;
+}
+
+// ============================================
+// Notification Settings
+// ============================================
+
+export interface NotificationSettings {
+  enabled: boolean;
+  /** How many minutes before airing to fire the notification */
+  leadTimeMinutes: number;
 }

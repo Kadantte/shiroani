@@ -25,3 +25,6 @@ export {
   cleanupBackgroundHandlers,
   registerBackgroundProtocol,
 } from './background';
+
+// Notification handlers
+export { registerNotificationHandlers, cleanupNotificationHandlers } from './notifications';
