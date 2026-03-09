@@ -28,16 +28,88 @@ const STATUS_OPTIONS: { value: AnimeStatus; label: string }[] = [
   { value: 'on_hold', label: 'Wstrzymane' },
 ];
 
-/** JS snippet to extract page metadata from the current tab */
+/** JS snippet to extract page metadata from the current tab.
+ *  Returns { coverImage, title, episodes } with site-specific scrapers
+ *  and a generic og:image fallback for unknown sites. */
 const SCRAPE_METADATA_SCRIPT = `
 (function() {
-  var og = document.querySelector('meta[property="og:image"]');
-  var img = og ? og.content : null;
-  if (!img) {
-    var tw = document.querySelector('meta[name="twitter:image"]');
-    img = tw ? tw.content : null;
+  var result = { coverImage: null, title: null, episodes: null };
+  var host = location.hostname.replace('www.', '');
+
+  // ── Site-specific scrapers ──────────────────────────────────
+  if (host === 'ogladajanime.pl') {
+    var img = document.querySelector('img.img-fluid.lozad.rounded.float-right');
+    if (img) result.coverImage = img.getAttribute('data-src') || img.src || null;
+    var h4 = document.getElementById('anime_name_id');
+    if (h4) result.title = h4.textContent.trim();
+    // Fallback title from the cover alt attribute
+    if (!result.title && img) result.title = img.alt ? img.alt.trim() : null;
+    // Parse episode count from "Odcinki: X" text
+    var allP = document.querySelectorAll('p');
+    for (var i = 0; i < allP.length; i++) {
+      var txt = allP[i].textContent || '';
+      var m = txt.match(/Odcinki:\\s*(\\d+)/i);
+      if (m) { result.episodes = parseInt(m[1], 10); break; }
+    }
+
+  } else if (host === 'anilist.co') {
+    var cover = document.querySelector('.cover img, img.cover');
+    if (cover) result.coverImage = cover.src || null;
+    var titleEl = document.querySelector('.content h1, [data-v-5776f768] h1');
+    if (titleEl) result.title = titleEl.textContent.trim();
+    var epLabel = document.querySelector('[class*="data-set"] .value');
+    if (epLabel) {
+      var epNum = parseInt(epLabel.textContent, 10);
+      if (!isNaN(epNum)) result.episodes = epNum;
+    }
+
+  } else if (host === 'myanimelist.net') {
+    var malImg = document.querySelector('.leftside img[itemprop="image"], td.borderClass img');
+    if (malImg) result.coverImage = malImg.getAttribute('data-src') || malImg.src || null;
+    var malTitle = document.querySelector('h1.title-name strong, span[itemprop="name"]');
+    if (malTitle) result.title = malTitle.textContent.trim();
+    var infoSpans = document.querySelectorAll('.spaceit_pad');
+    for (var j = 0; j < infoSpans.length; j++) {
+      if (infoSpans[j].textContent.indexOf('Episodes') !== -1) {
+        var epMatch = infoSpans[j].textContent.match(/(\\d+)/);
+        if (epMatch) result.episodes = parseInt(epMatch[1], 10);
+        break;
+      }
+    }
+
+  } else if (host === 'shinden.pl') {
+    var shinImg = document.querySelector('.info-aside-img img, .title-cover img');
+    if (shinImg) result.coverImage = shinImg.src || null;
+    var shinTitle = document.querySelector('h1.page-title, .title-small-h3');
+    if (shinTitle) result.title = shinTitle.textContent.trim();
+    var dtEls = document.querySelectorAll('dt');
+    for (var k = 0; k < dtEls.length; k++) {
+      if (dtEls[k].textContent.indexOf('Epizody') !== -1 || dtEls[k].textContent.indexOf('Episodes') !== -1) {
+        var dd = dtEls[k].nextElementSibling;
+        if (dd) {
+          var ep = parseInt(dd.textContent, 10);
+          if (!isNaN(ep)) result.episodes = ep;
+        }
+        break;
+      }
+    }
   }
-  return img || null;
+
+  // ── Generic fallback: og:image / twitter:image ──────────────
+  if (!result.coverImage) {
+    var og = document.querySelector('meta[property="og:image"]');
+    result.coverImage = og ? og.content : null;
+  }
+  if (!result.coverImage) {
+    var tw = document.querySelector('meta[name="twitter:image"]');
+    result.coverImage = tw ? tw.content : null;
+  }
+  if (!result.title) {
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) result.title = ogTitle.content || null;
+  }
+
+  return result;
 })()
 `;
 
@@ -68,19 +140,26 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       setCoverImage('');
       setIsFetchingCover(false);
 
-      // Auto-fetch og:image from the current tab
+      // Auto-fetch metadata (cover, title, episodes) from the current tab
       const activeTabId = useBrowserStore.getState().activeTabId;
       if (activeTabId) {
         setIsFetchingCover(true);
         window.electronAPI?.browser
           ?.executeScript(activeTabId, SCRAPE_METADATA_SCRIPT)
           .then(result => {
-            if (typeof result === 'string' && result) {
-              setCoverImage(result);
+            const meta = result as {
+              coverImage?: string;
+              title?: string;
+              episodes?: number;
+            } | null;
+            if (meta) {
+              if (meta.coverImage) setCoverImage(meta.coverImage);
+              if (meta.title) setEditableTitle(meta.title);
+              if (meta.episodes && meta.episodes > 0) setTotalEpisodes(meta.episodes);
             }
           })
           .catch(() => {
-            // Non-critical — user can paste manually
+            // Non-critical — user can fill in manually
           })
           .finally(() => {
             setIsFetchingCover(false);
@@ -153,12 +232,12 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                   <ImageIcon className="w-5 h-5 text-muted-foreground/30" />
                 )}
               </div>
-              <div className="flex-1 space-y-1.5">
+              <div className="flex-1 min-w-0 space-y-1.5">
                 <Input
                   value={coverImage}
                   onChange={e => setCoverImage(e.target.value)}
                   placeholder="URL obrazka okladki..."
-                  className="h-7 text-xs"
+                  className="h-7 text-xs truncate"
                 />
                 <p className="text-[10px] text-muted-foreground/50">
                   {isFetchingCover
@@ -174,7 +253,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           {/* URL display */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Adres URL</label>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border min-w-0 overflow-hidden">
               <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground truncate">{url || 'Brak URL'}</span>
             </div>
