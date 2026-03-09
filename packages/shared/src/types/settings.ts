@@ -52,20 +52,6 @@ export type Theme =
   | 'solarizedlight';
 
 /**
- * App language
- */
-export type AppLanguage = 'pl'; // Polish only for now
-
-/**
- * Anime browser settings
- */
-export interface AnimeSettings {
-  adblockEnabled: boolean;
-  defaultHomepage: string;
-  userAgent: string;
-}
-
-/**
  * Dark themes list
  */
 export const DARK_THEMES: Theme[] = [
@@ -91,34 +77,3 @@ export const DARK_THEMES: Theme[] = [
   'synthwave',
   'tokyonight',
 ];
-
-/**
- * Light themes list
- */
-export const LIGHT_THEMES: Theme[] = [
-  'light',
-  'ayu-light',
-  'blossom',
-  'bluloco',
-  'cream',
-  'feather',
-  'github',
-  'gruvboxlight',
-  'lavender',
-  'mint',
-  'nordlight',
-  'onelight',
-  'paper',
-  'peach',
-  'rose',
-  'sand',
-  'sepia',
-  'sky',
-  'snow',
-  'solarizedlight',
-];
-
-/**
- * All themes list
- */
-export const ALL_THEMES: Theme[] = [...DARK_THEMES, ...LIGHT_THEMES];

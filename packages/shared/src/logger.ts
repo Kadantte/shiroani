@@ -75,7 +75,7 @@ function getEnvVar(name: string): string | undefined {
 
 // Initialize configuration from environment variables
 // Colors enabled by default in Node.js, can be disabled with LOG_COLORS=false
-let colorsEnabled = !isBrowser && getEnvVar('LOG_COLORS') !== 'false';
+const colorsEnabled = !isBrowser && getEnvVar('LOG_COLORS') !== 'false';
 let timestampsEnabled = getEnvVar('LOG_TIMESTAMPS') === 'true';
 
 // Initialize log level from environment variable
@@ -118,37 +118,12 @@ function formatNodeLog(level: string, context: string, levelColor: string): stri
 /**
  * Structured log entry for JSON file logging
  */
-export interface LogEntry {
+interface LogEntry {
   timestamp: string; // ISO 8601
   level: 'error' | 'warn' | 'info' | 'debug';
   context: string; // Logger context name (e.g., "SessionService")
   message: string; // Primary message (first arg stringified)
   data?: unknown; // Additional args if any
-}
-
-/**
- * Parse JSONL log content into LogEntry array.
- * Skips malformed lines.
- */
-export function parseLogEntries(raw: string): LogEntry[] {
-  const lines = raw.split('\n').filter(Boolean);
-  const entries: LogEntry[] = [];
-  for (const line of lines) {
-    try {
-      const parsed = JSON.parse(line);
-      if (
-        typeof parsed.timestamp === 'string' &&
-        typeof parsed.level === 'string' &&
-        typeof parsed.context === 'string' &&
-        typeof parsed.message === 'string'
-      ) {
-        entries.push(parsed as LogEntry);
-      }
-    } catch {
-      // Skip malformed lines
-    }
-  }
-  return entries;
 }
 
 /**
@@ -340,27 +315,6 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
       }
     },
   };
-}
-
-/**
- * Get the current log level
- */
-export function getLogLevel(): LogLevel {
-  return currentLogLevel;
-}
-
-/**
- * Set the log level programmatically
- */
-export function setLogLevel(level: LogLevel): void {
-  currentLogLevel = level;
-}
-
-/**
- * Enable or disable colored output
- */
-export function setColorsEnabled(enabled: boolean): void {
-  colorsEnabled = enabled;
 }
 
 /**

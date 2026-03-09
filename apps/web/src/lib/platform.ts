@@ -11,9 +11,3 @@ export const IS_MAC =
     ((navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
       ?.platform === 'macOS' ||
       /Mac|iPhone|iPad/.test(navigator.platform)));
-
-/** Whether the app is running on Windows */
-export const IS_WINDOWS = platform === 'win32';
-
-/** Whether the app is running on Linux */
-export const IS_LINUX = platform === 'linux';

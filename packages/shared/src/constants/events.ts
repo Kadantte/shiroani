@@ -16,6 +16,10 @@ export const AnimeEvents = {
   GET_DETAILS: 'anime:get-details',
   GET_AIRING: 'anime:get-airing',
 
+  GET_TRENDING: 'anime:get-trending',
+  GET_POPULAR: 'anime:get-popular',
+  GET_SEASONAL: 'anime:get-seasonal',
+
   // Server -> Client (broadcasts)
   SEARCH_RESULT: 'anime:search-result',
   DETAILS_RESULT: 'anime:details-result',
@@ -38,24 +42,6 @@ export const LibraryEvents = {
 } as const;
 
 // ============================================
-// Browser Events
-// ============================================
-export const BrowserEvents = {
-  // Client -> Server (requests)
-  OPEN_TAB: 'browser:open-tab',
-  CLOSE_TAB: 'browser:close-tab',
-  NAVIGATE: 'browser:navigate',
-  GO_BACK: 'browser:go-back',
-  GO_FORWARD: 'browser:go-forward',
-  REFRESH: 'browser:refresh',
-
-  // Server -> Client (broadcasts)
-  TAB_UPDATED: 'browser:tab-updated',
-  TAB_CLOSED: 'browser:tab-closed',
-  NAVIGATION_STATE: 'browser:navigation-state',
-} as const;
-
-// ============================================
 // Schedule Events
 // ============================================
 export const ScheduleEvents = {
@@ -75,19 +61,4 @@ export const SystemEvents = {
   CONNECTED: 'system:connected',
   ERROR: 'system:error',
   THROTTLED: 'system:throttled',
-} as const;
-
-// ============================================
-// Updater Events
-// ============================================
-export const UpdaterEvents = {
-  // Client -> Server (requests)
-  CHECK: 'updater:check',
-  DOWNLOAD: 'updater:download',
-  INSTALL: 'updater:install',
-
-  // Server -> Client (broadcasts)
-  STATUS: 'updater:status',
-  PROGRESS: 'updater:progress',
-  ERROR: 'updater:error',
 } as const;

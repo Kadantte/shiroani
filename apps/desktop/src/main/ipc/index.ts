@@ -1,5 +1,5 @@
 // Types
-export type { MessageDialogOptions, HandlerModule } from './types';
+export type { MessageDialogOptions } from './types';
 
 // Window handlers
 export { registerWindowHandlers, cleanupWindowHandlers } from './window';
