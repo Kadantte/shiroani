@@ -63,6 +63,28 @@ const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 4,
+    description: 'Create diary_entries table',
+    up: `
+      CREATE TABLE IF NOT EXISTS diary_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL DEFAULT '',
+        content_json TEXT NOT NULL DEFAULT '{}',
+        cover_gradient TEXT,
+        mood TEXT,
+        tags TEXT,
+        anime_id INTEGER REFERENCES anime_library(id) ON DELETE SET NULL,
+        anime_title TEXT,
+        anime_cover_image TEXT,
+        is_pinned INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_diary_created ON diary_entries(created_at);
+      CREATE INDEX IF NOT EXISTS idx_diary_pinned ON diary_entries(is_pinned);
+    `,
+  },
 ];
 
 /**

@@ -56,6 +56,21 @@ export const ScheduleEvents = {
 } as const;
 
 // ============================================
+// Diary Events
+// ============================================
+export const DiaryEvents = {
+  // Client -> Server (requests)
+  GET_ALL: 'diary:get-all',
+  CREATE: 'diary:create',
+  UPDATE: 'diary:update',
+  REMOVE: 'diary:remove',
+
+  // Server -> Client (broadcasts)
+  RESULT: 'diary:result',
+  UPDATED: 'diary:updated',
+} as const;
+
+// ============================================
 // System Events
 // ============================================
 export const SystemEvents = {

@@ -4,6 +4,7 @@ import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
 import { LibraryModule } from './library';
 import { ScheduleModule } from './schedule';
+import { DiaryModule } from './diary';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ScheduleModule } from './schedule';
     AnimeModule,
     LibraryModule,
     ScheduleModule,
+    DiaryModule,
   ],
   controllers: [],
   providers: [],

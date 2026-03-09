@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Settings } from 'lucide-react';
+import { BookOpen, Calendar, NotebookPen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { APP_LOGO_URL } from '@/lib/constants';
@@ -11,6 +11,7 @@ interface NavItem {
 const ALL_ITEMS: NavItem[] = [
   { id: 'browser', label: 'Internet' },
   { id: 'library', label: 'Biblioteka' },
+  { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Plan' },
   { id: 'settings', label: 'Ustawienia' },
 ];
@@ -43,6 +44,16 @@ function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
           className={cn(
             base,
             'group-hover:rotate-[-8deg] group-hover:scale-110',
+            isActive && 'animate-[dock-wiggle_2.5s_ease-in-out_infinite] motion-reduce:animate-none'
+          )}
+        />
+      );
+    case 'diary':
+      return (
+        <NotebookPen
+          className={cn(
+            base,
+            'group-hover:rotate-[-6deg] group-hover:scale-110',
             isActive && 'animate-[dock-wiggle_2.5s_ease-in-out_infinite] motion-reduce:animate-none'
           )}
         />

@@ -4,6 +4,9 @@ export * from './types/anime';
 // Settings types
 export * from './types/settings';
 
+// Diary types
+export * from './types/diary';
+
 // Updater types
 export * from './types/updater';
 

@@ -9,6 +9,7 @@ import { BrowserView } from '@/components/browser/BrowserView';
 import { LibraryView } from '@/components/library/LibraryView';
 import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
+import { DiaryView } from '@/components/diary/DiaryView';
 import { SplashScreen } from '@/components/splash';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useAppStore } from '@/stores/useAppStore';
@@ -37,7 +38,13 @@ function App() {
   // Listen for navigation events from the main process (e.g. mascot overlay context menu)
   useEffect(() => {
     const unsub = window.electronAPI?.overlay?.onNavigate?.((view: string) => {
-      if (view === 'schedule' || view === 'library' || view === 'settings' || view === 'browser') {
+      if (
+        view === 'schedule' ||
+        view === 'library' ||
+        view === 'settings' ||
+        view === 'browser' ||
+        view === 'diary'
+      ) {
         navigateTo(view);
       }
     });
@@ -79,6 +86,7 @@ function App() {
             <ErrorBoundary>
               {activeView === 'browser' && <BrowserView />}
               {activeView === 'library' && <LibraryView />}
+              {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}
               {activeView === 'settings' && <SettingsView />}
             </ErrorBoundary>

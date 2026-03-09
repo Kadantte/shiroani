@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { IS_ELECTRON } from '@/lib/platform';
 
-export type ActiveView = 'browser' | 'library' | 'schedule' | 'settings';
+export type ActiveView = 'browser' | 'library' | 'diary' | 'schedule' | 'settings';
 
 interface AppState {
   activeView: ActiveView;
