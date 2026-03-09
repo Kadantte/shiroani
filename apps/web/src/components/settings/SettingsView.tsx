@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Palette, Globe, Download, Info, Bell, Cat } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { IS_WINDOWS } from '@/lib/platform';
+import { IS_WINDOWS, IS_MAC } from '@/lib/platform';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { BrowserSection } from '@/components/settings/BrowserSection';
 import { UpdatesSection } from '@/components/settings/UpdatesSection';
@@ -24,8 +24,11 @@ export function SettingsView() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('appearance');
   const [version, setVersion] = useState('');
 
-  // Hide mascot section on non-Windows platforms (native overlay is Windows-only)
-  const SECTIONS = useMemo(() => ALL_SECTIONS.filter(s => s.id !== 'mascot' || IS_WINDOWS), []);
+  // Show mascot section on Windows and macOS
+  const SECTIONS = useMemo(
+    () => ALL_SECTIONS.filter(s => s.id !== 'mascot' || IS_WINDOWS || IS_MAC),
+    []
+  );
 
   // Fetch app version once for both UpdatesSection and AboutSection
   useEffect(() => {

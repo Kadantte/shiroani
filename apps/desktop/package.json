@@ -10,7 +10,7 @@
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
-    "predev": "node-gyp rebuild 2>/dev/null || echo Native addon build skipped (non-Windows or missing deps)",
+    "predev": "node scripts/native-build.mjs",
     "dev": "tsc -p tsconfig.build.json && cross-env NODE_ENV=development electron .",
     "build:dev": "tsc -p tsconfig.build.json",
     "build": "pnpm native:build && tsc -p tsconfig.build.json && node scripts/copy-renderer.mjs",
@@ -22,7 +22,7 @@
     "package:win": "pnpm build && electron-builder --win",
     "package:mac": "pnpm build && electron-builder --mac",
     "package:linux": "pnpm build && electron-builder --linux",
-    "native:build": "node-gyp rebuild",
+    "native:build": "node scripts/native-build.mjs",
     "native:clean": "node-gyp clean",
     "postinstall": "electron-builder install-app-deps",
     "rebuild": "electron-builder install-app-deps"
