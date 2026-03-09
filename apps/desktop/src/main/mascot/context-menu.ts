@@ -1,4 +1,4 @@
-import { BrowserWindow, screen, ipcMain } from 'electron';
+import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
 import { logger } from '../logger';
 
@@ -21,10 +21,10 @@ let onMenuSelect: MenuSelectHandler | null = null;
  * In production, it is compiled to dist/renderer/.
  */
 function getMenuHtmlPath(): string {
-  if (process.env.NODE_ENV === 'development') {
+  if (!app.isPackaged) {
     return path.join(__dirname, '../../../src/renderer/context-menu.html');
   }
-  return path.join(__dirname, '../../renderer/context-menu.html');
+  return path.join(app.getAppPath(), 'dist/renderer/context-menu.html');
 }
 
 /**
@@ -56,6 +56,9 @@ export function createContextMenuWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // Use a separate session so the main app's restrictive CSP
+      // (set on defaultSession) doesn't block inline scripts in the menu HTML.
+      partition: 'mascot-menu',
     },
   });
 

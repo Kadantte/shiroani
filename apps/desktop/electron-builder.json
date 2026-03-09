@@ -16,6 +16,10 @@
     {
       "from": "resources/mascot",
       "to": "mascot"
+    },
+    {
+      "from": "resources/icon.ico",
+      "to": "icon.ico"
     }
   ],
   "artifactName": "${productName}-${version}-${arch}.${ext}",

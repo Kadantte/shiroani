@@ -3,10 +3,13 @@ import { createLogger } from '@shiroani/shared';
 import type { BrowserTab } from '@shiroani/shared';
 import { enableBlockingInSession, disableBlockingInSession } from '../adblock';
 import { normalizeUrl } from './url-utils';
-import { saveTabState, loadPersistedTabs } from './tab-persistence';
+import { saveTabState, loadPersistedTabs, type PersistedTab } from './tab-persistence';
 import { attachWebContentsListeners } from './tab-events';
 
 const logger = createLogger('BrowserManager');
+
+/** Delay before auto-saving tab state after a mutation (ms) */
+const AUTO_SAVE_DELAY = 3000;
 
 interface ManagedTab {
   id: string;
@@ -32,6 +35,7 @@ export class BrowserManager {
   private browserSession: Electron.Session | null = null;
   private adblockEnabled = false;
   private isFullScreen = false;
+  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Check if adblocking is currently enabled.
@@ -139,6 +143,7 @@ export class BrowserManager {
     }
 
     logger.debug(`Tab created: ${tabId}`);
+    this.scheduleSave();
     return tabId;
   }
 
@@ -181,6 +186,7 @@ export class BrowserManager {
     }
 
     logger.debug(`Tab closed: ${tabId}`);
+    this.scheduleSave();
   }
 
   /**
@@ -294,6 +300,30 @@ export class BrowserManager {
   }
 
   /**
+   * Reorder tabs to match the given array of tab IDs.
+   * This rebuilds the internal Map in the specified order so that
+   * persistence (saveTabState) respects the user's tab arrangement.
+   */
+  reorderTabs(orderedIds: string[]): void {
+    const reordered = new Map<string, ManagedTab>();
+    for (const id of orderedIds) {
+      const tab = this.tabs.get(id);
+      if (tab) {
+        reordered.set(id, tab);
+      }
+    }
+    // Preserve any tabs that weren't included in orderedIds (shouldn't happen, but safe)
+    for (const [id, tab] of this.tabs) {
+      if (!reordered.has(id)) {
+        reordered.set(id, tab);
+      }
+    }
+    this.tabs = reordered;
+    logger.debug(`Tabs reordered: [${orderedIds.join(', ')}]`);
+    this.scheduleSave();
+  }
+
+  /**
    * Execute JavaScript in a tab's web contents and return the result.
    * Used for scraping page metadata (e.g. og:image for cover images).
    */
@@ -369,10 +399,10 @@ export class BrowserManager {
    */
   saveTabState(): void {
     const tabEntries = Array.from(this.tabs.values());
-    const urls = tabEntries.map(t => t.url);
+    const tabs: PersistedTab[] = tabEntries.map(t => ({ url: t.url, title: t.title }));
     const activeIndex = this.activeTabId ? tabEntries.findIndex(t => t.id === this.activeTabId) : 0;
 
-    saveTabState(urls, activeIndex);
+    saveTabState(tabs, activeIndex);
   }
 
   /**
@@ -383,11 +413,18 @@ export class BrowserManager {
     const saved = loadPersistedTabs();
     if (!saved) return false;
 
-    logger.info(`Restoring ${saved.urls.length} tab(s) from previous session`);
+    logger.info(`Restoring ${saved.tabs.length} tab(s) from previous session`);
 
     const createdIds: string[] = [];
-    for (const url of saved.urls) {
-      createdIds.push(this.createTab(url));
+    for (const persistedTab of saved.tabs) {
+      const tabId = this.createTab(persistedTab.url);
+      // Apply saved title immediately so tabs don't flash "New Tab"
+      const tab = this.tabs.get(tabId);
+      if (tab && persistedTab.title && persistedTab.title !== 'New Tab') {
+        tab.title = persistedTab.title;
+        this.sendTabUpdate(tabId);
+      }
+      createdIds.push(tabId);
     }
 
     // Switch to the previously active tab
@@ -400,9 +437,28 @@ export class BrowserManager {
   }
 
   /**
+   * Schedule a debounced save of tab state. Coalesces rapid mutations
+   * (e.g. opening multiple tabs) into a single write after a short delay.
+   * Ensures tab state survives crashes without excessive disk writes.
+   */
+  private scheduleSave(): void {
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+    this.autoSaveTimer = setTimeout(() => {
+      this.autoSaveTimer = null;
+      this.saveTabState();
+    }, AUTO_SAVE_DELAY);
+  }
+
+  /**
    * Destroy all tabs. Call on app quit.
    */
   destroy(): void {
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = null;
+    }
     for (const [tabId, tab] of this.tabs) {
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
         try {
@@ -441,12 +497,20 @@ export class BrowserManager {
     const tab = this.tabs.get(tabId);
     if (!tab) return;
 
+    const urlChanged = update.url !== undefined && update.url !== tab.url;
+    const titleChanged = update.title !== undefined && update.title !== tab.title;
+
     if (update.url !== undefined) tab.url = update.url;
     if (update.title !== undefined) tab.title = update.title;
     if (update.favicon !== undefined) tab.favicon = update.favicon;
     if (update.isLoading !== undefined) tab.isLoading = update.isLoading;
     if (update.canGoBack !== undefined) tab.canGoBack = update.canGoBack;
     if (update.canGoForward !== undefined) tab.canGoForward = update.canGoForward;
+
+    // Auto-save when URL or title changes so state survives crashes
+    if (urlChanged || titleChanged) {
+      this.scheduleSave();
+    }
 
     this.sendTabUpdate(tabId);
   }

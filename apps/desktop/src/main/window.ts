@@ -1,4 +1,4 @@
-import { BrowserWindow, shell, session } from 'electron';
+import { app, BrowserWindow, shell, session } from 'electron';
 import * as path from 'path';
 import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
@@ -97,10 +97,12 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
     titleBarStyle: 'hidden',
     title: 'ShiroAni',
     backgroundColor: '#0a0a0f',
-    icon: path.join(
-      __dirname,
-      `../../resources/icon.${process.platform === 'win32' ? 'ico' : 'png'}`
-    ),
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, `icon.${process.platform === 'win32' ? 'ico' : 'png'}`)
+      : path.join(
+          __dirname,
+          `../../resources/icon.${process.platform === 'win32' ? 'ico' : 'png'}`
+        ),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,

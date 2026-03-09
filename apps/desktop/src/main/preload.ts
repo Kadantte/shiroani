@@ -73,6 +73,7 @@ export interface ElectronAPI {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
     executeScript: (tabId: string, script: string) => Promise<unknown>;
+    reorderTabs: (orderedIds: string[]) => Promise<void>;
     hide: () => Promise<void>;
     show: () => Promise<void>;
     onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
@@ -170,6 +171,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('browser:resize', bounds) as Promise<void>,
     executeScript: (tabId: string, script: string) =>
       ipcRenderer.invoke('browser:execute-script', tabId, script) as Promise<unknown>,
+    reorderTabs: (orderedIds: string[]) =>
+      ipcRenderer.invoke('browser:reorder-tabs', orderedIds) as Promise<void>,
     hide: () => ipcRenderer.invoke('browser:hide') as Promise<void>,
     show: () => ipcRenderer.invoke('browser:show') as Promise<void>,
     onTabUpdated: createIpcListener<BrowserTab>('browser:tab-updated'),

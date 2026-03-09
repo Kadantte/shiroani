@@ -127,10 +127,10 @@ export function setMascotEnabled(enabled: boolean): void {
 // ============================================================================
 
 function getMascotHtmlPath(): string {
-  if (process.env.NODE_ENV === 'development') {
+  if (!app.isPackaged) {
     return path.join(__dirname, '../../../src/renderer/mascot-overlay.html');
   }
-  return path.join(__dirname, '../../renderer/mascot-overlay.html');
+  return path.join(app.getAppPath(), 'dist/renderer/mascot-overlay.html');
 }
 
 function getMascotPreloadPath(): string {

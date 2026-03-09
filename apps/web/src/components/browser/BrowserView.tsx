@@ -21,6 +21,7 @@ export function BrowserView() {
     getDefaultUrl,
     closeTab,
     switchTab,
+    reorderTabs,
     navigate,
     goBack,
     goForward,
@@ -87,6 +88,7 @@ export function BrowserView() {
           onSelectTab={switchTab}
           onCloseTab={closeTab}
           onNewTab={openTab}
+          onReorderTabs={reorderTabs}
         />
       )}
 

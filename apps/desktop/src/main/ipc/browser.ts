@@ -83,6 +83,11 @@ export function registerBrowserHandlers(
     return browserManager.executeScript(tabId, script);
   });
 
+  ipcMain.handle('browser:reorder-tabs', (_event, orderedIds: string[]) => {
+    logger.debug(`browser:reorder-tabs invoked with ${orderedIds.length} tab(s)`);
+    browserManager.reorderTabs(orderedIds);
+  });
+
   ipcMain.handle('browser:hide', () => {
     browserManager.hideAllViews();
   });
@@ -108,6 +113,7 @@ export function cleanupBrowserHandlers(): void {
   ipcMain.removeHandler('browser:toggle-adblock');
   ipcMain.removeHandler('browser:resize');
   ipcMain.removeHandler('browser:execute-script');
+  ipcMain.removeHandler('browser:reorder-tabs');
   ipcMain.removeHandler('browser:hide');
   ipcMain.removeHandler('browser:show');
 

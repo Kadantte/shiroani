@@ -68,6 +68,8 @@ interface ElectronAPI {
     resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
     /** Execute JavaScript in a tab's web contents (for scraping metadata) */
     executeScript: (tabId: string, script: string) => Promise<unknown>;
+    /** Reorder tabs to match the given array of tab IDs */
+    reorderTabs: (orderedIds: string[]) => Promise<void>;
     /** Hide all browser views (when switching to another app section) */
     hide: () => Promise<void>;
     /** Show the active browser view (when switching back to browser) */

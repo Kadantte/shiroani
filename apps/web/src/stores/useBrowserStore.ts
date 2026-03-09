@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { arrayMove } from '@dnd-kit/sortable';
 import type { BrowserTab } from '@shiroani/shared';
 import { createLogger, DEFAULT_HOMEPAGE_URL } from '@shiroani/shared';
 
@@ -38,6 +39,7 @@ interface BrowserActions {
   openTab: (url?: string) => void;
   closeTab: (tabId: string) => void;
   switchTab: (tabId: string) => void;
+  reorderTabs: (activeId: string, overId: string) => void;
   navigate: (url: string) => void;
   goBack: () => void;
   goForward: () => void;
@@ -82,6 +84,20 @@ export const useBrowserStore = create<BrowserStore>()(
       switchTab: (tabId: string) => {
         set({ activeTabId: tabId }, undefined, 'browser/switchTab');
         callBrowserAPI('switch browser tab', b => b.switchTab(tabId));
+      },
+
+      reorderTabs: (activeId: string, overId: string) => {
+        const { tabs } = get();
+        const oldIndex = tabs.findIndex(t => t.id === activeId);
+        const newIndex = tabs.findIndex(t => t.id === overId);
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const reordered = arrayMove(tabs, oldIndex, newIndex);
+        set({ tabs: reordered }, undefined, 'browser/reorderTabs');
+
+        // Sync new order to main process for persistence
+        const orderedIds = reordered.map(t => t.id);
+        callBrowserAPI('reorder browser tabs', b => b.reorderTabs(orderedIds));
       },
 
       navigate: (url: string) => {
