@@ -22,14 +22,17 @@ export function ThemeSwatch({
       onMouseEnter={() => onPreview(option.value)}
       onMouseLeave={onPreviewEnd}
       className={cn(
-        'relative flex flex-col items-center gap-1.5 p-2 rounded-lg',
-        'transition-all duration-150',
-        'hover:bg-accent/50',
-        isActive && 'ring-2 ring-primary bg-accent/30'
+        'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
+        'transition-all duration-200',
+        'hover:bg-accent/40 hover:scale-105',
+        isActive && 'ring-2 ring-primary/70 bg-primary/10'
       )}
     >
       <div
-        className="w-8 h-8 rounded-full border-2 border-border shadow-sm"
+        className={cn(
+          'w-10 h-10 rounded-full border-2 shadow-sm transition-all duration-200',
+          isActive ? 'border-primary/70 scale-110' : 'border-border-glass'
+        )}
         style={{ backgroundColor: option.color }}
       >
         {isActive && (
@@ -38,7 +41,14 @@ export function ThemeSwatch({
           </div>
         )}
       </div>
-      <span className="text-2xs text-muted-foreground truncate max-w-[60px]">{option.label}</span>
+      <span
+        className={cn(
+          'text-2xs truncate max-w-[70px] transition-colors',
+          isActive ? 'text-primary font-medium' : 'text-muted-foreground'
+        )}
+      >
+        {option.label}
+      </span>
     </button>
   );
 }

@@ -25,7 +25,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border h-full min-w-[1820px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1820px]">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
           const isTodayDay = isToday(day);
@@ -56,13 +56,13 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                       key={`${anime.id}-${anime.episode}`}
                       className={cn(
                         'rounded-lg overflow-hidden',
-                        'border border-border/50',
-                        'hover:border-border hover:shadow-md transition-all duration-200',
+                        'border border-border-glass',
+                        'hover:border-border-glass/80 hover:shadow-md transition-all duration-200',
                         'group'
                       )}
                     >
                       {/* Info strip -- episode & time */}
-                      <div className="flex items-center justify-between px-2.5 py-1.5 bg-card/80 text-2xs">
+                      <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/40 backdrop-blur-sm text-2xs">
                         <span className="font-medium text-foreground/80">
                           Odc. {anime.episode}
                           {anime.media.episodes ? `/${anime.media.episodes}` : ''}
@@ -94,7 +94,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                             {title}
                           </p>
                           {anime.media.averageScore != null && (
-                            <span className="text-2xs text-foreground/60 mt-0.5 inline-block">
+                            <span className="text-2xs font-semibold text-primary/80 tabular-nums mt-0.5 inline-block">
                               {(anime.media.averageScore / 10).toFixed(1)}
                             </span>
                           )}

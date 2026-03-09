@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useScheduleStore } from '@/stores/useScheduleStore';
@@ -46,33 +47,47 @@ export function ScheduleView() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="shrink-0 px-6 pt-5 pb-3 border-b border-border bg-card/30">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-semibold text-foreground">Harmonogram</h1>
+      <div className="shrink-0 px-6 pt-5 pb-3 border-b border-border/60 bg-card/20 backdrop-blur-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <CalendarDays className="w-4 h-4 text-primary" />
+            </div>
+            <h1 className="text-base font-semibold text-foreground">Harmonogram</h1>
+          </div>
           <div className="flex items-center gap-1">
             <TooltipButton
-              variant={viewMode === 'daily' ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode('daily')}
-              className="w-8 h-7"
+              className={cn(
+                'w-8 h-8 transition-all duration-200',
+                viewMode === 'daily' && 'bg-primary/10 text-primary hover:bg-primary/15'
+              )}
               tooltip="Dzienny"
             >
               <CalendarDays className="w-4 h-4" />
             </TooltipButton>
             <TooltipButton
-              variant={viewMode === 'weekly' ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode('weekly')}
-              className="w-8 h-7"
+              className={cn(
+                'w-8 h-8 transition-all duration-200',
+                viewMode === 'weekly' && 'bg-primary/10 text-primary hover:bg-primary/15'
+              )}
               tooltip="Tydzien — lista"
             >
               <List className="w-4 h-4" />
             </TooltipButton>
             <TooltipButton
-              variant={viewMode === 'timetable' ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode('timetable')}
-              className="w-8 h-7"
+              className={cn(
+                'w-8 h-8 transition-all duration-200',
+                viewMode === 'timetable' && 'bg-primary/10 text-primary hover:bg-primary/15'
+              )}
               tooltip="Tydzien — siatka"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -85,7 +100,7 @@ export function ScheduleView() {
             <Button variant="ghost" size="icon" className="w-7 h-7" onClick={navigatePrevious}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[180px] text-center">
+            <span className="text-sm font-medium min-w-[180px] text-center tabular-nums">
               {viewMode === 'daily'
                 ? formatDate(selectedDay)
                 : `${formatDate(weekDays[0])} - ${formatDate(weekDays[6])}`}
@@ -95,7 +110,12 @@ export function ScheduleView() {
             </Button>
           </div>
           {!isToday(selectedDay) && (
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={navigateToday}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7 border-primary/20 text-primary hover:bg-primary/10"
+              onClick={navigateToday}
+            >
               Dzis
             </Button>
           )}

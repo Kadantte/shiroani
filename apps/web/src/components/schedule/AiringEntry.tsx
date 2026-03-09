@@ -16,13 +16,13 @@ export function AiringEntry({ anime }: AiringEntryProps) {
     <div
       className={cn(
         'flex items-center gap-3 p-2.5 rounded-lg',
-        'bg-card/60 backdrop-blur-sm border border-border-glass',
-        'hover:bg-card/80 transition-colors duration-150'
+        'bg-background/40 backdrop-blur-sm border border-border-glass',
+        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200'
       )}
     >
       {/* Time */}
       <div className="shrink-0 w-12 text-center">
-        <span className="text-xs font-mono font-medium text-primary">
+        <span className="text-xs tabular-nums tracking-tight font-medium text-primary">
           {formatTime(anime.airingAt)}
         </span>
       </div>
@@ -32,11 +32,11 @@ export function AiringEntry({ anime }: AiringEntryProps) {
         <img
           src={coverUrl}
           alt={title}
-          className="w-10 h-14 rounded object-cover shrink-0"
+          className="w-10 h-14 rounded-lg border border-border-glass object-cover shrink-0"
           loading="lazy"
         />
       ) : (
-        <div className="w-10 h-14 rounded bg-muted shrink-0" />
+        <div className="w-10 h-14 rounded-lg border border-border-glass bg-muted shrink-0" />
       )}
 
       {/* Info */}
@@ -48,7 +48,7 @@ export function AiringEntry({ anime }: AiringEntryProps) {
             {anime.media.episodes ? `/${anime.media.episodes}` : ''}
           </span>
           {anime.media.format && (
-            <Badge variant="secondary" className="text-2xs py-0 h-4">
+            <Badge variant="secondary" className="text-2xs py-0 h-4 rounded-full">
               {anime.media.format}
             </Badge>
           )}
@@ -66,7 +66,7 @@ export function AiringEntry({ anime }: AiringEntryProps) {
 
       {/* Score */}
       {anime.media.averageScore != null && (
-        <span className="text-xs font-medium text-muted-foreground shrink-0">
+        <span className="text-xs font-semibold text-primary/80 shrink-0 tabular-nums">
           {(anime.media.averageScore / 10).toFixed(1)}
         </span>
       )}

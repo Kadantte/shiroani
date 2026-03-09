@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useUpdateStore } from '@/stores/useUpdateStore';
+import { SettingsCard } from '@/components/settings/SettingsCard';
 
 interface UpdatesSectionProps {
   version: string;
@@ -49,62 +49,65 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
   })();
 
   return (
-    <div className="space-y-6">
-      {/* Version */}
-      <div>
-        <h3 className="text-sm font-medium mb-1">Wersja</h3>
-        <p className="text-base font-mono text-foreground">{version || '...'}</p>
-      </div>
-
-      <Separator />
-
-      {/* Channel */}
-      <div>
-        <h3 className="text-sm font-medium mb-2">Kanal aktualizacji</h3>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setChannel('stable')}
-            disabled={isChannelSwitching}
-            className={cn(
-              'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
-              channel === 'stable'
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:border-foreground/20'
-            )}
-          >
-            <div
-              className={cn(
-                'w-3 h-3 rounded-full',
-                channel === 'stable' ? 'bg-primary' : 'bg-muted-foreground/30'
-              )}
-            />
-            <span className="text-sm">Stabilna</span>
-          </button>
-          <button
-            onClick={() => setChannel('beta')}
-            disabled={isChannelSwitching}
-            className={cn(
-              'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
-              channel === 'beta'
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:border-foreground/20'
-            )}
-          >
-            <div
-              className={cn(
-                'w-3 h-3 rounded-full',
-                channel === 'beta' ? 'bg-primary' : 'bg-muted-foreground/30'
-              )}
-            />
-            <span className="text-sm">Beta</span>
-          </button>
+    <div className="space-y-4">
+      {/* Version & Channel */}
+      <SettingsCard
+        icon={Package}
+        title="Wersja aplikacji"
+        subtitle="Aktualna wersja i kanal aktualizacji"
+      >
+        <div>
+          <h3 className="text-sm font-medium mb-1">Wersja</h3>
+          <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">
+            {version || '...'}
+          </p>
         </div>
-      </div>
 
-      <Separator />
+        <div>
+          <h3 className="text-sm font-medium mb-2">Kanal aktualizacji</h3>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setChannel('stable')}
+              disabled={isChannelSwitching}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                channel === 'stable'
+                  ? 'border-primary/50 bg-primary/15 text-foreground'
+                  : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
+              )}
+            >
+              <div
+                className={cn(
+                  'w-3 h-3 rounded-full',
+                  channel === 'stable' ? 'bg-primary' : 'bg-muted-foreground/30'
+                )}
+              />
+              <span className="text-sm">Stabilna</span>
+            </button>
+            <button
+              onClick={() => setChannel('beta')}
+              disabled={isChannelSwitching}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                channel === 'beta'
+                  ? 'border-primary/50 bg-primary/15 text-foreground'
+                  : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
+              )}
+            >
+              <div
+                className={cn(
+                  'w-3 h-3 rounded-full',
+                  channel === 'beta' ? 'bg-primary' : 'bg-muted-foreground/30'
+                )}
+              />
+              <span className="text-sm">Beta</span>
+            </button>
+          </div>
+        </div>
+      </SettingsCard>
 
       {/* Check for updates */}
-      <div>
+      <SettingsCard>
         <div className="flex items-center gap-3 mb-2">
           <Button
             size="sm"
@@ -150,7 +153,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
             />
           </div>
         )}
-      </div>
+      </SettingsCard>
     </div>
   );
 }

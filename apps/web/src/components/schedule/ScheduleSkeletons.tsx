@@ -20,7 +20,7 @@ export function DailyViewSkeleton() {
           key={i}
           className={cn(
             'flex items-center gap-3 p-2.5 rounded-lg',
-            'bg-card/60 backdrop-blur-sm border border-border-glass'
+            'bg-background/40 backdrop-blur-sm border border-border-glass'
           )}
           style={{ animationDelay: `${i * 100}ms` }}
         >
@@ -61,11 +61,11 @@ export function DailyViewSkeleton() {
 export function WeeklyViewSkeleton() {
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border h-full min-w-[1680px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1680px]">
         {DAY_NAMES_SHORT.map((dayName, colIdx) => (
           <div key={dayName} className="flex flex-col bg-background min-w-[240px] flex-1">
             {/* Day header */}
-            <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border bg-card/40">
+            <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border/60 bg-card/20 backdrop-blur-sm">
               <Skeleton className="h-3 w-8 mx-auto rounded" />
               <div className="flex items-center justify-center gap-1.5 mt-1.5">
                 <Skeleton className="w-7 h-7 rounded-full" />
@@ -80,7 +80,10 @@ export function WeeklyViewSkeleton() {
                 return (
                   <div
                     key={entryIdx}
-                    className={cn('p-2 rounded-lg text-xs', 'bg-card/60 border border-border/50')}
+                    className={cn(
+                      'p-2 rounded-lg text-xs',
+                      'bg-background/40 border border-border-glass'
+                    )}
                     style={{ animationDelay: `${colIdx * 80 + entryIdx * 60}ms` }}
                   >
                     <div className="flex items-start gap-2">
@@ -116,11 +119,11 @@ export function WeeklyViewSkeleton() {
 export function TimetableViewSkeleton() {
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border h-full min-w-[1820px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1820px]">
         {DAY_NAMES_FULL.map((dayName, colIdx) => (
           <div key={dayName} className="flex flex-col bg-background min-w-[260px] flex-1">
             {/* Day header */}
-            <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border bg-card/40">
+            <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border/60 bg-card/20 backdrop-blur-sm">
               <Skeleton className="h-3 w-16 mx-auto rounded" />
               <div className="flex items-center justify-center gap-1.5 mt-1.5">
                 <Skeleton className="w-7 h-7 rounded-full" />
@@ -135,11 +138,11 @@ export function TimetableViewSkeleton() {
                 return (
                   <div
                     key={entryIdx}
-                    className="rounded-lg overflow-hidden border border-border/50"
+                    className="rounded-lg overflow-hidden border border-border-glass"
                     style={{ animationDelay: `${colIdx * 100 + entryIdx * 70}ms` }}
                   >
                     {/* Info strip */}
-                    <div className="flex items-center justify-between px-2.5 py-1.5 bg-card/80">
+                    <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/40 backdrop-blur-sm">
                       <Skeleton className="h-2.5 w-12 rounded" />
                       <div className="flex items-center gap-1">
                         <Skeleton className="w-3 h-3 rounded" />

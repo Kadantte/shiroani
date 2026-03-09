@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Bell, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SettingsCard } from '@/components/settings/SettingsCard';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
@@ -51,55 +52,63 @@ export function NotificationsSection() {
   if (!loaded) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Enable notifications */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <SettingsCard
+        icon={Bell}
+        title="Powiadomienia"
+        subtitle="Ustawienia powiadomien o nowych odcinkach"
+      >
+        {/* Enable notifications */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium">Powiadomienia o odcinkach</h3>
+            <p className="text-xs text-muted-foreground">
+              Otrzymuj powiadomienia gdy nowy odcinek sledzonego anime jest nadawany
+            </p>
+          </div>
+          <Switch checked={enabled} onCheckedChange={setEnabled} />
+        </div>
+
+        <Separator className="bg-border/50" />
+
+        {/* Lead time */}
         <div>
-          <h3 className="text-sm font-medium">Powiadomienia o odcinkach</h3>
-          <p className="text-xs text-muted-foreground">
-            Otrzymuj powiadomienia gdy nowy odcinek sledzonego anime jest nadawany
+          <h3 className="text-sm font-medium mb-1">Wyprzedzenie</h3>
+          <p className="text-xs text-muted-foreground mb-2">
+            Ile minut przed emisja wyslac powiadomienie
+          </p>
+          <Select value={leadTime} onValueChange={setLeadTime} disabled={!enabled}>
+            <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEAD_TIME_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value} className="text-xs">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="pt-2 border-t border-border/30">
+          <Button size="sm" onClick={handleSave}>
+            {saved ? <Check className="w-4 h-4" /> : null}
+            {saved ? 'Zapisano' : 'Zapisz'}
+          </Button>
+        </div>
+      </SettingsCard>
+
+      {/* Info callout */}
+      <SettingsCard>
+        <div className="flex items-start gap-2.5">
+          <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
+          <p className="text-xs font-medium text-muted-foreground/80">
+            Powiadomienia dzialaja tylko dla anime ze statusem &ldquo;Ogladane&rdquo; w bibliotece,
+            ktore maja przypisane ID z AniList.
           </p>
         </div>
-        <Switch checked={enabled} onCheckedChange={setEnabled} />
-      </div>
-
-      <Separator />
-
-      {/* Lead time */}
-      <div>
-        <h3 className="text-sm font-medium mb-1">Wyprzedzenie</h3>
-        <p className="text-xs text-muted-foreground mb-2">
-          Ile minut przed emisja wyslac powiadomienie
-        </p>
-        <Select value={leadTime} onValueChange={setLeadTime} disabled={!enabled}>
-          <SelectTrigger className="w-40 h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LEAD_TIME_OPTIONS.map(option => (
-              <SelectItem key={option.value} value={option.value} className="text-xs">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
-      {/* Info */}
-      <p className="text-xs text-muted-foreground">
-        Powiadomienia dzialaja tylko dla anime ze statusem &ldquo;Ogladane&rdquo; w bibliotece,
-        ktore maja przypisane ID z AniList.
-      </p>
-
-      <Separator />
-
-      {/* Save button */}
-      <Button size="sm" onClick={handleSave}>
-        {saved ? <Check className="w-4 h-4" /> : null}
-        {saved ? 'Zapisano' : 'Zapisz'}
-      </Button>
+      </SettingsCard>
     </div>
   );
 }

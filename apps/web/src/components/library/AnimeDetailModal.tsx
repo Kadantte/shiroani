@@ -56,6 +56,15 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     }
   }, [entry]);
 
+  const isCompleted = status === 'completed' && !!entry?.episodes && entry.episodes > 0;
+
+  // Auto-set current episode to total when status is completed
+  useEffect(() => {
+    if (status === 'completed' && entry?.episodes && entry.episodes > 0) {
+      setCurrentEpisode(entry.episodes);
+    }
+  }, [status, entry?.episodes]);
+
   const handleSave = useCallback(() => {
     if (!entry) return;
     const parsedAnilistId = anilistId.trim() ? parseInt(anilistId.trim(), 10) : null;
@@ -199,6 +208,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
                   )
                 }
                 className="w-16 h-7 text-xs text-center"
+                disabled={isCompleted}
               />
             </div>
             {entry.episodes && entry.episodes > 0 && (
@@ -208,6 +218,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
                 min={0}
                 max={entry.episodes}
                 step={1}
+                disabled={isCompleted}
               />
             )}
           </div>

@@ -8,10 +8,10 @@ export interface DailyViewProps {
 
 export function DailyView({ entries }: DailyViewProps) {
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+    <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-2">
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted/40 border border-border-glass flex items-center justify-center">
             <Calendar className="w-6 h-6 opacity-30" />
           </div>
           <div className="text-center space-y-1">

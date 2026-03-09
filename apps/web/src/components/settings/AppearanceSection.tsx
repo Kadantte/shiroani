@@ -11,6 +11,7 @@ import {
   classicLightThemes,
 } from '@/lib/theme';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
+import { SettingsCard } from '@/components/settings/SettingsCard';
 
 export function AppearanceSection() {
   const { theme, setTheme, setPreviewTheme } = useSettingsStore();
@@ -25,120 +26,32 @@ export function AppearanceSection() {
   } = useBackgroundStore();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-medium mb-1">Motyw</h3>
-        <p className="text-xs text-muted-foreground mb-3">Wybierz motyw kolorystyczny aplikacji</p>
-
-        {/* Anime section */}
-        <div className="mb-4">
-          <h4 className="text-xs font-medium text-primary mb-3 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3" />
-            Anime
-          </h4>
-
-          {/* Anime dark */}
-          <div className="mb-3">
-            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Ciemne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-              {animeDarkThemes.map(opt => (
-                <ThemeSwatch
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Anime light */}
-          <div>
-            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Jasne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-              {animeLightThemes.map(opt => (
-                <ThemeSwatch
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <Separator className="my-3" />
-
-        {/* Classic section */}
-        <div>
-          <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-            <Palette className="w-3 h-3" />
-            Klasyczne
-          </h4>
-
-          {/* Classic dark */}
-          <div className="mb-3">
-            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Ciemne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-              {classicDarkThemes.map(opt => (
-                <ThemeSwatch
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Classic light */}
-          <div>
-            <p className="text-2xs text-muted-foreground mb-1.5 ml-0.5">Jasne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(70px,1fr))] gap-1">
-              {classicLightThemes.map(opt => (
-                <ThemeSwatch
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Custom background */}
-      <div>
-        <h3 className="text-sm font-medium mb-1">Tlo</h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          Ustaw wlasne tlo aplikacji (obraz lub GIF)
-        </p>
-
+    <div className="space-y-4">
+      {/* Custom background — shown first */}
+      <SettingsCard icon={Image} title="Tlo" subtitle="Ustaw wlasne tlo aplikacji (obraz lub GIF)">
         {customBackground && (
-          <div className="mb-3 rounded-lg overflow-hidden border border-border h-24">
+          <div className="rounded-xl overflow-hidden border border-border-glass h-24">
             <img src={customBackground} alt="Podglad tla" className="w-full h-full object-cover" />
           </div>
         )}
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={pickBackground}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border-glass"
+            onClick={pickBackground}
+          >
             <Image className="w-4 h-4" />
             Wybierz obraz
           </Button>
           {customBackground && (
-            <Button variant="ghost" size="sm" onClick={removeBackground}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="border-border-glass"
+              onClick={removeBackground}
+            >
               <RotateCcw className="w-4 h-4" />
               Usun tlo
             </Button>
@@ -147,7 +60,7 @@ export function AppearanceSection() {
 
         {/* Opacity & blur sliders - only shown when a background is set */}
         {customBackground && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-2 space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-muted-foreground">Przezroczystosc</label>
@@ -159,7 +72,7 @@ export function AppearanceSection() {
                 value={[backgroundOpacity]}
                 onValueChange={([v]) => setBackgroundOpacity(v)}
                 min={0.02}
-                max={0.5}
+                max={1}
                 step={0.01}
               />
             </div>
@@ -181,7 +94,96 @@ export function AppearanceSection() {
             </div>
           </div>
         )}
-      </div>
+      </SettingsCard>
+
+      {/* Theme picker */}
+      <SettingsCard icon={Palette} title="Motyw" subtitle="Wybierz motyw kolorystyczny aplikacji">
+        {/* Anime section */}
+        <div>
+          <h4 className="text-xs font-medium text-primary mb-3 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            Anime
+          </h4>
+
+          {/* Anime dark */}
+          <div className="mb-3">
+            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Ciemne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+              {animeDarkThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Anime light */}
+          <div>
+            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Jasne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+              {animeLightThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <Separator className="bg-border/50" />
+
+        {/* Classic section */}
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Palette className="w-3 h-3" />
+            Klasyczne
+          </h4>
+
+          {/* Classic dark */}
+          <div className="mb-3">
+            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Ciemne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+              {classicDarkThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Classic light */}
+          <div>
+            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Jasne</p>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+              {classicLightThemes.map(opt => (
+                <ThemeSwatch
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={() => setPreviewTheme(null)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
     </div>
   );
 }

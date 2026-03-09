@@ -38,7 +38,7 @@ export function SettingsView() {
   return (
     <div className="flex-1 flex overflow-hidden animate-fade-in">
       {/* Section navigation */}
-      <div className="w-44 shrink-0 border-r border-border bg-card/30 p-3 space-y-0.5">
+      <div className="w-44 shrink-0 border-r border-border/40 p-3 space-y-0.5">
         {SECTIONS.map(section => (
           <button
             key={section.id}
@@ -47,8 +47,8 @@ export function SettingsView() {
               'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm',
               'transition-all duration-150',
               activeSection === section.id
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                ? 'bg-primary/15 text-primary font-medium'
+                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
             )}
           >
             <section.Icon className="w-4 h-4 shrink-0" />
@@ -58,7 +58,7 @@ export function SettingsView() {
       </div>
 
       {/* Section content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 pb-20">
         <div className="max-w-xl">
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}

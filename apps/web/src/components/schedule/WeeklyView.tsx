@@ -25,7 +25,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border h-full min-w-[1680px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1680px]">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
           const isTodayDay = isToday(day);
@@ -55,8 +55,8 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                       key={`${anime.id}-${anime.episode}`}
                       className={cn(
                         'group p-2 rounded-lg text-xs',
-                        'bg-card/60 border border-border/50',
-                        'hover:bg-card/80 hover:border-border transition-colors duration-150'
+                        'bg-background/40 border border-border-glass',
+                        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200'
                       )}
                     >
                       <div className="flex items-start gap-2">
@@ -77,7 +77,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                             <span>Odc. {anime.episode}</span>
                           </div>
                           {anime.media.averageScore != null && (
-                            <span className="text-2xs text-muted-foreground/50">
+                            <span className="text-2xs font-semibold text-primary/80 tabular-nums">
                               {(anime.media.averageScore / 10).toFixed(1)}
                             </span>
                           )}

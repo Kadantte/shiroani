@@ -41,6 +41,8 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
   const [coverImage, setCoverImage] = useState('');
   const [isFetchingCover, setIsFetchingCover] = useState(false);
 
+  const isCompleted = status === 'completed' && totalEpisodes > 0;
+
   // Reset form and auto-fetch cover when dialog opens
   useEffect(() => {
     if (open) {
@@ -78,6 +80,13 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       }
     }
   }, [open, title]);
+
+  // Auto-set current episode to total when status is completed
+  useEffect(() => {
+    if (status === 'completed' && totalEpisodes > 0) {
+      setCurrentEpisode(totalEpisodes);
+    }
+  }, [status, totalEpisodes]);
 
   const handleAdd = useCallback(() => {
     if (!editableTitle.trim()) {
@@ -223,6 +232,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 value={currentEpisode}
                 onChange={e => setCurrentEpisode(Math.max(0, parseInt(e.target.value) || 0))}
                 className="h-8 text-sm w-24"
+                disabled={isCompleted}
               />
             </div>
             <div className="space-y-1.5">

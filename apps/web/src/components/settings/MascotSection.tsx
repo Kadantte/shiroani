@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Cat } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SettingsCard } from '@/components/settings/SettingsCard';
 
 export function MascotSection() {
   const [enabled, setEnabled] = useState(true);
@@ -70,20 +72,21 @@ export function MascotSection() {
   if (!loaded) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium">Maskotka na pulpicie</h3>
-          <p className="text-xs text-muted-foreground">
-            Wyswietl animowana maskotke chibi na pulpicie z ikonka w zasobniku systemowym
-          </p>
+    <div className="space-y-4">
+      <SettingsCard icon={Cat} title="Maskotka" subtitle="Interaktywna maskotka na pulpicie">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium">Maskotka na pulpicie</h3>
+            <p className="text-xs text-muted-foreground">
+              Wyswietl animowana maskotke chibi na pulpicie z ikonka w zasobniku systemowym
+            </p>
+          </div>
+          <Switch checked={enabled} onCheckedChange={handleToggle} />
         </div>
-        <Switch checked={enabled} onCheckedChange={handleToggle} />
-      </div>
+      </SettingsCard>
 
       {enabled && (
-        <>
-          <Separator />
+        <SettingsCard>
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium">Rozmiar maskotki</h3>
@@ -91,19 +94,20 @@ export function MascotSection() {
             </div>
             <Slider value={[size]} min={48} max={256} step={8} onValueChange={handleSizeChange} />
             <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-muted-foreground">48px</span>
-              <span className="text-[10px] text-muted-foreground">256px</span>
+              <span className="text-2xs text-muted-foreground">48px</span>
+              <span className="text-2xs text-muted-foreground">256px</span>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/50" />
+
           <div>
             <h3 className="text-sm font-medium mb-1">Tryb widocznosci</h3>
             <p className="text-xs text-muted-foreground mb-2">
               Kiedy maskotka ma byc widoczna na pulpicie
             </p>
             <Select value={visibilityMode} onValueChange={handleVisibilityModeChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -113,7 +117,8 @@ export function MascotSection() {
             </Select>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/50" />
+
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium">Zablokuj pozycje</h3>
@@ -124,7 +129,8 @@ export function MascotSection() {
             <Switch checked={positionLocked} onCheckedChange={handleLockToggle} />
           </div>
 
-          <Separator />
+          <Separator className="bg-border/50" />
+
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium">Resetuj pozycje</h3>
@@ -136,7 +142,7 @@ export function MascotSection() {
               Resetuj
             </Button>
           </div>
-        </>
+        </SettingsCard>
       )}
     </div>
   );
