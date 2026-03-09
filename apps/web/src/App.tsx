@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Globe, BookOpen, Calendar, Settings, Loader2, AlertCircle } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Globe, BookOpen, Calendar, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON } from '@/lib/platform';
 
@@ -8,6 +8,7 @@ import { BrowserView } from '@/components/browser/BrowserView';
 import { LibraryView } from '@/components/library/LibraryView';
 import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
+import { SplashScreen } from '@/components/splash';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
@@ -75,9 +76,12 @@ function App() {
   const activeView = useAppStore(s => s.activeView);
   const navigateTo = useAppStore(s => s.navigateTo);
   const { ready, error } = useAppInitialization();
+  const [splashDone, setSplashDone] = useState(false);
   const restoreBackground = useBackgroundStore(s => s.restoreBackground);
   const customBackground = useBackgroundStore(s => s.customBackground);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
+
+  const handleSplashDismissed = useCallback(() => setSplashDone(true), []);
 
   // Restore custom background from persisted settings on startup
   useEffect(() => {
@@ -86,100 +90,73 @@ function App() {
     }
   }, [ready, restoreBackground]);
 
-  // Show loading state while initializing socket connection
-  if (!ready) {
-    return (
-      <div
-        className={cn(
-          'h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden',
-          IS_ELECTRON && 'rounded-t-[10px]'
-        )}
-      >
-        {IS_ELECTRON && <TitleBar />}
-        <div className="flex-1 flex flex-col items-center justify-center gap-5">
-          {error ? (
-            <div className="flex flex-col items-center gap-3 max-w-xs text-center">
-              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-destructive" />
-              </div>
-              <p className="text-destructive text-sm">{error}</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-2xl font-bold tracking-tight text-foreground">白アニ</span>
-                <span className="text-xs text-muted-foreground/60 tracking-widest uppercase">
-                  ShiroAni
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                <p className="text-muted-foreground text-xs">Laczenie z serwerem...</p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   const hasBg = !!customBackground;
 
   return (
-    <div
-      data-testid="app-ready"
-      className={cn(
-        'h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden relative',
-        IS_ELECTRON && 'rounded-t-[10px]'
-      )}
-    >
-      {/* Custom background overlay — covers entire window including sidebar */}
-      {hasBg && !isFullScreen && <BackgroundOverlay />}
+    <>
+      {/* Splash screen overlay — covers everything during initialization */}
+      <SplashScreen ready={ready} error={error} onDismissed={handleSplashDismissed} />
 
-      {/* Custom title bar for frameless window — hidden in fullscreen */}
-      {IS_ELECTRON && !isFullScreen && <TitleBar />}
-
-      <div className="flex-1 flex overflow-hidden relative z-[1]">
-        {/* Sidebar navigation — hidden in fullscreen */}
-        {!isFullScreen && (
-          <nav
-            aria-label="Nawigacja glowna"
-            className={cn(
-              'w-[68px] flex flex-col items-center px-1 py-2 gap-0.5 border-r border-border shrink-0',
-              hasBg ? 'bg-sidebar/60 backdrop-blur-sm' : 'bg-sidebar'
-            )}
-          >
-            {NAV_ITEMS.map(item => (
-              <NavButton
-                key={item.id}
-                item={item}
-                isActive={activeView === item.id}
-                onClick={() => navigateTo(item.id)}
-              />
-            ))}
-
-            <div className="flex-1" />
-
-            <NavButton
-              item={SETTINGS_ITEM}
-              isActive={activeView === 'settings'}
-              onClick={() => navigateTo('settings')}
-            />
-          </nav>
-        )}
-
-        {/* Content area renders the active view */}
-        <main
-          id="main-content"
-          className={cn('flex-1 flex overflow-hidden', hasBg ? 'bg-transparent' : 'bg-background')}
+      {splashDone && (
+        <div
+          data-testid="app-ready"
+          className={cn(
+            'h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden relative',
+            IS_ELECTRON && 'rounded-t-[10px]'
+          )}
         >
-          {activeView === 'browser' && <BrowserView />}
-          {activeView === 'library' && <LibraryView />}
-          {activeView === 'schedule' && <ScheduleView />}
-          {activeView === 'settings' && <SettingsView />}
-        </main>
-      </div>
-    </div>
+          {/* Custom background overlay — covers entire window including sidebar */}
+          {hasBg && !isFullScreen && <BackgroundOverlay />}
+
+          {/* Custom title bar for frameless window — hidden in fullscreen */}
+          {IS_ELECTRON && !isFullScreen && <TitleBar />}
+
+          <div className="flex-1 flex overflow-hidden relative z-[1]">
+            {/* Sidebar navigation — hidden in fullscreen */}
+            {!isFullScreen && (
+              <nav
+                aria-label="Nawigacja glowna"
+                className={cn(
+                  'w-[68px] flex flex-col items-center px-1 py-2 gap-0.5 border-r border-border shrink-0',
+                  hasBg ? 'bg-sidebar/60 backdrop-blur-sm' : 'bg-sidebar'
+                )}
+              >
+                {NAV_ITEMS.map(item => (
+                  <NavButton
+                    key={item.id}
+                    item={item}
+                    isActive={activeView === item.id}
+                    onClick={() => navigateTo(item.id)}
+                  />
+                ))}
+
+                <div className="flex-1" />
+
+                <NavButton
+                  item={SETTINGS_ITEM}
+                  isActive={activeView === 'settings'}
+                  onClick={() => navigateTo('settings')}
+                />
+              </nav>
+            )}
+
+            {/* Content area renders the active view */}
+            <main
+              id="main-content"
+              className={cn(
+                'flex-1 flex overflow-hidden',
+                hasBg ? 'bg-transparent' : 'bg-background'
+              )}
+            >
+              {activeView === 'browser' && <BrowserView />}
+              {activeView === 'library' && <LibraryView />}
+              {activeView === 'schedule' && <ScheduleView />}
+              {activeView === 'settings' && <SettingsView />}
+            </main>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

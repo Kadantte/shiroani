@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Minus, Square, Copy, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON, IS_MAC } from '@/lib/platform';
+import { APP_LOGO_URL } from '@/lib/constants';
 
 /**
  * Custom title bar for the frameless Electron window.
@@ -47,7 +48,7 @@ export function TitleBar() {
   return (
     <div className="drag h-8 flex items-center bg-sidebar border-b border-border shrink-0 select-none">
       <div className="no-drag flex items-center px-3 gap-1.5">
-        <div className="w-3 h-3 rounded-full bg-primary" />
+        <img src={APP_LOGO_URL} alt="" className="w-4 h-4 object-contain" draggable={false} />
         <span className="text-xs font-semibold text-foreground">ShiroAni</span>
       </div>
 

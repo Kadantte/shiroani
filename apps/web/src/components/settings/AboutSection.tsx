@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
+import { APP_LOGO_URL } from '@/lib/constants';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 
 interface AboutSectionProps {
@@ -12,8 +13,13 @@ export function AboutSection({ version }: AboutSectionProps) {
     <div className="space-y-6">
       {/* App info */}
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-          <span className="text-2xl font-bold text-primary">SA</span>
+        <div className="w-14 h-14 rounded-xl bg-primary/5 flex items-center justify-center overflow-hidden">
+          <img
+            src={APP_LOGO_URL}
+            alt="ShiroAni"
+            className="w-12 h-12 object-contain"
+            draggable={false}
+          />
         </div>
         <div>
           <h2 className="text-lg font-semibold">{APP_NAME}</h2>

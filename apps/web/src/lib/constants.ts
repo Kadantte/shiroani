@@ -1,5 +1,8 @@
 import type { AnimeStatus } from '@shiroani/shared';
 
+/** Path to the app mascot logo (chibi SVG) */
+export const APP_LOGO_URL = `${import.meta.env.BASE_URL}shiro-chibi.svg`;
+
 export const STATUS_CONFIG: Record<AnimeStatus, { label: string; color: string }> = {
   watching: { label: 'Ogladam', color: 'bg-status-info' },
   completed: { label: 'Ukonczone', color: 'bg-status-success' },
