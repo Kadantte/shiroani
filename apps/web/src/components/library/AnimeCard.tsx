@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Pencil, Trash2 } from 'lucide-react';
+import { Play, Pencil, Trash2, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
@@ -60,8 +60,11 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-muted-foreground text-xs">Brak obrazka</span>
+          <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex flex-col items-center justify-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-background/30 flex items-center justify-center">
+              <Film className="w-5 h-5 text-muted-foreground/40" />
+            </div>
+            <span className="text-muted-foreground/50 text-2xs font-medium">Brak okladki</span>
           </div>
         )}
 
@@ -103,8 +106,9 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
         {/* Hover overlay with action buttons */}
         <div
           className={cn(
-            'absolute inset-0 bg-black/50 flex items-center justify-center gap-2',
-            'transition-opacity duration-200',
+            'absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10',
+            'backdrop-blur-[2px] flex items-center justify-center gap-2.5',
+            'transition-all duration-250',
             isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
           )}
         >
@@ -115,9 +119,10 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
                 onContinue(entry);
               }}
               className={cn(
-                'w-7 h-7 rounded-full bg-primary text-primary-foreground',
+                'w-8 h-8 rounded-full bg-primary text-primary-foreground shadow-md',
                 'flex items-center justify-center',
-                'hover:bg-primary/80 transition-colors duration-150'
+                'hover:bg-primary/90 hover:scale-110 active:scale-95',
+                'transition-all duration-150'
               )}
               title="Kontynuuj"
             >
@@ -130,9 +135,10 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
               onSelect(entry);
             }}
             className={cn(
-              'w-7 h-7 rounded-full bg-accent text-accent-foreground',
+              'w-8 h-8 rounded-full bg-accent text-accent-foreground shadow-md',
               'flex items-center justify-center',
-              'hover:bg-accent/80 transition-colors duration-150'
+              'hover:bg-accent/90 hover:scale-110 active:scale-95',
+              'transition-all duration-150'
             )}
             title="Edytuj"
           >
@@ -145,9 +151,10 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
                 onRemove(entry);
               }}
               className={cn(
-                'w-7 h-7 rounded-full bg-destructive text-destructive-foreground',
+                'w-8 h-8 rounded-full bg-destructive text-destructive-foreground shadow-md',
                 'flex items-center justify-center',
-                'hover:bg-destructive/80 transition-colors duration-150'
+                'hover:bg-destructive/90 hover:scale-110 active:scale-95',
+                'transition-all duration-150'
               )}
               title="Usun"
             >

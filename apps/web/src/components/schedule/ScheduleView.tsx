@@ -205,8 +205,15 @@ export function ScheduleView() {
           <div className="p-4 space-y-2">
             {todayEntries.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
-                <Calendar className="w-12 h-12 opacity-20" />
-                <p className="text-sm">Brak anime na ten dzien</p>
+                <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center">
+                  <Calendar className="w-6 h-6 opacity-30" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-medium text-foreground/70">Brak anime na ten dzien</p>
+                  <p className="text-xs text-muted-foreground/50">
+                    Sprobuj innego dnia lub widoku tygodniowego
+                  </p>
+                </div>
               </div>
             ) : (
               todayEntries.map(anime => (
@@ -234,22 +241,22 @@ export function ScheduleView() {
                   {/* Day header */}
                   <div
                     className={cn(
-                      'shrink-0 px-2 py-1.5 text-center border-b border-border',
+                      'shrink-0 px-2 py-2 text-center border-b border-border',
                       isTodayDay ? 'bg-primary/10' : 'bg-card/40'
                     )}
                   >
                     <span
                       className={cn(
-                        'text-xs font-medium',
-                        isTodayDay ? 'text-primary' : 'text-muted-foreground'
+                        'text-[10px] font-medium uppercase tracking-wide',
+                        isTodayDay ? 'text-primary' : 'text-muted-foreground/70'
                       )}
                     >
                       {DAY_NAMES_SHORT[idx]}
                     </span>
                     <span
                       className={cn(
-                        'block text-2xs',
-                        isTodayDay ? 'text-primary/70' : 'text-muted-foreground/60'
+                        'flex items-center justify-center w-6 h-6 mx-auto mt-0.5 rounded-full text-xs font-semibold',
+                        isTodayDay ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
                       )}
                     >
                       {new Date(day).getDate()}

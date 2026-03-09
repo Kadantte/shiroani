@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useCallback } from 'react';
-import { Search, LayoutGrid, List, BookOpen } from 'lucide-react';
+import { Search, LayoutGrid, List, BookOpen, Globe, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -135,17 +135,42 @@ export function LibraryView() {
       <div className="flex-1 overflow-y-auto p-4">
         {filteredEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 py-16">
-            <BookOpen className="w-16 h-16 opacity-20" />
-            <div className="text-center space-y-1">
-              <p className="text-sm font-medium">
-                {searchQuery ? 'Brak wynikow wyszukiwania' : 'Twoja biblioteka jest pusta'}
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                {searchQuery
-                  ? 'Sprobuj innych slow kluczowych'
-                  : 'Wyszukaj anime, aby dodac je do biblioteki.'}
-              </p>
-            </div>
+            {searchQuery ? (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center">
+                  <SearchX className="w-7 h-7 opacity-40" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-sm font-medium text-foreground/70">Brak wynikow</p>
+                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">
+                    Sprobuj innych slow kluczowych lub zmien filtr statusu
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="w-7 h-7 text-primary/40" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-sm font-medium text-foreground/70">
+                    Twoja biblioteka jest pusta
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 max-w-[240px]">
+                    Przejdz do przegladarki i dodaj anime klikajac ikone zakladki na pasku
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 gap-1.5 text-xs"
+                  onClick={() => navigateTo('browser')}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  Otworz przegladarke
+                </Button>
+              </>
+            )}
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
