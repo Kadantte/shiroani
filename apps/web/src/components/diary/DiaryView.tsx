@@ -1,12 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, LayoutGrid, List, NotebookPen, Plus, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useDiaryStore, getFilteredDiaryEntries } from '@/stores/useDiaryStore';
 import { DiaryEntryGrid } from './DiaryEntryGrid';
 import { DiaryEditor } from './DiaryEditor';
+import type { DiaryEntry } from '@shiroani/shared';
 
 const DIARY_FILTER_OPTIONS = [
   { value: 'all' as const, label: 'Wszystkie' },
@@ -33,6 +35,8 @@ export function DiaryView() {
     initListeners,
     cleanupListeners,
   } = useDiaryStore();
+
+  const [entryToRemove, setEntryToRemove] = useState<DiaryEntry | null>(null);
 
   useEffect(() => {
     initListeners();
@@ -186,7 +190,7 @@ export function DiaryView() {
             entries={filteredEntries}
             viewMode={viewMode}
             onSelect={openEditor}
-            onRemove={e => removeEntry(e.id)}
+            onRemove={setEntryToRemove}
             onTogglePin={e => updateEntry({ id: e.id, isPinned: !e.isPinned })}
           />
         )}
@@ -202,6 +206,22 @@ export function DiaryView() {
           onUpdate={updateEntry}
         />
       )}
+
+      {/* Confirm removal dialog (single instance) */}
+      <ConfirmDialog
+        open={!!entryToRemove}
+        onOpenChange={open => {
+          if (!open) setEntryToRemove(null);
+        }}
+        title="Usuń wpis"
+        description={`Czy na pewno chcesz usunąć "${entryToRemove?.title || 'Bez tytułu'}" z pamiętnika?`}
+        onConfirm={() => {
+          if (entryToRemove) {
+            removeEntry(entryToRemove.id);
+            setEntryToRemove(null);
+          }
+        }}
+      />
     </div>
   );
 }

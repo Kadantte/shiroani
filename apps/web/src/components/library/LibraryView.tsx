@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useLibraryStore, getFilteredEntries } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
@@ -34,6 +35,7 @@ export function LibraryView() {
   } = useLibraryStore();
 
   const [showStats, setShowStats] = useState(false);
+  const [entryToRemove, setEntryToRemove] = useState<AnimeEntry | null>(null);
 
   const { openTab } = useBrowserStore();
   const navigateTo = useAppStore(s => s.navigateTo);
@@ -216,7 +218,7 @@ export function LibraryView() {
                 nextAiring={entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null}
                 onSelect={openDetail}
                 onContinue={handleContinue}
-                onRemove={e => removeFromLibrary(e.id)}
+                onRemove={setEntryToRemove}
               />
             ))}
           </div>
@@ -279,6 +281,22 @@ export function LibraryView() {
         open={isDetailOpen}
         onOpenChange={open => {
           if (!open) closeDetail();
+        }}
+      />
+
+      {/* Confirm removal dialog (single instance for all cards) */}
+      <ConfirmDialog
+        open={!!entryToRemove}
+        onOpenChange={open => {
+          if (!open) setEntryToRemove(null);
+        }}
+        title="Usuń z biblioteki"
+        description={`Czy na pewno chcesz usunąć "${entryToRemove?.title}" z biblioteki?`}
+        onConfirm={() => {
+          if (entryToRemove) {
+            removeFromLibrary(entryToRemove.id);
+            setEntryToRemove(null);
+          }
         }}
       />
     </div>

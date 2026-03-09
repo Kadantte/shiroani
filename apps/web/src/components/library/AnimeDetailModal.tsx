@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { ExternalLink, Save, Trash2, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
@@ -43,6 +44,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   const [notes, setNotes] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
   const [anilistId, setAnilistId] = useState<string>('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Sync form state when entry changes
   useEffect(() => {
@@ -308,13 +310,24 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
               <ExternalLink className="w-4 h-4" />
               Otworz
             </Button>
-            <Button onClick={handleRemove} variant="destructive" size="sm">
+            <Button onClick={() => setShowConfirm(true)} variant="destructive" size="sm">
               <Trash2 className="w-4 h-4" />
               Usun
             </Button>
           </div>
         </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Usuń z biblioteki"
+        description="Czy na pewno chcesz usunąć to anime z biblioteki?"
+        onConfirm={() => {
+          handleRemove();
+          setShowConfirm(false);
+        }}
+      />
     </Dialog>
   );
 }
