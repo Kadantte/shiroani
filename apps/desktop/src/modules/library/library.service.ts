@@ -97,8 +97,8 @@ export class LibraryService {
     const result = db
       .prepare(
         `INSERT INTO anime_library
-          (anilist_id, title, title_romaji, title_native, cover_image, total_episodes, status, resume_url)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          (anilist_id, title, title_romaji, title_native, cover_image, total_episodes, status, current_episode, resume_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         payload.anilistId ?? null,
@@ -108,6 +108,7 @@ export class LibraryService {
         payload.coverImage ?? null,
         payload.episodes ?? null,
         payload.status ?? 'plan_to_watch',
+        payload.currentEpisode ?? 0,
         payload.resumeUrl ?? null
       );
 

@@ -17,10 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ExternalLink, Save, Trash2 } from 'lucide-react';
+import { ExternalLink, Save, Trash2, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useAppStore } from '@/stores/useAppStore';
+import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
 
 const STATUS_OPTIONS: { value: AnimeStatus; label: string }[] = [
@@ -40,6 +42,7 @@ interface AnimeDetailModalProps {
 export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModalProps) {
   const { updateEntry, removeFromLibrary } = useLibraryStore();
   const { openTab } = useBrowserStore();
+  const navigateTo = useAppStore(s => s.navigateTo);
 
   const [status, setStatus] = useState<AnimeStatus>('watching');
   const [currentEpisode, setCurrentEpisode] = useState(0);
@@ -83,7 +86,27 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     } else if (entry?.anilistId) {
       openTab(`https://anilist.co/anime/${entry.anilistId}`);
     }
-  }, [entry, openTab]);
+    onOpenChange(false);
+    navigateTo('browser');
+  }, [entry, openTab, onOpenChange, navigateTo]);
+
+  const handleUpdateUrl = useCallback(() => {
+    if (!entry) return;
+
+    // Get the active browser tab's URL
+    const browserState = useBrowserStore.getState();
+    const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
+
+    if (!activeTab?.url) {
+      toast.error('Brak aktywnej karty przegladarki');
+      return;
+    }
+
+    setResumeUrl(activeTab.url);
+    toast.success('URL zaktualizowany', {
+      description: activeTab.url,
+    });
+  }, [entry]);
 
   if (!entry) return null;
 
@@ -219,7 +242,20 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* Resume URL */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Link do kontynuacji</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">
+                Link do kontynuacji
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-2xs px-2 text-muted-foreground"
+                onClick={handleUpdateUrl}
+              >
+                <Link2 className="w-3 h-3" />
+                Pobierz z przegladarki
+              </Button>
+            </div>
             <Input
               value={resumeUrl}
               onChange={e => setResumeUrl(e.target.value)}

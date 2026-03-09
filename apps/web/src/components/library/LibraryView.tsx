@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { Search, LayoutGrid, List, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,8 @@ import { useLibraryStore } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
 import { useBrowserStore } from '@/stores/useBrowserStore';
-import type { AnimeStatus } from '@shiroani/shared';
+import { useAppStore } from '@/stores/useAppStore';
+import type { AnimeStatus, AnimeEntry } from '@shiroani/shared';
 
 const FILTER_TABS: { value: AnimeStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Wszystkie' },
@@ -39,6 +40,17 @@ export function LibraryView() {
   } = useLibraryStore();
 
   const { openTab } = useBrowserStore();
+  const navigateTo = useAppStore(s => s.navigateTo);
+
+  // Navigate to the browser view and open the resume URL
+  const handleContinue = useCallback(
+    (entry: AnimeEntry) => {
+      if (!entry.resumeUrl) return;
+      openTab(entry.resumeUrl);
+      navigateTo('browser');
+    },
+    [openTab, navigateTo]
+  );
 
   // Initialize socket listeners
   useEffect(() => {
@@ -142,7 +154,7 @@ export function LibraryView() {
                 key={entry.id}
                 entry={entry}
                 onSelect={openDetail}
-                onContinue={e => e.resumeUrl && openTab(e.resumeUrl)}
+                onContinue={handleContinue}
                 onRemove={e => removeFromLibrary(e.id)}
               />
             ))}

@@ -60,6 +60,7 @@ export interface LibraryAddPayload {
   coverImage?: string;
   episodes?: number;
   status?: AnimeStatus;
+  currentEpisode?: number;
   resumeUrl?: string;
 }
 

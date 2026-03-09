@@ -113,17 +113,33 @@ export const useLibraryStore = create<LibraryStore>()(
         // Actions
         fetchLibrary: () => {
           set({ isLoading: true }, undefined, 'library/fetching');
-          emitWithErrorHandling(LibraryEvents.GET_ALL, {}).catch((err: Error) => {
-            logger.error('Failed to fetch library:', err.message);
-            set({ isLoading: false, error: err.message }, undefined, 'library/fetchError');
-          });
+          emitWithErrorHandling<Record<string, never>, { entries: AnimeEntry[] }>(
+            LibraryEvents.GET_ALL,
+            {}
+          )
+            .then(data => {
+              set(
+                { entries: data.entries ?? [], isLoading: false, error: null },
+                undefined,
+                'library/result'
+              );
+            })
+            .catch((err: Error) => {
+              logger.error('Failed to fetch library:', err.message);
+              set({ isLoading: false, error: err.message }, undefined, 'library/fetchError');
+            });
         },
 
         addToLibrary: (payload: LibraryAddPayload) => {
-          emitWithErrorHandling(LibraryEvents.ADD, payload).catch((err: Error) => {
-            logger.error('Failed to add to library:', err.message);
-            set({ error: err.message }, undefined, 'library/addError');
-          });
+          emitWithErrorHandling(LibraryEvents.ADD, payload)
+            .then(() => {
+              // Refetch library to include the new entry
+              get().fetchLibrary();
+            })
+            .catch((err: Error) => {
+              logger.error('Failed to add to library:', err.message);
+              set({ error: err.message }, undefined, 'library/addError');
+            });
         },
 
         updateEntry: (payload: LibraryUpdatePayload) => {

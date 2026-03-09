@@ -115,13 +115,13 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
                 onContinue(entry);
               }}
               className={cn(
-                'w-10 h-10 rounded-full bg-primary text-primary-foreground',
+                'w-7 h-7 rounded-full bg-primary text-primary-foreground',
                 'flex items-center justify-center',
                 'hover:bg-primary/80 transition-colors duration-150'
               )}
               title="Kontynuuj"
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-3.5 h-3.5" />
             </button>
           )}
           <button
@@ -130,13 +130,13 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
               onSelect(entry);
             }}
             className={cn(
-              'w-10 h-10 rounded-full bg-accent text-accent-foreground',
+              'w-7 h-7 rounded-full bg-accent text-accent-foreground',
               'flex items-center justify-center',
               'hover:bg-accent/80 transition-colors duration-150'
             )}
             title="Edytuj"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3 h-3" />
           </button>
           {onRemove && (
             <button
@@ -145,13 +145,13 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
                 onRemove(entry);
               }}
               className={cn(
-                'w-10 h-10 rounded-full bg-destructive text-destructive-foreground',
+                'w-7 h-7 rounded-full bg-destructive text-destructive-foreground',
                 'flex items-center justify-center',
                 'hover:bg-destructive/80 transition-colors duration-150'
               )}
               title="Usun"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3 h-3" />
             </button>
           )}
         </div>

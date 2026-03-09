@@ -10,12 +10,14 @@ import {
   X,
   Loader2,
   Globe,
+  BookmarkPlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { AddToLibraryDialog } from '@/components/browser/AddToLibraryDialog';
 
 /**
  * BrowserView: The main embedded browser interface.
@@ -39,7 +41,19 @@ export function BrowserView() {
   } = useBrowserStore();
 
   const [urlInput, setUrlInput] = useState('');
+  const [isAddToLibraryOpen, setIsAddToLibraryOpen] = useState(false);
   const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Hide/show the native WebContentsView overlay when the dialog opens/closes
+  // (native views sit above the renderer — CSS z-index can't fix this)
+  const handleAddToLibraryOpenChange = useCallback((open: boolean) => {
+    setIsAddToLibraryOpen(open);
+    if (open) {
+      window.electronAPI?.browser?.hide();
+    } else {
+      window.electronAPI?.browser?.show();
+    }
+  }, []);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const activeTab = tabs.find(t => t.id === activeTabId);
@@ -235,13 +249,28 @@ export function BrowserView() {
             <Button
               variant="ghost"
               size="icon"
+              className="w-8 h-8"
+              onClick={() => handleAddToLibraryOpenChange(true)}
+              disabled={!activeTab}
+            >
+              <BookmarkPlus className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Dodaj do biblioteki</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
               className={cn('w-8 h-8', adblockEnabled && 'text-status-success')}
               onClick={toggleAdblock}
             >
               {adblockEnabled ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
+          <TooltipContent side="top">
             {adblockEnabled ? 'Adblock wlaczony' : 'Adblock wylaczony'}
           </TooltipContent>
         </Tooltip>
@@ -257,7 +286,7 @@ export function BrowserView() {
               <Home className="w-4 h-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Strona glowna</TooltipContent>
+          <TooltipContent side="top">Strona glowna</TooltipContent>
         </Tooltip>
       </div>
 
@@ -270,6 +299,14 @@ export function BrowserView() {
           </div>
         )}
       </div>
+
+      {/* Add to Library dialog */}
+      <AddToLibraryDialog
+        open={isAddToLibraryOpen}
+        onOpenChange={handleAddToLibraryOpenChange}
+        url={activeTab?.url ?? ''}
+        title={activeTab?.title ?? ''}
+      />
     </div>
   );
 }
