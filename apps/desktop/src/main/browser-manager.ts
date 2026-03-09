@@ -1,8 +1,8 @@
 import { BrowserWindow, WebContentsView, session } from 'electron';
-import Store from 'electron-store';
 import { createLogger } from '@shiroani/shared';
 import type { BrowserTab } from '@shiroani/shared';
 import { enableBlockingInSession, disableBlockingInSession } from './adblock';
+import { store } from './store';
 
 interface PersistedTabState {
   urls: string[];
@@ -10,6 +10,12 @@ interface PersistedTabState {
 }
 
 const logger = createLogger('BrowserManager');
+
+/** Width of the app sidebar in pixels */
+const SIDEBAR_WIDTH = 68;
+
+/** Combined height of title bar + tab bar + toolbar in pixels */
+const CHROME_HEIGHT = 108;
 
 interface ManagedTab {
   id: string;
@@ -34,7 +40,6 @@ export class BrowserManager {
   private mainWindow: BrowserWindow | null = null;
   private browserSession: Electron.Session | null = null;
   private adblockEnabled = false;
-  private store = new Store();
   private isFullScreen = false;
 
   /**
@@ -76,7 +81,7 @@ export class BrowserManager {
   /**
    * Enable adblocking on the browser session.
    */
-  async enableAdblock(): Promise<void> {
+  enableAdblock(): void {
     this.adblockEnabled = true;
     enableBlockingInSession(this.getSession());
     logger.info('Adblock enabled for browser session');
@@ -85,7 +90,7 @@ export class BrowserManager {
   /**
    * Disable adblocking on the browser session.
    */
-  async disableAdblock(): Promise<void> {
+  disableAdblock(): void {
     this.adblockEnabled = false;
     disableBlockingInSession(this.getSession());
     logger.info('Adblock disabled for browser session');
@@ -366,7 +371,7 @@ export class BrowserManager {
     const urls = tabEntries.map(t => t.url).filter(url => url && url !== 'about:blank');
 
     if (urls.length === 0) {
-      this.store.delete('browser-tabs');
+      store.delete('browser-tabs');
       return;
     }
 
@@ -377,7 +382,7 @@ export class BrowserManager {
       activeIndex: Math.max(0, activeIndex),
     };
 
-    this.store.set('browser-tabs', state);
+    store.set('browser-tabs', state);
     logger.debug(`Saved ${urls.length} tab(s) to persistent storage`);
   }
 
@@ -386,7 +391,7 @@ export class BrowserManager {
    * Returns true if tabs were restored.
    */
   restoreTabs(): boolean {
-    const saved = this.store.get('browser-tabs') as PersistedTabState | undefined;
+    const saved = store.get('browser-tabs') as PersistedTabState | undefined;
     if (!saved?.urls?.length) return false;
 
     logger.info(`Restoring ${saved.urls.length} tab(s) from previous session`);
@@ -518,19 +523,16 @@ export class BrowserManager {
       // Notify renderer to restore chrome
       this.sendToRenderer('browser:fullscreen-change', false);
 
-      // Temporarily shrink the view so it doesn't cover the UI chrome
+      // Temporarily shrink the view to approximate UI chrome dimensions
       // while waiting for the renderer's ResizeObserver to report correct bounds.
-      // Approximate offsets: sidebar ~68px, title bar ~32px, tab bar ~36px, toolbar ~40px
       const tab = this.tabs.get(tabId);
       if (tab) {
         const { width, height } = this.mainWindow.getBounds();
-        const sidebarWidth = 68;
-        const chromeHeight = 108; // title + tabs + toolbar
         tab.view.setBounds({
-          x: sidebarWidth,
-          y: chromeHeight,
-          width: Math.max(0, width - sidebarWidth),
-          height: Math.max(0, height - chromeHeight),
+          x: SIDEBAR_WIDTH,
+          y: CHROME_HEIGHT,
+          width: Math.max(0, width - SIDEBAR_WIDTH),
+          height: Math.max(0, height - CHROME_HEIGHT),
         });
       }
 

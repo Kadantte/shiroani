@@ -26,7 +26,7 @@ let loggingFailed = false;
 let loggingErrorNotified = false;
 
 /** Optional callback invoked on the first logging error */
-export let onLoggingError: ((error: unknown) => void) | null = null;
+let onLoggingError: ((error: unknown) => void) | null = null;
 
 /**
  * Set the callback for logging errors (one-time notification)

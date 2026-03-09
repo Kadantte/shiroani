@@ -6,6 +6,20 @@ import type {
   BrowserTab,
 } from '@shiroani/shared';
 
+/**
+ * Create a typed IPC listener that returns an unsubscribe function.
+ * Eliminates the repeated on/removeListener boilerplate.
+ */
+function createIpcListener<T>(channel: string): (callback: (data: T) => void) => () => void {
+  return (callback: (data: T) => void) => {
+    const handler = (_event: IpcRendererEvent, data: T) => callback(data);
+    ipcRenderer.on(channel, handler);
+    return () => {
+      ipcRenderer.removeListener(channel, handler);
+    };
+  };
+}
+
 export interface ElectronAPI {
   window: {
     minimize: () => void;
@@ -87,15 +101,7 @@ const electronAPI: ElectronAPI = {
     maximize: () => ipcRenderer.send('window:maximize'),
     close: () => ipcRenderer.send('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
-    onMaximizedChange: (callback: (maximized: boolean) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, maximized: boolean) => {
-        callback(maximized);
-      };
-      ipcRenderer.on('window:maximized-change', listener);
-      return () => {
-        ipcRenderer.removeListener('window:maximized-change', listener);
-      };
-    },
+    onMaximizedChange: createIpcListener<boolean>('window:maximized-change'),
   },
   store: {
     get: <T>(key: string) => ipcRenderer.invoke('store:get', key) as Promise<T | undefined>,
@@ -144,27 +150,9 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('browser:execute-script', tabId, script) as Promise<unknown>,
     hide: () => ipcRenderer.invoke('browser:hide') as Promise<void>,
     show: () => ipcRenderer.invoke('browser:show') as Promise<void>,
-    onTabUpdated: (callback: (tab: BrowserTab) => void) => {
-      const handler = (_event: IpcRendererEvent, tab: BrowserTab) => callback(tab);
-      ipcRenderer.on('browser:tab-updated', handler);
-      return () => {
-        ipcRenderer.removeListener('browser:tab-updated', handler);
-      };
-    },
-    onTabClosed: (callback: (tabId: string) => void) => {
-      const handler = (_event: IpcRendererEvent, tabId: string) => callback(tabId);
-      ipcRenderer.on('browser:tab-closed', handler);
-      return () => {
-        ipcRenderer.removeListener('browser:tab-closed', handler);
-      };
-    },
-    onFullscreenChange: (callback: (isFullScreen: boolean) => void) => {
-      const handler = (_event: IpcRendererEvent, isFullScreen: boolean) => callback(isFullScreen);
-      ipcRenderer.on('browser:fullscreen-change', handler);
-      return () => {
-        ipcRenderer.removeListener('browser:fullscreen-change', handler);
-      };
-    },
+    onTabUpdated: createIpcListener<BrowserTab>('browser:tab-updated'),
+    onTabClosed: createIpcListener<string>('browser:tab-closed'),
+    onFullscreenChange: createIpcListener<boolean>('browser:fullscreen-change'),
   },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),
@@ -179,50 +167,12 @@ const electronAPI: ElectronAPI = {
         ipcRenderer.removeListener('updater:checking-for-update', listener);
       };
     },
-    onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, info: UpdateInfo) => callback(info);
-      ipcRenderer.on('updater:update-available', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:update-available', listener);
-      };
-    },
-    onUpdateNotAvailable: (callback: (info: UpdateInfo) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, info: UpdateInfo) => callback(info);
-      ipcRenderer.on('updater:update-not-available', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:update-not-available', listener);
-      };
-    },
-    onDownloadProgress: (callback: (progress: UpdateDownloadProgress) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, progress: UpdateDownloadProgress) =>
-        callback(progress);
-      ipcRenderer.on('updater:download-progress', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:download-progress', listener);
-      };
-    },
-    onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, info: UpdateInfo) => callback(info);
-      ipcRenderer.on('updater:update-downloaded', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:update-downloaded', listener);
-      };
-    },
-    onUpdateError: (callback: (message: string) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, message: string) => callback(message);
-      ipcRenderer.on('updater:error', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:error', listener);
-      };
-    },
-    onChannelChanged: (callback: (channel: UpdateChannel) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, channel: UpdateChannel) =>
-        callback(channel);
-      ipcRenderer.on('updater:channel-changed', listener);
-      return () => {
-        ipcRenderer.removeListener('updater:channel-changed', listener);
-      };
-    },
+    onUpdateAvailable: createIpcListener<UpdateInfo>('updater:update-available'),
+    onUpdateNotAvailable: createIpcListener<UpdateInfo>('updater:update-not-available'),
+    onDownloadProgress: createIpcListener<UpdateDownloadProgress>('updater:download-progress'),
+    onUpdateDownloaded: createIpcListener<UpdateInfo>('updater:update-downloaded'),
+    onUpdateError: createIpcListener<string>('updater:error'),
+    onChannelChanged: createIpcListener<UpdateChannel>('updater:channel-changed'),
   },
   platform: process.platform,
 };

@@ -48,21 +48,11 @@ export class AnimeService {
     page = 1,
     perPage = DEFAULT_PER_PAGE
   ): Promise<PaginatedMediaResult> {
-    logger.debug(`Searching anime: "${query}" (page ${page})`);
-    try {
-      const data = await this.anilistClient.query<SearchAnimeResponse>(SEARCH_ANIME_QUERY, {
-        search: query,
-        page,
-        perPage,
-      });
-      return {
-        media: data.Page.media,
-        pageInfo: data.Page.pageInfo,
-      };
-    } catch (error) {
-      logger.error(`Failed to search anime: ${extractErrorMessage(error)}`);
-      throw error;
-    }
+    return this.queryPagedMedia('Searching anime', SEARCH_ANIME_QUERY, {
+      search: query,
+      page,
+      perPage,
+    });
   }
 
   /**
@@ -123,20 +113,10 @@ export class AnimeService {
    * Get currently trending anime with pagination.
    */
   async getTrending(page = 1, perPage = DEFAULT_PER_PAGE): Promise<PaginatedMediaResult> {
-    logger.debug(`Fetching trending anime (page ${page})`);
-    try {
-      const data = await this.anilistClient.query<TrendingAnimeResponse>(TRENDING_ANIME_QUERY, {
-        page,
-        perPage,
-      });
-      return {
-        media: data.Page.media,
-        pageInfo: data.Page.pageInfo,
-      };
-    } catch (error) {
-      logger.error(`Failed to fetch trending anime: ${extractErrorMessage(error)}`);
-      throw error;
-    }
+    return this.queryPagedMedia('Fetching trending anime', TRENDING_ANIME_QUERY, {
+      page,
+      perPage,
+    });
   }
 
   /**
@@ -147,19 +127,52 @@ export class AnimeService {
     const season = getCurrentSeason();
     const seasonYear = new Date().getFullYear();
 
-    logger.debug(`Fetching popular anime for ${season} ${seasonYear} (page ${page})`);
+    return this.queryPagedMedia(
+      `Fetching popular anime for ${season} ${seasonYear}`,
+      POPULAR_THIS_SEASON_QUERY,
+      { season, seasonYear, page, perPage }
+    );
+  }
+
+  /**
+   * Get anime for a specific season and year.
+   */
+  async getSeasonalAnime(
+    year: number,
+    season: string,
+    page = 1,
+    perPage = DEFAULT_PER_PAGE
+  ): Promise<PaginatedMediaResult> {
+    return this.queryPagedMedia(
+      `Fetching seasonal anime for ${season} ${year}`,
+      POPULAR_THIS_SEASON_QUERY,
+      { season: season.toUpperCase(), seasonYear: year, page, perPage }
+    );
+  }
+
+  /**
+   * Execute a paged media query against AniList and extract media + pageInfo.
+   * Centralizes the common log/try/query/extract/catch pattern.
+   */
+  private async queryPagedMedia(
+    description: string,
+    query: string,
+    variables: Record<string, unknown>
+  ): Promise<PaginatedMediaResult> {
+    const page = (variables.page as number) ?? 1;
+    logger.debug(`${description} (page ${page})`);
 
     try {
-      const data = await this.anilistClient.query<PopularThisSeasonResponse>(
-        POPULAR_THIS_SEASON_QUERY,
-        { season, seasonYear, page, perPage }
+      const data = await this.anilistClient.query<TrendingAnimeResponse | PopularThisSeasonResponse | SearchAnimeResponse>(
+        query,
+        variables
       );
       return {
         media: data.Page.media,
         pageInfo: data.Page.pageInfo,
       };
     } catch (error) {
-      logger.error(`Failed to fetch popular this season: ${extractErrorMessage(error)}`);
+      logger.error(`Failed: ${description}: ${extractErrorMessage(error)}`);
       throw error;
     }
   }
@@ -173,7 +186,7 @@ export class AnimeService {
  * - SUMMER: July, August, September
  * - FALL: October, November, December
  */
-export function getCurrentSeason(): MediaSeason {
+function getCurrentSeason(): MediaSeason {
   const month = new Date().getMonth(); // 0-indexed
   if (month <= 2) return 'WINTER';
   if (month <= 5) return 'SPRING';

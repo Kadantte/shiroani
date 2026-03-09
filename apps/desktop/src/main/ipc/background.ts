@@ -18,6 +18,13 @@ const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 /**
+ * Check if a filename contains path-traversal or otherwise unsafe characters.
+ */
+function isUnsafeFileName(name: string): boolean {
+  return name.includes('..') || name.includes('/') || name.includes('\\') || name.includes('\0');
+}
+
+/**
  * Get (and ensure existence of) the backgrounds directory
  */
 function getBackgroundsDir(): string {
@@ -50,13 +57,7 @@ export function registerBackgroundProtocol(): void {
     const fileName = url.pathname.replace(/^\/+/, '');
 
     // Security: reject path traversal
-    if (
-      !fileName ||
-      fileName.includes('..') ||
-      fileName.includes('/') ||
-      fileName.includes('\\') ||
-      fileName.includes('\0')
-    ) {
+    if (!fileName || isUnsafeFileName(fileName)) {
       logger.warn(`Blocked background request with suspicious path: ${fileName}`);
       return new Response('Forbidden', { status: 403 });
     }
@@ -133,14 +134,7 @@ export function registerBackgroundHandlers(mainWindow: BrowserWindow): void {
     logger.debug(`background:remove invoked for: ${fileName}`);
 
     // Security: validate filename
-    if (
-      typeof fileName !== 'string' ||
-      !fileName ||
-      fileName.includes('..') ||
-      fileName.includes('/') ||
-      fileName.includes('\\') ||
-      fileName.includes('\0')
-    ) {
+    if (typeof fileName !== 'string' || !fileName || isUnsafeFileName(fileName)) {
       throw new Error('Invalid filename');
     }
 
@@ -157,14 +151,7 @@ export function registerBackgroundHandlers(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.handle('background:get-url', (_event, fileName: string): string | null => {
-    if (
-      typeof fileName !== 'string' ||
-      !fileName ||
-      fileName.includes('..') ||
-      fileName.includes('/') ||
-      fileName.includes('\\') ||
-      fileName.includes('\0')
-    ) {
+    if (typeof fileName !== 'string' || !fileName || isUnsafeFileName(fileName)) {
       return null;
     }
 
