@@ -69,7 +69,7 @@ export const useBrowserStore = create<BrowserStore>()(
 
       // Actions
       openTab: (url?: string) => {
-        const targetUrl = url ?? defaultUrl;
+        const targetUrl = typeof url === 'string' ? url : defaultUrl;
         callBrowserAPI('create browser tab', b => b.createTab(targetUrl)).then(tabId => {
           if (tabId) logger.debug(`Tab created: ${tabId}`);
           // The tab-updated event from the main process will populate the tab state

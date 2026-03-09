@@ -87,7 +87,7 @@ export function BrowserView() {
           activeTabId={activeTabId}
           onSelectTab={switchTab}
           onCloseTab={closeTab}
-          onNewTab={openTab}
+          onNewTab={() => openTab()}
           onReorderTabs={reorderTabs}
         />
       )}
