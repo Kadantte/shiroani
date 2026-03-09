@@ -24,14 +24,12 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
+import { STATUS_CONFIG } from '@/lib/constants';
 
-const STATUS_OPTIONS: { value: AnimeStatus; label: string }[] = [
-  { value: 'watching', label: 'Ogladam' },
-  { value: 'completed', label: 'Ukonczone' },
-  { value: 'plan_to_watch', label: 'Planowane' },
-  { value: 'on_hold', label: 'Wstrzymane' },
-  { value: 'dropped', label: 'Porzucone' },
-];
+const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({
+  value: value as AnimeStatus,
+  label,
+}));
 
 interface AnimeDetailModalProps {
   entry: AnimeEntry | null;

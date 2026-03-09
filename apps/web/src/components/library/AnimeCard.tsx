@@ -2,23 +2,8 @@ import { useState } from 'react';
 import { Play, Pencil, Trash2, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
-
-const STATUS_COLORS: Record<AnimeStatus, string> = {
-  watching: 'bg-blue-500',
-  completed: 'bg-green-500',
-  plan_to_watch: 'bg-yellow-500',
-  on_hold: 'bg-orange-500',
-  dropped: 'bg-red-500',
-};
-
-const STATUS_LABELS: Record<AnimeStatus, string> = {
-  watching: 'Ogladam',
-  completed: 'Ukonczone',
-  plan_to_watch: 'Planowane',
-  on_hold: 'Wstrzymane',
-  dropped: 'Porzucone',
-};
+import type { AnimeEntry } from '@shiroani/shared';
+import { STATUS_CONFIG } from '@/lib/constants';
 
 interface AnimeCardProps {
   entry: AnimeEntry;
@@ -70,7 +55,7 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
 
         {/* Status indicator */}
         <div className="absolute top-2 left-2">
-          <div className={cn('w-2.5 h-2.5 rounded-full', STATUS_COLORS[entry.status])} />
+          <div className={cn('w-2.5 h-2.5 rounded-full', STATUS_CONFIG[entry.status].color)} />
         </div>
 
         {/* Episode progress badge */}
@@ -90,7 +75,7 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
         {/* Bottom gradient overlay with title */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
           <h3 className="text-sm font-medium text-white truncate-2 leading-tight">{entry.title}</h3>
-          <p className="text-2xs text-white/60 mt-0.5">{STATUS_LABELS[entry.status]}</p>
+          <p className="text-2xs text-white/60 mt-0.5">{STATUS_CONFIG[entry.status].label}</p>
         </div>
 
         {/* Progress bar at the very bottom */}

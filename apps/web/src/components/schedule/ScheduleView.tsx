@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -105,16 +105,8 @@ export function ScheduleView() {
     setViewMode,
     getEntriesForDay,
     getWeekDays,
-    initListeners,
-    cleanupListeners,
     schedule,
   } = useScheduleStore();
-
-  // Initialize socket listeners
-  useEffect(() => {
-    initListeners();
-    return () => cleanupListeners();
-  }, [initListeners, cleanupListeners]);
 
   const navigatePrevious = useCallback(() => {
     if (viewMode === 'daily') {

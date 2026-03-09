@@ -1,11 +1,13 @@
 /**
  * BackgroundOverlay renders a fixed background image behind all app content.
- * It reads CSS custom properties set by the settings store:
- *   --app-bg-image: url(shiroani-bg://backgrounds/filename.ext)
- *   --app-bg-opacity: 0-1
- *   --app-bg-blur: Npx
+ * It reads CSS custom properties set by the settings store for background image
+ * and blur, and reads the opacity value directly from the store as a proper number.
  */
+import { useSettingsStore } from '@/stores/useSettingsStore';
+
 export function BackgroundOverlay() {
+  const backgroundOpacity = useSettingsStore(s => s.backgroundOpacity);
+
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} aria-hidden="true">
       {/* Background image layer */}
@@ -16,7 +18,7 @@ export function BackgroundOverlay() {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 'var(--app-bg-opacity, 0.15)' as unknown as number,
+          opacity: backgroundOpacity,
           filter: 'blur(var(--app-bg-blur, 0px))',
         }}
       />

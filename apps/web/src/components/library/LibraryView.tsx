@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Search, LayoutGrid, List, BookOpen, Globe, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -9,16 +9,8 @@ import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
-import type { AnimeStatus, AnimeEntry } from '@shiroani/shared';
-
-const FILTER_TABS: { value: AnimeStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'watching', label: 'Ogladam' },
-  { value: 'completed', label: 'Ukonczone' },
-  { value: 'plan_to_watch', label: 'Planowane' },
-  { value: 'on_hold', label: 'Wstrzymane' },
-  { value: 'dropped', label: 'Porzucone' },
-];
+import { STATUS_FILTER_OPTIONS } from '@/lib/constants';
+import type { AnimeEntry } from '@shiroani/shared';
 
 export function LibraryView() {
   const {
@@ -35,8 +27,6 @@ export function LibraryView() {
     closeDetail,
     removeFromLibrary,
     getFilteredEntries,
-    initListeners,
-    cleanupListeners,
   } = useLibraryStore();
 
   const { openTab } = useBrowserStore();
@@ -51,12 +41,6 @@ export function LibraryView() {
     },
     [openTab, navigateTo]
   );
-
-  // Initialize socket listeners
-  useEffect(() => {
-    initListeners();
-    return () => cleanupListeners();
-  }, [initListeners, cleanupListeners]);
 
   const filteredEntries = useMemo(
     () => getFilteredEntries(),
@@ -113,7 +97,7 @@ export function LibraryView() {
 
         {/* Filter tabs */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-          {FILTER_TABS.map(tab => (
+          {STATUS_FILTER_OPTIONS.map(tab => (
             <button
               key={tab.value}
               onClick={() => setFilter(tab.value)}
@@ -210,7 +194,8 @@ export function LibraryView() {
                   <p className="text-xs text-muted-foreground">
                     Odc. {entry.currentEpisode}
                     {entry.episodes ? `/${entry.episodes}` : ''} &middot;{' '}
-                    {FILTER_TABS.find(f => f.value === entry.status)?.label ?? entry.status}
+                    {STATUS_FILTER_OPTIONS.find(f => f.value === entry.status)?.label ??
+                      entry.status}
                   </p>
                 </div>
                 {entry.score != null && entry.score > 0 && (

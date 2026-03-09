@@ -67,16 +67,13 @@ export function BrowserView() {
     }
   }, [activeTab?.url, activeTab]);
 
-  // Initialize listeners on mount
-  useEffect(() => {
-    const cleanup = initListeners();
-    return cleanup;
-  }, [initListeners]);
-
-  // On mount, fetch any tabs restored by the main process from the previous session.
-  // Only open a default tab if no restored tabs exist.
+  // On mount, fetch any tabs restored by the main process from the previous session,
+  // then initialize listeners. This order prevents the onTabUpdated listener from
+  // creating duplicates of tabs that getTabs() is about to populate.
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     window.electronAPI?.browser
       ?.getTabs()
       .then(existingTabs => {
@@ -100,12 +97,18 @@ export function BrowserView() {
         if (activeId) {
           useBrowserStore.setState({ activeTabId: activeId });
         }
+        // Initialize listeners after tab population to avoid duplicates
+        cleanup = initListeners();
         setInitialCheckDone(true);
       })
       .catch(() => {
+        // Still initialize listeners on error so the browser remains functional
+        cleanup = initListeners();
         setInitialCheckDone(true);
       });
-  }, []);
+
+    return () => cleanup?.();
+  }, [initListeners]);
 
   // Open a default tab if none exist (after initial check completes)
   useEffect(() => {
