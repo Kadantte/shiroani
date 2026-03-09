@@ -486,6 +486,9 @@
 @utility animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+@utility animate-slide-down {
+  animation: slideDown 0.25s ease-out;
+}
 @utility truncate-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
