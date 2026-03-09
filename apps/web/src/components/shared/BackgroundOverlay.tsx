@@ -3,10 +3,10 @@
  * It reads CSS custom properties set by the settings store for background image
  * and blur, and reads the opacity value directly from the store as a proper number.
  */
-import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useBackgroundStore } from '@/stores/useBackgroundStore';
 
 export function BackgroundOverlay() {
-  const backgroundOpacity = useSettingsStore(s => s.backgroundOpacity);
+  const backgroundOpacity = useBackgroundStore(s => s.backgroundOpacity);
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} aria-hidden="true">

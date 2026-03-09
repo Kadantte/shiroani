@@ -10,7 +10,7 @@ import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
-import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 
@@ -73,8 +73,8 @@ function App() {
   const activeView = useAppStore(s => s.activeView);
   const navigateTo = useAppStore(s => s.navigateTo);
   const { ready, error } = useAppInitialization();
-  const restoreBackground = useSettingsStore(s => s.restoreBackground);
-  const customBackground = useSettingsStore(s => s.customBackground);
+  const restoreBackground = useBackgroundStore(s => s.restoreBackground);
+  const customBackground = useBackgroundStore(s => s.customBackground);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   // Restore custom background from persisted settings on startup

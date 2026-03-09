@@ -3,22 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { darkThemes, lightThemes } from '@/lib/theme';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 
 export function AppearanceSection() {
+  const { theme, setTheme, setPreviewTheme } = useSettingsStore();
   const {
-    theme,
-    setTheme,
-    setPreviewTheme,
     customBackground,
     backgroundOpacity,
     backgroundBlur,
-    pickCustomBackground,
-    removeCustomBackground,
+    pickBackground,
+    removeBackground,
     setBackgroundOpacity,
     setBackgroundBlur,
-  } = useSettingsStore();
+  } = useBackgroundStore();
 
   return (
     <div className="space-y-6">
@@ -77,12 +76,12 @@ export function AppearanceSection() {
         )}
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={pickCustomBackground}>
+          <Button variant="outline" size="sm" onClick={pickBackground}>
             <Image className="w-4 h-4" />
             Wybierz obraz
           </Button>
           {customBackground && (
-            <Button variant="ghost" size="sm" onClick={removeCustomBackground}>
+            <Button variant="ghost" size="sm" onClick={removeBackground}>
               <RotateCcw className="w-4 h-4" />
               Usun tlo
             </Button>

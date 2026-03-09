@@ -9,19 +9,16 @@ import { extractErrorMessage } from '@shiroani/shared';
  *
  * Eliminates boilerplate per handler across gateways.
  *
- * The handler returns the success result. On caught exceptions,
- * defaultResult is returned with the error message merged in.
- *
- * Type parameter TResponse must include an optional error field to ensure
- * the error paths produce well-typed results.
+ * TDefault is the type of the fallback result (returned on error with an error message).
+ * TResult is the type the handler returns on success (may differ from TDefault).
  */
-export async function handleGatewayRequest<TResponse extends { error?: string }>(options: {
+export async function handleGatewayRequest<TDefault, TResult = TDefault>(options: {
   logger: Logger;
   action: string;
-  /** Default result merged with error on caught exception */
-  defaultResult: NoInfer<Omit<TResponse, 'error'>>;
-  handler: () => Promise<NoInfer<TResponse>>;
-}): Promise<TResponse> {
+  /** Default result returned (with error appended) on caught exception */
+  defaultResult: TDefault;
+  handler: () => Promise<TResult>;
+}): Promise<TResult | (TDefault & { error: string })> {
   const { logger, action, defaultResult, handler } = options;
   logger.debug(`${action}`);
   try {
@@ -29,6 +26,6 @@ export async function handleGatewayRequest<TResponse extends { error?: string }>
   } catch (error) {
     const message = extractErrorMessage(error, 'Unknown error');
     logger.error(`Error ${action}:`, error);
-    return { ...defaultResult, error: message } as TResponse;
+    return { ...defaultResult, error: message };
   }
 }
