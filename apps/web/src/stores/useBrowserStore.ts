@@ -6,6 +6,22 @@ import { createLogger } from '@shiroani/shared';
 const logger = createLogger('BrowserStore');
 
 /**
+ * Call a browser API method with standardized error logging.
+ * Returns undefined if the browser API is not available.
+ */
+function callBrowserAPI<T>(
+  action: string,
+  fn: (browser: NonNullable<NonNullable<typeof window.electronAPI>['browser']>) => Promise<T> | undefined
+): Promise<T | undefined> {
+  const browser = window.electronAPI?.browser;
+  if (!browser) return Promise.resolve(undefined);
+  return (fn(browser) ?? Promise.resolve(undefined))?.catch((err: Error) => {
+    logger.error(`Failed to ${action}:`, err.message);
+    return undefined;
+  });
+}
+
+/**
  * Browser store state and actions
  */
 interface BrowserState {
@@ -49,63 +65,45 @@ export const useBrowserStore = create<BrowserStore>()(
       // Actions
       openTab: (url?: string) => {
         const targetUrl = url ?? defaultUrl;
-        window.electronAPI?.browser
-          ?.createTab(targetUrl)
-          .then((tabId: string) => {
-            logger.debug(`Tab created: ${tabId}`);
-            // The tab-updated event from the main process will populate the tab state
-          })
-          .catch((err: Error) => {
-            logger.error('Failed to create browser tab:', err.message);
-          });
+        callBrowserAPI('create browser tab', b => b.createTab(targetUrl)).then(tabId => {
+          if (tabId) logger.debug(`Tab created: ${tabId}`);
+          // The tab-updated event from the main process will populate the tab state
+        });
       },
 
       closeTab: (tabId: string) => {
-        window.electronAPI?.browser?.closeTab(tabId).catch((err: Error) => {
-          logger.error('Failed to close browser tab:', err.message);
-        });
+        callBrowserAPI('close browser tab', b => b.closeTab(tabId));
         // The tab-closed event from the main process will update the store
       },
 
       switchTab: (tabId: string) => {
         set({ activeTabId: tabId }, undefined, 'browser/switchTab');
-        window.electronAPI?.browser?.switchTab(tabId).catch((err: Error) => {
-          logger.error('Failed to switch browser tab:', err.message);
-        });
+        callBrowserAPI('switch browser tab', b => b.switchTab(tabId));
       },
 
       navigate: (url: string) => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-
         // URL normalization is handled by BrowserManager on the main process side
-        window.electronAPI?.browser?.navigate(activeTabId, url).catch((err: Error) => {
-          logger.error('Failed to navigate:', err.message);
-        });
+        callBrowserAPI('navigate', b => b.navigate(activeTabId, url));
       },
 
       goBack: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        window.electronAPI?.browser?.goBack(activeTabId).catch((err: Error) => {
-          logger.error('Failed to go back:', err.message);
-        });
+        callBrowserAPI('go back', b => b.goBack(activeTabId));
       },
 
       goForward: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        window.electronAPI?.browser?.goForward(activeTabId).catch((err: Error) => {
-          logger.error('Failed to go forward:', err.message);
-        });
+        callBrowserAPI('go forward', b => b.goForward(activeTabId));
       },
 
       reload: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        window.electronAPI?.browser?.refresh(activeTabId).catch((err: Error) => {
-          logger.error('Failed to reload:', err.message);
-        });
+        callBrowserAPI('reload', b => b.refresh(activeTabId));
       },
 
       updateTabState: (tabId: string, updates: Partial<BrowserTab>) => {
@@ -124,9 +122,7 @@ export const useBrowserStore = create<BrowserStore>()(
 
       setAdblockEnabled: (enabled: boolean) => {
         set({ adblockEnabled: enabled }, undefined, 'browser/setAdblockEnabled');
-        window.electronAPI?.browser?.toggleAdblock(enabled).catch((err: Error) => {
-          logger.error('Failed to toggle adblock:', err.message);
-        });
+        callBrowserAPI('toggle adblock', b => b.toggleAdblock(enabled));
       },
 
       toggleAdblock: () => {
@@ -190,9 +186,7 @@ export const useBrowserStore = create<BrowserStore>()(
 
           // Switch to the new active tab if needed
           if (newActiveId && newActiveId !== activeTabId) {
-            window.electronAPI?.browser?.switchTab(newActiveId).catch((err: Error) => {
-              logger.error('Failed to switch tab after close:', err.message);
-            });
+            callBrowserAPI('switch tab after close', b => b.switchTab(newActiveId));
           }
         });
 
