@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { Play, Pencil, Trash2, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { CountdownBadge } from '@/components/library/CountdownBadge';
 import type { AnimeEntry } from '@shiroani/shared';
 import { STATUS_CONFIG } from '@/lib/constants';
 
 interface AnimeCardProps {
   entry: AnimeEntry;
+  nextAiring?: { airingAt: number; episode: number } | null;
   onSelect: (entry: AnimeEntry) => void;
   onContinue?: (entry: AnimeEntry) => void;
   onRemove?: (entry: AnimeEntry) => void;
 }
 
-export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardProps) {
+export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }: AnimeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const progressText = entry.episodes
@@ -69,6 +71,13 @@ export function AnimeCard({ entry, onSelect, onContinue, onRemove }: AnimeCardPr
         {entry.score != null && entry.score > 0 && (
           <div className="absolute bottom-12 right-2">
             <Badge className="text-2xs bg-primary/90 border-0">{entry.score}/10</Badge>
+          </div>
+        )}
+
+        {/* Next episode countdown badge */}
+        {nextAiring && (
+          <div className="absolute bottom-12 left-2">
+            <CountdownBadge airingAt={nextAiring.airingAt} episode={nextAiring.episode} />
           </div>
         )}
 

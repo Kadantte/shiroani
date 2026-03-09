@@ -32,6 +32,7 @@ export const AnimeEvents = {
 export const LibraryEvents = {
   // Client -> Server (requests)
   GET_ALL: 'library:get-all',
+  GET_STATS: 'library:get-stats',
   ADD: 'library:add',
   UPDATE: 'library:update',
   REMOVE: 'library:remove',

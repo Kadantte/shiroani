@@ -1,15 +1,18 @@
-import { useMemo, useCallback } from 'react';
-import { Search, LayoutGrid, List, BookOpen, Globe, SearchX } from 'lucide-react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
+import { Search, LayoutGrid, List, BookOpen, Globe, SearchX, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useScheduleStore, toLocalDate } from '@/stores/useScheduleStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
+import { LibraryStats } from '@/components/library/LibraryStats';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
 import { STATUS_FILTER_OPTIONS } from '@/lib/constants';
+import { CountdownBadge } from '@/components/library/CountdownBadge';
 import type { AnimeEntry } from '@shiroani/shared';
 
 export function LibraryView() {
@@ -29,8 +32,44 @@ export function LibraryView() {
     getFilteredEntries,
   } = useLibraryStore();
 
+  const [showStats, setShowStats] = useState(false);
+
+  const schedule = useScheduleStore(s => s.schedule);
+  const fetchWeekly = useScheduleStore(s => s.fetchWeekly);
+
   const { openTab } = useBrowserStore();
   const navigateTo = useAppStore(s => s.navigateTo);
+
+  // Ensure schedule data is loaded for the current week
+  useEffect(() => {
+    if (Object.keys(schedule).length === 0) {
+      const now = new Date();
+      const dow = now.getDay();
+      const diff = dow === 0 ? -6 : 1 - dow;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diff);
+      fetchWeekly(toLocalDate(monday));
+    }
+  }, [schedule, fetchWeekly]);
+
+  // Build a map of anilistId -> nearest future airing info
+  const nextAiringMap = useMemo(() => {
+    const map = new Map<number, { airingAt: number; episode: number }>();
+    const nowUnix = Math.floor(Date.now() / 1000);
+
+    for (const dayEntries of Object.values(schedule)) {
+      for (const airing of dayEntries) {
+        if (airing.airingAt <= nowUnix) continue;
+        const mediaId = airing.media.id;
+        const existing = map.get(mediaId);
+        if (!existing || airing.airingAt < existing.airingAt) {
+          map.set(mediaId, { airingAt: airing.airingAt, episode: airing.episode });
+        }
+      }
+    }
+
+    return map;
+  }, [schedule]);
 
   // Navigate to the browser view and open the resume URL
   const handleContinue = useCallback(
@@ -55,6 +94,20 @@ export function LibraryView() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-foreground">Moja Biblioteka</h1>
           <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={showStats ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="w-8 h-8"
+                  onClick={() => setShowStats(v => !v)}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Statystyki</TooltipContent>
+            </Tooltip>
+            <div className="w-px h-4 bg-border mx-0.5" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -115,6 +168,9 @@ export function LibraryView() {
         </div>
       </div>
 
+      {/* Stats dashboard */}
+      {showStats && <LibraryStats />}
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {filteredEntries.length === 0 ? (
@@ -162,6 +218,7 @@ export function LibraryView() {
               <AnimeCard
                 key={entry.id}
                 entry={entry}
+                nextAiring={entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null}
                 onSelect={openDetail}
                 onContinue={handleContinue}
                 onRemove={e => removeFromLibrary(e.id)}
@@ -198,6 +255,14 @@ export function LibraryView() {
                       entry.status}
                   </p>
                 </div>
+                {entry.anilistId && nextAiringMap.get(entry.anilistId) && (
+                  <div className="shrink-0">
+                    <CountdownBadge
+                      airingAt={nextAiringMap.get(entry.anilistId)!.airingAt}
+                      episode={nextAiringMap.get(entry.anilistId)!.episode}
+                    />
+                  </div>
+                )}
                 {entry.score != null && entry.score > 0 && (
                   <span className="text-xs font-medium text-primary shrink-0">
                     {entry.score}/10

@@ -49,7 +49,7 @@ Replace the current minimal detail modal with a full anime detail page/panel sho
 
 **Priority:** High
 **Effort:** Low
-**Status:** Planned
+**Status:** Done
 
 ### Description
 
@@ -80,7 +80,7 @@ Show a countdown badge on library cards for currently airing anime (e.g., "Ep 5 
 
 **Priority:** Medium
 **Effort:** Low
-**Status:** Planned
+**Status:** Done
 
 ### Description
 

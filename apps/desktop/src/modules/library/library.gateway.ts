@@ -75,6 +75,19 @@ export class LibraryGateway {
     });
   }
 
+  @SubscribeMessage(LibraryEvents.GET_STATS)
+  handleGetStats() {
+    return handleGatewayRequest({
+      logger,
+      action: 'library:get-stats',
+      defaultResult: { stats: null },
+      handler: async () => {
+        const stats = this.libraryService.getStats();
+        return { stats };
+      },
+    });
+  }
+
   @SubscribeMessage(LibraryEvents.REMOVE)
   handleRemove(@MessageBody() payload: { id: number }) {
     return handleGatewayRequest({
