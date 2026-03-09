@@ -20,8 +20,8 @@ interface ScheduleState extends SocketStoreSlice {
   schedule: Record<string, AiringAnime[]>;
   /** Currently selected day (ISO date string YYYY-MM-DD) */
   selectedDay: string;
-  /** View mode: daily or weekly */
-  viewMode: 'daily' | 'weekly';
+  /** View mode: daily, weekly list, or timetable grid */
+  viewMode: 'daily' | 'weekly' | 'timetable';
   /** Filter to show only anime in user's library */
   onlyInLibrary: boolean;
 }
@@ -31,7 +31,7 @@ interface ScheduleState extends SocketStoreSlice {
  */
 interface ScheduleActions {
   selectDay: (day: string) => void;
-  setViewMode: (mode: 'daily' | 'weekly') => void;
+  setViewMode: (mode: 'daily' | 'weekly' | 'timetable') => void;
   toggleLibraryFilter: () => void;
   fetchDaily: (date: string) => void;
   fetchWeekly: (startDate: string) => void;
@@ -113,6 +113,7 @@ export const useScheduleStore = create<ScheduleStore>()(
             if (viewMode === 'daily') {
               get().fetchDaily(selectedDay);
             } else {
+              // Both 'weekly' and 'timetable' use weekly data
               get().fetchWeekly(getWeekStart(selectedDay));
             }
           },
@@ -141,7 +142,7 @@ export const useScheduleStore = create<ScheduleStore>()(
           }
         },
 
-        setViewMode: (mode: 'daily' | 'weekly') => {
+        setViewMode: (mode: 'daily' | 'weekly' | 'timetable') => {
           set({ viewMode: mode }, undefined, 'schedule/setViewMode');
           const { selectedDay } = get();
           if (mode === 'daily') {
