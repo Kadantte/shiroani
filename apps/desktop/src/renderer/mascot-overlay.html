@@ -1,137 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:;">
-  <title>Mascot</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      background: transparent;
-      overflow: hidden;
-      user-select: none;
-      width: 100%;
-      height: 100%;
-    }
-
-    #mascot-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-app-region: no-drag;
-    }
-
-    #mascot {
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-      pointer-events: auto;
-      cursor: grab;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    #mascot.dragging {
-      cursor: grabbing;
-    }
-
-    #mascot.locked {
-      cursor: default;
-    }
-  </style>
-</head>
-<body>
-  <div id="mascot-container">
-    <img id="mascot" draggable="false" />
-  </div>
-
-  <script>
-    (function() {
-      var mascot = document.getElementById('mascot');
-      var isDragging = false;
-      var dragOffsetX = 0;
-      var dragOffsetY = 0;
-      var positionLocked = false;
-      var bobPhase = 0;
-      var bobEnabled = true;
-      var BOB_AMPLITUDE = 3; // pixels
-      var BOB_SPEED = 0.03; // radians per frame
-      var animFrameId = null;
-
-      // Listen for config from main process
-      window.mascotAPI.onConfig(function(config) {
-        mascot.src = config.spritePath;
-        if (config.positionLocked) {
-          positionLocked = true;
-          mascot.classList.add('locked');
-        }
-      });
-
-      window.mascotAPI.onPositionLocked(function(locked) {
-        positionLocked = locked;
-        if (locked) {
-          mascot.classList.add('locked');
-        } else {
-          mascot.classList.remove('locked');
-        }
-      });
-
-      // Sinusoidal bobbing animation
-      function animateBob() {
-        if (bobEnabled && !isDragging) {
-          bobPhase += BOB_SPEED;
-          var offsetY = Math.sin(bobPhase) * BOB_AMPLITUDE;
-          mascot.style.transform = 'translateY(' + offsetY + 'px)';
-        }
-        animFrameId = requestAnimationFrame(animateBob);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:;"
+    />
+    <title>Mascot</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      animFrameId = requestAnimationFrame(animateBob);
+      html,
+      body {
+        background: transparent;
+        overflow: hidden;
+        user-select: none;
+        width: 100%;
+        height: 100%;
+      }
 
-      // Drag support
-      mascot.addEventListener('mousedown', function(e) {
-        if (e.button !== 0 || positionLocked) return;
-        isDragging = true;
-        dragOffsetX = e.screenX;
-        dragOffsetY = e.screenY;
-        mascot.classList.add('dragging');
-        mascot.style.transform = 'translateY(0)';
-        window.mascotAPI.startDrag(e.screenX, e.screenY);
-      });
+      #mascot-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-app-region: no-drag;
+      }
 
-      window.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
-        var dx = e.screenX - dragOffsetX;
-        var dy = e.screenY - dragOffsetY;
-        dragOffsetX = e.screenX;
-        dragOffsetY = e.screenY;
-        window.mascotAPI.drag(dx, dy);
-      });
+      #mascot {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        pointer-events: auto;
+        cursor: grab;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
 
-      window.addEventListener('mouseup', function(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        mascot.classList.remove('dragging');
-        window.mascotAPI.endDrag();
-      });
+      #mascot.dragging {
+        cursor: grabbing;
+      }
 
-      // Right-click context menu
-      mascot.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        window.mascotAPI.contextMenu(e.screenX, e.screenY);
-      });
-    })();
-  </script>
-</body>
+      #mascot.locked {
+        cursor: default;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mascot-container">
+      <img id="mascot" draggable="false" />
+    </div>
+
+    <script>
+      (function () {
+        var mascot = document.getElementById('mascot');
+        var isDragging = false;
+        var dragOffsetX = 0;
+        var dragOffsetY = 0;
+        var positionLocked = false;
+        var bobPhase = 0;
+        var bobEnabled = true;
+        var BOB_AMPLITUDE = 3; // pixels
+        var BOB_SPEED = 0.03; // radians per frame
+        var animFrameId = null;
+
+        // Listen for config from main process
+        window.mascotAPI.onConfig(function (config) {
+          mascot.src = config.spritePath;
+          if (config.positionLocked) {
+            positionLocked = true;
+            mascot.classList.add('locked');
+          }
+        });
+
+        window.mascotAPI.onPositionLocked(function (locked) {
+          positionLocked = locked;
+          if (locked) {
+            mascot.classList.add('locked');
+          } else {
+            mascot.classList.remove('locked');
+          }
+        });
+
+        // Sinusoidal bobbing animation
+        function animateBob() {
+          if (bobEnabled && !isDragging) {
+            bobPhase += BOB_SPEED;
+            var offsetY = Math.sin(bobPhase) * BOB_AMPLITUDE;
+            mascot.style.transform = 'translateY(' + offsetY + 'px)';
+          }
+          animFrameId = requestAnimationFrame(animateBob);
+        }
+
+        animFrameId = requestAnimationFrame(animateBob);
+
+        // Drag support
+        mascot.addEventListener('mousedown', function (e) {
+          if (e.button !== 0 || positionLocked) return;
+          isDragging = true;
+          dragOffsetX = e.screenX;
+          dragOffsetY = e.screenY;
+          mascot.classList.add('dragging');
+          mascot.style.transform = 'translateY(0)';
+          window.mascotAPI.startDrag(e.screenX, e.screenY);
+        });
+
+        window.addEventListener('mousemove', function (e) {
+          if (!isDragging) return;
+          var dx = e.screenX - dragOffsetX;
+          var dy = e.screenY - dragOffsetY;
+          dragOffsetX = e.screenX;
+          dragOffsetY = e.screenY;
+          window.mascotAPI.drag(dx, dy);
+        });
+
+        window.addEventListener('mouseup', function (e) {
+          if (!isDragging) return;
+          isDragging = false;
+          mascot.classList.remove('dragging');
+          window.mascotAPI.endDrag();
+        });
+
+        // Right-click context menu
+        mascot.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          window.mascotAPI.contextMenu(e.screenX, e.screenY);
+        });
+      })();
+    </script>
+  </body>
 </html>

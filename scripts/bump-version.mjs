@@ -17,7 +17,7 @@ const PACKAGE_FILES = [
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const bumpType = args.find((a) => ['patch', 'minor', 'major'].includes(a));
+const bumpType = args.find(a => ['patch', 'minor', 'major'].includes(a));
 
 if (!bumpType) {
   console.error('Usage: node scripts/bump-version.mjs <patch|minor|major> [--dry-run]');

@@ -242,7 +242,9 @@ export const useLibraryStore = create<LibraryStore>()(
  * filter, search query, and sort settings. Use with:
  *   useLibraryStore(getFilteredEntries)
  */
-export const getFilteredEntries = (state: LibraryState & LibraryActions): AnimeEntry[] => {
+export const getFilteredEntries = (
+  state: Pick<LibraryState, 'entries' | 'activeFilter' | 'searchQuery' | 'sortBy' | 'sortOrder'>
+): AnimeEntry[] => {
   const { entries, activeFilter, searchQuery, sortBy, sortOrder } = state;
 
   let filtered = entries;

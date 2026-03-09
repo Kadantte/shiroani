@@ -11,7 +11,9 @@ const logger = createLogger('BrowserStore');
  */
 function callBrowserAPI<T>(
   action: string,
-  fn: (browser: NonNullable<NonNullable<typeof window.electronAPI>['browser']>) => Promise<T> | undefined
+  fn: (
+    browser: NonNullable<NonNullable<typeof window.electronAPI>['browser']>
+  ) => Promise<T> | undefined
 ): Promise<T | undefined> {
   const browser = window.electronAPI?.browser;
   if (!browser) return Promise.resolve(undefined);

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Search, LayoutGrid, List, BookOpen, Globe, SearchX, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,11 @@ import type { AnimeEntry } from '@shiroani/shared';
 
 export function LibraryView() {
   const {
+    entries,
     activeFilter,
     searchQuery,
+    sortBy,
+    sortOrder,
     viewMode,
     isDetailOpen,
     selectedEntry,
@@ -47,7 +50,10 @@ export function LibraryView() {
     [openTab, navigateTo]
   );
 
-  const filteredEntries = useLibraryStore(getFilteredEntries);
+  const filteredEntries = useMemo(
+    () => getFilteredEntries({ entries, activeFilter, searchQuery, sortBy, sortOrder }),
+    [entries, activeFilter, searchQuery, sortBy, sortOrder]
+  );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">

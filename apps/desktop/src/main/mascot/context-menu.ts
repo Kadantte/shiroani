@@ -22,16 +22,16 @@ let onMenuSelect: MenuSelectHandler | null = null;
  */
 function getMenuHtmlPath(): string {
   if (process.env.NODE_ENV === 'development') {
-    return path.join(__dirname, '../../src/renderer/context-menu.html');
+    return path.join(__dirname, '../../../src/renderer/context-menu.html');
   }
-  return path.join(__dirname, '../renderer/context-menu.html');
+  return path.join(__dirname, '../../renderer/context-menu.html');
 }
 
 /**
  * Get the path to the compiled menu preload script.
  */
 function getMenuPreloadPath(): string {
-  return path.join(__dirname, 'menu-preload.js');
+  return path.join(__dirname, '../menu-preload.js');
 }
 
 /**

@@ -64,7 +64,7 @@ function getAddonPath(): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'native', 'desktop_overlay.node');
   }
-  return path.join(__dirname, '../../build/Release/desktop_overlay.node');
+  return path.join(__dirname, '../../../build/Release/desktop_overlay.node');
 }
 
 function loadAddon(): boolean {
@@ -128,19 +128,19 @@ export function setMascotEnabled(enabled: boolean): void {
 
 function getMascotHtmlPath(): string {
   if (process.env.NODE_ENV === 'development') {
-    return path.join(__dirname, '../../src/renderer/mascot-overlay.html');
+    return path.join(__dirname, '../../../src/renderer/mascot-overlay.html');
   }
-  return path.join(__dirname, '../renderer/mascot-overlay.html');
+  return path.join(__dirname, '../../renderer/mascot-overlay.html');
 }
 
 function getMascotPreloadPath(): string {
-  return path.join(__dirname, 'mascot-preload.js');
+  return path.join(__dirname, '../mascot-preload.js');
 }
 
 function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
-    : path.join(__dirname, '../../resources/mascot');
+    : path.join(__dirname, '../../../resources/mascot');
 }
 
 function createMacOverlay(): boolean {
@@ -382,7 +382,7 @@ export function createMascotOverlay(): boolean {
   const resourcesPath = getResourcesPath();
   const spritePath = path.join(resourcesPath, 'chibi_base.png');
   const iconPath = path.join(
-    app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../resources'),
+    app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../../resources'),
     'icon.ico'
   );
 

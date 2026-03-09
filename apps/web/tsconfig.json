@@ -16,5 +16,11 @@
     }
   },
   "include": ["src/**/*", "../../packages/shared/src/**/*"],
-  "exclude": ["node_modules", "dist", "../../packages/shared/src/**/*.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../../packages/shared/src/**/*.spec.ts",
+    "../../packages/shared/src/**/*.test.ts",
+    "../../packages/shared/src/**/__tests__/**"
+  ]
 }

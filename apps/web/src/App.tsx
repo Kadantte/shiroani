@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { IS_ELECTRON } from '@/lib/platform';
 
 import { TitleBar } from '@/components/shared/TitleBar';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { BrowserView } from '@/components/browser/BrowserView';
 import { LibraryView } from '@/components/library/LibraryView';
 import { ScheduleView } from '@/components/schedule/ScheduleView';
@@ -160,10 +161,12 @@ function App() {
                 hasBg ? 'bg-transparent' : 'bg-background'
               )}
             >
-              {activeView === 'browser' && <BrowserView />}
-              {activeView === 'library' && <LibraryView />}
-              {activeView === 'schedule' && <ScheduleView />}
-              {activeView === 'settings' && <SettingsView />}
+              <ErrorBoundary>
+                {activeView === 'browser' && <BrowserView />}
+                {activeView === 'library' && <LibraryView />}
+                {activeView === 'schedule' && <ScheduleView />}
+                {activeView === 'settings' && <SettingsView />}
+              </ErrorBoundary>
             </main>
           </div>
         </div>
