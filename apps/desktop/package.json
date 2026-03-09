@@ -32,7 +32,6 @@
     "@nestjs/event-emitter": "^2.1.1",
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/platform-socket.io": "^10.4.22",
-    "@nestjs/schedule": "^6.1.1",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.4.22",
     "@shiroani/shared": "workspace:*",

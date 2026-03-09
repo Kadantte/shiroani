@@ -67,22 +67,6 @@ export function initializeSocket(port: number): Socket {
 }
 
 /**
- * Tear down the existing socket (for HMR / tests).
- */
-export function resetSocket(): void {
-  if (_socket) {
-    _socket.removeAllListeners();
-    _socket.io.removeAllListeners();
-    _socket.disconnect();
-    _socket = null;
-  }
-  // Clear test handle to avoid stale references during HMR/tests
-  if (typeof window !== 'undefined') {
-    window.__testSocket = undefined;
-  }
-}
-
-/**
  * Get the socket singleton. Throws if not yet initialized.
  */
 export function getSocket(): Socket {
@@ -156,13 +140,6 @@ export function connectSocket(): Promise<void> {
 
     socket.connect();
   });
-}
-
-export function disconnectSocket(): void {
-  const socket = getSocket();
-  if (socket.connected) {
-    socket.disconnect();
-  }
 }
 
 // Re-export socket helpers for convenient access
