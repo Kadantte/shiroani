@@ -4,6 +4,8 @@ import type {
   UpdateChannel,
   BrowserTab,
   NotificationSettings,
+  DiscordRpcSettings,
+  DiscordPresenceActivity,
 } from '@shiroani/shared';
 
 /**
@@ -112,6 +114,12 @@ interface ElectronAPI {
     getSettings: () => Promise<NotificationSettings>;
     updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
+  };
+  discordRpc?: {
+    getSettings: () => Promise<DiscordRpcSettings>;
+    updateSettings: (updates: Partial<DiscordRpcSettings>) => Promise<DiscordRpcSettings>;
+    updatePresence: (activity: DiscordPresenceActivity) => Promise<void>;
+    clearPresence: () => Promise<void>;
   };
   overlay?: {
     show: () => Promise<{ success: boolean }>;

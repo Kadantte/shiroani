@@ -36,6 +36,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.mascotVisibilityMode',
   'settings.mascotPositionLocked',
   'settings.mascotPosition',
+  // Discord RPC settings
+  'discord-rpc-settings',
 ]);
 
 /**

@@ -15,6 +15,7 @@ import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
+import { initializeDiscordRpc, cleanupDiscordRpc } from './discord-rpc-service';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
@@ -120,6 +121,9 @@ async function bootstrap(): Promise<void> {
     initializeNotificationService(mainWindow, nestApp);
   }
 
+  // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
+  initializeDiscordRpc();
+
   // Initialize adblocker after window creation, then enable on browser session
   try {
     await initializeAdblock();
@@ -219,6 +223,7 @@ app.on('before-quit', event => {
   (async () => {
     await safeCleanup('context menu', () => destroyContextMenu(), logger);
     await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
+    await safeCleanup('discord rpc', () => cleanupDiscordRpc(), logger);
     await safeCleanup('notification service', () => cleanupNotificationService(), logger);
     await safeCleanup('browser tab state', () => browserManager.saveTabState(), logger);
     await safeCleanup('browser manager', () => browserManager.destroy(), logger);

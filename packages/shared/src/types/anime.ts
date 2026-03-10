@@ -92,3 +92,28 @@ export interface NotificationSettings {
   /** How many minutes before airing to fire the notification */
   leadTimeMinutes: number;
 }
+
+// ============================================
+// Discord Rich Presence Settings
+// ============================================
+
+export interface DiscordRpcSettings {
+  enabled: boolean;
+  /** Whether to show specific anime titles or generic "Using ShiroAni" */
+  showAnimeDetails: boolean;
+  /** Whether to show elapsed time on the presence */
+  showElapsedTime: boolean;
+}
+
+export interface DiscordPresenceActivity {
+  /** Current view/activity: browser, library, diary, schedule, settings */
+  view: string;
+  /** Optional anime title being viewed */
+  animeTitle?: string;
+  /** Optional anime cover image URL */
+  animeCoverUrl?: string;
+  /** Optional AniList anime ID for the button link */
+  anilistId?: number;
+  /** Total anime count in library (for library view) */
+  libraryCount?: number;
+}

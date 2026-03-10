@@ -5,6 +5,8 @@ import type {
   UpdateChannel,
   BrowserTab,
   NotificationSettings,
+  DiscordRpcSettings,
+  DiscordPresenceActivity,
 } from '@shiroani/shared';
 
 /**
@@ -103,6 +105,12 @@ export interface ElectronAPI {
     getSettings: () => Promise<NotificationSettings>;
     updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
+  };
+  discordRpc: {
+    getSettings: () => Promise<DiscordRpcSettings>;
+    updateSettings: (updates: Partial<DiscordRpcSettings>) => Promise<DiscordRpcSettings>;
+    updatePresence: (activity: DiscordPresenceActivity) => Promise<void>;
+    clearPresence: () => Promise<void>;
   };
   overlay: {
     show: () => Promise<{ success: boolean }>;
@@ -216,6 +224,15 @@ const electronAPI: ElectronAPI = {
     updateSettings: (updates: Partial<NotificationSettings>) =>
       ipcRenderer.invoke('notifications:update-settings', updates) as Promise<NotificationSettings>,
     onClicked: createIpcListener<{ mediaId: number; episode: number }>('notifications:clicked'),
+  },
+  discordRpc: {
+    getSettings: () =>
+      ipcRenderer.invoke('discord-rpc:get-settings') as Promise<DiscordRpcSettings>,
+    updateSettings: (updates: Partial<DiscordRpcSettings>) =>
+      ipcRenderer.invoke('discord-rpc:update-settings', updates) as Promise<DiscordRpcSettings>,
+    updatePresence: (activity: DiscordPresenceActivity) =>
+      ipcRenderer.invoke('discord-rpc:update-presence', activity) as Promise<void>,
+    clearPresence: () => ipcRenderer.invoke('discord-rpc:clear-presence') as Promise<void>,
   },
   overlay: {
     show: () => ipcRenderer.invoke('overlay:show'),

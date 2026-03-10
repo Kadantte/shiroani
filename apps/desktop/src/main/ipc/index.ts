@@ -34,3 +34,6 @@ export { registerFileHandlers, cleanupFileHandlers } from './file';
 
 // Overlay handlers
 export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';
+
+// Discord RPC handlers
+export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord-rpc';

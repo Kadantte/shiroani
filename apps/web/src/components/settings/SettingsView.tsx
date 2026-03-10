@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Palette, Globe, Download, Info, Bell, Cat, Database } from 'lucide-react';
+import { Palette, Globe, Download, Info, Bell, Cat, Database, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_WINDOWS, IS_MAC } from '@/lib/platform';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
@@ -9,11 +9,13 @@ import { AboutSection } from '@/components/settings/AboutSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
+import { DiscordSection } from '@/components/settings/DiscordSection';
 
 type SettingsSection =
   | 'appearance'
   | 'browser'
   | 'notifications'
+  | 'discord'
   | 'mascot'
   | 'data'
   | 'updates'
@@ -23,6 +25,7 @@ const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }
   { id: 'appearance', label: 'Wygląd', Icon: Palette },
   { id: 'browser', label: 'Przeglądarka', Icon: Globe },
   { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
+  { id: 'discord', label: 'Discord', Icon: MessageCircle },
   { id: 'mascot', label: 'Maskotka', Icon: Cat },
   { id: 'data', label: 'Dane', Icon: Database },
   { id: 'updates', label: 'Aktualizacje', Icon: Download },
@@ -72,6 +75,7 @@ export function SettingsView() {
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}
           {activeSection === 'notifications' && <NotificationsSection />}
+          {activeSection === 'discord' && <DiscordSection />}
           {activeSection === 'mascot' && <MascotSection />}
           {activeSection === 'data' && <DataSection />}
           {activeSection === 'updates' && <UpdatesSection version={version} />}

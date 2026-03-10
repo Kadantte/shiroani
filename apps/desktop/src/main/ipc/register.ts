@@ -20,6 +20,8 @@ import {
   cleanupFileHandlers,
   registerOverlayHandlers,
   cleanupOverlayHandlers,
+  registerDiscordRpcHandlers,
+  cleanupDiscordRpcHandlers,
 } from './';
 import { BrowserManager } from '../browser/browser-manager';
 
@@ -40,6 +42,7 @@ export function registerIpcHandlers(
   registerNotificationHandlers();
   registerFileHandlers();
   registerOverlayHandlers();
+  registerDiscordRpcHandlers();
 }
 
 /**
@@ -56,4 +59,5 @@ export function cleanupIpcHandlers(): void {
   cleanupNotificationHandlers();
   cleanupFileHandlers();
   cleanupOverlayHandlers();
+  cleanupDiscordRpcHandlers();
 }

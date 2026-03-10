@@ -32,6 +32,11 @@ export const useAppStore = create<AppStore>()(
           }
         }
 
+        // Update Discord Rich Presence with the new view
+        if (IS_ELECTRON && window.electronAPI?.discordRpc) {
+          window.electronAPI.discordRpc.updatePresence({ view });
+        }
+
         set({ activeView: view }, undefined, 'app/navigateTo');
       },
     }),
