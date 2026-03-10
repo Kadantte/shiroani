@@ -16,6 +16,13 @@ let menuWindow: BrowserWindow | null = null;
 let onMenuSelect: MenuSelectHandler | null = null;
 
 /**
+ * Check if the context menu is currently visible.
+ */
+export function isContextMenuVisible(): boolean {
+  return menuWindow !== null && !menuWindow.isDestroyed() && menuWindow.isVisible();
+}
+
+/**
  * Get the path to the context menu HTML file.
  * In dev mode, the source file is used directly.
  * In production, it is compiled to dist/renderer/.

@@ -1,8 +1,14 @@
 import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import { logger } from '../logger';
 import { store } from '../store';
-import { showContextMenu, setMenuSelectHandler, type MenuState } from './context-menu';
+import {
+  showContextMenu,
+  setMenuSelectHandler,
+  isContextMenuVisible,
+  type MenuState,
+} from './context-menu';
 import { handleOverlayAction, registerVisibilitySetter } from './mascot-actions';
 import {
   isMascotPositionLocked,
@@ -180,6 +186,9 @@ function createMacOverlay(): boolean {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // Use a separate session so the main app's restrictive CSP
+      // (which strips 'unsafe-inline') doesn't block inline scripts.
+      partition: 'mascot-overlay',
     },
   });
 
@@ -194,9 +203,17 @@ function createMacOverlay(): boolean {
   mascotWindow
     .loadFile(getMascotHtmlPath())
     .then(() => {
-      const spritePath = path.join(getResourcesPath(), 'chibi_base.png');
+      const spriteFile = path.join(getResourcesPath(), 'chibi_base.png');
+      let spriteSrc: string;
+      try {
+        const data = fs.readFileSync(spriteFile);
+        spriteSrc = `data:image/png;base64,${data.toString('base64')}`;
+      } catch (err) {
+        logger.error('Failed to read mascot sprite:', err);
+        spriteSrc = '';
+      }
       mascotWindow!.webContents.send('mascot:config', {
-        spritePath,
+        spritePath: spriteSrc,
         positionLocked: isMascotPositionLocked(),
       });
 
@@ -227,6 +244,8 @@ function createMacOverlay(): boolean {
   // When the mascot is clicked, immediately return focus to the previously active window.
   mascotWindow.on('focus', () => {
     if (mascotWindow && !mascotWindow.isDestroyed()) {
+      // Don't steal focus back when the context menu is open
+      if (isContextMenuVisible()) return;
       mascotWindow.blur();
       // If the main window was visible, refocus it
       if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
