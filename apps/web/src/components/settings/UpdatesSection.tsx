@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import { Download, Loader2, Package } from 'lucide-react';
+import { Download, ExternalLink, Loader2, Package } from 'lucide-react';
+import { GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useUpdateStore } from '@/stores/useUpdateStore';
+import { useBrowserStore } from '@/stores/useBrowserStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
 interface UpdatesSectionProps {
@@ -29,6 +31,8 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
     return cleanup;
   }, [initListeners]);
 
+  const isMac = window.electronAPI?.platform === 'darwin';
+
   const statusText = (() => {
     switch (status) {
       case 'idle':
@@ -36,17 +40,25 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
       case 'checking':
         return 'Sprawdzanie...';
       case 'available':
-        return `Dostepna aktualizacja: ${updateInfo?.version ?? ''}`;
+        return `Dostępna aktualizacja: ${updateInfo?.version ?? ''}`;
       case 'downloading':
         return `Pobieranie... ${progress ? `${Math.round(progress.percent)}%` : ''}`;
       case 'ready':
         return 'Aktualizacja gotowa do instalacji';
       case 'error':
-        return `Blad: ${error ?? 'Nieznany blad'}`;
+        return `Błąd: ${error ?? 'Nieznany błąd'}`;
       default:
         return '';
     }
   })();
+
+  const openReleasesPage = () => {
+    if (window.electronAPI?.browser) {
+      useBrowserStore.getState().openTab(GITHUB_RELEASES_URL);
+    } else {
+      window.open(GITHUB_RELEASES_URL, '_blank');
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -54,7 +66,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
       <SettingsCard
         icon={Package}
         title="Wersja aplikacji"
-        subtitle="Aktualna wersja i kanal aktualizacji"
+        subtitle={isMac ? 'Aktualna wersja' : 'Aktualna wersja i kanał aktualizacji'}
       >
         <div>
           <h3 className="text-sm font-medium mb-1">Wersja</h3>
@@ -63,95 +75,112 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
           </p>
         </div>
 
-        <div>
-          <h3 className="text-sm font-medium mb-2">Kanal aktualizacji</h3>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setChannel('stable')}
-              disabled={isChannelSwitching}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
-                channel === 'stable'
-                  ? 'border-primary/50 bg-primary/15 text-foreground'
-                  : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
-              )}
-            >
-              <div
+        {!isMac && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">Kanał aktualizacji</h3>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setChannel('stable')}
+                disabled={isChannelSwitching}
                 className={cn(
-                  'w-3 h-3 rounded-full',
-                  channel === 'stable' ? 'bg-primary' : 'bg-muted-foreground/30'
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                  channel === 'stable'
+                    ? 'border-primary/50 bg-primary/15 text-foreground'
+                    : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
                 )}
-              />
-              <span className="text-sm">Stabilna</span>
-            </button>
-            <button
-              onClick={() => setChannel('beta')}
-              disabled={isChannelSwitching}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
-                channel === 'beta'
-                  ? 'border-primary/50 bg-primary/15 text-foreground'
-                  : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
-              )}
-            >
-              <div
+              >
+                <div
+                  className={cn(
+                    'w-3 h-3 rounded-full',
+                    channel === 'stable' ? 'bg-primary' : 'bg-muted-foreground/30'
+                  )}
+                />
+                <span className="text-sm">Stabilna</span>
+              </button>
+              <button
+                onClick={() => setChannel('beta')}
+                disabled={isChannelSwitching}
                 className={cn(
-                  'w-3 h-3 rounded-full',
-                  channel === 'beta' ? 'bg-primary' : 'bg-muted-foreground/30'
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                  channel === 'beta'
+                    ? 'border-primary/50 bg-primary/15 text-foreground'
+                    : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
                 )}
-              />
-              <span className="text-sm">Beta</span>
-            </button>
+              >
+                <div
+                  className={cn(
+                    'w-3 h-3 rounded-full',
+                    channel === 'beta' ? 'bg-primary' : 'bg-muted-foreground/30'
+                  )}
+                />
+                <span className="text-sm">Beta</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </SettingsCard>
 
-      {/* Check for updates */}
+      {/* Updates */}
       <SettingsCard>
-        <div className="flex items-center gap-3 mb-2">
-          <Button
-            size="sm"
-            onClick={checkForUpdates}
-            disabled={status === 'checking' || status === 'downloading'}
-          >
-            {status === 'checking' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
+        {isMac ? (
+          <>
+            <p className="text-xs text-muted-foreground mb-3">
+              Automatyczne aktualizacje nie są na razie dostepne na macOS ze względu na brak podpisu
+              cyfrowego. Pobierz najnowsza wersję ręcznie z GitHub Releases lub Discorda.
+            </p>
+            <Button size="sm" variant="outline" onClick={openReleasesPage}>
+              <ExternalLink className="w-4 h-4" />
+              Otwórz GitHub Releases
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-2">
+              <Button
+                size="sm"
+                onClick={checkForUpdates}
+                disabled={status === 'checking' || status === 'downloading'}
+              >
+                {status === 'checking' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                Sprawdź aktualizacje
+              </Button>
+
+              {status === 'available' && (
+                <Button size="sm" variant="outline" onClick={startDownload}>
+                  Pobierz
+                </Button>
+              )}
+
+              {status === 'ready' && (
+                <Button size="sm" variant="outline" onClick={installNow}>
+                  Zainstaluj teraz
+                </Button>
+              )}
+            </div>
+
+            <p
+              className={cn(
+                'text-xs',
+                status === 'error' ? 'text-destructive' : 'text-muted-foreground'
+              )}
+            >
+              {statusText}
+            </p>
+
+            {/* Download progress */}
+            {status === 'downloading' && progress && (
+              <div className="mt-2 w-full bg-primary/20 rounded-full h-1.5">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
             )}
-            Sprawdz aktualizacje
-          </Button>
-
-          {status === 'available' && (
-            <Button size="sm" variant="outline" onClick={startDownload}>
-              Pobierz
-            </Button>
-          )}
-
-          {status === 'ready' && (
-            <Button size="sm" variant="outline" onClick={installNow}>
-              Zainstaluj teraz
-            </Button>
-          )}
-        </div>
-
-        <p
-          className={cn(
-            'text-xs',
-            status === 'error' ? 'text-destructive' : 'text-muted-foreground'
-          )}
-        >
-          {statusText}
-        </p>
-
-        {/* Download progress */}
-        {status === 'downloading' && progress && (
-          <div className="mt-2 w-full bg-primary/20 rounded-full h-1.5">
-            <div
-              className="bg-primary h-full rounded-full transition-all duration-300"
-              style={{ width: `${progress.percent}%` }}
-            />
-          </div>
+          </>
         )}
       </SettingsCard>
     </div>

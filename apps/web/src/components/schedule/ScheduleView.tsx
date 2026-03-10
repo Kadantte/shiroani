@@ -76,7 +76,7 @@ export function ScheduleView() {
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'weekly' && 'bg-primary/10 text-primary hover:bg-primary/15'
               )}
-              tooltip="Tydzien — lista"
+              tooltip="Tydzień — lista"
             >
               <List className="w-4 h-4" />
             </TooltipButton>
@@ -88,7 +88,7 @@ export function ScheduleView() {
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'timetable' && 'bg-primary/10 text-primary hover:bg-primary/15'
               )}
-              tooltip="Tydzien — siatka"
+              tooltip="Tydzień — siatka"
             >
               <LayoutGrid className="w-4 h-4" />
             </TooltipButton>
@@ -116,7 +116,7 @@ export function ScheduleView() {
               className="text-xs h-7 border-primary/20 text-primary hover:bg-primary/10"
               onClick={navigateToday}
             >
-              Dzis
+              Dziś
             </Button>
           )}
         </div>

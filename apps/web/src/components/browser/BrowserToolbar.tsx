@@ -99,7 +99,7 @@ export function BrowserToolbar({
         size="icon"
         className="w-8 h-8"
         onClick={onReload}
-        tooltip={isLoading ? 'Ladowanie...' : 'Odswiez'}
+        tooltip={isLoading ? 'Ładowanie...' : 'Odśwież'}
         tooltipSide="bottom"
       >
         {isLoading ? (
@@ -139,7 +139,7 @@ export function BrowserToolbar({
         size="icon"
         className={cn('w-8 h-8', adblockEnabled && 'text-status-success')}
         onClick={onToggleAdblock}
-        tooltip={adblockEnabled ? 'Adblock wlaczony' : 'Adblock wylaczony'}
+        tooltip={adblockEnabled ? 'Adblock włączony' : 'Adblock wyłączony'}
         tooltipSide="top"
       >
         {adblockEnabled ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
@@ -150,7 +150,7 @@ export function BrowserToolbar({
         size="icon"
         className="w-8 h-8"
         onClick={onGoHome}
-        tooltip="Strona glowna"
+        tooltip="Strona główna"
         tooltipSide="top"
       >
         <Home className="w-4 h-4" />

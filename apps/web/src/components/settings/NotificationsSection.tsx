@@ -56,14 +56,14 @@ export function NotificationsSection() {
       <SettingsCard
         icon={Bell}
         title="Powiadomienia"
-        subtitle="Ustawienia powiadomien o nowych odcinkach"
+        subtitle="Ustawienia powiadomień o nowych odcinkach"
       >
         {/* Enable notifications */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium">Powiadomienia o odcinkach</h3>
             <p className="text-xs text-muted-foreground">
-              Otrzymuj powiadomienia gdy nowy odcinek sledzonego anime jest nadawany
+              Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} />
@@ -75,7 +75,7 @@ export function NotificationsSection() {
         <div>
           <h3 className="text-sm font-medium mb-1">Wyprzedzenie</h3>
           <p className="text-xs text-muted-foreground mb-2">
-            Ile minut przed emisja wyslac powiadomienie
+            Ile minut przed emisją wysłać powiadomienie
           </p>
           <Select value={leadTime} onValueChange={setLeadTime} disabled={!enabled}>
             <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
@@ -104,8 +104,8 @@ export function NotificationsSection() {
         <div className="flex items-start gap-2.5">
           <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
           <p className="text-xs font-medium text-muted-foreground/80">
-            Powiadomienia dzialaja tylko dla anime ze statusem &ldquo;Ogladane&rdquo; w bibliotece,
-            ktore maja przypisane ID z AniList.
+            Powiadomienia działają tylko dla anime ze statusem &ldquo;Oglądane&rdquo; w bibliotece,
+            które mają przypisane ID z AniList.
           </p>
         </div>
       </SettingsCard>

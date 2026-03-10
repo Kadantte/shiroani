@@ -28,10 +28,10 @@ export function AppearanceSection() {
   return (
     <div className="space-y-4">
       {/* Custom background — shown first */}
-      <SettingsCard icon={Image} title="Tlo" subtitle="Ustaw wlasne tlo aplikacji (obraz lub GIF)">
+      <SettingsCard icon={Image} title="Tło" subtitle="Ustaw własne tło aplikacji (obraz lub GIF)">
         {customBackground && (
           <div className="rounded-xl overflow-hidden border border-border-glass h-24">
-            <img src={customBackground} alt="Podglad tla" className="w-full h-full object-cover" />
+            <img src={customBackground} alt="Podgląd tła" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -53,7 +53,7 @@ export function AppearanceSection() {
               onClick={removeBackground}
             >
               <RotateCcw className="w-4 h-4" />
-              Usun tlo
+              Usuń tło
             </Button>
           )}
         </div>
@@ -63,7 +63,7 @@ export function AppearanceSection() {
           <div className="mt-2 space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-muted-foreground">Przezroczystosc</label>
+                <label className="text-xs font-medium text-muted-foreground">Przezroczystość</label>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {Math.round(backgroundOpacity * 100)}%
                 </span>

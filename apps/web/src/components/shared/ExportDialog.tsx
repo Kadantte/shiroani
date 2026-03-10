@@ -48,7 +48,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
     } catch (err) {
       setState({
         step: 'error',
-        message: err instanceof Error ? err.message : 'Nieznany blad',
+        message: err instanceof Error ? err.message : 'Nieznany błąd',
       });
     }
   }, [type, selectedIds]);
@@ -77,7 +77,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
     } catch (err) {
       setState({
         step: 'save-error',
-        message: err instanceof Error ? err.message : 'Nie udalo sie zapisac pliku',
+        message: err instanceof Error ? err.message : 'Nie udało się zapisać pliku',
       });
     }
   }, [state]);
@@ -130,7 +130,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
               <CheckCircle className="w-8 h-8 text-green-400" />
               <p className="text-sm text-foreground">
                 Wyeksportowano <span className="font-semibold">{state.data.totalExported}</span>{' '}
-                elementow
+                elementów
               </p>
             </div>
           )}
@@ -155,7 +155,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
           {state.step === 'saved' && (
             <div className="flex flex-col items-center gap-3 py-4">
               <CheckCircle className="w-8 h-8 text-green-400" />
-              <p className="text-sm text-green-400">Plik zostal zapisany pomyslnie</p>
+              <p className="text-sm text-green-400">Plik został zapisany pomyślnie</p>
             </div>
           )}
 

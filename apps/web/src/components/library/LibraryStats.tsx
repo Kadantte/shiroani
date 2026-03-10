@@ -76,14 +76,14 @@ export function LibraryStats() {
         />
         <StatCard
           icon={<Star className="w-3.5 h-3.5" />}
-          label="Srednia ocena"
+          label="Średnia ocena"
           value={stats.avgScore > 0 ? stats.avgScore.toFixed(1) : '\u2014'}
           subtitle={stats.scoredCount > 0 ? `z ${stats.scoredCount} ocen` : undefined}
           accent="warning"
         />
         <StatCard
           icon={<TrendingUp className="w-3.5 h-3.5" />}
-          label="Ogladam"
+          label="Oglądam"
           value={stats.breakdown.watching}
           accent="success"
         />
@@ -94,7 +94,7 @@ export function LibraryStats() {
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">
-              Rozklad statusow
+              Rozkład statusów
             </p>
             <p className="text-2xs text-muted-foreground/60">{stats.totalEntries} pozycji</p>
           </div>

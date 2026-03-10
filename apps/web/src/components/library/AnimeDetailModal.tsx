@@ -116,7 +116,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
 
     if (!activeTab?.url) {
-      toast.error('Brak aktywnej karty przegladarki');
+      toast.error('Brak aktywnej karty przeglądarki');
       return;
     }
 
@@ -197,7 +197,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-muted-foreground">
-                Postep: {currentEpisode} / {entry.episodes ?? '?'} odcinkow
+                Postęp: {currentEpisode} / {entry.episodes ?? '?'} odcinków
               </label>
               <Input
                 type="number"
@@ -273,7 +273,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
                 onClick={handleUpdateUrl}
               >
                 <Link2 className="w-3 h-3" />
-                Pobierz z przegladarki
+                Pobierz z przeglądarki
               </Button>
             </div>
             <Input
@@ -288,7 +288,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">AniList ID</label>
             <p className="text-2xs text-muted-foreground/70">
-              Wymagane do powiadomien i odliczania odcinkow
+              Wymagane do powiadomień i odliczania odcinków
             </p>
             <Input
               type="number"
@@ -308,11 +308,11 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
             </Button>
             <Button onClick={handleOpenInBrowser} variant="outline" size="sm">
               <ExternalLink className="w-4 h-4" />
-              Otworz
+              Otwórz
             </Button>
             <Button onClick={() => setShowConfirm(true)} variant="destructive" size="sm">
               <Trash2 className="w-4 h-4" />
-              Usun
+              Usuń
             </Button>
           </div>
         </div>

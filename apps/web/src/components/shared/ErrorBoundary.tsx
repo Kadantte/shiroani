@@ -40,9 +40,9 @@ export class ErrorBoundary extends Component<Props, State> {
           className="w-32 h-32 opacity-60 drop-shadow-lg"
         />
         <div className="text-center space-y-2 max-w-md">
-          <h2 className="text-lg font-semibold">Cos poszlo nie tak</h2>
+          <h2 className="text-lg font-semibold">Coś poszło nie tak</h2>
           <p className="text-sm text-muted-foreground">
-            Wystapil nieoczekiwany blad. Sprobuj ponownie lub zrestartuj aplikacje.
+            Wystąpił nieoczekiwany błąd. Spróbuj ponownie lub zrestartuj aplikację.
           </p>
           {this.state.error && (
             <pre className="mt-3 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground text-left overflow-auto max-h-32">
@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
           onClick={this.handleReset}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          Sprobuj ponownie
+          Spróbuj ponownie
         </button>
       </div>
     );

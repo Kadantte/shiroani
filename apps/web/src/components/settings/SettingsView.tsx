@@ -20,8 +20,8 @@ type SettingsSection =
   | 'about';
 
 const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
-  { id: 'appearance', label: 'Wyglad', Icon: Palette },
-  { id: 'browser', label: 'Przegladarka', Icon: Globe },
+  { id: 'appearance', label: 'Wygląd', Icon: Palette },
+  { id: 'browser', label: 'Przeglądarka', Icon: Globe },
   { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
   { id: 'mascot', label: 'Maskotka', Icon: Cat },
   { id: 'data', label: 'Dane', Icon: Database },

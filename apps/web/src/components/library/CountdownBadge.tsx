@@ -7,7 +7,7 @@ interface CountdownBadgeProps {
 }
 
 function formatCountdown(secondsLeft: number): string {
-  if (secondsLeft < 15 * 60) return 'Wkrotce!';
+  if (secondsLeft < 15 * 60) return 'Wkrótce!';
 
   const minutes = Math.floor(secondsLeft / 60) % 60;
   const hours = Math.floor(secondsLeft / 3600) % 24;

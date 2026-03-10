@@ -211,9 +211,9 @@ export function LibraryView() {
                   <SearchX className="w-7 h-7 opacity-40" />
                 </div>
                 <div className="text-center space-y-1.5">
-                  <p className="text-sm font-medium text-foreground/70">Brak wynikow</p>
+                  <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
                   <p className="text-xs text-muted-foreground/60 max-w-[200px]">
-                    Sprobuj innych slow kluczowych lub zmien filtr statusu
+                    Spróbuj innych słów kluczowych lub zmień filtr statusu
                   </p>
                 </div>
               </>
@@ -227,7 +227,7 @@ export function LibraryView() {
                     Twoja biblioteka jest pusta
                   </p>
                   <p className="text-xs text-muted-foreground/60 max-w-[240px]">
-                    Przejdz do przegladarki i dodaj anime klikajac ikone zakladki na pasku
+                    Przejdź do przeglądarki i dodaj anime klikając ikonę zakładki na pasku
                   </p>
                 </div>
                 <Button
@@ -237,7 +237,7 @@ export function LibraryView() {
                   onClick={() => navigateTo('browser')}
                 >
                   <Globe className="w-3.5 h-3.5" />
-                  Otworz przegladarke
+                  Otwórz przeglądarkę
                 </Button>
               </>
             )}

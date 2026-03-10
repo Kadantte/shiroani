@@ -62,7 +62,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       const raw = await window.electronAPI?.file?.readJson(filePath);
 
       if (!raw) {
-        setState({ step: 'file-error', message: 'Nie udalo sie odczytac pliku' });
+        setState({ step: 'file-error', message: 'Nie udało się odczytać pliku' });
         return;
       }
 
@@ -70,14 +70,14 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       try {
         data = JSON.parse(raw);
       } catch {
-        setState({ step: 'file-error', message: 'Plik nie zawiera prawidlowego formatu JSON' });
+        setState({ step: 'file-error', message: 'Plik nie zawiera prawidłowego formatu JSON' });
         return;
       }
 
       if (data.source !== 'shiroani' || data.version !== 1) {
         setState({
           step: 'file-error',
-          message: 'Nieprawidlowy format pliku. Oczekiwano pliku eksportu ShiroAni.',
+          message: 'Nieprawidłowy format pliku. Oczekiwano pliku eksportu ShiroAni.',
         });
         return;
       }
@@ -89,7 +89,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
     } catch (err) {
       setState({
         step: 'file-error',
-        message: err instanceof Error ? err.message : 'Nie udalo sie odczytac pliku',
+        message: err instanceof Error ? err.message : 'Nie udało się odczytać pliku',
       });
     }
   }, [onOpenChange]);
@@ -155,7 +155,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
     } catch (err) {
       setState({
         step: 'file-error',
-        message: err instanceof Error ? err.message : 'Blad podczas importu',
+        message: err instanceof Error ? err.message : 'Błąd podczas importu',
       });
     } finally {
       socket.off(ImportExportEvents.IMPORT_PROGRESS, handleProgress);
@@ -232,12 +232,12 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
               <div className="bg-accent/30 rounded-lg p-3">
                 <p className="text-sm text-foreground">
                   Znaleziono <span className="font-semibold">{state.libraryCount}</span> anime i{' '}
-                  <span className="font-semibold">{state.diaryCount}</span> wpisow dziennika
+                  <span className="font-semibold">{state.diaryCount}</span> wpisów dziennika
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Strategia duplikatow</p>
+                <p className="text-sm font-medium text-foreground">Strategia duplikatów</p>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
@@ -246,7 +246,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
                     onChange={() => setStrategy('skip')}
                     className="accent-primary"
                   />
-                  <span className="text-sm text-muted-foreground">Pomin duplikaty</span>
+                  <span className="text-sm text-muted-foreground">Pomiń duplikaty</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -303,15 +303,15 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
             <div className="space-y-3 py-2">
               <div className="flex items-center justify-center gap-2 py-2">
                 <CheckCircle className="w-6 h-6 text-green-400" />
-                <span className="text-sm font-medium text-foreground">Import zakonczony</span>
+                <span className="text-sm font-medium text-foreground">Import zakończony</span>
               </div>
               <div className="flex items-center justify-center gap-4 text-sm">
                 <span className="text-green-400">Zaimportowano: {state.result.totalImported}</span>
                 {state.result.totalSkipped > 0 && (
-                  <span className="text-yellow-400">Pominieto: {state.result.totalSkipped}</span>
+                  <span className="text-yellow-400">Pominięto: {state.result.totalSkipped}</span>
                 )}
                 {state.result.totalErrors > 0 && (
-                  <span className="text-red-400">Bledy: {state.result.totalErrors}</span>
+                  <span className="text-red-400">Błędy: {state.result.totalErrors}</span>
                 )}
               </div>
             </div>

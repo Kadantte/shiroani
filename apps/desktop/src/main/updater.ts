@@ -62,6 +62,14 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
     return;
   }
 
+  if (process.platform === 'darwin') {
+    logger.info(
+      'Auto-updater disabled on macOS (unsigned app — users should download updates from GitHub Releases)'
+    );
+    updaterEnabled = false;
+    return;
+  }
+
   updaterEnabled = true;
   applyChannel(getPersistedChannel());
 

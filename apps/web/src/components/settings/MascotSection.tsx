@@ -78,7 +78,7 @@ export function MascotSection() {
           <div>
             <h3 className="text-sm font-medium">Maskotka na pulpicie</h3>
             <p className="text-xs text-muted-foreground">
-              Wyswietl animowana maskotke chibi na pulpicie z ikonka w zasobniku systemowym
+              Wyświetl animowaną maskotkę chibi na pulpicie z ikonką w zasobniku systemowym
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={handleToggle} />
@@ -102,9 +102,9 @@ export function MascotSection() {
           <Separator className="bg-border/50" />
 
           <div>
-            <h3 className="text-sm font-medium mb-1">Tryb widocznosci</h3>
+            <h3 className="text-sm font-medium mb-1">Tryb widoczności</h3>
             <p className="text-xs text-muted-foreground mb-2">
-              Kiedy maskotka ma byc widoczna na pulpicie
+              Kiedy maskotka ma być widoczna na pulpicie
             </p>
             <Select value={visibilityMode} onValueChange={handleVisibilityModeChange}>
               <SelectTrigger className="h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
@@ -121,7 +121,7 @@ export function MascotSection() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Zablokuj pozycje</h3>
+              <h3 className="text-sm font-medium">Zablokuj pozycję</h3>
               <p className="text-xs text-muted-foreground">
                 Zapobiega przypadkowemu przesuwaniu maskotki
               </p>
@@ -133,9 +133,9 @@ export function MascotSection() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Resetuj pozycje</h3>
+              <h3 className="text-sm font-medium">Resetuj pozycję</h3>
               <p className="text-xs text-muted-foreground">
-                Przywroc maskotke do domyslnej pozycji (prawy dolny rog)
+                Przywróć maskotkę do domyślnej pozycji (prawy dolny róg)
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={handleResetPosition}>

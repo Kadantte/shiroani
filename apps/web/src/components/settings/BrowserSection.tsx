@@ -58,15 +58,15 @@ export function BrowserSection() {
     <div className="space-y-4">
       <SettingsCard
         icon={Globe}
-        title="Przegladarka"
-        subtitle="Ustawienia przegladarki internetowej"
+        title="Przeglądarka"
+        subtitle="Ustawienia przeglądarki internetowej"
       >
         {/* Adblock */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium">Blokowanie reklam</h3>
             <p className="text-xs text-muted-foreground">
-              Blokuj reklamy w wbudowanej przegladarce
+              Blokuj reklamy w wbudowanej przeglądarce
             </p>
           </div>
           <Switch checked={adblockEnabled} onCheckedChange={setAdblockEnabled} />
@@ -78,7 +78,7 @@ export function BrowserSection() {
         <div>
           <h3 className="text-sm font-medium mb-1">Strona domowa</h3>
           <p className="text-xs text-muted-foreground mb-2">
-            Domyslna strona otwierana w nowych kartach
+            Domyślna strona otwierana w nowych kartach
           </p>
           <Input
             value={homepage}

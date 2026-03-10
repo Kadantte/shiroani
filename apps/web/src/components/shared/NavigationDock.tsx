@@ -130,7 +130,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
 
   return (
     <nav
-      aria-label="Nawigacja glowna"
+      aria-label="Nawigacja główna"
       className={cn(
         'fixed bottom-3 left-1/2 -translate-x-1/2 z-40',
         'animate-slide-up motion-reduce:animate-none'

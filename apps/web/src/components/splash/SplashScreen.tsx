@@ -110,7 +110,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
             <div className="flex items-center gap-2.5 animate-[splash-fade-up_0.6s_ease-out_0.8s_both]">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/70" />
               <p className="text-muted-foreground/60 text-xs">
-                {ready ? 'Prawie gotowe...' : 'Laczenie z serwerem...'}
+                {ready ? 'Prawie gotowe...' : 'Łączenie z serwerem...'}
               </p>
             </div>
           )}

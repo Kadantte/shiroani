@@ -39,12 +39,6 @@
     "icon": "resources/icon.ico",
     "target": ["nsis"]
   },
-  "linux": {
-    "icon": "resources/icon.png",
-    "target": ["AppImage", "deb"],
-    "category": "Network",
-    "executableName": "shiroani"
-  },
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,

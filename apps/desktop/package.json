@@ -21,7 +21,6 @@
     "package": "pnpm build && electron-builder",
     "package:win": "pnpm build && electron-builder --win",
     "package:mac": "pnpm build && electron-builder --mac",
-    "package:linux": "pnpm build && electron-builder --linux",
     "native:build": "node scripts/native-build.mjs",
     "native:clean": "node-gyp clean",
     "postinstall": "electron-builder install-app-deps",

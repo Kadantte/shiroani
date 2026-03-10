@@ -90,7 +90,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
   const handleAdd = useCallback(() => {
     if (!editableTitle.trim()) {
-      toast.error('Tytul nie moze byc pusty');
+      toast.error('Tytuł nie może być pusty');
       return;
     }
 
@@ -120,7 +120,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
       onOpenChange(false);
     } catch {
-      toast.error('Nie udalo sie dodac do biblioteki');
+      toast.error('Nie udało się dodać do biblioteki');
     }
   }, [
     editableTitle,
@@ -142,14 +142,14 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
             Dodaj do biblioteki
           </DialogTitle>
           <DialogDescription>
-            Zapisz biezaca strone w bibliotece, aby moc do niej wrocic pozniej.
+            Zapisz bieżącą stronę w bibliotece, aby móc do niej wrócić później.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-w-0 space-y-4 py-2">
           {/* Cover image preview + URL */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Okladka</label>
+            <label className="text-xs font-medium text-muted-foreground">Okładka</label>
             <div className="flex items-start gap-3">
               {/* Thumbnail preview */}
               <div className="w-16 h-[86px] rounded-md border border-border overflow-hidden bg-muted shrink-0 flex items-center justify-center">
@@ -158,7 +158,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 ) : coverImage ? (
                   <img
                     src={coverImage}
-                    alt="Okladka"
+                    alt="Okładka"
                     className="w-full h-full object-cover"
                     onError={() => setCoverImage('')}
                   />
@@ -170,12 +170,12 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 <Input
                   value={coverImage}
                   onChange={e => setCoverImage(e.target.value)}
-                  placeholder="URL obrazka okladki..."
+                  placeholder="URL obrazka okładki..."
                   className="h-7 text-xs truncate"
                 />
                 <p className="text-[10px] text-muted-foreground/50">
                   {isFetchingCover
-                    ? 'Pobieranie okladki ze strony...'
+                    ? 'Pobieranie okładki ze strony...'
                     : coverImage
                       ? 'Pobrano automatycznie ze strony'
                       : 'Wklej URL lub zostaw puste'}
@@ -195,11 +195,11 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
           {/* Title input */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Tytul</label>
+            <label className="text-xs font-medium text-muted-foreground">Tytuł</label>
             <Input
               value={editableTitle}
               onChange={e => setEditableTitle(e.target.value)}
-              placeholder="Wpisz tytul..."
+              placeholder="Wpisz tytuł..."
               className="h-8 text-sm"
               autoFocus
             />
@@ -225,7 +225,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           {/* Episodes row */}
           <div className="flex items-end gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Biezacy odcinek</label>
+              <label className="text-xs font-medium text-muted-foreground">Bieżący odcinek</label>
               <Input
                 type="number"
                 min={0}
@@ -236,7 +236,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Liczba odcinkow</label>
+              <label className="text-xs font-medium text-muted-foreground">Liczba odcinków</label>
               <Input
                 type="number"
                 min={0}

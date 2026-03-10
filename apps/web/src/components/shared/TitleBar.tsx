@@ -73,7 +73,7 @@ export function TitleBar() {
             'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             'transition-colors duration-150'
           )}
-          aria-label={isMaximized ? 'Przywroc' : 'Maksymalizuj'}
+          aria-label={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
         >
           {isMaximized ? <Copy className="w-3 h-3" /> : <Square className="w-3 h-3" />}
         </button>

@@ -26,7 +26,7 @@ export function AboutSection({ version }: AboutSectionProps) {
             <h2 className="text-lg font-semibold">{APP_NAME}</h2>
             <p className="text-xs text-muted-foreground">Wersja {version || '...'}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Przegladarka i tracker anime w jednym miejscu
+              Przeglądarka i tracker anime w jednym miejscu
             </p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export function AboutSection({ version }: AboutSectionProps) {
       {/* License */}
       <SettingsCard>
         <h3 className="text-sm font-medium mb-1">Licencja</h3>
-        <p className="text-2xs text-muted-foreground/70">MIT License</p>
+        <p className="text-2xs text-muted-foreground/70">Source Available License</p>
       </SettingsCard>
     </div>
   );

@@ -51,7 +51,7 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
             <div className="w-10 h-10 rounded-xl bg-background/30 flex items-center justify-center">
               <Film className="w-5 h-5 text-muted-foreground/40" />
             </div>
-            <span className="text-muted-foreground/50 text-2xs font-medium">Brak okladki</span>
+            <span className="text-muted-foreground/50 text-2xs font-medium">Brak okładki</span>
           </div>
         )}
 
@@ -152,7 +152,7 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
                 'hover:bg-destructive/90 hover:scale-110 active:scale-95',
                 'transition-all duration-150'
               )}
-              title="Usun"
+              title="Usuń"
             >
               <Trash2 className="w-3 h-3" />
             </button>

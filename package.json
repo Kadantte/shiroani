@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "ShiroAni — Your personal anime browser and tracker",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@10.9.0",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -21,7 +21,6 @@
     "package": "pnpm build && pnpm --filter @shiroani/desktop package",
     "package:win": "pnpm build && pnpm --filter @shiroani/desktop package:win",
     "package:mac": "pnpm build && pnpm --filter @shiroani/desktop package:mac",
-    "package:linux": "pnpm build && pnpm --filter @shiroani/desktop package:linux",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

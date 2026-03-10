@@ -15,9 +15,9 @@ export function DailyView({ entries }: DailyViewProps) {
             <Calendar className="w-6 h-6 opacity-30" />
           </div>
           <div className="text-center space-y-1">
-            <p className="text-sm font-medium text-foreground/70">Brak anime na ten dzien</p>
+            <p className="text-sm font-medium text-foreground/70">Brak anime na ten dzień</p>
             <p className="text-xs text-muted-foreground/50">
-              Sprobuj innego dnia lub widoku tygodniowego
+              Spróbuj innego dnia lub widoku tygodniowego
             </p>
           </div>
         </div>
