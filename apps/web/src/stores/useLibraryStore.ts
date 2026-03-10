@@ -101,6 +101,8 @@ export const useLibraryStore = create<LibraryStore>()(
                     undefined,
                     'library/entryRemoved'
                   );
+                } else if (action === 'imported') {
+                  get().fetchLibrary();
                 }
               },
             },

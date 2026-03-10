@@ -71,6 +71,18 @@ export const DiaryEvents = {
 } as const;
 
 // ============================================
+// Import/Export Events
+// ============================================
+export const ImportExportEvents = {
+  // Client -> Server (requests)
+  EXPORT: 'data:export',
+  IMPORT: 'data:import',
+
+  // Server -> Client (broadcasts)
+  IMPORT_PROGRESS: 'data:import-progress',
+} as const;
+
+// ============================================
 // System Events
 // ============================================
 export const SystemEvents = {

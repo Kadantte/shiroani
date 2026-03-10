@@ -38,6 +38,7 @@ export interface ElectronAPI {
   dialog: {
     openDirectory: (options?: unknown) => Promise<string | null>;
     openFile: (options?: unknown) => Promise<string | null>;
+    saveFile: (options?: unknown) => Promise<string | null>;
     message: (options: {
       type?: 'none' | 'info' | 'error' | 'question' | 'warning';
       title?: string;
@@ -45,6 +46,10 @@ export interface ElectronAPI {
       detail?: string;
       buttons?: string[];
     }) => Promise<number>;
+  };
+  file: {
+    writeJson: (filePath: string, jsonString: string) => Promise<{ success: boolean }>;
+    readJson: (filePath: string) => Promise<string>;
   };
   background: {
     pick: () => Promise<{ fileName: string; url: string } | null>;
@@ -135,7 +140,13 @@ const electronAPI: ElectronAPI = {
   dialog: {
     openDirectory: (options?: unknown) => ipcRenderer.invoke('dialog:open-directory', options),
     openFile: (options?: unknown) => ipcRenderer.invoke('dialog:open-file', options),
+    saveFile: (options?: unknown) => ipcRenderer.invoke('dialog:save-file', options),
     message: options => ipcRenderer.invoke('dialog:message', options),
+  },
+  file: {
+    writeJson: (filePath: string, jsonString: string) =>
+      ipcRenderer.invoke('file:write-json', filePath, jsonString),
+    readJson: (filePath: string) => ipcRenderer.invoke('file:read-json', filePath),
   },
   background: {
     pick: () =>

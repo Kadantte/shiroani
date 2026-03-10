@@ -16,6 +16,8 @@ import {
   cleanupBackgroundHandlers,
   registerNotificationHandlers,
   cleanupNotificationHandlers,
+  registerFileHandlers,
+  cleanupFileHandlers,
   registerOverlayHandlers,
   cleanupOverlayHandlers,
 } from './';
@@ -36,6 +38,7 @@ export function registerIpcHandlers(
   registerBrowserHandlers(mainWindow, browserManager);
   registerBackgroundHandlers(mainWindow);
   registerNotificationHandlers();
+  registerFileHandlers();
   registerOverlayHandlers();
 }
 
@@ -51,5 +54,6 @@ export function cleanupIpcHandlers(): void {
   cleanupBrowserHandlers();
   cleanupBackgroundHandlers();
   cleanupNotificationHandlers();
+  cleanupFileHandlers();
   cleanupOverlayHandlers();
 }

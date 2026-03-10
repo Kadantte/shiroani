@@ -1,10 +1,22 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Search, LayoutGrid, List, BookOpen, Globe, SearchX, BarChart3 } from 'lucide-react';
+import {
+  Search,
+  LayoutGrid,
+  List,
+  BookOpen,
+  Globe,
+  SearchX,
+  BarChart3,
+  Download,
+  Upload,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ExportDialog } from '@/components/shared/ExportDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useLibraryStore, getFilteredEntries } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
@@ -36,6 +48,8 @@ export function LibraryView() {
 
   const [showStats, setShowStats] = useState(false);
   const [entryToRemove, setEntryToRemove] = useState<AnimeEntry | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const { openTab } = useBrowserStore();
   const navigateTo = useAppStore(s => s.navigateTo);
@@ -80,6 +94,25 @@ export function LibraryView() {
             </div>
           </div>
           <div className="flex items-center gap-0.5">
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setIsExportOpen(true)}
+              tooltip="Eksportuj"
+            >
+              <Download className="w-4 h-4" />
+            </TooltipButton>
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setIsImportOpen(true)}
+              tooltip="Importuj"
+            >
+              <Upload className="w-4 h-4" />
+            </TooltipButton>
+            <div className="w-px h-4 bg-border/50 mx-1" />
             <TooltipButton
               variant={showStats ? 'secondary' : 'ghost'}
               size="icon"
@@ -283,6 +316,10 @@ export function LibraryView() {
           if (!open) closeDetail();
         }}
       />
+
+      {/* Export/Import dialogs */}
+      <ExportDialog open={isExportOpen} onOpenChange={setIsExportOpen} type="library" />
+      <ImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} type="library" />
 
       {/* Confirm removal dialog (single instance for all cards) */}
       <ConfirmDialog

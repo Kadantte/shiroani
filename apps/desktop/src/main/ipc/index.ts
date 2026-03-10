@@ -29,5 +29,8 @@ export {
 // Notification handlers
 export { registerNotificationHandlers, cleanupNotificationHandlers } from './notifications';
 
+// File handlers
+export { registerFileHandlers, cleanupFileHandlers } from './file';
+
 // Overlay handlers
 export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';

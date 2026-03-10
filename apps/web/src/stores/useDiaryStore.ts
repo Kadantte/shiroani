@@ -95,6 +95,8 @@ export const useDiaryStore = create<DiaryStore>()(
                     undefined,
                     'diary/entryRemoved'
                   );
+                } else if (action === 'imported') {
+                  get().fetchEntries();
                 }
               },
             },

@@ -26,6 +26,7 @@ interface ElectronAPI {
   dialog?: {
     openDirectory: (options?: unknown) => Promise<string | null>;
     openFile: (options?: unknown) => Promise<string | null>;
+    saveFile: (options?: unknown) => Promise<string | null>;
     message: (options: {
       type?: 'none' | 'info' | 'error' | 'question' | 'warning';
       title?: string;
@@ -33,6 +34,10 @@ interface ElectronAPI {
       detail?: string;
       buttons?: string[];
     }) => Promise<number>;
+  };
+  file?: {
+    writeJson: (filePath: string, jsonString: string) => Promise<{ success: boolean }>;
+    readJson: (filePath: string) => Promise<string>;
   };
   app?: {
     getPath: (name: string) => Promise<string>;

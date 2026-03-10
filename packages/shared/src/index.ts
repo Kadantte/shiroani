@@ -7,6 +7,9 @@ export * from './types/settings';
 // Diary types
 export * from './types/diary';
 
+// Import/Export types
+export * from './types/import-export';
+
 // Updater types
 export * from './types/updater';
 

@@ -1,10 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, LayoutGrid, List, NotebookPen, Plus, SearchX } from 'lucide-react';
+import {
+  Search,
+  LayoutGrid,
+  List,
+  NotebookPen,
+  Plus,
+  SearchX,
+  Download,
+  Upload,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ExportDialog } from '@/components/shared/ExportDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useDiaryStore, getFilteredDiaryEntries } from '@/stores/useDiaryStore';
 import { DiaryEntryGrid } from './DiaryEntryGrid';
 import { DiaryEditor } from './DiaryEditor';
@@ -32,16 +43,20 @@ export function DiaryView() {
     createEntry,
     updateEntry,
     removeEntry,
+    fetchEntries,
     initListeners,
     cleanupListeners,
   } = useDiaryStore();
 
   const [entryToRemove, setEntryToRemove] = useState<DiaryEntry | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   useEffect(() => {
     initListeners();
+    fetchEntries();
     return () => cleanupListeners();
-  }, [initListeners, cleanupListeners]);
+  }, [initListeners, fetchEntries, cleanupListeners]);
 
   const filteredEntries = useMemo(
     () => getFilteredDiaryEntries({ entries, activeFilter, searchQuery }),
@@ -73,6 +88,25 @@ export function DiaryView() {
               <Plus className="w-3.5 h-3.5" />
               Nowy wpis
             </Button>
+            <div className="w-px h-4 bg-border/50 mx-1" />
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setIsExportOpen(true)}
+              tooltip="Eksportuj"
+            >
+              <Download className="w-4 h-4" />
+            </TooltipButton>
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => setIsImportOpen(true)}
+              tooltip="Importuj"
+            >
+              <Upload className="w-4 h-4" />
+            </TooltipButton>
             <div className="w-px h-4 bg-border/50 mx-1" />
             <TooltipButton
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
@@ -206,6 +240,10 @@ export function DiaryView() {
           onUpdate={updateEntry}
         />
       )}
+
+      {/* Export/Import dialogs */}
+      <ExportDialog open={isExportOpen} onOpenChange={setIsExportOpen} type="diary" />
+      <ImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} type="diary" />
 
       {/* Confirm removal dialog (single instance) */}
       <ConfirmDialog

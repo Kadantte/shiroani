@@ -47,6 +47,45 @@ function sanitizeOpenDialogOptions(
 }
 
 /**
+ * Security: Sanitize and validate save dialog options
+ * Only allows safe properties through to prevent abuse
+ */
+function sanitizeSaveDialogOptions(
+  options?: Electron.SaveDialogOptions
+): Partial<Electron.SaveDialogOptions> {
+  if (!options) return {};
+
+  const sanitized: Partial<Electron.SaveDialogOptions> = {};
+
+  if (typeof options.title === 'string') {
+    sanitized.title = options.title.slice(0, 200);
+  }
+
+  if (typeof options.defaultPath === 'string') {
+    const safePath = options.defaultPath.replace(/[<>"|?*]/g, '');
+    sanitized.defaultPath = safePath;
+  }
+
+  if (typeof options.buttonLabel === 'string') {
+    sanitized.buttonLabel = options.buttonLabel.slice(0, 50);
+  }
+
+  if (Array.isArray(options.filters)) {
+    sanitized.filters = options.filters
+      .slice(0, 10)
+      .filter(
+        f => typeof f === 'object' && typeof f.name === 'string' && Array.isArray(f.extensions)
+      )
+      .map(f => ({
+        name: f.name.slice(0, 100),
+        extensions: f.extensions.slice(0, 20).filter(e => typeof e === 'string'),
+      }));
+  }
+
+  return sanitized;
+}
+
+/**
  * Security: Sanitize message dialog options
  */
 function sanitizeMessageDialogOptions(options: MessageDialogOptions): MessageDialogOptions {
@@ -91,6 +130,14 @@ export function registerDialogHandlers(mainWindow: BrowserWindow): void {
     return result.canceled ? null : result.filePaths[0];
   });
 
+  ipcMain.handle('dialog:save-file', async (_event, options?: Electron.SaveDialogOptions) => {
+    const sanitized = sanitizeSaveDialogOptions(options);
+    const result = await dialog.showSaveDialog(mainWindow, {
+      ...sanitized,
+    });
+    return result.canceled ? null : result.filePath;
+  });
+
   ipcMain.handle('dialog:message', async (_event, options: MessageDialogOptions) => {
     const sanitized = sanitizeMessageDialogOptions(options);
     const result = await dialog.showMessageBox(mainWindow, {
@@ -110,5 +157,6 @@ export function registerDialogHandlers(mainWindow: BrowserWindow): void {
 export function cleanupDialogHandlers(): void {
   ipcMain.removeHandler('dialog:open-directory');
   ipcMain.removeHandler('dialog:open-file');
+  ipcMain.removeHandler('dialog:save-file');
   ipcMain.removeHandler('dialog:message');
 }

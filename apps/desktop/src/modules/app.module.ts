@@ -5,6 +5,7 @@ import { AnimeModule } from './anime';
 import { LibraryModule } from './library';
 import { ScheduleModule } from './schedule';
 import { DiaryModule } from './diary';
+import { ImportExportModule } from './import-export';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DiaryModule } from './diary';
     LibraryModule,
     ScheduleModule,
     DiaryModule,
+    ImportExportModule,
   ],
   controllers: [],
   providers: [],
