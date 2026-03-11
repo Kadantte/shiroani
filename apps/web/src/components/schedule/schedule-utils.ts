@@ -1,5 +1,6 @@
-import { toLocalDate } from '@/stores/useScheduleStore';
-import type { AiringAnime } from '@shiroani/shared';
+import { toLocalDate } from '@shiroani/shared';
+
+export { getAnimeTitle, getCoverUrl } from '@/lib/anime-utils';
 
 export function formatTime(timestamp: number): string {
   const d = new Date(timestamp * 1000);
@@ -21,14 +22,6 @@ export function addDays(dateStr: string, days: number): string {
 
 export function isToday(dateStr: string): boolean {
   return dateStr === toLocalDate(new Date());
-}
-
-export function getAnimeTitle(media: AiringAnime['media']): string {
-  return media.title.romaji || media.title.english || media.title.native || '?';
-}
-
-export function getCoverUrl(media: AiringAnime['media']): string | undefined {
-  return media.coverImage.medium || media.coverImage.large;
 }
 
 /** Parse the day-of-month number from a YYYY-MM-DD string */

@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import type { AnimeStatus } from '@shiroani/shared';
 import { STATUS_OPTIONS } from '@/lib/constants';
 import { SCRAPE_METADATA_SCRIPT } from '@/lib/scrape-metadata';
+import { useDialogStateMachine } from '@/hooks/useDialogStateMachine';
 
 interface AddToLibraryDialogProps {
   open: boolean;
@@ -31,6 +32,8 @@ interface AddToLibraryDialogProps {
   url: string;
   title: string;
 }
+
+type AddToLibraryStep = { step: 'fetching' } | { step: 'ready' };
 
 export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibraryDialogProps) {
   const { addToLibrary } = useLibraryStore();
@@ -40,8 +43,9 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
   const [currentEpisode, setCurrentEpisode] = useState(0);
   const [totalEpisodes, setTotalEpisodes] = useState(0);
   const [coverImage, setCoverImage] = useState('');
-  const [isFetchingCover, setIsFetchingCover] = useState(false);
+  const { state, transition } = useDialogStateMachine<AddToLibraryStep>({ step: 'ready' });
 
+  const isFetchingCover = state.step === 'fetching';
   const isCompleted = status === 'completed' && totalEpisodes > 0;
 
   // Reset form and auto-fetch cover when dialog opens
@@ -52,14 +56,14 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       setCurrentEpisode(0);
       setTotalEpisodes(0);
       setCoverImage('');
-      setIsFetchingCover(false);
+      transition({ step: 'ready' });
 
       // Auto-fetch metadata (cover, title, episodes) from the current tab
       const activeTabId = useBrowserStore.getState().activeTabId;
       if (activeTabId) {
         const webview = getWebview(activeTabId);
         if (webview) {
-          setIsFetchingCover(true);
+          transition({ step: 'fetching' });
           webview
             .executeJavaScript(SCRAPE_METADATA_SCRIPT)
             .then(result => {
@@ -78,12 +82,12 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               // Non-critical — user can fill in manually
             })
             .finally(() => {
-              setIsFetchingCover(false);
+              transition({ step: 'ready' });
             });
         }
       }
     }
-  }, [open, title]);
+  }, [open, title, transition]);
 
   // Auto-set current episode to total when status is completed
   useEffect(() => {

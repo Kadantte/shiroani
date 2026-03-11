@@ -6,9 +6,14 @@ import {
   createSocketActions,
   createSocketListeners,
 } from '@/stores/utils/createSocketStore';
-import { type AiringAnime, ScheduleEvents } from '@shiroani/shared';
+import {
+  type AiringAnime,
+  ScheduleEvents,
+  toLocalDate,
+  getWeekStart,
+  createLogger,
+} from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
-import { createLogger } from '@shiroani/shared';
 
 const logger = createLogger('ScheduleStore');
 
@@ -43,23 +48,9 @@ interface ScheduleActions {
 
 type ScheduleStore = ScheduleState & ScheduleActions;
 
-/** Get local ISO date string (YYYY-MM-DD) from a Date, using local timezone */
-export function toLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/** Get the Monday of the current week */
-function getWeekStart(dateStr: string): string {
+function getWeekStartStr(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  const dow = date.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow; // Monday = 1
-  const monday = new Date(date);
-  monday.setDate(date.getDate() + diff);
-  return toLocalDate(monday);
+  return toLocalDate(getWeekStart(new Date(year, month - 1, day)));
 }
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -114,7 +105,7 @@ export const useScheduleStore = create<ScheduleStore>()(
               get().fetchDaily(selectedDay);
             } else {
               // Both 'weekly' and 'timetable' use weekly data
-              get().fetchWeekly(getWeekStart(selectedDay));
+              get().fetchWeekly(getWeekStartStr(selectedDay));
             }
           },
         }
@@ -138,7 +129,7 @@ export const useScheduleStore = create<ScheduleStore>()(
           if (viewMode === 'daily') {
             get().fetchDaily(day);
           } else {
-            get().fetchWeekly(getWeekStart(day));
+            get().fetchWeekly(getWeekStartStr(day));
           }
         },
 
@@ -148,7 +139,7 @@ export const useScheduleStore = create<ScheduleStore>()(
           if (mode === 'daily') {
             get().fetchDaily(selectedDay);
           } else {
-            get().fetchWeekly(getWeekStart(selectedDay));
+            get().fetchWeekly(getWeekStartStr(selectedDay));
           }
         },
 
@@ -179,7 +170,7 @@ export const useScheduleStore = create<ScheduleStore>()(
 
         getWeekDays: () => {
           const { selectedDay } = get();
-          const start = getWeekStart(selectedDay);
+          const start = getWeekStartStr(selectedDay);
           const [y, m, d] = start.split('-').map(Number);
           const startDate = new Date(y, m - 1, d);
           const days: string[] = [];

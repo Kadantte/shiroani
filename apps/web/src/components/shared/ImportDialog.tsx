@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo, useState } from 'react';
 import { Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   type ImportResponse,
   type ImportItemResult,
 } from '@shiroani/shared';
+import { useDialogStateMachine } from '@/hooks/useDialogStateMachine';
 
 interface ImportDialogProps {
   open: boolean;
@@ -33,7 +34,9 @@ type ImportStep =
   | { step: 'done'; result: ImportResponse };
 
 export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
-  const [state, setState] = useState<ImportStep>({ step: 'idle' });
+  const { state, transition, reset, updateState } = useDialogStateMachine<ImportStep>({
+    step: 'idle',
+  });
   const [strategy, setStrategy] = useState<'skip' | 'overwrite'>('skip');
   const listenerCleanupRef = useRef<(() => void) | null>(null);
 
@@ -45,7 +48,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
   }, []);
 
   const handleFileSelect = useCallback(async () => {
-    setState({ step: 'loading-file' });
+    transition({ step: 'loading-file' });
 
     try {
       const filePath = await window.electronAPI?.dialog?.openFile?.({
@@ -54,7 +57,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       });
 
       if (!filePath) {
-        setState({ step: 'idle' });
+        reset();
         onOpenChange(false);
         return;
       }
@@ -62,7 +65,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       const raw = await window.electronAPI?.file?.readJson(filePath);
 
       if (!raw) {
-        setState({ step: 'file-error', message: 'Nie udało się odczytać pliku' });
+        transition({ step: 'file-error', message: 'Nie udało się odczytać pliku' });
         return;
       }
 
@@ -70,12 +73,12 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       try {
         data = JSON.parse(raw);
       } catch {
-        setState({ step: 'file-error', message: 'Plik nie zawiera prawidłowego formatu JSON' });
+        transition({ step: 'file-error', message: 'Plik nie zawiera prawidłowego formatu JSON' });
         return;
       }
 
       if (data.source !== 'shiroani' || data.version !== 1) {
-        setState({
+        transition({
           step: 'file-error',
           message: 'Nieprawidłowy format pliku. Oczekiwano pliku eksportu ShiroAni.',
         });
@@ -85,14 +88,14 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       const libraryCount = data.data?.library?.length ?? 0;
       const diaryCount = data.data?.diary?.length ?? 0;
 
-      setState({ step: 'preview', data, libraryCount, diaryCount });
+      transition({ step: 'preview', data, libraryCount, diaryCount });
     } catch (err) {
-      setState({
+      transition({
         step: 'file-error',
         message: err instanceof Error ? err.message : 'Nie udało się odczytać pliku',
       });
     }
-  }, [onOpenChange]);
+  }, [onOpenChange, transition, reset]);
 
   const handleImport = useCallback(async () => {
     if (state.step !== 'preview') return;
@@ -124,17 +127,17 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
     }
 
     const totalCount = initialItems.length;
-    setState({ step: 'importing', items: [...initialItems], totalCount });
+    transition({ step: 'importing', items: [...initialItems], totalCount });
 
     // Listen for progress updates
     const socket = getSocket();
     const handleProgress = (progress: ImportItemResult) => {
-      setState(prev => {
+      updateState(prev => {
         if (prev.step !== 'importing') return prev;
-        const updated = prev.items.map(item =>
+        const updated = (prev as Extract<ImportStep, { step: 'importing' }>).items.map(item =>
           item.index === progress.index ? { ...item, ...progress } : item
         );
-        return { ...prev, items: updated };
+        return { ...prev, items: updated } as ImportStep;
       });
     };
 
@@ -151,9 +154,9 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       );
 
       await new Promise(resolve => setTimeout(resolve, 800));
-      setState({ step: 'done', result: response });
+      transition({ step: 'done', result: response });
     } catch (err) {
-      setState({
+      transition({
         step: 'file-error',
         message: err instanceof Error ? err.message : 'Błąd podczas importu',
       });
@@ -161,7 +164,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       socket.off(ImportExportEvents.IMPORT_PROGRESS, handleProgress);
       listenerCleanupRef.current = null;
     }
-  }, [state, type, strategy]);
+  }, [state, type, strategy, transition, updateState]);
 
   const handleOpenChange = useCallback(
     (value: boolean) => {
@@ -170,11 +173,11 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       if (!value) {
         listenerCleanupRef.current?.();
         listenerCleanupRef.current = null;
-        setState({ step: 'idle' });
+        reset();
       }
       onOpenChange(value);
     },
-    [onOpenChange, state.step]
+    [onOpenChange, state.step, reset]
   );
 
   // Auto-start file selection when opened

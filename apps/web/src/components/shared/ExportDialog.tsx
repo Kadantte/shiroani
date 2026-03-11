@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Download, Loader2, CheckCircle, AlertCircle, Save } from 'lucide-react';
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { ImportExportEvents, type ExportRequest, type ExportResponse } from '@shiroani/shared';
+import { useDialogStateMachine } from '@/hooks/useDialogStateMachine';
 
 interface ExportDialogProps {
   open: boolean;
@@ -35,29 +36,29 @@ const EXPORT_FILENAME: Record<string, string> = {
 };
 
 export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDialogProps) {
-  const [state, setState] = useState<ExportState>({ step: 'idle' });
+  const { state, transition, reset } = useDialogStateMachine<ExportState>({ step: 'idle' });
 
   const handleExport = useCallback(async () => {
-    setState({ step: 'loading' });
+    transition({ step: 'loading' });
     try {
       const response = await emitWithErrorHandling<ExportRequest, ExportResponse>(
         ImportExportEvents.EXPORT,
         { type, ids: selectedIds }
       );
-      setState({ step: 'success', data: response });
+      transition({ step: 'success', data: response });
     } catch (err) {
-      setState({
+      transition({
         step: 'error',
         message: err instanceof Error ? err.message : 'Nieznany błąd',
       });
     }
-  }, [type, selectedIds]);
+  }, [type, selectedIds, transition]);
 
   const handleSave = useCallback(async () => {
     if (state.step !== 'success') return;
 
     const { data } = state;
-    setState({ step: 'saving' });
+    transition({ step: 'saving' });
 
     try {
       const filePath = await window.electronAPI?.dialog?.saveFile?.({
@@ -68,28 +69,28 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
 
       if (!filePath) {
         // User cancelled — go back to success state
-        setState({ step: 'success', data });
+        transition({ step: 'success', data });
         return;
       }
 
       await window.electronAPI?.file?.writeJson(filePath, JSON.stringify(data.data, null, 2));
-      setState({ step: 'saved' });
+      transition({ step: 'saved' });
     } catch (err) {
-      setState({
+      transition({
         step: 'save-error',
         message: err instanceof Error ? err.message : 'Nie udało się zapisać pliku',
       });
     }
-  }, [state]);
+  }, [state, transition]);
 
   const handleOpenChange = useCallback(
     (value: boolean) => {
       if (!value) {
-        setState({ step: 'idle' });
+        reset();
       }
       onOpenChange(value);
     },
-    [onOpenChange]
+    [onOpenChange, reset]
   );
 
   // Trigger export when dialog opens

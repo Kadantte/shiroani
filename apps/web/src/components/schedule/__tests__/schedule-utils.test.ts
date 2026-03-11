@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatTime,
-  formatDate,
-  addDays,
-  isToday,
-  getAnimeTitle,
-  getCoverUrl,
-} from '../schedule-utils';
+import { formatTime, formatDate, addDays, isToday } from '../schedule-utils';
+import { getAnimeTitle, getCoverUrl } from '@/lib/anime-utils';
 import type { AiringAnime } from '@shiroani/shared';
 
 describe('formatTime', () => {
