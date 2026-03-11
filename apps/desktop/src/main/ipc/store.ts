@@ -38,6 +38,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.mascotPosition',
   // Discord RPC settings
   'discord-rpc-settings',
+  // Browser tab persistence (renderer saves/loads tabs directly)
+  'browser-tabs',
 ]);
 
 /**
@@ -86,13 +88,6 @@ export function registerStoreHandlers(): void {
     }
     store.delete(key);
   });
-
-  // Security: Remove store:clear to prevent wiping all data
-  // If needed, implement a selective clear for specific key prefixes
-  ipcMain.handle('store:clear', () => {
-    logger.warn('store:clear is disabled for security reasons');
-    // Intentionally do nothing - clearing all data is dangerous
-  });
 }
 
 /**
@@ -102,5 +97,4 @@ export function cleanupStoreHandlers(): void {
   ipcMain.removeHandler('store:get');
   ipcMain.removeHandler('store:set');
   ipcMain.removeHandler('store:delete');
-  ipcMain.removeHandler('store:clear');
 }

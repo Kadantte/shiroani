@@ -1,9 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
+import { createLogger } from '@shiroani/shared';
+
+const logger = createLogger('IPC:File');
 
 /**
- * Security: Validate that the file path ends with .json
+ * Allowed base directories for JSON file read/write operations.
+ * Restricts filesystem access to prevent path traversal attacks.
+ */
+function getAllowedDirectories(): string[] {
+  return [
+    app.getPath('userData'),
+    app.getPath('documents'),
+    app.getPath('downloads'),
+    app.getPath('desktop'),
+    app.getPath('home'),
+  ];
+}
+
+/**
+ * Security: Validate that the file path ends with .json and resides
+ * within one of the allowed directories.
  */
 function validateJsonPath(filePath: unknown): asserts filePath is string {
   if (typeof filePath !== 'string' || filePath.trim().length === 0) {
@@ -12,6 +30,15 @@ function validateJsonPath(filePath: unknown): asserts filePath is string {
 
   if (path.extname(filePath).toLowerCase() !== '.json') {
     throw new Error('Invalid file path: must end in .json');
+  }
+
+  const resolved = path.resolve(filePath);
+  const allowed = getAllowedDirectories();
+
+  const isAllowed = allowed.some(dir => resolved.startsWith(dir + path.sep) || resolved === dir);
+  if (!isAllowed) {
+    logger.warn(`[security] Blocked file access outside allowed directories: ${resolved}`);
+    throw new Error('Invalid file path: outside allowed directories');
   }
 }
 

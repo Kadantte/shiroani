@@ -12,7 +12,21 @@ const logger = createLogger('IPC:App');
  * Register app-related IPC handlers
  */
 export function registerAppHandlers(): void {
+  const ALLOWED_PATH_NAMES = new Set([
+    'userData',
+    'home',
+    'documents',
+    'downloads',
+    'desktop',
+    'logs',
+    'temp',
+  ]);
+
   ipcMain.handle('app:get-path', (_event, name: Parameters<typeof app.getPath>[0]) => {
+    if (!ALLOWED_PATH_NAMES.has(name)) {
+      logger.warn(`[security] Blocked app:get-path for non-whitelisted name: "${name}"`);
+      return undefined;
+    }
     logger.debug(`app:get-path invoked for "${name}"`);
     return app.getPath(name);
   });

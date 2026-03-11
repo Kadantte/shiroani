@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { IS_ELECTRON } from '@/lib/platform';
+import { updateAnimePresence } from '@/lib/anime-detection';
+import { useBrowserStore } from '@/stores/useBrowserStore';
 
 export type ActiveView = 'browser' | 'library' | 'diary' | 'schedule' | 'settings';
 
@@ -23,21 +25,23 @@ export const useAppStore = create<AppStore>()(
         const prev = get().activeView;
         if (prev === view) return;
 
-        // Tell main process to hide/show the native WebContentsView overlay
-        if (IS_ELECTRON && window.electronAPI?.browser) {
-          if (prev === 'browser' && view !== 'browser') {
-            window.electronAPI.browser.hide();
-          } else if (prev !== 'browser' && view === 'browser') {
-            window.electronAPI.browser.show();
-          }
-        }
+        // Set state first so updateAnimePresence sees the correct activeView
+        set({ activeView: view }, undefined, 'app/navigateTo');
 
         // Update Discord Rich Presence with the new view
         if (IS_ELECTRON && window.electronAPI?.discordRpc) {
-          window.electronAPI.discordRpc.updatePresence({ view });
+          if (view === 'browser') {
+            // When navigating back to browser, restore anime-specific presence
+            const activeTabId = useBrowserStore.getState().activeTabId;
+            if (activeTabId) {
+              updateAnimePresence(activeTabId);
+            } else {
+              window.electronAPI.discordRpc.updatePresence({ view });
+            }
+          } else {
+            window.electronAPI.discordRpc.updatePresence({ view });
+          }
         }
-
-        set({ activeView: view }, undefined, 'app/navigateTo');
       },
     }),
     { name: 'app' }

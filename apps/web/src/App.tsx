@@ -84,7 +84,15 @@ function App() {
             )}
           >
             <ErrorBoundary>
-              {activeView === 'browser' && <BrowserView />}
+              <div
+                style={{
+                  display: activeView === 'browser' ? 'flex' : 'none',
+                  flex: 1,
+                  overflow: 'hidden',
+                }}
+              >
+                <BrowserView />
+              </div>
               {activeView === 'library' && <LibraryView />}
               {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}

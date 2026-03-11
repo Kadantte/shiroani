@@ -3,30 +3,11 @@ import { devtools } from 'zustand/middleware';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { BrowserTab } from '@shiroani/shared';
 import { createLogger, DEFAULT_HOMEPAGE_URL } from '@shiroani/shared';
+import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
+import { normalizeUrl } from '@/lib/url-utils';
 
 const logger = createLogger('BrowserStore');
 
-/**
- * Call a browser API method with standardized error logging.
- * Returns undefined if the browser API is not available.
- */
-function callBrowserAPI<T>(
-  action: string,
-  fn: (
-    browser: NonNullable<NonNullable<typeof window.electronAPI>['browser']>
-  ) => Promise<T> | undefined
-): Promise<T | undefined> {
-  const browser = window.electronAPI?.browser;
-  if (!browser) return Promise.resolve(undefined);
-  return (fn(browser) ?? Promise.resolve(undefined))?.catch((err: Error) => {
-    logger.error(`Failed to ${action}:`, err.message);
-    return undefined;
-  });
-}
-
-/**
- * Browser store state and actions
- */
 interface BrowserState {
   tabs: BrowserTab[];
   activeTabId: string | null;
@@ -50,12 +31,17 @@ interface BrowserActions {
   toggleAdblock: () => void;
   setDefaultUrl: (url: string) => void;
   getDefaultUrl: () => string;
-  initListeners: () => () => void;
+  persistTabs: () => void;
+  restoreTabs: () => Promise<void>;
 }
 
 type BrowserStore = BrowserState & BrowserActions;
 
 let defaultUrl = DEFAULT_HOMEPAGE_URL;
+
+// Debounce timer for tab persistence
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+const PERSIST_DEBOUNCE_MS = 1000;
 
 export const useBrowserStore = create<BrowserStore>()(
   devtools(
@@ -67,23 +53,58 @@ export const useBrowserStore = create<BrowserStore>()(
       adblockEnabled: true,
       isFullScreen: false,
 
-      // Actions
+      // ── Tab CRUD (all local now) ────────────────────────────────
+
       openTab: (url?: string) => {
         const targetUrl = typeof url === 'string' ? url : defaultUrl;
-        callBrowserAPI('create browser tab', b => b.createTab(targetUrl)).then(tabId => {
-          if (tabId) logger.debug(`Tab created: ${tabId}`);
-          // The tab-updated event from the main process will populate the tab state
-        });
+        const tabId = crypto.randomUUID();
+
+        const newTab: BrowserTab = {
+          id: tabId,
+          url: targetUrl,
+          title: 'Nowa karta',
+          isLoading: true,
+          canGoBack: false,
+          canGoForward: false,
+        };
+
+        set(
+          state => ({
+            tabs: [...state.tabs, newTab],
+            activeTabId: tabId,
+          }),
+          undefined,
+          'browser/openTab'
+        );
+
+        logger.debug(`Tab created: ${tabId} → ${targetUrl}`);
       },
 
       closeTab: (tabId: string) => {
-        callBrowserAPI('close browser tab', b => b.closeTab(tabId));
-        // The tab-closed event from the main process will update the store
+        const { tabs, activeTabId } = get();
+        const index = tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+
+        // Unregister webview ref immediately
+        unregisterWebview(tabId);
+
+        const newTabs = tabs.filter(t => t.id !== tabId);
+        let newActiveId = activeTabId;
+
+        if (activeTabId === tabId) {
+          if (newTabs.length > 0) {
+            newActiveId = newTabs[Math.min(index, newTabs.length - 1)].id;
+          } else {
+            newActiveId = null;
+          }
+        }
+
+        set({ tabs: newTabs, activeTabId: newActiveId }, undefined, 'browser/closeTab');
+        get().persistTabs();
       },
 
       switchTab: (tabId: string) => {
         set({ activeTabId: tabId }, undefined, 'browser/switchTab');
-        callBrowserAPI('switch browser tab', b => b.switchTab(tabId));
       },
 
       reorderTabs: (activeId: string, overId: string) => {
@@ -94,36 +115,46 @@ export const useBrowserStore = create<BrowserStore>()(
 
         const reordered = arrayMove(tabs, oldIndex, newIndex);
         set({ tabs: reordered }, undefined, 'browser/reorderTabs');
-
-        // Sync new order to main process for persistence
-        const orderedIds = reordered.map(t => t.id);
-        callBrowserAPI('reorder browser tabs', b => b.reorderTabs(orderedIds));
+        get().persistTabs();
       },
+
+      // ── Navigation (calls webview methods directly) ─────────────
 
       navigate: (url: string) => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        // URL normalization is handled by BrowserManager on the main process side
-        callBrowserAPI('navigate', b => b.navigate(activeTabId, url));
+
+        const webview = getWebview(activeTabId);
+        if (!webview) {
+          logger.warn(`No webview ref for tab ${activeTabId}`);
+          return;
+        }
+
+        const normalizedUrl = normalizeUrl(url);
+        webview.loadURL(normalizedUrl).catch((err: Error) => {
+          logger.error(`Failed to navigate tab ${activeTabId}:`, err.message);
+        });
       },
 
       goBack: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        callBrowserAPI('go back', b => b.goBack(activeTabId));
+        getWebview(activeTabId)?.goBack();
       },
 
       goForward: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        callBrowserAPI('go forward', b => b.goForward(activeTabId));
+        getWebview(activeTabId)?.goForward();
       },
 
       reload: () => {
         const { activeTabId } = get();
         if (!activeTabId) return;
-        callBrowserAPI('reload', b => b.refresh(activeTabId));
+        getWebview(activeTabId)?.reload();
       },
+
+      // ── State updates ───────────────────────────────────────────
 
       updateTabState: (tabId: string, updates: Partial<BrowserTab>) => {
         set(
@@ -133,6 +164,10 @@ export const useBrowserStore = create<BrowserStore>()(
           undefined,
           'browser/updateTabState'
         );
+        // Debounced persistence when tab state changes (URL, title, etc.)
+        if (updates.url || updates.title) {
+          get().persistTabs();
+        }
       },
 
       setAddressBarFocused: (focused: boolean) => {
@@ -141,7 +176,9 @@ export const useBrowserStore = create<BrowserStore>()(
 
       setAdblockEnabled: (enabled: boolean) => {
         set({ adblockEnabled: enabled }, undefined, 'browser/setAdblockEnabled');
-        callBrowserAPI('toggle adblock', b => b.toggleAdblock(enabled));
+        // Adblock toggle still goes through IPC — the session-level webRequest
+        // handlers live in the main process
+        window.electronAPI?.browser?.toggleAdblock(enabled);
       },
 
       toggleAdblock: () => {
@@ -156,72 +193,76 @@ export const useBrowserStore = create<BrowserStore>()(
 
       getDefaultUrl: () => defaultUrl,
 
-      initListeners: () => {
-        const browser = window.electronAPI?.browser;
-        if (!browser) {
-          logger.warn('Browser API not available - skipping listener init');
-          return () => {};
+      // ── Persistence ─────────────────────────────────────────────
+
+      persistTabs: () => {
+        if (persistTimer) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          const { tabs, activeTabId } = get();
+          const filtered = tabs.filter(t => t.url && t.url !== 'about:blank');
+
+          if (filtered.length === 0) {
+            window.electronAPI?.store?.delete('browser-tabs');
+            return;
+          }
+
+          const activeIndex = activeTabId ? filtered.findIndex(t => t.id === activeTabId) : 0;
+
+          const state = {
+            tabs: filtered.map(t => ({ url: t.url, title: t.title })),
+            activeIndex: Math.max(0, activeIndex),
+          };
+
+          window.electronAPI?.store?.set('browser-tabs', state);
+          logger.debug(`Persisted ${filtered.length} tab(s)`);
+        }, PERSIST_DEBOUNCE_MS);
+      },
+
+      restoreTabs: async () => {
+        // Restore adblock setting
+        const settings = await window.electronAPI?.store?.get<{
+          adblockEnabled?: boolean;
+          homepage?: string;
+        }>('browser-settings');
+
+        if (settings) {
+          if (typeof settings.adblockEnabled === 'boolean') {
+            set({ adblockEnabled: settings.adblockEnabled });
+          }
+          if (settings.homepage) {
+            defaultUrl = settings.homepage;
+          }
         }
 
-        logger.debug('Initializing browser listeners');
+        // Restore tabs
+        const saved = await window.electronAPI?.store?.get<{
+          tabs: Array<{ url: string; title: string }>;
+          activeIndex: number;
+        }>('browser-tabs');
 
-        // Listen for tab state updates from the main process
-        const cleanupTabUpdated = browser.onTabUpdated((tab: BrowserTab) => {
-          const { tabs } = get();
-          const existing = tabs.find(t => t.id === tab.id);
+        if (saved?.tabs?.length) {
+          const restoredTabs: BrowserTab[] = saved.tabs.map(t => ({
+            id: crypto.randomUUID(),
+            url: t.url,
+            title: t.title || 'Nowa karta',
+            isLoading: true, // Will start loading when webview mounts
+            canGoBack: false,
+            canGoForward: false,
+          }));
 
-          if (existing) {
-            // Update existing tab
-            get().updateTabState(tab.id, tab);
-          } else {
-            // New tab created (e.g. from popup interception or initial creation)
-            set(
-              state => ({
-                tabs: [...state.tabs, tab],
-                activeTabId: tab.id,
-              }),
-              undefined,
-              'browser/tabAdded'
-            );
-          }
-        });
+          const activeIndex = Math.min(saved.activeIndex, restoredTabs.length - 1);
 
-        // Listen for tab close events from the main process
-        const cleanupTabClosed = browser.onTabClosed((tabId: string) => {
-          const { tabs, activeTabId } = get();
-          const index = tabs.findIndex(t => t.id === tabId);
-          if (index === -1) return;
+          set(
+            {
+              tabs: restoredTabs,
+              activeTabId: restoredTabs[Math.max(0, activeIndex)]?.id ?? null,
+            },
+            undefined,
+            'browser/restoreTabs'
+          );
 
-          const newTabs = tabs.filter(t => t.id !== tabId);
-          let newActiveId = activeTabId;
-
-          if (activeTabId === tabId) {
-            if (newTabs.length > 0) {
-              newActiveId = newTabs[Math.min(index, newTabs.length - 1)].id;
-            } else {
-              newActiveId = null;
-            }
-          }
-
-          set({ tabs: newTabs, activeTabId: newActiveId }, undefined, 'browser/tabClosed');
-
-          // Switch to the new active tab if needed
-          if (newActiveId && newActiveId !== activeTabId) {
-            callBrowserAPI('switch tab after close', b => b.switchTab(newActiveId));
-          }
-        });
-
-        // Listen for fullscreen enter/leave from main process
-        const cleanupFullscreen = browser.onFullscreenChange((isFullScreen: boolean) => {
-          set({ isFullScreen }, undefined, 'browser/fullscreenChange');
-        });
-
-        return () => {
-          logger.debug('Cleaning up browser listeners');
-          cleanupTabUpdated();
-          cleanupTabClosed();
-          cleanupFullscreen();
-        };
+          logger.debug(`Restored ${restoredTabs.length} tab(s)`);
+        }
       },
     }),
     { name: 'browser' }

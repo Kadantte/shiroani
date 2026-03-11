@@ -16,6 +16,7 @@ import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
 import { initializeDiscordRpc, cleanupDiscordRpc } from './discord-rpc-service';
+import { store } from './store';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
@@ -125,17 +126,25 @@ async function bootstrap(): Promise<void> {
   initializeDiscordRpc();
 
   // Initialize adblocker after window creation, then enable on browser session
+  // only if user hasn't explicitly disabled it
   try {
     await initializeAdblock();
     logger.info('Adblocker initialized successfully');
-    await browserManager.enableAdblock();
-    logger.info('Adblock enabled on browser session');
+
+    const browserSettings = store.get('browser-settings') as
+      | { adblockEnabled?: boolean }
+      | undefined;
+    const shouldEnableAdblock = browserSettings?.adblockEnabled !== false;
+
+    if (shouldEnableAdblock) {
+      browserManager.enableAdblock();
+      logger.info('Adblock enabled on browser session');
+    } else {
+      logger.info('Adblock disabled per user settings');
+    }
   } catch (error) {
     logger.warn('Failed to initialize adblocker:', error);
   }
-
-  // Restore previously open browser tabs from last session
-  browserManager.restoreTabs();
 
   // Set up mascot overlay with main window reference
   setMainWindow(mainWindow);
@@ -225,8 +234,6 @@ app.on('before-quit', event => {
     await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
     await safeCleanup('discord rpc', () => cleanupDiscordRpc(), logger);
     await safeCleanup('notification service', () => cleanupNotificationService(), logger);
-    await safeCleanup('browser tab state', () => browserManager.saveTabState(), logger);
-    await safeCleanup('browser manager', () => browserManager.destroy(), logger);
     await safeCleanup('log flush', () => flushLogs(), logger);
     if (nestApp) {
       await shutdownNestApp();

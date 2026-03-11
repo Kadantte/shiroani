@@ -11,7 +11,12 @@ import { BrowserManager } from './browser/browser-manager';
  * This helps prevent XSS attacks and other injection vulnerabilities
  */
 function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  // Only apply CSP to the main renderer's own pages, not to webview content
+  const urlFilter = isDev
+    ? { urls: [`http://localhost:${VITE_DEV_PORT}/*`] }
+    : { urls: ['file://*'] };
+
+  session.defaultSession.webRequest.onHeadersReceived(urlFilter, (details, callback) => {
     // Build CSP directives
     const cspDirectives = [
       // Only allow scripts from same origin (and Vite dev server in dev mode)
@@ -30,9 +35,9 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
         : `connect-src 'self' http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co`,
       // Restrict object/embed sources
       "object-src 'none'",
-      // Allow frames for embedded video players
+      // Allow frames from same origin only (webview tags use their own session)
       "frame-src 'self' https:",
-      // Allow media from any HTTPS source for video/audio playback
+      // Allow media from HTTPS sources for video/audio playback
       "media-src 'self' https: blob:",
       // Default to same-origin
       "default-src 'self'",
@@ -108,11 +113,27 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      webviewTag: true, // Enable <webview> tag for built-in browser
     },
   });
 
-  // Set main window on browser manager so views can be attached
-  browserManager.setMainWindow(mainWindow);
+  // Security: validate and harden <webview> tags before they attach
+  mainWindow.webContents.on('will-attach-webview', (_event, webPreferences, _params) => {
+    // Force safe defaults — never trust renderer-supplied values
+    webPreferences.nodeIntegration = false;
+    webPreferences.nodeIntegrationInSubFrames = false;
+    webPreferences.nodeIntegrationInWorker = false;
+    webPreferences.contextIsolation = true;
+    webPreferences.allowRunningInsecureContent = true; // needed for anime sites with mixed content
+
+    // Strip any preload scripts the renderer might inject
+    delete webPreferences.preload;
+    delete (webPreferences as Record<string, unknown>).preloadURL;
+
+    // Do NOT force sandbox — macOS sandboxed renderers block cross-origin iframes
+
+    logger.debug('[security] will-attach-webview: webPreferences hardened');
+  });
 
   // Register all IPC handlers
   registerIpcHandlers(mainWindow, browserManager);

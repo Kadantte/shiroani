@@ -1,41 +1,23 @@
-import { BrowserWindow, WebContentsView, session } from 'electron';
+import { session } from 'electron';
 import { createLogger } from '@shiroani/shared';
-import type { BrowserTab } from '@shiroani/shared';
-import { enableBlockingInSession, disableBlockingInSession } from '../adblock';
-import { normalizeUrl } from './url-utils';
-import { saveTabState, loadPersistedTabs, type PersistedTab } from './tab-persistence';
-import { attachWebContentsListeners } from './tab-events';
+import { getBlocker, enableCosmeticFiltering, disableCosmeticFiltering } from '../adblock';
+import { fromElectronDetails } from '@ghostery/adblocker-electron';
 
 const logger = createLogger('BrowserManager');
 
-/** Delay before auto-saving tab state after a mutation (ms) */
-const AUTO_SAVE_DELAY = 3000;
-
-interface ManagedTab {
-  id: string;
-  view: WebContentsView;
-  url: string;
-  title: string;
-  favicon?: string;
-  isLoading: boolean;
-  canGoBack: boolean;
-  canGoForward: boolean;
-}
-
 /**
- * Manages multiple WebContentsView tabs in the Electron main process.
+ * Manages the shared browser session for <webview> tags.
  *
- * Each tab is a WebContentsView sharing an isolated `persist:browser` session.
- * Only the active tab's view is added to the window's contentView and visible.
+ * Responsibilities:
+ * - Initialize the `persist:browser` session (user agent, permissions)
+ * - Register composite webRequest handlers (iframe unblocking + adblock)
+ * - Toggle adblock on/off (network + cosmetic filtering)
+ *
+ * Tab lifecycle is entirely handled by the renderer process via <webview> DOM elements.
  */
 export class BrowserManager {
-  private tabs: Map<string, ManagedTab> = new Map();
-  private activeTabId: string | null = null;
-  private mainWindow: BrowserWindow | null = null;
   private browserSession: Electron.Session | null = null;
   private adblockEnabled = false;
-  private isFullScreen = false;
-  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Check if adblocking is currently enabled.
@@ -45,21 +27,9 @@ export class BrowserManager {
   }
 
   /**
-   * Initialize the browser session. Must be called after app.whenReady().
+   * Get the browser session. Throws if not initialized.
    */
-  init(): void {
-    // Create isolated session for browser tabs (separate from app session)
-    this.browserSession = session.fromPartition('persist:browser');
-
-    // Set Chrome-like user agent to avoid Electron detection
-    this.browserSession.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-
-    logger.info('Browser session initialized');
-  }
-
-  private getSession(): Electron.Session {
+  getSession(): Electron.Session {
     if (!this.browserSession) {
       throw new Error('BrowserManager not initialized. Call init() after app.whenReady().');
     }
@@ -67,10 +37,51 @@ export class BrowserManager {
   }
 
   /**
-   * Set the main window that tab views will be attached to.
+   * Initialize the browser session. Must be called after app.whenReady().
    */
-  setMainWindow(window: BrowserWindow): void {
-    this.mainWindow = window;
+  init(): void {
+    // Create isolated session for browser tabs (separate from app session)
+    this.browserSession = session.fromPartition('persist:browser');
+
+    // Set platform-aware Chrome user agent to avoid Electron detection
+    const chromeVersion = process.versions.chrome || '134.0.0.0';
+    const osString =
+      process.platform === 'darwin'
+        ? 'Macintosh; Intel Mac OS X 10_15_7'
+        : 'Windows NT 10.0; Win64; x64';
+    this.browserSession.setUserAgent(
+      `Mozilla/5.0 (${osString}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`
+    );
+
+    // Allow media and clipboard permissions for browser tabs (needed for video players)
+    const allowedPermissions = new Set([
+      'clipboard-read',
+      'clipboard-sanitized-write',
+      'media',
+      'mediaKeySystem',
+      'fullscreen',
+      'pointerLock',
+    ]);
+
+    // Permission request handler — allow known permissions, including from cross-origin subframes
+    this.browserSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      if (allowedPermissions.has(permission)) {
+        callback(true);
+        return;
+      }
+      logger.debug(`Browser session denied permission: ${permission}`);
+      callback(false);
+    });
+
+    // Permission check handler — cross-origin subframes pass null webContents
+    this.browserSession.setPermissionCheckHandler((_webContents, permission, _requestingOrigin) => {
+      return allowedPermissions.has(permission);
+    });
+
+    // Register composite webRequest handlers
+    this.registerCompositeWebRequestHandlers();
+
+    logger.info('Browser session initialized');
   }
 
   /**
@@ -78,7 +89,7 @@ export class BrowserManager {
    */
   enableAdblock(): void {
     this.adblockEnabled = true;
-    enableBlockingInSession(this.getSession());
+    enableCosmeticFiltering(this.getSession());
     logger.info('Adblock enabled for browser session');
   }
 
@@ -87,469 +98,110 @@ export class BrowserManager {
    */
   disableAdblock(): void {
     this.adblockEnabled = false;
-    disableBlockingInSession(this.getSession());
+    disableCosmeticFiltering(this.getSession());
     logger.info('Adblock disabled for browser session');
   }
 
   /**
-   * Create a new browser tab. Returns the tab ID.
-   * If no URL is provided, navigates to a blank page.
+   * Register composite webRequest handlers on the browser session.
+   * Always strips iframe-blocking headers and injects permissive Permissions-Policy.
+   * When adblock is enabled, also runs adblocker network filtering.
    */
-  createTab(url?: string): string {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) {
-      throw new Error('Main window is not available');
-    }
+  private registerCompositeWebRequestHandlers(): void {
+    const sess = this.getSession();
 
-    const tabId = crypto.randomUUID();
+    // Composite onHeadersReceived: strip iframe restrictions + optional adblocker CSP
+    sess.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
+      const responseHeaders = { ...details.responseHeaders } as Record<string, string[]>;
 
-    const view = new WebContentsView({
-      webPreferences: {
-        session: this.getSession(),
-        sandbox: true,
-        contextIsolation: true,
-        nodeIntegration: false,
-      },
-    });
-
-    const tab: ManagedTab = {
-      id: tabId,
-      view,
-      url: url || 'about:blank',
-      title: 'New Tab',
-      isLoading: false,
-      canGoBack: false,
-      canGoForward: false,
-    };
-
-    this.tabs.set(tabId, tab);
-
-    attachWebContentsListeners(tabId, view, {
-      onTabStateUpdate: (id, update) => this.updateTabState(id, update),
-      onNewTabRequested: newUrl => this.createTab(newUrl),
-      getMainWindow: () => this.mainWindow,
-      getTabView: id => this.tabs.get(id)?.view,
-      setFullScreen: value => {
-        this.isFullScreen = value;
-      },
-      sendToRenderer: (channel, ...args) => this.sendToRenderer(channel, ...args),
-    });
-
-    // Always switch to the newly created tab
-    this.switchTab(tabId);
-
-    // Navigate to the URL
-    if (url) {
-      this.navigate(tabId, url);
-    }
-
-    logger.debug(`Tab created: ${tabId}`);
-    this.scheduleSave();
-    return tabId;
-  }
-
-  /**
-   * Close and destroy a tab.
-   */
-  closeTab(tabId: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab) {
-      logger.warn(`closeTab: tab ${tabId} not found`);
-      return;
-    }
-
-    // Remove view from window if it's the active tab
-    if (this.activeTabId === tabId && this.mainWindow && !this.mainWindow.isDestroyed()) {
-      try {
-        this.mainWindow.contentView.removeChildView(tab.view);
-      } catch {
-        // View may already be removed
-      }
-    }
-
-    // Destroy the web contents
-    if (!tab.view.webContents.isDestroyed()) {
-      tab.view.webContents.close();
-    }
-
-    this.tabs.delete(tabId);
-
-    // Notify renderer that the tab was closed
-    this.sendToRenderer('browser:tab-closed', tabId);
-
-    // If closing the active tab, switch to another tab
-    if (this.activeTabId === tabId) {
-      this.activeTabId = null;
-      const remainingIds = Array.from(this.tabs.keys());
-      if (remainingIds.length > 0) {
-        this.switchTab(remainingIds[remainingIds.length - 1]);
-      }
-    }
-
-    logger.debug(`Tab closed: ${tabId}`);
-    this.scheduleSave();
-  }
-
-  /**
-   * Switch to a different tab. Hides the current active view and shows the new one.
-   */
-  switchTab(tabId: string): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-
-    const newTab = this.tabs.get(tabId);
-    if (!newTab) {
-      logger.warn(`switchTab: tab ${tabId} not found`);
-      return;
-    }
-
-    // Remove current active view from window
-    if (this.activeTabId && this.activeTabId !== tabId) {
-      const currentTab = this.tabs.get(this.activeTabId);
-      if (currentTab) {
-        try {
-          this.mainWindow.contentView.removeChildView(currentTab.view);
-        } catch {
-          // View may already be removed
-        }
-      }
-    }
-
-    // Add the new view to the window
-    this.mainWindow.contentView.addChildView(newTab.view);
-    this.activeTabId = tabId;
-
-    // Send tab update so renderer knows the current state
-    this.sendTabUpdate(tabId);
-
-    logger.debug(`Switched to tab: ${tabId}`);
-  }
-
-  /**
-   * Navigate a tab to a URL. Auto-prepends https:// if no protocol is present.
-   * If input looks like a search query, redirects to Google search.
-   */
-  navigate(tabId: string, url: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab) {
-      logger.warn(`navigate: tab ${tabId} not found`);
-      return;
-    }
-
-    if (tab.view.webContents.isDestroyed()) return;
-
-    const normalized = normalizeUrl(url);
-    tab.view.webContents.loadURL(normalized).catch(err => {
-      logger.warn(`Failed to load URL "${normalized}" in tab ${tabId}:`, err.message);
-    });
-  }
-
-  /**
-   * Navigate back in the tab's history.
-   */
-  goBack(tabId: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab || tab.view.webContents.isDestroyed()) return;
-
-    if (tab.view.webContents.canGoBack()) {
-      tab.view.webContents.navigationHistory.goBack();
-    }
-  }
-
-  /**
-   * Navigate forward in the tab's history.
-   */
-  goForward(tabId: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab || tab.view.webContents.isDestroyed()) return;
-
-    if (tab.view.webContents.canGoForward()) {
-      tab.view.webContents.navigationHistory.goForward();
-    }
-  }
-
-  /**
-   * Reload the tab.
-   */
-  refresh(tabId: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab || tab.view.webContents.isDestroyed()) return;
-
-    tab.view.webContents.reload();
-  }
-
-  /**
-   * Get public tab info for a single tab.
-   */
-  getTabInfo(tabId: string): BrowserTab | null {
-    const tab = this.tabs.get(tabId);
-    if (!tab) return null;
-    return this.toPublicTab(tab);
-  }
-
-  /**
-   * Get public tab info for all tabs.
-   */
-  getAllTabs(): BrowserTab[] {
-    return Array.from(this.tabs.values()).map(tab => this.toPublicTab(tab));
-  }
-
-  /**
-   * Get the active tab ID.
-   */
-  getActiveTabId(): string | null {
-    return this.activeTabId;
-  }
-
-  /**
-   * Reorder tabs to match the given array of tab IDs.
-   * This rebuilds the internal Map in the specified order so that
-   * persistence (saveTabState) respects the user's tab arrangement.
-   */
-  reorderTabs(orderedIds: string[]): void {
-    const reordered = new Map<string, ManagedTab>();
-    for (const id of orderedIds) {
-      const tab = this.tabs.get(id);
-      if (tab) {
-        reordered.set(id, tab);
-      }
-    }
-    // Preserve any tabs that weren't included in orderedIds (shouldn't happen, but safe)
-    for (const [id, tab] of this.tabs) {
-      if (!reordered.has(id)) {
-        reordered.set(id, tab);
-      }
-    }
-    this.tabs = reordered;
-    logger.debug(`Tabs reordered: [${orderedIds.join(', ')}]`);
-    this.scheduleSave();
-  }
-
-  /**
-   * Execute JavaScript in a tab's web contents and return the result.
-   * Used for scraping page metadata (e.g. og:image for cover images).
-   */
-  async executeScript(tabId: string, script: string): Promise<unknown> {
-    const tab = this.tabs.get(tabId);
-    if (!tab || tab.view.webContents.isDestroyed()) return null;
-
-    try {
-      return await tab.view.webContents.executeJavaScript(script);
-    } catch (err) {
-      logger.warn(`executeScript failed in tab ${tabId}:`, (err as Error).message);
-      return null;
-    }
-  }
-
-  /**
-   * Hide all browser views (remove from window). Called when user switches
-   * away from the browser view to another app section (library, schedule, etc.).
-   * WebContentsView is a native overlay — CSS/React cannot hide it.
-   */
-  hideAllViews(): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-
-    for (const tab of this.tabs.values()) {
-      try {
-        this.mainWindow.contentView.removeChildView(tab.view);
-      } catch {
-        // View may already be removed
-      }
-    }
-    logger.debug('All browser views hidden');
-  }
-
-  /**
-   * Show the active tab's view again. Called when user switches back
-   * to the browser view.
-   */
-  showActiveView(): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-    if (!this.activeTabId) return;
-
-    const tab = this.tabs.get(this.activeTabId);
-    if (!tab) return;
-
-    this.mainWindow.contentView.addChildView(tab.view);
-    logger.debug(`Browser view shown: ${this.activeTabId}`);
-  }
-
-  /**
-   * Resize the active tab's WebContentsView to the given bounds.
-   * The renderer sends the exact bounds of the browser content area.
-   */
-  resizeActiveTab(bounds: { x: number; y: number; width: number; height: number }): void {
-    if (!this.activeTabId || this.isFullScreen) return;
-
-    const tab = this.tabs.get(this.activeTabId);
-    if (!tab) return;
-
-    // Ensure bounds are valid integers
-    const safeBounds = {
-      x: Math.round(Math.max(0, bounds.x)),
-      y: Math.round(Math.max(0, bounds.y)),
-      width: Math.round(Math.max(0, bounds.width)),
-      height: Math.round(Math.max(0, bounds.height)),
-    };
-
-    tab.view.setBounds(safeBounds);
-  }
-
-  /**
-   * Save the current tab URLs and active tab index to persistent storage.
-   * Called before app quit so tabs can be restored on next launch.
-   */
-  saveTabState(): void {
-    const tabEntries = Array.from(this.tabs.values());
-    const tabs: PersistedTab[] = tabEntries.map(t => ({ url: t.url, title: t.title }));
-    const activeIndex = this.activeTabId ? tabEntries.findIndex(t => t.id === this.activeTabId) : 0;
-
-    saveTabState(tabs, activeIndex);
-  }
-
-  /**
-   * Restore tabs from persistent storage. Call after the main window is ready.
-   * Returns true if tabs were restored.
-   */
-  restoreTabs(): boolean {
-    const saved = loadPersistedTabs();
-    if (!saved) return false;
-
-    logger.info(`Restoring ${saved.tabs.length} tab(s) from previous session`);
-
-    const createdIds: string[] = [];
-    for (const persistedTab of saved.tabs) {
-      const tabId = this.createTab(persistedTab.url);
-      // Apply saved title immediately so tabs don't flash "New Tab"
-      const tab = this.tabs.get(tabId);
-      if (tab && persistedTab.title && persistedTab.title !== 'New Tab') {
-        tab.title = persistedTab.title;
-        this.sendTabUpdate(tabId);
-      }
-      createdIds.push(tabId);
-    }
-
-    // Switch to the previously active tab
-    const targetIndex = Math.min(saved.activeIndex, createdIds.length - 1);
-    if (targetIndex >= 0 && createdIds[targetIndex]) {
-      this.switchTab(createdIds[targetIndex]);
-    }
-
-    return true;
-  }
-
-  /**
-   * Schedule a debounced save of tab state. Coalesces rapid mutations
-   * (e.g. opening multiple tabs) into a single write after a short delay.
-   * Ensures tab state survives crashes without excessive disk writes.
-   */
-  private scheduleSave(): void {
-    if (this.autoSaveTimer) {
-      clearTimeout(this.autoSaveTimer);
-    }
-    this.autoSaveTimer = setTimeout(() => {
-      this.autoSaveTimer = null;
-      this.saveTabState();
-    }, AUTO_SAVE_DELAY);
-  }
-
-  /**
-   * Destroy all tabs. Call on app quit.
-   */
-  destroy(): void {
-    if (this.autoSaveTimer) {
-      clearTimeout(this.autoSaveTimer);
-      this.autoSaveTimer = null;
-    }
-    for (const [tabId, tab] of this.tabs) {
-      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        try {
-          this.mainWindow.contentView.removeChildView(tab.view);
-        } catch {
-          // Ignore removal errors during shutdown
+      // Only strip framing restrictions for subframe responses — main frame
+      // responses should keep their original security headers intact.
+      if (details.resourceType === 'subFrame') {
+        for (const key of Object.keys(responseHeaders)) {
+          const lower = key.toLowerCase();
+          if (lower === 'x-frame-options') {
+            delete responseHeaders[key];
+          } else if (lower === 'content-security-policy') {
+            responseHeaders[key] = responseHeaders[key].map(policy =>
+              policy
+                .split(';')
+                .filter(directive => !directive.trim().toLowerCase().startsWith('frame-ancestors'))
+                .join(';')
+            );
+          }
         }
       }
 
-      if (!tab.view.webContents.isDestroyed()) {
-        tab.view.webContents.close();
+      // Add permissive Permissions-Policy for video player features
+      responseHeaders['Permissions-Policy'] = [
+        'autoplay=*, fullscreen=*, encrypted-media=*, picture-in-picture=*',
+      ];
+
+      // If adblock is enabled, also run the adblocker's CSP injection logic
+      if (this.adblockEnabled) {
+        const blocker = getBlocker();
+        if (
+          blocker &&
+          (details.resourceType === 'mainFrame' || details.resourceType === 'subFrame')
+        ) {
+          const request = fromElectronDetails(details);
+          const rawCSP = blocker.getCSPDirectives(request);
+          if (rawCSP !== undefined) {
+            const CSP_HEADER_NAME = 'content-security-policy';
+            const policies = rawCSP
+              .split(';')
+              .map(csp => csp.trim())
+              .filter(Boolean);
+
+            for (const hKey of Object.keys(responseHeaders)) {
+              if (hKey.toLowerCase() === CSP_HEADER_NAME) {
+                policies.push(...responseHeaders[hKey]);
+                delete responseHeaders[hKey];
+              }
+            }
+
+            responseHeaders[CSP_HEADER_NAME] = [policies.join('; ')];
+          }
+        }
       }
 
-      logger.debug(`Destroyed tab: ${tabId}`);
-    }
+      callback({ responseHeaders });
+    });
 
-    this.tabs.clear();
-    this.activeTabId = null;
-    this.mainWindow = null;
-    logger.info('All browser tabs destroyed');
-  }
+    // Composite onBeforeRequest: optional adblocker network blocking
+    sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
+      if (!this.adblockEnabled) {
+        callback({});
+        return;
+      }
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
+      const blocker = getBlocker();
+      if (!blocker) {
+        callback({});
+        return;
+      }
 
-  /**
-   * Update internal tab state and send update to renderer.
-   */
-  private updateTabState(
-    tabId: string,
-    update: Partial<
-      Pick<ManagedTab, 'url' | 'title' | 'favicon' | 'isLoading' | 'canGoBack' | 'canGoForward'>
-    >
-  ): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab) return;
+      const request = fromElectronDetails(details);
+      if (blocker.config.guessRequestTypeFromUrl === true && request.type === 'other') {
+        request.guessTypeOfRequest();
+      }
 
-    const urlChanged = update.url !== undefined && update.url !== tab.url;
-    const titleChanged = update.title !== undefined && update.title !== tab.title;
+      // Never block main frame or subframe navigation (video player iframes)
+      if (request.isMainFrame() || details.resourceType === 'subFrame') {
+        callback({});
+        return;
+      }
 
-    if (update.url !== undefined) tab.url = update.url;
-    if (update.title !== undefined) tab.title = update.title;
-    if (update.favicon !== undefined) tab.favicon = update.favicon;
-    if (update.isLoading !== undefined) tab.isLoading = update.isLoading;
-    if (update.canGoBack !== undefined) tab.canGoBack = update.canGoBack;
-    if (update.canGoForward !== undefined) tab.canGoForward = update.canGoForward;
+      const { redirect, match } = blocker.match(request);
+      if (redirect) {
+        callback({ redirectURL: redirect.dataUrl });
+      } else if (match) {
+        callback({ cancel: true });
+      } else {
+        callback({});
+      }
+    });
 
-    // Auto-save when URL or title changes so state survives crashes
-    if (urlChanged || titleChanged) {
-      this.scheduleSave();
-    }
-
-    this.sendTabUpdate(tabId);
-  }
-
-  /**
-   * Send a tab update to the renderer process.
-   */
-  private sendTabUpdate(tabId: string): void {
-    const tab = this.tabs.get(tabId);
-    if (!tab) return;
-
-    this.sendToRenderer('browser:tab-updated', this.toPublicTab(tab));
-  }
-
-  /**
-   * Send an IPC message to the renderer process.
-   */
-  private sendToRenderer(channel: string, ...args: unknown[]): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-
-    try {
-      this.mainWindow.webContents.send(channel, ...args);
-    } catch {
-      // Window may be closing
-    }
-  }
-
-  /**
-   * Convert internal tab to the public BrowserTab type.
-   */
-  private toPublicTab(tab: ManagedTab): BrowserTab {
-    return {
-      id: tab.id,
-      url: tab.url,
-      title: tab.title,
-      favicon: tab.favicon,
-      isLoading: tab.isLoading,
-      canGoBack: tab.canGoBack,
-      canGoForward: tab.canGoForward,
-    };
+    logger.info('Composite webRequest handlers registered');
   }
 }

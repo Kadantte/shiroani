@@ -3,7 +3,6 @@ import type {
   UpdateInfo,
   UpdateDownloadProgress,
   UpdateChannel,
-  BrowserTab,
   NotificationSettings,
   DiscordRpcSettings,
   DiscordPresenceActivity,
@@ -35,7 +34,6 @@ export interface ElectronAPI {
     get: <T>(key: string) => Promise<T | undefined>;
     set: <T>(key: string, value: T) => Promise<void>;
     delete: (key: string) => Promise<void>;
-    clear: () => Promise<void>;
   };
   dialog: {
     openDirectory: (options?: unknown) => Promise<string | null>;
@@ -68,24 +66,9 @@ export interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
   };
   browser: {
-    createTab: (url?: string) => Promise<string>;
-    closeTab: (tabId: string) => Promise<void>;
-    switchTab: (tabId: string) => Promise<void>;
-    navigate: (tabId: string, url: string) => Promise<void>;
-    goBack: (tabId: string) => Promise<void>;
-    goForward: (tabId: string) => Promise<void>;
-    refresh: (tabId: string) => Promise<void>;
-    getTabs: () => Promise<BrowserTab[]>;
-    getActiveTab: () => Promise<string | null>;
     toggleAdblock: (enabled: boolean) => Promise<void>;
-    resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
-    executeScript: (tabId: string, script: string) => Promise<unknown>;
-    reorderTabs: (orderedIds: string[]) => Promise<void>;
-    hide: () => Promise<void>;
-    show: () => Promise<void>;
-    onTabUpdated: (callback: (tab: BrowserTab) => void) => () => void;
-    onTabClosed: (callback: (tabId: string) => void) => () => void;
-    onFullscreenChange: (callback: (isFullScreen: boolean) => void) => () => void;
+    setFullscreen: (isFullscreen: boolean) => Promise<void>;
+    onNewWindowRequest: (callback: (url: string) => void) => () => void;
   };
   updater: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
@@ -143,7 +126,6 @@ const electronAPI: ElectronAPI = {
     get: <T>(key: string) => ipcRenderer.invoke('store:get', key) as Promise<T | undefined>,
     set: <T>(key: string, value: T) => ipcRenderer.invoke('store:set', key, value),
     delete: (key: string) => ipcRenderer.invoke('store:delete', key),
-    clear: () => ipcRenderer.invoke('store:clear'),
   },
   dialog: {
     openDirectory: (options?: unknown) => ipcRenderer.invoke('dialog:open-directory', options),
@@ -174,29 +156,11 @@ const electronAPI: ElectronAPI = {
     readLogFile: (fileName: string) => ipcRenderer.invoke('app:read-log-file', fileName),
   },
   browser: {
-    createTab: (url?: string) => ipcRenderer.invoke('browser:create-tab', url) as Promise<string>,
-    closeTab: (tabId: string) => ipcRenderer.invoke('browser:close-tab', tabId) as Promise<void>,
-    switchTab: (tabId: string) => ipcRenderer.invoke('browser:switch-tab', tabId) as Promise<void>,
-    navigate: (tabId: string, url: string) =>
-      ipcRenderer.invoke('browser:navigate', tabId, url) as Promise<void>,
-    goBack: (tabId: string) => ipcRenderer.invoke('browser:go-back', tabId) as Promise<void>,
-    goForward: (tabId: string) => ipcRenderer.invoke('browser:go-forward', tabId) as Promise<void>,
-    refresh: (tabId: string) => ipcRenderer.invoke('browser:refresh', tabId) as Promise<void>,
-    getTabs: () => ipcRenderer.invoke('browser:get-tabs') as Promise<BrowserTab[]>,
-    getActiveTab: () => ipcRenderer.invoke('browser:get-active-tab') as Promise<string | null>,
     toggleAdblock: (enabled: boolean) =>
       ipcRenderer.invoke('browser:toggle-adblock', enabled) as Promise<void>,
-    resize: (bounds: { x: number; y: number; width: number; height: number }) =>
-      ipcRenderer.invoke('browser:resize', bounds) as Promise<void>,
-    executeScript: (tabId: string, script: string) =>
-      ipcRenderer.invoke('browser:execute-script', tabId, script) as Promise<unknown>,
-    reorderTabs: (orderedIds: string[]) =>
-      ipcRenderer.invoke('browser:reorder-tabs', orderedIds) as Promise<void>,
-    hide: () => ipcRenderer.invoke('browser:hide') as Promise<void>,
-    show: () => ipcRenderer.invoke('browser:show') as Promise<void>,
-    onTabUpdated: createIpcListener<BrowserTab>('browser:tab-updated'),
-    onTabClosed: createIpcListener<string>('browser:tab-closed'),
-    onFullscreenChange: createIpcListener<boolean>('browser:fullscreen-change'),
+    setFullscreen: (isFullscreen: boolean) =>
+      ipcRenderer.invoke('browser:set-fullscreen', isFullscreen) as Promise<void>,
+    onNewWindowRequest: createIpcListener<string>('browser:new-window-request'),
   },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),

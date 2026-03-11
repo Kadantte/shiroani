@@ -19,6 +19,7 @@ import {
 import { BookmarkPlus, Link2, ImageIcon, Loader2 } from 'lucide-react';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { getWebview } from '@/components/browser/webviewRefs';
 import { toast } from 'sonner';
 import type { AnimeStatus } from '@shiroani/shared';
 import { STATUS_OPTIONS } from '@/lib/constants';
@@ -56,27 +57,30 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       // Auto-fetch metadata (cover, title, episodes) from the current tab
       const activeTabId = useBrowserStore.getState().activeTabId;
       if (activeTabId) {
-        setIsFetchingCover(true);
-        window.electronAPI?.browser
-          ?.executeScript(activeTabId, SCRAPE_METADATA_SCRIPT)
-          .then(result => {
-            const meta = result as {
-              coverImage?: string;
-              title?: string;
-              episodes?: number;
-            } | null;
-            if (meta) {
-              if (meta.coverImage) setCoverImage(meta.coverImage);
-              if (meta.title) setEditableTitle(meta.title);
-              if (meta.episodes && meta.episodes > 0) setTotalEpisodes(meta.episodes);
-            }
-          })
-          .catch(() => {
-            // Non-critical — user can fill in manually
-          })
-          .finally(() => {
-            setIsFetchingCover(false);
-          });
+        const webview = getWebview(activeTabId);
+        if (webview) {
+          setIsFetchingCover(true);
+          webview
+            .executeJavaScript(SCRAPE_METADATA_SCRIPT)
+            .then(result => {
+              const meta = result as {
+                coverImage?: string;
+                title?: string;
+                episodes?: number;
+              } | null;
+              if (meta) {
+                if (meta.coverImage) setCoverImage(meta.coverImage);
+                if (meta.title) setEditableTitle(meta.title);
+                if (meta.episodes && meta.episodes > 0) setTotalEpisodes(meta.episodes);
+              }
+            })
+            .catch(() => {
+              // Non-critical — user can fill in manually
+            })
+            .finally(() => {
+              setIsFetchingCover(false);
+            });
+        }
       }
     }
   }, [open, title]);
