@@ -1,5 +1,5 @@
 import { Client } from '@xhayper/discord-rpc';
-import { createLogger } from '@shiroani/shared';
+import { createLogger, DEFAULT_DISCORD_TEMPLATES } from '@shiroani/shared';
 import type { DiscordRpcSettings, DiscordPresenceActivity } from '@shiroani/shared';
 import { store } from './store';
 import { buildPresence } from './discord-presence-builder';
@@ -16,6 +16,8 @@ const DEFAULT_SETTINGS: DiscordRpcSettings = {
   enabled: false,
   showAnimeDetails: true,
   showElapsedTime: true,
+  useCustomTemplates: false,
+  templates: DEFAULT_DISCORD_TEMPLATES,
 };
 
 let client: Client | null = null;
@@ -27,10 +29,13 @@ let pendingActivity: DiscordPresenceActivity | null = null;
 let throttleTimer: ReturnType<typeof setTimeout> | null = null;
 let currentActivity: DiscordPresenceActivity | null = null;
 let activityStartTime: Date | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let isIdle = false;
+const IDLE_TIMEOUT_MS = 20_000;
 
 function getSettings(): DiscordRpcSettings {
   const stored = store.get(STORE_KEY) as Partial<DiscordRpcSettings> | undefined;
-  if (!stored) return { ...DEFAULT_SETTINGS };
+  if (!stored) return { ...DEFAULT_SETTINGS, templates: { ...DEFAULT_DISCORD_TEMPLATES } };
   return {
     enabled: typeof stored.enabled === 'boolean' ? stored.enabled : DEFAULT_SETTINGS.enabled,
     showAnimeDetails:
@@ -41,6 +46,13 @@ function getSettings(): DiscordRpcSettings {
       typeof stored.showElapsedTime === 'boolean'
         ? stored.showElapsedTime
         : DEFAULT_SETTINGS.showElapsedTime,
+    useCustomTemplates:
+      typeof stored.useCustomTemplates === 'boolean'
+        ? stored.useCustomTemplates
+        : DEFAULT_SETTINGS.useCustomTemplates,
+    templates: stored.templates
+      ? { ...DEFAULT_DISCORD_TEMPLATES, ...stored.templates }
+      : { ...DEFAULT_DISCORD_TEMPLATES },
   };
 }
 
@@ -194,6 +206,10 @@ export function updateDiscordRpcSettings(updates: Partial<DiscordRpcSettings>): 
     enabled: updates.enabled ?? current.enabled,
     showAnimeDetails: updates.showAnimeDetails ?? current.showAnimeDetails,
     showElapsedTime: updates.showElapsedTime ?? current.showElapsedTime,
+    useCustomTemplates: updates.useCustomTemplates ?? current.useCustomTemplates,
+    templates: updates.templates
+      ? { ...current.templates, ...updates.templates }
+      : current.templates,
   };
   saveSettings(next);
 
@@ -239,7 +255,38 @@ export function clearDiscordPresence(): void {
   }
 }
 
+export function onWindowBlur(): void {
+  const settings = getSettings();
+  if (!settings.enabled || !isConnected) return;
+
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    isIdle = true;
+    activityStartTime = new Date();
+    sendPresenceUpdate({ view: 'idle' });
+    logger.debug('Idle presence activated');
+  }, IDLE_TIMEOUT_MS);
+}
+
+export function onWindowFocus(): void {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+
+  if (isIdle) {
+    isIdle = false;
+    if (currentActivity) {
+      activityStartTime = new Date();
+      sendPresenceUpdate(currentActivity);
+      logger.debug('Restored presence from idle');
+    }
+  }
+}
+
 export function cleanupDiscordRpc(): void {
+  if (idleTimer) clearTimeout(idleTimer);
   disconnectClient();
   currentActivity = null;
   activityStartTime = null;

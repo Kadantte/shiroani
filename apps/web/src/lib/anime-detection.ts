@@ -129,14 +129,23 @@ export function updateAnimePresence(tabId: string): void {
 
   const detection = detectAnimeFromUrl(tab.url, tab.title);
 
+  let siteName: string | undefined;
+  try {
+    siteName = new URL(tab.url).hostname.replace(/^www\./, '');
+  } catch {
+    // invalid URL
+  }
+
   const activity: DiscordPresenceActivity = detection
     ? {
         view: 'browser',
         animeTitle: detection.episodeInfo
           ? `${detection.animeTitle} — ${detection.episodeInfo}`
           : detection.animeTitle,
+        episodeNumber: detection.episodeInfo,
+        siteName,
       }
-    : { view: 'browser' };
+    : { view: 'browser', siteName };
 
   window.electronAPI?.discordRpc?.updatePresence(activity);
 }

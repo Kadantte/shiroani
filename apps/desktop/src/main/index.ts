@@ -15,7 +15,12 @@ import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
-import { initializeDiscordRpc, cleanupDiscordRpc } from './discord-rpc-service';
+import {
+  initializeDiscordRpc,
+  cleanupDiscordRpc,
+  onWindowBlur,
+  onWindowFocus,
+} from './discord-rpc-service';
 import { store } from './store';
 import {
   createMascotOverlay,
@@ -168,6 +173,10 @@ async function bootstrap(): Promise<void> {
   mainWindow.on('restore', () => updateMascotVisibilityForWindowState(true));
   mainWindow.on('show', () => updateMascotVisibilityForWindowState(true));
   mainWindow.on('hide', () => updateMascotVisibilityForWindowState(false));
+
+  // Discord RPC idle detection on window blur/focus
+  mainWindow.on('blur', () => onWindowBlur());
+  mainWindow.on('focus', () => onWindowFocus());
 }
 
 // Global error handling

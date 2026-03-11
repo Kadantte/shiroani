@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { IS_ELECTRON } from '@/lib/platform';
 import { updateAnimePresence } from '@/lib/anime-detection';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
 
 export type ActiveView = 'browser' | 'library' | 'diary' | 'schedule' | 'settings';
 
@@ -38,6 +39,9 @@ export const useAppStore = create<AppStore>()(
             } else {
               window.electronAPI.discordRpc.updatePresence({ view });
             }
+          } else if (view === 'library') {
+            const libraryCount = useLibraryStore.getState().entries.length;
+            window.electronAPI.discordRpc.updatePresence({ view, libraryCount });
           } else {
             window.electronAPI.discordRpc.updatePresence({ view });
           }

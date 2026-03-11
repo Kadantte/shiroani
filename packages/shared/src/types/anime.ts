@@ -97,12 +97,35 @@ export interface NotificationSettings {
 // Discord Rich Presence Settings
 // ============================================
 
+export type DiscordActivityType =
+  | 'watching'
+  | 'browsing'
+  | 'library'
+  | 'diary'
+  | 'schedule'
+  | 'settings'
+  | 'idle';
+
+export interface DiscordPresenceTemplate {
+  details: string;
+  state: string;
+  showTimestamp: boolean;
+  showLargeImage: boolean;
+  showButton: boolean;
+}
+
+export type DiscordPresenceTemplates = Record<DiscordActivityType, DiscordPresenceTemplate>;
+
 export interface DiscordRpcSettings {
   enabled: boolean;
   /** Whether to show specific anime titles or generic "Using ShiroAni" */
   showAnimeDetails: boolean;
   /** Whether to show elapsed time on the presence */
   showElapsedTime: boolean;
+  /** Whether to use custom templates instead of defaults */
+  useCustomTemplates: boolean;
+  /** Per-activity custom templates */
+  templates: DiscordPresenceTemplates;
 }
 
 // ============================================
@@ -136,4 +159,8 @@ export interface DiscordPresenceActivity {
   anilistId?: number;
   /** Total anime count in library (for library view) */
   libraryCount?: number;
+  /** Episode number/info extracted from URL */
+  episodeNumber?: string;
+  /** Site hostname where anime is being watched */
+  siteName?: string;
 }

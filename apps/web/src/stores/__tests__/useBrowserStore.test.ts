@@ -40,7 +40,7 @@ describe('useBrowserStore', () => {
       const { tabs, activeTabId } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
       expect(tabs[0].title).toBe('Nowa karta');
-      expect(tabs[0].isLoading).toBe(true);
+      expect(tabs[0].isLoading).toBe(false); // new tab page doesn't load
       expect(tabs[0].canGoBack).toBe(false);
       expect(tabs[0].canGoForward).toBe(false);
       expect(activeTabId).toBe(tabs[0].id);
