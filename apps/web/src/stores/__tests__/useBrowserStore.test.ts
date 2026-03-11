@@ -193,19 +193,15 @@ describe('useBrowserStore', () => {
     });
   });
 
-  // ── setDefaultUrl / getDefaultUrl ─────────────────────────────
+  // ── openTab uses NEW_TAB_URL by default ─────────────────────
 
-  describe('setDefaultUrl / getDefaultUrl', () => {
-    it('updates default URL used for new tabs', () => {
-      useBrowserStore.getState().setDefaultUrl('https://custom.com');
-      expect(useBrowserStore.getState().getDefaultUrl()).toBe('https://custom.com');
-    });
+  describe('openTab default URL', () => {
+    it('opens new tab with NEW_TAB_URL when no URL provided', () => {
+      useBrowserStore.getState().openTab();
 
-    it('falls back to DEFAULT_HOMEPAGE_URL when empty string is provided', () => {
-      useBrowserStore.getState().setDefaultUrl('https://custom.com');
-      useBrowserStore.getState().setDefaultUrl('');
-      // Should fall back to the constant
-      expect(useBrowserStore.getState().getDefaultUrl()).toBeTruthy();
+      const { tabs } = useBrowserStore.getState();
+      expect(tabs).toHaveLength(1);
+      expect(tabs[0].url).toBe('shiroani://newtab');
     });
   });
 });

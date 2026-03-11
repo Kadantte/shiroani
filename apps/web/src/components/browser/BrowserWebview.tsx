@@ -1,5 +1,6 @@
 import { memo, useRef, useEffect } from 'react';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import {
   registerWebview,
   unregisterWebview,
@@ -99,6 +100,16 @@ const BrowserWebviewInner = function BrowserWebview({
         canGoBack: el.canGoBack(),
         canGoForward: el.canGoForward(),
       });
+
+      // Track visit for frequent sites
+      try {
+        const currentUrl = el.getURL();
+        const currentTitle = el.getTitle();
+        const tab = useBrowserStore.getState().tabs.find(t => t.id === tabId);
+        useQuickAccessStore.getState().recordVisit(currentUrl, currentTitle, tab?.favicon);
+      } catch {
+        // Non-critical — skip tracking
+      }
     };
 
     const onDidFailLoad = (e: Event) => {

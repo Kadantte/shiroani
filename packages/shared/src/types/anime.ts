@@ -105,6 +105,26 @@ export interface DiscordRpcSettings {
   showElapsedTime: boolean;
 }
 
+// ============================================
+// Quick Access Types
+// ============================================
+
+export interface QuickAccessSite {
+  id: string;
+  name: string;
+  url: string;
+  icon?: string;
+  isPredefined?: boolean;
+}
+
+export interface FrequentSite {
+  url: string;
+  title: string;
+  favicon?: string;
+  visitCount: number;
+  lastVisited: number;
+}
+
 export interface DiscordPresenceActivity {
   /** Current view/activity: browser, library, diary, schedule, settings */
   view: string;

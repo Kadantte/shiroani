@@ -38,8 +38,14 @@ export const GITHUB_REPO_NAME = 'shiroani';
 /** GitHub releases page URL */
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases`;
 
+/** Custom protocol URL for the new tab page */
+export const NEW_TAB_URL = 'shiroani://newtab';
+
+/** Check if a URL is the new tab page */
+export const isNewTabUrl = (url: string) => url === NEW_TAB_URL;
+
 /** Default homepage when user has not configured a custom URL */
-export const DEFAULT_HOMEPAGE_URL = 'https://ogladajanime.pl';
+export const DEFAULT_HOMEPAGE_URL = NEW_TAB_URL;
 
 // =============================================================================
 // Logging

@@ -40,6 +40,9 @@ const ALLOWED_STORE_KEYS = new Set([
   'discord-rpc-settings',
   // Browser tab persistence (renderer saves/loads tabs directly)
   'browser-tabs',
+  // Quick access sites and frequent visits
+  'quick-access-sites',
+  'quick-access-frequent',
 ]);
 
 /**

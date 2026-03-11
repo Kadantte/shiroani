@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Globe } from 'lucide-react';
+import { isNewTabUrl, NEW_TAB_URL } from '@shiroani/shared';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { AddToLibraryDialog } from '@/components/browser/AddToLibraryDialog';
 import { BrowserTabBar } from '@/components/browser/BrowserTabBar';
 import { BrowserToolbar } from '@/components/browser/BrowserToolbar';
 import { BrowserWebview } from '@/components/browser/BrowserWebview';
+import { NewTabPage } from '@/components/browser/NewTabPage';
 import { useBrowserInit } from '@/components/browser/useBrowserInit';
+import { unregisterWebview } from '@/components/browser/webviewRefs';
 
 // Actions are stable references — extract once outside render cycle
 const {
@@ -19,7 +22,6 @@ const {
   goForward,
   reload,
   toggleAdblock,
-  getDefaultUrl,
 } = useBrowserStore.getState();
 
 /**
@@ -41,12 +43,38 @@ export function BrowserView() {
   // Tab restoration on mount
   useBrowserInit();
 
-  // Sync URL input with active tab URL
+  // Sync URL input with active tab URL (show empty for new tab page)
   useEffect(() => {
     if (activeTab && !useBrowserStore.getState().isAddressBarFocused) {
-      setUrlInput(activeTab.url);
+      setUrlInput(isNewTabUrl(activeTab.url) ? '' : activeTab.url);
     }
   }, [activeTab?.url, activeTab]);
+
+  const isActiveTabNewTab = activeTab ? isNewTabUrl(activeTab.url) : false;
+
+  // When navigating from the new tab page, update tab state to swap in a webview
+  const handleNewTabNavigate = useCallback(
+    (url: string) => {
+      if (!activeTab) return;
+      const { updateTabState } = useBrowserStore.getState();
+      updateTabState(activeTab.id, { url, isLoading: true });
+    },
+    [activeTab]
+  );
+
+  // Home button: go back to new tab page
+  const handleGoHome = useCallback(() => {
+    if (!activeTab) return;
+    const { updateTabState } = useBrowserStore.getState();
+    unregisterWebview(activeTab.id);
+    updateTabState(activeTab.id, {
+      url: NEW_TAB_URL,
+      title: 'Nowa karta',
+      isLoading: false,
+      canGoBack: false,
+      canGoForward: false,
+    });
+  }, [activeTab]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -77,27 +105,40 @@ export function BrowserView() {
           onReload={reload}
           onNavigate={navigate}
           onToggleAdblock={toggleAdblock}
-          onGoHome={() => navigate(getDefaultUrl())}
+          onGoHome={handleGoHome}
           onAddToLibrary={() => setIsAddToLibraryOpen(true)}
         />
       )}
 
       {/* Webview container — renders all tabs, CSS controls visibility */}
-      <div className="flex-1 relative overflow-hidden bg-background">
+      <div
+        className={`flex-1 relative overflow-hidden ${isActiveTabNewTab ? '' : 'bg-background'}`}
+      >
         {tabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
             <Globe className="w-16 h-16 opacity-20" />
             <p className="text-sm">Kliknij + aby otworzyc nowa karte</p>
           </div>
         ) : (
-          tabs.map(tab => (
-            <BrowserWebview
-              key={tab.id}
-              tabId={tab.id}
-              initialUrl={tab.url}
-              isActive={tab.id === activeTabId}
-            />
-          ))
+          <>
+            {/* New tab page overlay — shown when active tab is a new tab */}
+            {isActiveTabNewTab && (
+              <div className="absolute inset-0 z-10">
+                <NewTabPage onNavigate={handleNewTabNavigate} />
+              </div>
+            )}
+            {/* Webviews — skip rendering for tabs with new tab URL */}
+            {tabs.map(tab =>
+              isNewTabUrl(tab.url) ? null : (
+                <BrowserWebview
+                  key={tab.id}
+                  tabId={tab.id}
+                  initialUrl={tab.url}
+                  isActive={tab.id === activeTabId}
+                />
+              )
+            )}
+          </>
         )}
       </div>
 

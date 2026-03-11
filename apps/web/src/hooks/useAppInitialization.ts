@@ -5,7 +5,7 @@ import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 
 const logger = createLogger('AppInit');
 
@@ -70,16 +70,11 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
         // Init updater listeners (IPC-based)
         cleanupUpdate = initUpdateListeners();
 
-        // Restore persisted browser settings (homepage)
+        // Load quick access data
         try {
-          const browserSettings = await window.electronAPI?.store?.get<{ homepage?: string }>(
-            'browser-settings'
-          );
-          if (browserSettings?.homepage) {
-            useBrowserStore.getState().setDefaultUrl(browserSettings.homepage);
-          }
+          await useQuickAccessStore.getState().loadSites();
         } catch {
-          // Non-critical — use default homepage
+          // Non-critical — quick access will use defaults
         }
 
         setReady(true);

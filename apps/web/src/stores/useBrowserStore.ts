@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { BrowserTab } from '@shiroani/shared';
-import { createLogger, DEFAULT_HOMEPAGE_URL } from '@shiroani/shared';
+import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
 import { normalizeUrl } from '@/lib/url-utils';
 
@@ -29,15 +29,11 @@ interface BrowserActions {
   setAddressBarFocused: (focused: boolean) => void;
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
-  setDefaultUrl: (url: string) => void;
-  getDefaultUrl: () => string;
   persistTabs: () => void;
   restoreTabs: () => Promise<void>;
 }
 
 type BrowserStore = BrowserState & BrowserActions;
-
-let defaultUrl = DEFAULT_HOMEPAGE_URL;
 
 // Debounce timer for tab persistence
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,14 +52,14 @@ export const useBrowserStore = create<BrowserStore>()(
       // ── Tab CRUD (all local now) ────────────────────────────────
 
       openTab: (url?: string) => {
-        const targetUrl = typeof url === 'string' ? url : defaultUrl;
+        const targetUrl = typeof url === 'string' ? url : NEW_TAB_URL;
         const tabId = crypto.randomUUID();
 
         const newTab: BrowserTab = {
           id: tabId,
           url: targetUrl,
           title: 'Nowa karta',
-          isLoading: true,
+          isLoading: targetUrl !== NEW_TAB_URL,
           canGoBack: false,
           canGoForward: false,
         };
@@ -121,16 +117,18 @@ export const useBrowserStore = create<BrowserStore>()(
       // ── Navigation (calls webview methods directly) ─────────────
 
       navigate: (url: string) => {
-        const { activeTabId } = get();
+        const { activeTabId, updateTabState } = get();
         if (!activeTabId) return;
 
+        const normalizedUrl = normalizeUrl(url);
         const webview = getWebview(activeTabId);
+
         if (!webview) {
-          logger.warn(`No webview ref for tab ${activeTabId}`);
+          // No webview (e.g., new tab page) — update state to trigger webview mount
+          updateTabState(activeTabId, { url: normalizedUrl, isLoading: true });
           return;
         }
 
-        const normalizedUrl = normalizeUrl(url);
         webview.loadURL(normalizedUrl).catch((err: Error) => {
           logger.error(`Failed to navigate tab ${activeTabId}:`, err.message);
         });
@@ -186,13 +184,6 @@ export const useBrowserStore = create<BrowserStore>()(
         get().setAdblockEnabled(enabled);
       },
 
-      setDefaultUrl: (url: string) => {
-        defaultUrl = url || DEFAULT_HOMEPAGE_URL;
-        logger.debug('Default URL updated:', defaultUrl);
-      },
-
-      getDefaultUrl: () => defaultUrl,
-
       // ── Persistence ─────────────────────────────────────────────
 
       persistTabs: () => {
@@ -222,15 +213,11 @@ export const useBrowserStore = create<BrowserStore>()(
         // Restore adblock setting
         const settings = await window.electronAPI?.store?.get<{
           adblockEnabled?: boolean;
-          homepage?: string;
         }>('browser-settings');
 
         if (settings) {
           if (typeof settings.adblockEnabled === 'boolean') {
             set({ adblockEnabled: settings.adblockEnabled });
-          }
-          if (settings.homepage) {
-            defaultUrl = settings.homepage;
           }
         }
 
@@ -245,7 +232,7 @@ export const useBrowserStore = create<BrowserStore>()(
             id: crypto.randomUUID(),
             url: t.url,
             title: t.title || 'Nowa karta',
-            isLoading: true, // Will start loading when webview mounts
+            isLoading: t.url !== NEW_TAB_URL, // New tab pages don't load
             canGoBack: false,
             canGoForward: false,
           }));

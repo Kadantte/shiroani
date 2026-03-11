@@ -102,7 +102,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     if (entry?.resumeUrl) {
       openTab(entry.resumeUrl);
     } else {
-      openTab(useBrowserStore.getState().getDefaultUrl());
+      openTab();
     }
     onOpenChange(false);
     navigateTo('browser');
