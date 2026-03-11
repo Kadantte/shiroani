@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { useMemo, useCallback } from 'react';
+import { Calendar, Clock, Bell, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_SHORT } from '@/lib/constants';
 import { formatTime, getAnimeTitle, getCoverUrl, isToday } from './schedule-utils';
 import { DayColumnHeader } from './DayColumnHeader';
+import { TooltipButton } from '@/components/ui/tooltip-button';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface WeeklyViewProps {
@@ -14,6 +16,22 @@ export interface WeeklyViewProps {
 }
 
 export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewProps) {
+  const subscribedIds = useNotificationStore(state => state.subscribedIds);
+  const subscribe = useNotificationStore(state => state.subscribe);
+  const unsubscribe = useNotificationStore(state => state.unsubscribe);
+
+  const handleBellClick = useCallback(
+    (e: React.MouseEvent, anime: AiringAnime) => {
+      e.stopPropagation();
+      if (subscribedIds.has(anime.media.id)) {
+        unsubscribe(anime.media.id);
+      } else {
+        subscribe(anime);
+      }
+    },
+    [subscribedIds, subscribe, unsubscribe]
+  );
+
   const weekData = useMemo(() => {
     const map = new Map<string, AiringAnime[]>();
     for (const day of weekDays) {
@@ -49,12 +67,13 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                 {dayEntries.map((anime: AiringAnime) => {
                   const title = getAnimeTitle(anime.media);
                   const coverUrl = getCoverUrl(anime.media);
+                  const isSub = subscribedIds.has(anime.media.id);
 
                   return (
                     <div
                       key={`${anime.id}-${anime.episode}`}
                       className={cn(
-                        'group p-2 rounded-lg text-xs',
+                        'group relative p-2 rounded-lg text-xs',
                         'bg-background/40 border border-border-glass',
                         'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200'
                       )}
@@ -83,6 +102,27 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                           )}
                         </div>
                       </div>
+
+                      {/* Bell icon overlay - top right */}
+                      {anime.media.id && (
+                        <TooltipButton
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity',
+                            isSub && 'opacity-100'
+                          )}
+                          tooltip={isSub ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
+                          tooltipSide="top"
+                          onClick={e => handleBellClick(e, anime)}
+                        >
+                          {isSub ? (
+                            <BellRing className="w-3 h-3 text-primary" />
+                          ) : (
+                            <Bell className="w-3 h-3" />
+                          )}
+                        </TooltipButton>
+                      )}
                     </div>
                   );
                 })}

@@ -1,9 +1,10 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useScheduleStore } from '@/stores/useScheduleStore';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 import { DailyViewSkeleton, WeeklyViewSkeleton, TimetableViewSkeleton } from './ScheduleSkeletons';
 import { addDays, formatDate, isToday } from './schedule-utils';
 import { DailyView } from './DailyView';
@@ -43,6 +44,13 @@ export function ScheduleView() {
   }, [selectedDay, getEntriesForDay, schedule]);
 
   const weekDays = useMemo(() => getWeekDays(), [getWeekDays, selectedDay]);
+
+  // Load notification subscriptions once
+  const notifLoaded = useNotificationStore(state => state.loaded);
+  const loadSubscriptions = useNotificationStore(state => state.loadSubscriptions);
+  useEffect(() => {
+    if (!notifLoaded) loadSubscriptions();
+  }, [notifLoaded, loadSubscriptions]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">

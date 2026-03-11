@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { useMemo, useCallback } from 'react';
+import { Calendar, Clock, Bell, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_FULL } from '@/lib/constants';
 import { formatTime, getAnimeTitle, isToday } from './schedule-utils';
 import { DayColumnHeader } from './DayColumnHeader';
+import { TooltipButton } from '@/components/ui/tooltip-button';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface TimetableViewProps {
@@ -14,6 +16,22 @@ export interface TimetableViewProps {
 }
 
 export function TimetableView({ weekDays, getEntriesForDay, schedule }: TimetableViewProps) {
+  const subscribedIds = useNotificationStore(state => state.subscribedIds);
+  const subscribe = useNotificationStore(state => state.subscribe);
+  const unsubscribe = useNotificationStore(state => state.unsubscribe);
+
+  const handleBellClick = useCallback(
+    (e: React.MouseEvent, anime: AiringAnime) => {
+      e.stopPropagation();
+      if (subscribedIds.has(anime.media.id)) {
+        unsubscribe(anime.media.id);
+      } else {
+        subscribe(anime);
+      }
+    },
+    [subscribedIds, subscribe, unsubscribe]
+  );
+
   const weekData = useMemo(() => {
     const map = new Map<string, AiringAnime[]>();
     for (const day of weekDays) {
@@ -50,6 +68,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                   const title = getAnimeTitle(anime.media);
                   // Timetable prefers large cover for the card layout
                   const coverUrl = anime.media.coverImage.large || anime.media.coverImage.medium;
+                  const isSub = subscribedIds.has(anime.media.id);
 
                   return (
                     <div
@@ -58,7 +77,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                         'rounded-lg overflow-hidden',
                         'border border-border-glass',
                         'hover:border-border-glass/80 hover:shadow-md transition-all duration-200',
-                        'group'
+                        'group relative'
                       )}
                     >
                       {/* Info strip -- episode & time */}
@@ -86,6 +105,28 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                           <div className="w-full h-full flex items-center justify-center">
                             <Calendar className="w-8 h-8 text-muted-foreground/20" />
                           </div>
+                        )}
+
+                        {/* Bell icon overlay - top right */}
+                        {anime.media.id && (
+                          <TooltipButton
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              'absolute top-1 right-1 w-7 h-7 bg-background/60 backdrop-blur-sm',
+                              'opacity-0 group-hover:opacity-100 transition-opacity',
+                              isSub && 'opacity-100'
+                            )}
+                            tooltip={isSub ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
+                            tooltipSide="top"
+                            onClick={e => handleBellClick(e, anime)}
+                          >
+                            {isSub ? (
+                              <BellRing className="w-3.5 h-3.5 text-primary" />
+                            ) : (
+                              <Bell className="w-3.5 h-3.5" />
+                            )}
+                          </TooltipButton>
                         )}
 
                         {/* Title overlay at bottom */}

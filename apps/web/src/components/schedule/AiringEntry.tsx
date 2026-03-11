@@ -1,6 +1,9 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { TooltipButton } from '@/components/ui/tooltip-button';
+import { Bell, BellRing } from 'lucide-react';
 import { formatTime, getAnimeTitle, getCoverUrl } from './schedule-utils';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface AiringEntryProps {
@@ -11,13 +14,28 @@ export interface AiringEntryProps {
 export function AiringEntry({ anime }: AiringEntryProps) {
   const title = getAnimeTitle(anime.media);
   const coverUrl = getCoverUrl(anime.media);
+  const mediaId = anime.media.id;
+
+  const isSubscribed = useNotificationStore(state => state.subscribedIds.has(mediaId));
+  const subscribe = useNotificationStore(state => state.subscribe);
+  const unsubscribe = useNotificationStore(state => state.unsubscribe);
+
+  const handleBellClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSubscribed) {
+      unsubscribe(mediaId);
+    } else {
+      subscribe(anime);
+    }
+  };
 
   return (
     <div
       className={cn(
         'flex items-center gap-3 p-2.5 rounded-lg',
         'bg-background/40 backdrop-blur-sm border border-border-glass',
-        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200'
+        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200',
+        'group'
       )}
     >
       {/* Time */}
@@ -69,6 +87,27 @@ export function AiringEntry({ anime }: AiringEntryProps) {
         <span className="text-xs font-semibold text-primary/80 shrink-0 tabular-nums">
           {(anime.media.averageScore / 10).toFixed(1)}
         </span>
+      )}
+
+      {/* Bell subscription button */}
+      {mediaId && (
+        <TooltipButton
+          variant="ghost"
+          size="icon"
+          className={cn(
+            'shrink-0 w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity',
+            isSubscribed && 'opacity-100'
+          )}
+          tooltip={isSubscribed ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
+          tooltipSide="left"
+          onClick={handleBellClick}
+        >
+          {isSubscribed ? (
+            <BellRing className="w-3.5 h-3.5 text-primary" />
+          ) : (
+            <Bell className="w-3.5 h-3.5" />
+          )}
+        </TooltipButton>
       )}
     </div>
   );

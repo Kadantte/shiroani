@@ -87,10 +87,27 @@ export interface LibraryStatsResult {
 // Notification Settings
 // ============================================
 
+export interface NotificationSubscription {
+  anilistId: number;
+  title: string;
+  titleRomaji?: string;
+  coverImage?: string;
+  subscribedAt: string;
+  enabled: boolean;
+  source: 'schedule' | 'library';
+}
+
 export interface NotificationSettings {
   enabled: boolean;
-  /** How many minutes before airing to fire the notification */
+  /** How many minutes before airing to fire the notification (0 = at airing time) */
   leadTimeMinutes: number;
+  quietHours: {
+    enabled: boolean;
+    start: string; // "HH:mm"
+    end: string; // "HH:mm"
+  };
+  useSystemSound: boolean;
+  subscriptions: NotificationSubscription[];
 }
 
 // ============================================

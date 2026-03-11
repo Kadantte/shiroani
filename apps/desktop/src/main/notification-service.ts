@@ -1,7 +1,7 @@
 import { Notification, BrowserWindow, nativeImage } from 'electron';
 import { createLogger, getWeekStart, toLocalDate } from '@shiroani/shared';
 import type { INestApplication } from '@nestjs/common';
-import type { AiringAnime, NotificationSettings } from '@shiroani/shared';
+import type { AiringAnime, NotificationSettings, NotificationSubscription } from '@shiroani/shared';
 import { ScheduleService } from '../modules/schedule/schedule.service';
 import { LibraryService } from '../modules/library/library.service';
 import { store } from './store';
@@ -17,6 +17,13 @@ const SCHEDULE_CACHE_TTL_MS = 30 * 60 * 1000; // Re-fetch schedule every 30 minu
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
   leadTimeMinutes: 15,
+  quietHours: {
+    enabled: false,
+    start: '23:00',
+    end: '07:00',
+  },
+  useSystemSound: true,
+  subscriptions: [],
 };
 
 let checkInterval: ReturnType<typeof setInterval> | null = null;
@@ -35,17 +42,41 @@ let cacheTimestamp = 0;
 function getSettings(): NotificationSettings {
   const stored = store.get(STORE_KEY) as Partial<NotificationSettings> | undefined;
   if (!stored) return { ...DEFAULT_SETTINGS };
+
   return {
-    enabled: typeof stored.enabled === 'boolean' ? stored.enabled : DEFAULT_SETTINGS.enabled,
-    leadTimeMinutes:
-      typeof stored.leadTimeMinutes === 'number'
-        ? stored.leadTimeMinutes
-        : DEFAULT_SETTINGS.leadTimeMinutes,
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    quietHours: {
+      ...DEFAULT_SETTINGS.quietHours,
+      ...(stored.quietHours ?? {}),
+    },
+    subscriptions: stored.subscriptions ?? DEFAULT_SETTINGS.subscriptions,
   };
 }
 
 function saveSettings(settings: NotificationSettings): void {
   store.set(STORE_KEY, settings);
+}
+
+/** Check if current time falls within quiet hours */
+function isInQuietHours(settings: NotificationSettings): boolean {
+  if (!settings.quietHours.enabled) return false;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const [startH, startM] = settings.quietHours.start.split(':').map(Number);
+  const [endH, endM] = settings.quietHours.end.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+
+  if (startMinutes <= endMinutes) {
+    // Same-day range (e.g. 09:00 - 17:00)
+    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+  } else {
+    // Overnight wrap (e.g. 23:00 - 07:00)
+    return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+  }
 }
 
 /** Fetch and cache the weekly schedule */
@@ -110,43 +141,59 @@ function getTitle(media: AiringAnime['media']): string {
   return media.title.english || media.title.romaji || media.title.native || 'Nieznane anime';
 }
 
-/** Main check: cross-reference library with schedule and fire notifications */
+/** Main check: cross-reference library + subscriptions with schedule and fire notifications */
 async function checkAndNotify(): Promise<void> {
   const settings = getSettings();
   if (!settings.enabled || !libraryService || !scheduleService) return;
 
-  const watchingEntries = libraryService.getAllEntries('watching');
-  if (watchingEntries.length === 0) return;
+  // Check quiet hours
+  if (isInQuietHours(settings)) return;
 
-  // Build a set of AniList IDs from watching entries
-  const watchingIds = new Set<number>();
+  // Build a set of AniList IDs to notify: library watching + enabled subscriptions
+  const notifyIds = new Set<number>();
+
+  const watchingEntries = libraryService.getAllEntries('watching');
   for (const entry of watchingEntries) {
-    if (entry.anilistId) watchingIds.add(entry.anilistId);
+    if (entry.anilistId) notifyIds.add(entry.anilistId);
   }
-  if (watchingIds.size === 0) return;
+
+  for (const sub of settings.subscriptions) {
+    if (sub.enabled) notifyIds.add(sub.anilistId);
+  }
+
+  if (notifyIds.size === 0) return;
 
   const airingData = await getScheduleData();
   const nowUnix = Math.floor(Date.now() / 1000);
   const leadTimeSeconds = settings.leadTimeMinutes * 60;
+  const checkWindowSeconds = CHECK_INTERVAL_MS / 1000; // 5 minutes
 
   for (const airing of airingData) {
-    if (!watchingIds.has(airing.media.id)) continue;
+    if (!notifyIds.has(airing.media.id)) continue;
 
     const timeUntilAiring = airing.airingAt - nowUnix;
 
-    // Only notify if within the lead time window and not already aired
-    if (timeUntilAiring <= 0 || timeUntilAiring > leadTimeSeconds) continue;
+    if (leadTimeSeconds === 0) {
+      // Lead time 0: notify for anime airing within the check interval window
+      if (timeUntilAiring < -checkWindowSeconds || timeUntilAiring > checkWindowSeconds) continue;
+    } else {
+      // Only notify if within the lead time window and not already aired
+      if (timeUntilAiring <= 0 || timeUntilAiring > leadTimeSeconds) continue;
+    }
 
     const dedupeKey = `${airing.media.id}:${airing.episode}`;
     if (sentNotifications.has(dedupeKey)) continue;
 
     sentNotifications.add(dedupeKey);
-    await showNotification(airing);
+    await showNotification(airing, settings);
   }
 }
 
 /** Show a native notification for an airing anime */
-async function showNotification(airing: AiringAnime): Promise<void> {
+async function showNotification(
+  airing: AiringAnime,
+  settings: NotificationSettings
+): Promise<void> {
   const title = getTitle(airing.media);
   const minutesLeft = Math.round((airing.airingAt - Date.now() / 1000) / 60);
   const body =
@@ -166,7 +213,7 @@ async function showNotification(airing: AiringAnime): Promise<void> {
     title,
     body,
     ...(icon ? { icon } : {}),
-    silent: false,
+    silent: !settings.useSystemSound,
   });
 
   notification.on('click', () => {
@@ -221,6 +268,49 @@ function stopChecking(): void {
 }
 
 // ========================================
+// Subscription CRUD
+// ========================================
+
+export function getSubscriptions(): NotificationSubscription[] {
+  return getSettings().subscriptions;
+}
+
+export function addSubscription(
+  subscription: NotificationSubscription
+): NotificationSubscription[] {
+  const settings = getSettings();
+  // Avoid duplicates
+  if (settings.subscriptions.some(s => s.anilistId === subscription.anilistId)) {
+    return settings.subscriptions;
+  }
+  settings.subscriptions.push(subscription);
+  saveSettings(settings);
+  return settings.subscriptions;
+}
+
+export function removeSubscription(anilistId: number): NotificationSubscription[] {
+  const settings = getSettings();
+  settings.subscriptions = settings.subscriptions.filter(s => s.anilistId !== anilistId);
+  saveSettings(settings);
+  return settings.subscriptions;
+}
+
+export function toggleSubscription(anilistId: number): NotificationSubscription[] {
+  const settings = getSettings();
+  const sub = settings.subscriptions.find(s => s.anilistId === anilistId);
+  if (sub) {
+    sub.enabled = !sub.enabled;
+    saveSettings(settings);
+  }
+  return settings.subscriptions;
+}
+
+export function isSubscribed(anilistId: number): boolean {
+  const settings = getSettings();
+  return settings.subscriptions.some(s => s.anilistId === anilistId);
+}
+
+// ========================================
 // Public API
 // ========================================
 
@@ -257,8 +347,14 @@ export function updateNotificationSettings(
 ): NotificationSettings {
   const current = getSettings();
   const next: NotificationSettings = {
-    enabled: updates.enabled ?? current.enabled,
-    leadTimeMinutes: updates.leadTimeMinutes ?? current.leadTimeMinutes,
+    ...current,
+    ...updates,
+    quietHours: {
+      ...current.quietHours,
+      ...(updates.quietHours ?? {}),
+    },
+    // Don't let partial updates wipe subscriptions
+    subscriptions: updates.subscriptions ?? current.subscriptions,
   };
   saveSettings(next);
 

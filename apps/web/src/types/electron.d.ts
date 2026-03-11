@@ -3,6 +3,7 @@ import type {
   UpdateDownloadProgress,
   UpdateChannel,
   NotificationSettings,
+  NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
 } from '@shiroani/shared';
@@ -78,6 +79,13 @@ interface ElectronAPI {
   notifications?: {
     getSettings: () => Promise<NotificationSettings>;
     updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
+    getSubscriptions: () => Promise<NotificationSubscription[]>;
+    addSubscription: (
+      subscription: NotificationSubscription
+    ) => Promise<NotificationSubscription[]>;
+    removeSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
+    toggleSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
+    isSubscribed: (anilistId: number) => Promise<boolean>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
   };
   discordRpc?: {

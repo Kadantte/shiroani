@@ -4,6 +4,7 @@ import type {
   UpdateDownloadProgress,
   UpdateChannel,
   NotificationSettings,
+  NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
 } from '@shiroani/shared';
@@ -87,6 +88,13 @@ export interface ElectronAPI {
   notifications: {
     getSettings: () => Promise<NotificationSettings>;
     updateSettings: (updates: Partial<NotificationSettings>) => Promise<NotificationSettings>;
+    getSubscriptions: () => Promise<NotificationSubscription[]>;
+    addSubscription: (
+      subscription: NotificationSubscription
+    ) => Promise<NotificationSubscription[]>;
+    removeSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
+    toggleSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
+    isSubscribed: (anilistId: number) => Promise<boolean>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
   };
   discordRpc: {
@@ -187,6 +195,22 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('notifications:get-settings') as Promise<NotificationSettings>,
     updateSettings: (updates: Partial<NotificationSettings>) =>
       ipcRenderer.invoke('notifications:update-settings', updates) as Promise<NotificationSettings>,
+    getSubscriptions: () =>
+      ipcRenderer.invoke('notifications:get-subscriptions') as Promise<NotificationSubscription[]>,
+    addSubscription: (subscription: NotificationSubscription) =>
+      ipcRenderer.invoke('notifications:add-subscription', subscription) as Promise<
+        NotificationSubscription[]
+      >,
+    removeSubscription: (anilistId: number) =>
+      ipcRenderer.invoke('notifications:remove-subscription', anilistId) as Promise<
+        NotificationSubscription[]
+      >,
+    toggleSubscription: (anilistId: number) =>
+      ipcRenderer.invoke('notifications:toggle-subscription', anilistId) as Promise<
+        NotificationSubscription[]
+      >,
+    isSubscribed: (anilistId: number) =>
+      ipcRenderer.invoke('notifications:is-subscribed', anilistId) as Promise<boolean>,
     onClicked: createIpcListener<{ mediaId: number; episode: number }>('notifications:clicked'),
   },
   discordRpc: {
