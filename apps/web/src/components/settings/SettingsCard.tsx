@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SettingsCardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   /** Icon for the section header */
   icon?: LucideIcon;
@@ -28,7 +28,7 @@ export function SettingsCard({
       )}
     >
       {Icon && title && (
-        <div className="flex items-center gap-2.5 mb-3">
+        <div className={cn('flex items-center gap-2.5', children && 'mb-3')}>
           <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
             <Icon className="w-3.5 h-3.5 text-primary" />
           </div>

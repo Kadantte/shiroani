@@ -1,4 +1,4 @@
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { ExternalLink, Heart, Scale, Sparkles } from 'lucide-react';
 import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { APP_LOGO_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,7 @@ export function AboutSection({ version }: AboutSectionProps) {
               window.open(GITHUB_RELEASES_URL, '_blank');
             }
           }}
+          aria-label="GitHub — otwórz w nowej karcie"
           className="flex items-center gap-2.5 text-sm text-muted-foreground p-3 rounded-lg hover:bg-accent/50 hover:text-primary transition-colors cursor-pointer w-full"
         >
           <ExternalLink className="w-4 h-4" />
@@ -68,16 +69,34 @@ export function AboutSection({ version }: AboutSectionProps) {
           <Sparkles className="w-3.5 h-3.5" />
           Uruchom kreator ponownie
         </Button>
-        <p className="text-2xs text-muted-foreground/60">
+        <p className="text-xs text-muted-foreground/70">
           Po kliknięciu kreator uruchomi się od razu — Shiro-chan przeprowadzi Cię jeszcze raz!
         </p>
       </SettingsCard>
 
-      {/* License */}
-      <SettingsCard>
-        <h3 className="text-sm font-medium mb-1">Licencja</h3>
-        <p className="text-2xs text-muted-foreground/70">Source Available License</p>
+      {/* Story */}
+      <SettingsCard icon={Heart} title="Historia" subtitle="Skąd wzięło się ShiroAni">
+        <div className="space-y-2.5 text-[13px] text-muted-foreground leading-relaxed">
+          <p>
+            ShiroAni powstało z prostej potrzeby — chciałem mieć wszystko czego potrzebuję do
+            oglądania anime w jednym miejscu. Przeglądarka, biblioteka, harmonogram, pamiętnik... po
+            prostu jedno przytulne miejsce.
+          </p>
+          <p>
+            Z czasem zacząłem dodawać coraz więcej rzeczy — maskotki, motywy, powiadomienia — i po
+            prostu świetnie się przy tym bawiłem. W pewnym momencie pomyślałem: czemu nie udostępnić
+            tego innym?
+          </p>
+          <p>
+            Głównym celem ShiroAni jest to, żeby każdy mógł mieć swoje unikalne, fajne doświadczenie
+            z anime. A przy okazji — zbudować społeczność osób, z którymi można pogadać o ulubionych
+            seriach.
+          </p>
+        </div>
       </SettingsCard>
+
+      {/* License */}
+      <SettingsCard icon={Scale} title="Licencja" subtitle="Source Available License" />
     </div>
   );
 }
