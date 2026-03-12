@@ -1,6 +1,7 @@
 import { render, screen, act } from '@/test/test-utils';
 import { vi } from 'vitest';
 import { useAppStore } from '@/stores/useAppStore';
+import { useDockStore } from '@/stores/useDockStore';
 import { NavigationDock } from '../NavigationDock';
 
 vi.mock('@/lib/platform', () => ({ IS_ELECTRON: false }));
@@ -15,6 +16,17 @@ const NAV_ITEMS = [
 
 beforeEach(() => {
   useAppStore.setState({ activeView: 'browser' });
+  useDockStore.setState({
+    edge: 'bottom',
+    offset: 50,
+    autoHide: false,
+    draggable: true,
+    showLabels: true,
+    isDragging: false,
+    dragPosition: null,
+    isExpanded: false,
+    initialized: true,
+  });
 });
 
 describe('NavigationDock', () => {
@@ -92,5 +104,35 @@ describe('NavigationDock', () => {
       'page'
     );
     expect(screen.getByRole('button', { name: 'Internet' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('shows collapsed logo when autoHide is enabled', () => {
+    useDockStore.setState({ autoHide: true, isExpanded: false });
+    render(<NavigationDock hasBg={false} />);
+
+    // Should show the logo image but not nav buttons
+    expect(screen.getByAltText('ShiroAni')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Internet' })).not.toBeInTheDocument();
+  });
+
+  it('renders vertically when edge is left or right', () => {
+    useDockStore.setState({ edge: 'left' });
+    render(<NavigationDock hasBg={false} />);
+
+    // All items should still render
+    for (const { label } of NAV_ITEMS) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it('hides labels in icon-only mode', () => {
+    useDockStore.setState({ showLabels: false });
+    render(<NavigationDock hasBg={false} />);
+
+    // Buttons should exist (via aria-label) but label text should not be visible
+    for (const { label } of NAV_ITEMS) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
   });
 });

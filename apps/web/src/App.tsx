@@ -15,6 +15,7 @@ import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useAppStore } from '@/stores/useAppStore';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useDockStore } from '@/stores/useDockStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 
 function App() {
@@ -28,12 +29,15 @@ function App() {
 
   const handleSplashDismissed = useCallback(() => setSplashDone(true), []);
 
-  // Restore custom background from persisted settings on startup
+  const initDock = useDockStore(s => s.initDock);
+
+  // Restore custom background and dock settings on startup
   useEffect(() => {
     if (ready) {
       restoreBackground();
+      initDock();
     }
-  }, [ready, restoreBackground]);
+  }, [ready, restoreBackground, initDock]);
 
   // Listen for navigation events from the main process (e.g. mascot overlay context menu)
   useEffect(() => {
@@ -79,8 +83,7 @@ function App() {
             id="main-content"
             className={cn(
               'flex-1 flex overflow-hidden relative z-[1]',
-              hasBg ? 'bg-transparent' : 'bg-background',
-              !isFullScreen && 'pb-20'
+              hasBg ? 'bg-transparent' : 'bg-background'
             )}
           >
             <ErrorBoundary>

@@ -1,10 +1,21 @@
 import { useState, useCallback } from 'react';
-import { Download, Palette, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import {
+  Download,
+  GripHorizontal,
+  Palette,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
+import { useDockStore } from '@/stores/useDockStore';
 import {
   animeDarkThemes,
   animeLightThemes,
@@ -69,8 +80,62 @@ export function AppearanceSection() {
 
   const clearPreview = useCallback(() => setPreviewTheme(null), [setPreviewTheme]);
 
+  const dockAutoHide = useDockStore(s => s.autoHide);
+  const setDockAutoHide = useDockStore(s => s.setAutoHide);
+  const dockDraggable = useDockStore(s => s.draggable);
+  const setDockDraggable = useDockStore(s => s.setDraggable);
+  const dockShowLabels = useDockStore(s => s.showLabels);
+  const setDockShowLabels = useDockStore(s => s.setShowLabels);
+  const resetDockPosition = useDockStore(s => s.resetPosition);
+
   return (
     <div className="space-y-4">
+      {/* Dock settings */}
+      <SettingsCard
+        icon={GripHorizontal}
+        title="Dock nawigacyjny"
+        subtitle="Pozycja i zachowanie paska nawigacji"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground">Automatyczne ukrywanie</p>
+            <p className="text-2xs text-muted-foreground/70">
+              Dock zwija się do ikony i rozwija po najechaniu
+            </p>
+          </div>
+          <Switch checked={dockAutoHide} onCheckedChange={setDockAutoHide} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground">Pokaż etykiety</p>
+            <p className="text-2xs text-muted-foreground/70">
+              Wyświetlaj nazwy pod ikonami nawigacji
+            </p>
+          </div>
+          <Switch checked={dockShowLabels} onCheckedChange={setDockShowLabels} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground">Przeciąganie</p>
+            <p className="text-2xs text-muted-foreground/70">
+              Pozwól na zmianę pozycji docka przeciąganiem
+            </p>
+          </div>
+          <Switch checked={dockDraggable} onCheckedChange={setDockDraggable} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground">Pozycja docka</p>
+            <p className="text-2xs text-muted-foreground/70">
+              Przywróć domyślną pozycję na dole ekranu
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={resetDockPosition}>
+            Resetuj pozycję
+          </Button>
+        </div>
+      </SettingsCard>
+
       {/* Custom background */}
       <BackgroundSettings />
 

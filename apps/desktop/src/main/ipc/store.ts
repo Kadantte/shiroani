@@ -45,6 +45,8 @@ const ALLOWED_STORE_KEYS = new Set([
   // Quick access sites and frequent visits
   'quick-access-sites',
   'quick-access-frequent',
+  // Dock position and settings
+  'dock-settings',
 ]);
 
 /**
