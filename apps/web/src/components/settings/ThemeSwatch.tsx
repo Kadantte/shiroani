@@ -24,7 +24,7 @@ export function ThemeSwatch({
       className={cn(
         'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
         'transition-all duration-200',
-        'hover:bg-accent/40 hover:scale-105',
+        'hover:bg-accent/40',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         isActive && 'ring-2 ring-primary/70 bg-primary/10'
       )}

@@ -1,7 +1,9 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
 import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { APP_LOGO_URL } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
 interface AboutSectionProps {
@@ -9,6 +11,8 @@ interface AboutSectionProps {
 }
 
 export function AboutSection({ version }: AboutSectionProps) {
+  const resetOnboarding = useOnboardingStore(s => s.reset);
+
   return (
     <div className="space-y-4">
       {/* App info - hero glass card */}
@@ -47,6 +51,22 @@ export function AboutSection({ version }: AboutSectionProps) {
           <ExternalLink className="w-4 h-4" />
           GitHub
         </button>
+      </SettingsCard>
+
+      {/* Onboarding */}
+      <SettingsCard icon={Sparkles} title="Kreator konfiguracji" subtitle="Ponownie przejdź kreator pierwszego uruchomienia">
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-border-glass gap-1.5"
+          onClick={resetOnboarding}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Uruchom kreator ponownie
+        </Button>
+        <p className="text-2xs text-muted-foreground/60">
+          Po kliknięciu kreator pojawi się przy następnym uruchomieniu aplikacji
+        </p>
       </SettingsCard>
 
       {/* License */}

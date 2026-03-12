@@ -11,11 +11,13 @@ import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DiaryView } from '@/components/diary/DiaryView';
 import { SplashScreen } from '@/components/splash';
+import { OnboardingWizard } from '@/components/onboarding';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useAppStore } from '@/stores/useAppStore';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useDockStore } from '@/stores/useDockStore';
+import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 
 function App() {
@@ -27,7 +29,17 @@ function App() {
   const customBackground = useBackgroundStore(s => s.customBackground);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
+  const onboardingCompleted = useOnboardingStore(s => s.completed);
+  // Track locally so resetting from settings immediately shows onboarding
+  const [onboardingDone, setOnboardingDone] = useState(onboardingCompleted);
+
+  // Sync when store resets (e.g. user clicked "rerun onboarding" in settings)
+  useEffect(() => {
+    if (!onboardingCompleted) setOnboardingDone(false);
+  }, [onboardingCompleted]);
+
   const handleSplashDismissed = useCallback(() => setSplashDone(true), []);
+  const handleOnboardingComplete = useCallback(() => setOnboardingDone(true), []);
 
   const initDock = useDockStore(s => s.initDock);
 
@@ -64,7 +76,12 @@ function App() {
       {/* Splash screen overlay — covers everything during initialization */}
       <SplashScreen ready={ready} error={error} onDismissed={handleSplashDismissed} />
 
-      {splashDone && (
+      {/* Onboarding wizard — shown after splash on first launch */}
+      {splashDone && !onboardingDone && (
+        <OnboardingWizard onComplete={handleOnboardingComplete} />
+      )}
+
+      {splashDone && onboardingDone && (
         <div
           data-testid="app-ready"
           className={cn(

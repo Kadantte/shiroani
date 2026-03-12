@@ -264,6 +264,28 @@
     }
   }
 
+  /* Onboarding wizard — step slide transitions */
+  @keyframes onb-slide-in-right {
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  @keyframes onb-slide-in-left {
+    0% {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
   /* Dock expand animation — scales from the snapped edge with gentle spring */
   @keyframes dock-expand {
     0% {
@@ -551,6 +573,10 @@
 }
 @utility animate-blob-drift-3 {
   animation: var(--animate-blob-drift-3);
+}
+@utility animate-onb-mascot {
+  animation: splash-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    splash-float 3s ease-in-out 0.6s infinite;
 }
 @utility viewport-noise {
   position: relative;
