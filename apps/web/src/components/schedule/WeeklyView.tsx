@@ -20,7 +20,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1680px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1400px]">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
           const isTodayDay = isToday(day);
@@ -29,7 +29,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
             <div
               key={day}
               className={cn(
-                'flex flex-col bg-background min-w-[240px] flex-1',
+                'flex flex-col bg-background min-w-[200px] flex-1',
                 isTodayDay && 'bg-primary/5'
               )}
             >
@@ -58,7 +58,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                         {coverUrl && (
                           <img
                             src={coverUrl}
-                            alt=""
+                            alt={title}
                             className="w-9 h-12 rounded object-cover shrink-0"
                             loading="lazy"
                           />
@@ -82,7 +82,7 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                       {/* Bell icon overlay - top right */}
                       <SubscribeBellButton
                         anime={anime}
-                        className="absolute top-1 right-1 w-6 h-6"
+                        className="absolute top-1 right-1 w-7 h-7 min-w-[44px] min-h-[44px]"
                         iconClassName="w-3 h-3"
                       />
                     </div>

@@ -61,9 +61,9 @@ export function DailyViewSkeleton() {
 export function WeeklyViewSkeleton() {
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1680px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1400px]">
         {DAY_NAMES_SHORT.map((dayName, colIdx) => (
-          <div key={dayName} className="flex flex-col bg-background min-w-[240px] flex-1">
+          <div key={dayName} className="flex flex-col bg-background min-w-[200px] flex-1">
             {/* Day header */}
             <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border/60 bg-card/20 backdrop-blur-sm">
               <Skeleton className="h-3 w-8 mx-auto rounded" />
@@ -119,9 +119,9 @@ export function WeeklyViewSkeleton() {
 export function TimetableViewSkeleton() {
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1820px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1540px]">
         {DAY_NAMES_FULL.map((dayName, colIdx) => (
-          <div key={dayName} className="flex flex-col bg-background min-w-[260px] flex-1">
+          <div key={dayName} className="flex flex-col bg-background min-w-[220px] flex-1">
             {/* Day header */}
             <div className="sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border/60 bg-card/20 backdrop-blur-sm">
               <Skeleton className="h-3 w-16 mx-auto rounded" />

@@ -20,7 +20,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1820px]">
+      <div className="flex gap-px bg-border/50 h-full min-w-[1540px]">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
           const isTodayDay = isToday(day);
@@ -29,7 +29,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
             <div
               key={day}
               className={cn(
-                'flex flex-col bg-background min-w-[260px] flex-1',
+                'flex flex-col bg-background min-w-[220px] flex-1',
                 isTodayDay && 'bg-primary/5'
               )}
             >
@@ -49,6 +49,8 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                   return (
                     <div
                       key={`${anime.id}-${anime.episode}`}
+                      role="article"
+                      aria-label={title}
                       className={cn(
                         'rounded-lg overflow-hidden',
                         'border border-border-glass',
@@ -57,7 +59,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                       )}
                     >
                       {/* Info strip -- episode & time */}
-                      <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/40 backdrop-blur-sm text-2xs">
+                      <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/80 text-2xs">
                         <span className="font-medium text-foreground/80">
                           {formatEpisodeProgress(anime.episode, anime.media.episodes)}
                         </span>
@@ -73,7 +75,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                           <img
                             src={coverUrl}
                             alt={title}
-                            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                            className="w-full h-full object-cover"
                             loading="lazy"
                           />
                         ) : (
@@ -85,7 +87,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                         {/* Bell icon overlay - top right */}
                         <SubscribeBellButton
                           anime={anime}
-                          className="absolute top-1 right-1 w-7 h-7 bg-background/60 backdrop-blur-sm"
+                          className="absolute top-1 right-1 w-7 h-7 bg-background/80"
                         />
 
                         {/* Title overlay at bottom */}

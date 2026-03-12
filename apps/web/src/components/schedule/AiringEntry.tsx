@@ -58,9 +58,9 @@ const AiringEntry = memo(function AiringEntry({ anime }: AiringEntryProps) {
         </div>
         {anime.media.genres.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
-            {anime.media.genres.slice(0, 3).map(genre => (
+            {anime.media.genres.slice(0, 3).map((genre, i, arr) => (
               <span key={genre} className="text-2xs text-muted-foreground/70">
-                {genre}
+                {genre}{i < arr.length - 1 && ' · '}
               </span>
             ))}
           </div>

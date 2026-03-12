@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
 import { toLocalDate } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,13 @@ import { DailyView } from './DailyView';
 import { WeeklyView } from './WeeklyView';
 import { TimetableView } from './TimetableView';
 
-const { selectDay, setViewMode, getEntriesForDay, getWeekDays } = useScheduleStore.getState();
+const { selectDay, setViewMode, getEntriesForDay, getWeekDays, fetchDaily, fetchWeekly } = useScheduleStore.getState();
 
 export function ScheduleView() {
   const selectedDay = useScheduleStore(s => s.selectedDay);
   const viewMode = useScheduleStore(s => s.viewMode);
   const isLoading = useScheduleStore(s => s.isLoading);
+  const error = useScheduleStore(s => s.error);
   const schedule = useScheduleStore(s => s.schedule);
 
   const navigatePrevious = useCallback(() => {
@@ -39,6 +40,15 @@ export function ScheduleView() {
   }, [selectedDay, getEntriesForDay, schedule]);
 
   const weekDays = useMemo(() => getWeekDays(), [getWeekDays, selectedDay]);
+
+  const handleRetry = useCallback(() => {
+    if (viewMode === 'daily') {
+      fetchDaily(selectedDay);
+    } else {
+      const weekStart = weekDays[0] ?? selectedDay;
+      fetchWeekly(weekStart);
+    }
+  }, [viewMode, selectedDay, weekDays, fetchDaily, fetchWeekly]);
 
   // Load notification subscriptions once
   const notifLoaded = useNotificationStore(state => state.loaded);
@@ -63,6 +73,7 @@ export function ScheduleView() {
               variant="ghost"
               size="icon"
               onClick={() => setViewMode('daily')}
+              aria-pressed={viewMode === 'daily'}
               className={cn(
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'daily' && 'bg-primary/10 text-primary hover:bg-primary/15'
@@ -75,6 +86,7 @@ export function ScheduleView() {
               variant="ghost"
               size="icon"
               onClick={() => setViewMode('weekly')}
+              aria-pressed={viewMode === 'weekly'}
               className={cn(
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'weekly' && 'bg-primary/10 text-primary hover:bg-primary/15'
@@ -87,6 +99,7 @@ export function ScheduleView() {
               variant="ghost"
               size="icon"
               onClick={() => setViewMode('timetable')}
+              aria-pressed={viewMode === 'timetable'}
               className={cn(
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'timetable' && 'bg-primary/10 text-primary hover:bg-primary/15'
@@ -100,15 +113,27 @@ export function ScheduleView() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="w-7 h-7" onClick={navigatePrevious}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 min-w-[44px] min-h-[44px]"
+              onClick={navigatePrevious}
+              aria-label={viewMode === 'daily' ? 'Poprzedni dzień' : 'Poprzedni tydzień'}
+            >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[180px] text-center tabular-nums">
+            <span className="text-sm font-medium min-w-[180px] text-center tabular-nums" aria-live="polite">
               {viewMode === 'daily'
                 ? formatDate(selectedDay)
                 : `${formatDate(weekDays[0])} - ${formatDate(weekDays[6])}`}
             </span>
-            <Button variant="ghost" size="icon" className="w-7 h-7" onClick={navigateNext}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 min-w-[44px] min-h-[44px]"
+              onClick={navigateNext}
+              aria-label={viewMode === 'daily' ? 'Następny dzień' : 'Następny tydzień'}
+            >
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -126,25 +151,35 @@ export function ScheduleView() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
-        viewMode === 'daily' ? (
-          <DailyViewSkeleton />
+      <div role="region" aria-label="Harmonogram anime" className="flex-1 flex flex-col overflow-hidden">
+        {isLoading ? (
+          viewMode === 'daily' ? (
+            <DailyViewSkeleton />
+          ) : viewMode === 'weekly' ? (
+            <WeeklyViewSkeleton />
+          ) : (
+            <TimetableViewSkeleton />
+          )
+        ) : error ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <AlertCircle className="w-10 h-10 text-destructive/60" />
+            <p className="text-sm text-center max-w-xs">{error}</p>
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              Spróbuj ponownie
+            </Button>
+          </div>
+        ) : viewMode === 'daily' ? (
+          <DailyView entries={todayEntries} />
         ) : viewMode === 'weekly' ? (
-          <WeeklyViewSkeleton />
+          <WeeklyView weekDays={weekDays} getEntriesForDay={getEntriesForDay} schedule={schedule} />
         ) : (
-          <TimetableViewSkeleton />
-        )
-      ) : viewMode === 'daily' ? (
-        <DailyView entries={todayEntries} />
-      ) : viewMode === 'weekly' ? (
-        <WeeklyView weekDays={weekDays} getEntriesForDay={getEntriesForDay} schedule={schedule} />
-      ) : (
-        <TimetableView
-          weekDays={weekDays}
-          getEntriesForDay={getEntriesForDay}
-          schedule={schedule}
-        />
-      )}
+          <TimetableView
+            weekDays={weekDays}
+            getEntriesForDay={getEntriesForDay}
+            schedule={schedule}
+          />
+        )}
+      </div>
     </div>
   );
 }
