@@ -19,23 +19,18 @@ import { useNextAiringMap } from '@/hooks/useNextAiringMap';
 import { pluralize } from '@shiroani/shared';
 import type { AnimeEntry } from '@shiroani/shared';
 
+const { setFilter, setSearchQuery, setViewMode, openDetail, closeDetail, removeFromLibrary } =
+  useLibraryStore.getState();
+
 export function LibraryView() {
-  const {
-    entries,
-    activeFilter,
-    searchQuery,
-    sortBy,
-    sortOrder,
-    viewMode,
-    isDetailOpen,
-    selectedEntry,
-    setFilter,
-    setSearchQuery,
-    setViewMode,
-    openDetail,
-    closeDetail,
-    removeFromLibrary,
-  } = useLibraryStore();
+  const entries = useLibraryStore(s => s.entries);
+  const activeFilter = useLibraryStore(s => s.activeFilter);
+  const searchQuery = useLibraryStore(s => s.searchQuery);
+  const sortBy = useLibraryStore(s => s.sortBy);
+  const sortOrder = useLibraryStore(s => s.sortOrder);
+  const viewMode = useLibraryStore(s => s.viewMode);
+  const isDetailOpen = useLibraryStore(s => s.isDetailOpen);
+  const selectedEntry = useLibraryStore(s => s.selectedEntry);
 
   const [showStats, setShowStats] = useState(false);
   const [entryToRemove, setEntryToRemove] = useState<AnimeEntry | null>(null);
@@ -72,7 +67,7 @@ export function LibraryView() {
       {/* Header */}
       <ViewHeader
         icon={BookOpen}
-        title="Moja Biblioteka"
+        title="Moja biblioteka"
         subtitle={subtitle}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

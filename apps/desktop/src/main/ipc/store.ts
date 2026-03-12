@@ -83,6 +83,10 @@ export function registerStoreHandlers(): void {
       logger.warn(`Blocked store:set for unauthorized key: ${key}`);
       return;
     }
+    const serialized = JSON.stringify(value);
+    if (serialized.length > 1_000_000) {
+      throw new Error('Value too large');
+    }
     store.set(key, value);
   });
 

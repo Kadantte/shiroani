@@ -28,6 +28,8 @@ import { useAnimeDetailForm } from '@/hooks/useAnimeDetailForm';
 import { useNavigateToBrowser } from '@/hooks/useNavigateToBrowser';
 import { SliderInputField } from './SliderInputField';
 
+const { updateEntry, removeFromLibrary } = useLibraryStore.getState();
+
 interface AnimeDetailModalProps {
   entry: AnimeEntry | null;
   open: boolean;
@@ -35,7 +37,6 @@ interface AnimeDetailModalProps {
 }
 
 export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModalProps) {
-  const { updateEntry, removeFromLibrary } = useLibraryStore();
   const navigateToBrowser = useNavigateToBrowser();
 
   const {

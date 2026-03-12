@@ -19,7 +19,7 @@ export function useAnimeDetailForm(entry: AnimeEntry | null) {
       setResumeUrl(entry.resumeUrl ?? '');
       setAnilistId(entry.anilistId ? String(entry.anilistId) : '');
     }
-  }, [entry]);
+  }, [entry?.id]);
 
   // Auto-set current episode to total when status is completed
   useEffect(() => {

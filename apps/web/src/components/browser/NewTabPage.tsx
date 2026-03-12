@@ -84,7 +84,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
         {/* Quick Access Section */}
         <div className="mb-8">
           <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
-            Szybki dostep
+            Szybki dostęp
           </h2>
           <div className="grid grid-cols-5 gap-3">
             {sites.map(site => (
@@ -133,7 +133,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
         {frequentSites.length > 0 && (
           <div>
             <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
-              Czesto odwiedzane
+              Często odwiedzane
             </h2>
             <div className="grid grid-cols-4 gap-2">
               {frequentSites.map(site => (
@@ -166,9 +166,9 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Dodaj strone</DialogTitle>
+            <DialogTitle>Dodaj stronę</DialogTitle>
             <DialogDescription>
-              Dodaj strone do szybkiego dostepu na nowej karcie.
+              Dodaj stronę do szybkiego dostępu na nowej karcie.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
@@ -243,6 +243,7 @@ function SiteCard({
           e.stopPropagation();
           onRemove();
         }}
+        aria-label="Usuń stronę"
         className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 border border-border/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
       >
         <X className="w-3 h-3" />

@@ -1,6 +1,19 @@
-import { memo, useRef } from 'react';
+import React, { memo, useRef } from 'react';
 import type { WebviewElement } from '@/components/browser/webviewRefs';
 import { useWebviewEvents } from '@/hooks/useWebviewEvents';
+
+const ACTIVE_STYLE: React.CSSProperties = {
+  display: 'inline-flex',
+  width: '100%',
+  height: '100%',
+  border: 'none',
+};
+const HIDDEN_STYLE: React.CSSProperties = {
+  display: 'none',
+  width: '100%',
+  height: '100%',
+  border: 'none',
+};
 
 interface BrowserWebviewProps {
   tabId: string;
@@ -23,12 +36,7 @@ const BrowserWebviewInner = function BrowserWebview({
       src={initialUrl}
       partition="persist:browser"
       allowpopups=""
-      style={{
-        display: isActive ? 'inline-flex' : 'none',
-        width: '100%',
-        height: '100%',
-        border: 'none',
-      }}
+      style={isActive ? ACTIVE_STYLE : HIDDEN_STYLE}
     />
   );
 };

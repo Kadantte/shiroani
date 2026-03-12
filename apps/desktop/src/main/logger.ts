@@ -56,7 +56,6 @@ export function getLogsDir(): string {
 
 /**
  * Get the current log file path (date-based).
- * Exported for backward compatibility with index.ts.
  */
 export function getLogPath(): string {
   const date = new Date().toISOString().split('T')[0];

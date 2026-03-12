@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Pin, Trash2 } from 'lucide-react';
 import type { DiaryEntry } from '@shiroani/shared';
@@ -5,11 +6,16 @@ import { DIARY_GRADIENTS, MOOD_ICONS, formatDate } from '@/lib/diary-constants';
 
 const DEFAULT_GRADIENT = 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)';
 
+interface TipTapNode {
+  text?: string;
+  content?: TipTapNode[];
+}
+
 function extractPreview(contentJson: string): string {
   try {
     const doc = JSON.parse(contentJson);
     const texts: string[] = [];
-    const walk = (node: any) => {
+    const walk = (node: TipTapNode) => {
       if (node.text) texts.push(node.text);
       if (node.content) node.content.forEach(walk);
     };
@@ -27,7 +33,12 @@ interface DiaryEntryCardProps {
   onTogglePin: (entry: DiaryEntry) => void;
 }
 
-export function DiaryEntryCard({ entry, onSelect, onRemove, onTogglePin }: DiaryEntryCardProps) {
+const DiaryEntryCard = memo(function DiaryEntryCard({
+  entry,
+  onSelect,
+  onRemove,
+  onTogglePin,
+}: DiaryEntryCardProps) {
   const gradient = entry.coverGradient
     ? (DIARY_GRADIENTS[entry.coverGradient]?.css ?? DEFAULT_GRADIENT)
     : DEFAULT_GRADIENT;
@@ -126,4 +137,6 @@ export function DiaryEntryCard({ entry, onSelect, onRemove, onTogglePin }: Diary
       </div>
     </div>
   );
-}
+});
+
+export { DiaryEntryCard };

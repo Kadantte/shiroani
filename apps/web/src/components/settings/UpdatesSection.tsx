@@ -125,8 +125,8 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
         {isMac ? (
           <>
             <p className="text-xs text-muted-foreground mb-3">
-              Automatyczne aktualizacje nie są na razie dostepne na macOS ze względu na brak podpisu
-              cyfrowego. Pobierz najnowsza wersję ręcznie z GitHub Releases lub Discorda.
+              Automatyczne aktualizacje nie są na razie dostępne na macOS ze względu na brak podpisu
+              cyfrowego. Pobierz najnowszą wersję ręcznie z GitHub Releases lub Discorda.
             </p>
             <Button size="sm" variant="outline" onClick={openReleasesPage}>
               <ExternalLink className="w-4 h-4" />

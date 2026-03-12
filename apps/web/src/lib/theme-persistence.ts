@@ -1,7 +1,7 @@
 /**
  * localStorage key for persisted theme.
  */
-export const THEME_STORAGE_KEY = 'shiroani-theme';
+const THEME_STORAGE_KEY = 'shiroani-theme';
 
 /** Matches valid CSS class names: starts with a letter, only alphanumeric/hyphens/underscores, max 100 chars. */
 const VALID_THEME_ID = /^[a-zA-Z][a-zA-Z0-9_-]{0,100}$/;

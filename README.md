@@ -49,21 +49,26 @@ ShiroAni is a desktop application for browsing and tracking anime. It combines a
 
 ### Screenshots
 
-<!-- TODO: Add screenshots -->
+<!-- Screenshots coming soon -->
 
 ### Features
 
-| Feature          | Description                                                                     |
-| ---------------- | ------------------------------------------------------------------------------- |
-| Built-in Browser | Watch anime with built-in ad-blocking powered by Ghostery                       |
-| Anime Library    | Track anime with statuses: watching, completed, plan to watch, on hold, dropped |
-| Airing Schedule  | Weekly, daily, and timetable views powered by AniList                           |
-| Diary            | Personal journal with a rich text editor                                        |
-| Desktop Mascot   | Chibi companion that sits on your desktop with multiple poses and animations    |
-| Themes           | 15+ anime-inspired themes to customize the look                                 |
-| Notifications    | Get notified when new episodes air                                              |
-| Import / Export  | Back up and restore your library and diary data                                 |
-| Auto Updates     | Automatic updates on Windows via GitHub Releases                                |
+| Feature               | Description                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| Built-in Browser      | Watch anime with built-in ad-blocking powered by Ghostery                                              |
+| Anime Library         | Track anime with statuses: watching, completed, plan to watch, on hold, dropped                        |
+| Airing Schedule       | Weekly, daily, and timetable views powered by AniList                                                  |
+| Diary                 | Personal journal with a rich text editor                                                               |
+| Desktop Mascot        | Chibi companion that sits on your desktop with multiple poses and animations (Windows, macOS fallback) |
+| Themes                | 39 built-in themes (including 15 anime-inspired) with visual theme editor                              |
+| Custom Themes         | Visual theme editor for creating custom themes                                                         |
+| Custom Backgrounds    | Personalize app background with custom wallpapers                                                      |
+| Discord Rich Presence | Shows current anime activity on Discord profile with customizable templates                            |
+| Quick Access New Tab  | Predefined anime sites on new tab page                                                                 |
+| Floating Dock         | Modern floating dock for app navigation                                                                |
+| Notifications         | Get notified when new episodes air                                                                     |
+| Import / Export       | Back up and restore your library and diary data                                                        |
+| Auto Updates          | Automatic updates on Windows via GitHub Releases                                                       |
 
 ### Installation
 
@@ -91,27 +96,27 @@ Linux support is planned for future releases.
 
 ### Tech Stack
 
-| Layer         | Technology                          |
-| ------------- | ----------------------------------- |
-| Desktop       | Electron 40                         |
-| Backend       | NestJS 10 (embedded)                |
-| Frontend      | React 18, Vite 7, Tailwind CSS 4    |
-| Database      | better-sqlite3                      |
-| Rich Text     | TipTap                              |
-| UI Components | Radix UI, Lucide Icons              |
-| Real-time     | Socket.IO                           |
-| State         | Zustand                             |
-| Native        | C++ overlay module (node-addon-api) |
-| Code Quality  | ESLint, Prettier, Husky             |
-| Testing       | Jest, Vitest, Testing Library       |
-| CI/CD         | GitHub Actions                      |
+| Layer         | Technology                                        |
+| ------------- | ------------------------------------------------- |
+| Desktop       | Electron 40                                       |
+| Backend       | NestJS 10 (embedded)                              |
+| Frontend      | React 18, Vite 7, Tailwind CSS 4                  |
+| Database      | better-sqlite3                                    |
+| Rich Text     | TipTap                                            |
+| UI Components | Radix UI, Lucide Icons                            |
+| Real-time     | Socket.IO                                         |
+| State         | Zustand                                           |
+| Native        | C++ overlay module (node-addon-api, Windows only) |
+| Code Quality  | ESLint, Prettier, Husky                           |
+| Testing       | Jest, Vitest                                      |
+| CI/CD         | GitHub Actions                                    |
 
 ### Building from Source
 
 #### Requirements
 
 - [Node.js](https://nodejs.org/) >= 22.0.0
-- [pnpm](https://pnpm.io/) >= 9.0.0
+- [pnpm](https://pnpm.io/) >= 10.0.0
 - C++ compiler for native modules (Xcode CLI tools on macOS, Visual Studio Build Tools on Windows)
 
 #### Setup
@@ -126,8 +131,11 @@ pnpm dev
 #### Commands
 
 ```bash
+pnpm dev           # Run in development mode
+pnpm dev:debug     # Run in debug mode with verbose logging
 pnpm lint          # Run linter
 pnpm format        # Format code
+pnpm format:check  # Check code formatting
 pnpm typecheck     # Type check
 pnpm test          # Run tests
 pnpm build         # Build the app
@@ -170,21 +178,26 @@ ShiroAni to aplikacja desktopowa do przeglądania i śledzenia anime. Łączy w 
 
 ### Zrzuty ekranu
 
-<!-- TODO: Dodaj zrzuty ekranu -->
+<!-- Zrzuty ekranu wkrotce -->
 
 ### Funkcje
 
-| Funkcja                   | Opis                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| Wbudowana przeglądarka    | Oglądaj anime z wbudowanym blokowaniem reklam (Ghostery)                        |
-| Biblioteka anime          | Śledź anime ze statusami: oglądane, ukończone, planowane, wstrzymane, porzucone |
-| Harmonogram emisji        | Widok tygodniowy, dzienny i tabelaryczny z danymi z AniList                     |
-| Pamiętnik                 | Osobisty dziennik z edytorem tekstu                                             |
-| Maskotka na pulpicie      | Chibi towarzyszka na pulpicie z różnymi pozami i animacjami                     |
-| Motywy                    | Ponad 15 motywów inspirowanych anime do personalizacji wyglądu                  |
-| Powiadomienia             | Otrzymuj powiadomienia o nowych odcinkach                                       |
-| Import / Eksport          | Twórz kopie zapasowe i przywracaj dane biblioteki oraz pamiętnika               |
-| Automatyczne aktualizacje | Automatyczne aktualizacje na Windowsie przez GitHub Releases                    |
+| Funkcja                   | Opis                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| Wbudowana przeglądarka    | Oglądaj anime z wbudowanym blokowaniem reklam (Ghostery)                                 |
+| Biblioteka anime          | Śledź anime ze statusami: oglądane, ukończone, planowane, wstrzymane, porzucone          |
+| Harmonogram emisji        | Widok tygodniowy, dzienny i tabelaryczny z danymi z AniList                              |
+| Pamiętnik                 | Osobisty dziennik z edytorem tekstu                                                      |
+| Maskotka na pulpicie      | Chibi towarzyszka na pulpicie z różnymi pozami i animacjami (Windows, fallback na macOS) |
+| Motywy                    | 39 wbudowanych motywów (w tym 15 anime) z edytorem motywów                               |
+| Własne motywy             | Wizualny edytor motywów do tworzenia własnych motywów                                    |
+| Własne tła                | Personalizacja tła aplikacji własnymi tapetami                                           |
+| Discord Rich Presence     | Wyświetla aktualną aktywność anime na profilu Discord z konfigurowalnymi szablonami      |
+| Szybki dostęp             | Predefiniowane strony anime na stronie nowej karty                                       |
+| Pływający dock            | Nowoczesny pływający dock do nawigacji w aplikacji                                       |
+| Powiadomienia             | Otrzymuj powiadomienia o nowych odcinkach                                                |
+| Import / Eksport          | Twórz kopie zapasowe i przywracaj dane biblioteki oraz pamiętnika                        |
+| Automatyczne aktualizacje | Automatyczne aktualizacje na Windowsie przez GitHub Releases                             |
 
 ### Instalacja
 
@@ -212,27 +225,27 @@ Wsparcie dla Linuxa jest planowane w przyszłych wydaniach.
 
 ### Stos technologiczny
 
-| Warstwa                           | Technologia                      |
-| --------------------------------- | -------------------------------- |
-| Aplikacja desktopowa              | Electron 40                      |
-| Backend                           | NestJS 10 (wbudowany)            |
-| Frontend                          | React 18, Vite 7, Tailwind CSS 4 |
-| Baza danych                       | better-sqlite3                   |
-| Edytor tekstu                     | TipTap                           |
-| Komponenty UI                     | Radix UI, Lucide Icons           |
-| Komunikacja w czasie rzeczywistym | Socket.IO                        |
-| Zarządzanie stanem                | Zustand                          |
-| Moduł natywny                     | C++ (node-addon-api)             |
-| Jakość kodu                       | ESLint, Prettier, Husky          |
-| Testy                             | Jest, Vitest, Testing Library    |
-| CI/CD                             | GitHub Actions                   |
+| Warstwa                           | Technologia                         |
+| --------------------------------- | ----------------------------------- |
+| Aplikacja desktopowa              | Electron 40                         |
+| Backend                           | NestJS 10 (wbudowany)               |
+| Frontend                          | React 18, Vite 7, Tailwind CSS 4    |
+| Baza danych                       | better-sqlite3                      |
+| Edytor tekstu                     | TipTap                              |
+| Komponenty UI                     | Radix UI, Lucide Icons              |
+| Komunikacja w czasie rzeczywistym | Socket.IO                           |
+| Zarządzanie stanem                | Zustand                             |
+| Moduł natywny                     | C++ (node-addon-api, tylko Windows) |
+| Jakość kodu                       | ESLint, Prettier, Husky             |
+| Testy                             | Jest, Vitest                        |
+| CI/CD                             | GitHub Actions                      |
 
 ### Budowanie ze źródeł
 
 #### Wymagania
 
 - [Node.js](https://nodejs.org/) >= 22.0.0
-- [pnpm](https://pnpm.io/) >= 9.0.0
+- [pnpm](https://pnpm.io/) >= 10.0.0
 - Kompilator C++ do modułów natywnych (Xcode CLI tools na macOS, Visual Studio Build Tools na Windows)
 
 #### Konfiguracja
@@ -247,8 +260,11 @@ pnpm dev
 #### Komendy
 
 ```bash
+pnpm dev           # Uruchom w trybie deweloperskim
+pnpm dev:debug     # Uruchom w trybie debug z rozszerzonym logowaniem
 pnpm lint          # Uruchom linter
 pnpm format        # Formatuj kod
+pnpm format:check  # Sprawdź formatowanie kodu
 pnpm typecheck     # Sprawdź typy
 pnpm test          # Uruchom testy
 pnpm build         # Zbuduj aplikację

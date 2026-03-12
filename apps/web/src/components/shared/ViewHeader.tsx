@@ -134,5 +134,3 @@ export function ViewHeader<T extends string = string>({
     </div>
   );
 }
-
-export type { FilterOption, ViewHeaderProps };

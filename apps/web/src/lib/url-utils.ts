@@ -7,9 +7,13 @@
 export function normalizeUrl(input: string): string {
   const trimmed = input.trim();
 
-  // Already has a protocol
+  // Already has a protocol — only allow http(s), treat others as search
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) {
-    return trimmed;
+    const protocol = trimmed.split('://')[0].toLowerCase();
+    if (protocol === 'http' || protocol === 'https') {
+      return trimmed;
+    }
+    return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
   }
 
   // Looks like a domain (contains a dot and no spaces)

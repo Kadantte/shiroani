@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Play, Pencil, Trash2, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,13 @@ interface AnimeCardProps {
   onRemove?: (entry: AnimeEntry) => void;
 }
 
-export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }: AnimeCardProps) {
+const AnimeCard = memo(function AnimeCard({
+  entry,
+  nextAiring,
+  onSelect,
+  onContinue,
+  onRemove,
+}: AnimeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const progressText = entry.episodes
@@ -161,4 +167,6 @@ export function AnimeCard({ entry, nextAiring, onSelect, onContinue, onRemove }:
       </div>
     </div>
   );
-}
+});
+
+export { AnimeCard };

@@ -64,8 +64,6 @@ export const THEME_VARIABLE_NAMES = [
   'shadow-card-focused',
 ] as const;
 
-export type ThemeVariableName = (typeof THEME_VARIABLE_NAMES)[number];
-
 /** Prefix for custom theme style element IDs */
 const STYLE_ID_PREFIX = 'shiroani-custom-theme-';
 

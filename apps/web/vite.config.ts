@@ -41,7 +41,6 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (/node_modules\/(react|react-dom)\//.test(id)) return 'vendor';
-          if (id.includes('node_modules/framer-motion/')) return 'framer-motion';
         },
       },
     },

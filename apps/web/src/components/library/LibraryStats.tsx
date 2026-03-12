@@ -2,33 +2,8 @@ import { useMemo } from 'react';
 import { Eye, Star, Tv, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLibraryStore } from '@/stores/useLibraryStore';
-import { STATUS_CONFIG } from '@/lib/constants';
+import { STATUS_CONFIG, STATUS_ORDER } from '@/lib/constants';
 import type { AnimeStatus } from '@shiroani/shared';
-
-const STATUS_ORDER: AnimeStatus[] = [
-  'watching',
-  'completed',
-  'plan_to_watch',
-  'on_hold',
-  'dropped',
-];
-
-/** Color mapping for inline styles (uses CSS custom-property values). */
-const STATUS_COLORS: Record<AnimeStatus, string> = {
-  watching: 'var(--status-info)',
-  completed: 'var(--status-success)',
-  plan_to_watch: 'var(--status-warning)',
-  on_hold: 'var(--status-pending)',
-  dropped: 'var(--status-error)',
-};
-
-const STATUS_BG_COLORS: Record<AnimeStatus, string> = {
-  watching: 'var(--status-info-bg)',
-  completed: 'var(--status-success-bg)',
-  plan_to_watch: 'var(--status-warning-bg)',
-  on_hold: 'var(--status-pending-bg)',
-  dropped: 'var(--status-error-bg)',
-};
 
 export function LibraryStats() {
   const entries = useLibraryStore(s => s.entries);
@@ -111,7 +86,7 @@ export function LibraryStats() {
                   className="h-full transition-all duration-500 ease-out first:rounded-l-full last:rounded-r-full"
                   style={{
                     width: `${percent}%`,
-                    backgroundColor: STATUS_COLORS[status],
+                    backgroundColor: STATUS_CONFIG[status].cssColor,
                     minWidth: count > 0 ? '6px' : 0,
                   }}
                   title={`${STATUS_CONFIG[status].label}: ${count} (${Math.round(percent)}%)`}
@@ -130,16 +105,19 @@ export function LibraryStats() {
                 <div
                   key={status}
                   className="flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-colors"
-                  style={{ backgroundColor: STATUS_BG_COLORS[status] }}
+                  style={{ backgroundColor: STATUS_CONFIG[status].cssBgColor }}
                 >
                   <div
                     className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: STATUS_COLORS[status] }}
+                    style={{ backgroundColor: STATUS_CONFIG[status].cssColor }}
                   />
                   <span className="text-2xs text-foreground/80 whitespace-nowrap">
                     {STATUS_CONFIG[status].label}
                   </span>
-                  <span className="text-2xs font-semibold" style={{ color: STATUS_COLORS[status] }}>
+                  <span
+                    className="text-2xs font-semibold"
+                    style={{ color: STATUS_CONFIG[status].cssColor }}
+                  >
                     {count}
                   </span>
                   <span className="text-2xs text-muted-foreground/50">{percent}%</span>

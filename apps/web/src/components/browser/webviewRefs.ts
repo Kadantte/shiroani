@@ -37,7 +37,3 @@ export function unregisterWebview(tabId: string): void {
 export function getWebview(tabId: string): WebviewElement | undefined {
   return webviewRefs.get(tabId);
 }
-
-export function getAllWebviewIds(): string[] {
-  return Array.from(webviewRefs.keys());
-}

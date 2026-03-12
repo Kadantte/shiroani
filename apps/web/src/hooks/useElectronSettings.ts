@@ -31,12 +31,17 @@ export function useElectronSettings<T extends object>(
   saveRef.current = options.save;
 
   useEffect(() => {
+    let mounted = true;
     loadRef.current().then(result => {
+      if (!mounted) return;
       if (result !== undefined) {
         setData(result);
       }
       setLoaded(true);
     });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const update = useCallback((partial: Partial<T>) => {

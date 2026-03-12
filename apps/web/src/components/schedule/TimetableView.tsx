@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_FULL } from '@/lib/constants';
@@ -6,6 +5,7 @@ import { formatTime, getAnimeTitle, isToday } from './schedule-utils';
 import { formatEpisodeProgress, formatScore } from '@/lib/anime-utils';
 import { DayColumnHeader } from './DayColumnHeader';
 import { SubscribeBellButton } from './SubscribeBellButton';
+import { useWeekData } from '@/hooks/useWeekData';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface TimetableViewProps {
@@ -16,14 +16,7 @@ export interface TimetableViewProps {
 }
 
 export function TimetableView({ weekDays, getEntriesForDay, schedule }: TimetableViewProps) {
-  const weekData = useMemo(() => {
-    const map = new Map<string, AiringAnime[]>();
-    for (const day of weekDays) {
-      const entries = [...getEntriesForDay(day)].sort((a, b) => a.airingAt - b.airingAt);
-      map.set(day, entries);
-    }
-    return map;
-  }, [weekDays, getEntriesForDay, schedule]);
+  const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">

@@ -6,7 +6,6 @@ import { ScheduleService } from '../modules/schedule/schedule.service';
 import { LibraryService } from '../modules/library/library.service';
 import { store } from './store';
 import https from 'https';
-import http from 'http';
 
 const logger = createLogger('NotificationService');
 
@@ -104,13 +103,26 @@ async function getScheduleData(): Promise<AiringAnime[]> {
   }
 }
 
-/** Download an image from a URL and return a nativeImage */
+/** Download an image from a URL and return a nativeImage. Only allows https: URLs. */
 function downloadImage(url: string): Promise<Electron.NativeImage | null> {
   return new Promise(resolve => {
-    const timeout = setTimeout(() => resolve(null), 5000);
-    const client = url.startsWith('https') ? https : http;
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return resolve(null);
+    }
 
-    client
+    if (parsed.protocol !== 'https:') {
+      return resolve(null);
+    }
+
+    const timeout = setTimeout(() => {
+      req.destroy();
+      resolve(null);
+    }, 5000);
+
+    const req = https
       .get(url, res => {
         const chunks: Buffer[] = [];
         res.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -346,15 +358,61 @@ export function updateNotificationSettings(
   updates: Partial<NotificationSettings>
 ): NotificationSettings {
   const current = getSettings();
+  const timeFormatRegex = /^\d{2}:\d{2}$/;
+
+  // Validate and sanitize inputs before applying
+  const sanitized: Partial<NotificationSettings> = {};
+
+  if (updates.enabled !== undefined) {
+    if (typeof updates.enabled === 'boolean') sanitized.enabled = updates.enabled;
+  }
+  if (updates.leadTimeMinutes !== undefined) {
+    if (
+      typeof updates.leadTimeMinutes === 'number' &&
+      Number.isFinite(updates.leadTimeMinutes) &&
+      updates.leadTimeMinutes >= 0 &&
+      updates.leadTimeMinutes <= 1440
+    ) {
+      sanitized.leadTimeMinutes = updates.leadTimeMinutes;
+    }
+  }
+  if (updates.useSystemSound !== undefined) {
+    if (typeof updates.useSystemSound === 'boolean')
+      sanitized.useSystemSound = updates.useSystemSound;
+  }
+  if (updates.subscriptions !== undefined) {
+    sanitized.subscriptions = updates.subscriptions;
+  }
+
+  // Validate quiet hours
+  let quietHoursUpdate: Partial<NotificationSettings['quietHours']> | undefined;
+  if (updates.quietHours) {
+    quietHoursUpdate = {};
+    if (typeof updates.quietHours.enabled === 'boolean') {
+      quietHoursUpdate.enabled = updates.quietHours.enabled;
+    }
+    if (
+      typeof updates.quietHours.start === 'string' &&
+      timeFormatRegex.test(updates.quietHours.start)
+    ) {
+      quietHoursUpdate.start = updates.quietHours.start;
+    }
+    if (
+      typeof updates.quietHours.end === 'string' &&
+      timeFormatRegex.test(updates.quietHours.end)
+    ) {
+      quietHoursUpdate.end = updates.quietHours.end;
+    }
+  }
+
   const next: NotificationSettings = {
     ...current,
-    ...updates,
+    ...sanitized,
     quietHours: {
       ...current.quietHours,
-      ...(updates.quietHours ?? {}),
+      ...(quietHoursUpdate ?? {}),
     },
-    // Don't let partial updates wipe subscriptions
-    subscriptions: updates.subscriptions ?? current.subscriptions,
+    subscriptions: sanitized.subscriptions ?? current.subscriptions,
   };
   saveSettings(next);
 

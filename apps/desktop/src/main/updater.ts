@@ -15,6 +15,8 @@ const logger = createLogger('AutoUpdater');
 
 let updaterEnabled = false;
 let currentChannel: UpdateChannel = DEFAULT_UPDATE_CHANNEL;
+let updaterInitialized = false;
+let mainWindowRef: BrowserWindow | null = null;
 
 // Disable auto download — user controls when to download
 autoUpdater.autoDownload = false;
@@ -28,6 +30,13 @@ function parseReleaseNotes(releaseNotes: ElectronUpdateInfo['releaseNotes']): st
     .map(entry => entry.note)
     .filter(Boolean)
     .join('\n\n');
+}
+
+/** Safely send IPC to the main window (guards against destroyed windows) */
+function sendToMainWindow(channel: string, ...args: unknown[]): void {
+  if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+    mainWindowRef.webContents.send(channel, ...args);
+  }
 }
 
 function getPersistedChannel(): UpdateChannel {
@@ -56,6 +65,9 @@ export async function setUpdateChannel(channel: UpdateChannel): Promise<UpdateCh
 }
 
 export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean): void {
+  // Always update the window reference so existing listeners target the new window
+  mainWindowRef = mainWindow;
+
   if (isDev) {
     logger.info('Skipping auto-updater in development mode');
     updaterEnabled = false;
@@ -73,10 +85,14 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
   updaterEnabled = true;
   applyChannel(getPersistedChannel());
 
-  // Wire autoUpdater events → renderer via IPC
+  // Only register listeners and timers once; subsequent calls just update mainWindowRef
+  if (updaterInitialized) return;
+  updaterInitialized = true;
+
+  // Wire autoUpdater events → renderer via IPC (closures read mainWindowRef)
   autoUpdater.on('checking-for-update', () => {
     logger.info('Checking for update...');
-    mainWindow.webContents.send('updater:checking-for-update');
+    sendToMainWindow('updater:checking-for-update');
   });
 
   autoUpdater.on('update-available', (info: ElectronUpdateInfo) => {
@@ -87,7 +103,7 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
     } catch {
       logger.warn(`Could not compare versions: ${info.version} vs ${app.getVersion()}`);
     }
-    mainWindow.webContents.send('updater:update-available', {
+    sendToMainWindow('updater:update-available', {
       version: info.version,
       releaseNotes: parseReleaseNotes(info.releaseNotes),
       releaseDate: info.releaseDate,
@@ -98,7 +114,7 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
 
   autoUpdater.on('update-not-available', (info: ElectronUpdateInfo) => {
     logger.info('No update available. Current version is up to date:', info.version);
-    mainWindow.webContents.send('updater:update-not-available', {
+    sendToMainWindow('updater:update-not-available', {
       version: info.version,
       releaseNotes: parseReleaseNotes(info.releaseNotes),
       releaseDate: info.releaseDate,
@@ -109,7 +125,7 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
     logger.debug(
       `Download progress: ${progress.percent.toFixed(1)}% (${progress.bytesPerSecond} B/s)`
     );
-    mainWindow.webContents.send('updater:download-progress', {
+    sendToMainWindow('updater:download-progress', {
       bytesPerSecond: progress.bytesPerSecond,
       percent: progress.percent,
       transferred: progress.transferred,
@@ -119,7 +135,7 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
 
   autoUpdater.on('update-downloaded', (info: ElectronUpdateInfo) => {
     logger.info('Update downloaded:', info.version);
-    mainWindow.webContents.send('updater:update-downloaded', {
+    sendToMainWindow('updater:update-downloaded', {
       version: info.version,
       releaseNotes: parseReleaseNotes(info.releaseNotes),
       releaseDate: info.releaseDate,
@@ -138,10 +154,10 @@ export function initializeAutoUpdater(mainWindow: BrowserWindow, isDev: boolean)
       logger.warn(
         'Release artifacts not yet available (.yml 404) — build may still be in progress'
       );
-      mainWindow.webContents.send('updater:error', UPDATE_ERROR_RELEASE_PENDING);
+      sendToMainWindow('updater:error', UPDATE_ERROR_RELEASE_PENDING);
     } else {
       logger.error('Auto-updater error:', error.message);
-      mainWindow.webContents.send('updater:error', error.message);
+      sendToMainWindow('updater:error', error.message);
     }
   });
 

@@ -11,13 +11,14 @@ import { useScheduleStore } from '@/stores/useScheduleStore';
 export function useNextAiringMap(): Map<number, { episode: number; airingAt: number }> {
   const schedule = useScheduleStore(s => s.schedule);
   const fetchWeekly = useScheduleStore(s => s.fetchWeekly);
+  const isLoading = useScheduleStore(s => s.isLoading);
 
   // Ensure schedule data is loaded for the current week
   useEffect(() => {
-    if (Object.keys(schedule).length === 0) {
+    if (Object.keys(schedule).length === 0 && !isLoading) {
       fetchWeekly(toLocalDate(getWeekStart()));
     }
-  }, [schedule, fetchWeekly]);
+  }, [schedule, fetchWeekly, isLoading]);
 
   // Build a map of mediaId -> nearest future airing info
   const nextAiringMap = useMemo(() => {

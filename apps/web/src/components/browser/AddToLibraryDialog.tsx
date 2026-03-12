@@ -50,6 +50,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
   // Reset form and auto-fetch cover when dialog opens
   useEffect(() => {
+    let cancelled = false;
     if (open) {
       setEditableTitle(title || '');
       setStatus('plan_to_watch');
@@ -67,6 +68,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           webview
             .executeJavaScript(SCRAPE_METADATA_SCRIPT)
             .then(result => {
+              if (cancelled) return;
               const meta = result as {
                 coverImage?: string;
                 title?: string;
@@ -82,11 +84,14 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               // Non-critical — user can fill in manually
             })
             .finally(() => {
-              transition({ step: 'ready' });
+              if (!cancelled) transition({ step: 'ready' });
             });
         }
       }
     }
+    return () => {
+      cancelled = true;
+    };
   }, [open, title, transition]);
 
   // Auto-set current episode to total when status is completed

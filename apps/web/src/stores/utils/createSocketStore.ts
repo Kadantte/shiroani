@@ -7,7 +7,7 @@ const logger = createLogger('SocketStore');
 /**
  * Common state for socket-connected stores
  */
-export interface SocketStoreState {
+interface SocketStoreState {
   /** Loading state */
   isLoading: boolean;
   /** Error message */
@@ -19,7 +19,7 @@ export interface SocketStoreState {
 /**
  * Common actions for socket-connected stores
  */
-export interface SocketStoreActions {
+interface SocketStoreActions {
   /** Set loading state */
   setLoading: (isLoading: boolean) => void;
   /** Set error */
@@ -60,7 +60,7 @@ export function createSocketActions<T extends SocketStoreState>(
 /**
  * Socket listener configuration
  */
-export interface SocketListenerConfig<T> {
+interface SocketListenerConfig<T> {
   /** Event name to listen for */
   event: string;
   /** Handler function */
@@ -70,7 +70,7 @@ export interface SocketListenerConfig<T> {
 /**
  * Options for creating socket listeners
  */
-export interface CreateListenersOptions<T extends SocketStoreSlice> {
+interface CreateListenersOptions<T extends SocketStoreSlice> {
   /** Socket event listeners specific to this store */
   listeners: SocketListenerConfig<T>[];
   /** Callback on connect (after error is cleared) */
@@ -170,8 +170,3 @@ export function createSocketListeners<T extends SocketStoreSlice>(
 
   return { initListeners, cleanupListeners };
 }
-
-/**
- * Helper type for stores that extend SocketStoreSlice
- */
-export type WithSocketStore<T> = T & SocketStoreSlice;

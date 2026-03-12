@@ -87,7 +87,7 @@ export function DiscordTemplateEditor({
       {/* Template inputs */}
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Linia 1 (details)</label>
+          <label className="text-xs font-medium text-muted-foreground">Linia 1 (opis)</label>
           <Input
             className="h-8 text-sm"
             value={currentTemplate.details}
@@ -96,7 +96,7 @@ export function DiscordTemplateEditor({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Linia 2 (state)</label>
+          <label className="text-xs font-medium text-muted-foreground">Linia 2 (stan)</label>
           <Input
             className="h-8 text-sm"
             value={currentTemplate.state}
@@ -130,7 +130,7 @@ export function DiscordTemplateEditor({
 
       {/* Available variables */}
       <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
-        <p className="text-xs font-medium text-muted-foreground">Dostępne zmienne:</p>
+        <p className="text-xs font-medium text-muted-foreground">Dostępne znaczniki:</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {DISCORD_TEMPLATE_VARIABLES.map(v => (
             <span key={v.key} className="text-xs text-muted-foreground">

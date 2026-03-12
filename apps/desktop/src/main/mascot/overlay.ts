@@ -219,5 +219,5 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
 // Re-export from overlay-state
 export { isMascotEnabled, getMascotSize, getMascotVisibilityMode, setMascotVisibilityMode };
 
-// Position lock (re-exported from mascot-position for backward compatibility)
+// Position lock (re-exported from mascot-position for centralized imports)
 export { isMascotPositionLocked, setMascotPositionLocked } from './mascot-position';

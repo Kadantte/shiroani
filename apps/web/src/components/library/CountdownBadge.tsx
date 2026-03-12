@@ -18,15 +18,28 @@ function formatCountdown(secondsLeft: number): string {
   return `${minutes}m`;
 }
 
-export function CountdownBadge({ airingAt, episode }: CountdownBadgeProps) {
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+// Shared timer: all CountdownBadge instances share a single setInterval
+let currentTimestamp = Math.floor(Date.now() / 1000);
+const listeners = new Set<() => void>();
+setInterval(() => {
+  currentTimestamp = Math.floor(Date.now() / 1000);
+  listeners.forEach(fn => fn());
+}, 60_000);
 
+function useSharedTimestamp() {
+  const [, forceUpdate] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => {
-      setNow(Math.floor(Date.now() / 1000));
-    }, 60_000);
-    return () => clearInterval(id);
+    const listener = () => forceUpdate(n => n + 1);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   }, []);
+  return currentTimestamp;
+}
+
+export function CountdownBadge({ airingAt, episode }: CountdownBadgeProps) {
+  const now = useSharedTimestamp();
 
   const secondsLeft = airingAt - now;
   if (secondsLeft <= 0) return null;

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Bell, BellRing } from 'lucide-react';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -14,7 +15,7 @@ export interface SubscribeBellButtonProps {
   tooltipSide?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export function SubscribeBellButton({
+const SubscribeBellButton = memo(function SubscribeBellButton({
   anime,
   className,
   iconClassName = 'w-3.5 h-3.5',
@@ -45,4 +46,6 @@ export function SubscribeBellButton({
       )}
     </TooltipButton>
   );
-}
+});
+
+export { SubscribeBellButton };

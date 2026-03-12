@@ -42,15 +42,15 @@ export function BrowserSection() {
     <div className="space-y-4">
       <SettingsCard
         icon={Globe}
-        title="Przegladarka"
-        subtitle="Ustawienia przegladarki internetowej"
+        title="Przeglądarka"
+        subtitle="Ustawienia przeglądarki internetowej"
       >
         {/* Adblock */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium">Blokowanie reklam</h3>
             <p className="text-xs text-muted-foreground">
-              Blokuj reklamy w wbudowanej przegladarce
+              Blokuj reklamy w wbudowanej przeglądarce
             </p>
           </div>
           <Switch
@@ -62,7 +62,7 @@ export function BrowserSection() {
         {/* Info about new tab quick access */}
         <div>
           <p className="text-xs text-muted-foreground">
-            Strony szybkiego dostepu mozna dostosowac na stronie nowej karty.
+            Strony szybkiego dostępu można dostosować na stronie nowej karty.
           </p>
         </div>
 

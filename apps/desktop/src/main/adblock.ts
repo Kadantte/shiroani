@@ -106,17 +106,3 @@ export function disableCosmeticFiltering(session: Electron.Session): void {
   cosmeticState.delete(session);
   logger.info('Cosmetic filtering disabled for session');
 }
-
-export function enableBlockingInSession(session: Electron.Session): void {
-  if (blocker) {
-    blocker.enableBlockingInSession(session);
-    logger.info('Adblocking enabled for session');
-  }
-}
-
-export function disableBlockingInSession(session: Electron.Session): void {
-  if (blocker) {
-    blocker.disableBlockingInSession(session);
-    logger.info('Adblocking disabled for session');
-  }
-}

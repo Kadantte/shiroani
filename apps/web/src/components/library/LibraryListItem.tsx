@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { CountdownBadge } from '@/components/library/CountdownBadge';
 import { formatEpisodeProgress } from '@/lib/anime-utils';
@@ -10,7 +11,11 @@ interface LibraryListItemProps {
   onClick: () => void;
 }
 
-export function LibraryListItem({ entry, nextAiring, onClick }: LibraryListItemProps) {
+const LibraryListItem = memo(function LibraryListItem({
+  entry,
+  nextAiring,
+  onClick,
+}: LibraryListItemProps) {
   return (
     <div
       onClick={onClick}
@@ -52,4 +57,6 @@ export function LibraryListItem({ entry, nextAiring, onClick }: LibraryListItemP
       )}
     </div>
   );
-}
+});
+
+export { LibraryListItem };

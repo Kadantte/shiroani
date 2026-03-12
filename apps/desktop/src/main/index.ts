@@ -104,6 +104,27 @@ async function shutdownNestApp(): Promise<void> {
   }
 }
 
+/** Set up services and event listeners that depend on the main window */
+function setupWindowDependentServices(win: BrowserWindow): void {
+  initializeAutoUpdater(win, process.env.NODE_ENV === 'development');
+  if (nestApp) {
+    initializeNotificationService(win, nestApp);
+  }
+
+  // Set up mascot overlay with main window reference
+  setMainWindow(win);
+
+  // Wire window state changes to mascot visibility mode
+  win.on('minimize', () => updateMascotVisibilityForWindowState(false));
+  win.on('restore', () => updateMascotVisibilityForWindowState(true));
+  win.on('show', () => updateMascotVisibilityForWindowState(true));
+  win.on('hide', () => updateMascotVisibilityForWindowState(false));
+
+  // Discord RPC idle detection on window blur/focus
+  win.on('blur', () => onWindowBlur());
+  win.on('focus', () => onWindowFocus());
+}
+
 async function bootstrap(): Promise<void> {
   // Log security posture at startup
   const isPackaged = app.isPackaged;
@@ -122,10 +143,6 @@ async function bootstrap(): Promise<void> {
   await bootstrapNestApp();
   browserManager.init();
   mainWindow = await createMainWindow(browserManager);
-  initializeAutoUpdater(mainWindow, process.env.NODE_ENV === 'development');
-  if (nestApp) {
-    initializeNotificationService(mainWindow, nestApp);
-  }
 
   // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
   initializeDiscordRpc();
@@ -151,9 +168,6 @@ async function bootstrap(): Promise<void> {
     logger.warn('Failed to initialize adblocker:', error);
   }
 
-  // Set up mascot overlay with main window reference
-  setMainWindow(mainWindow);
-
   // Create the pre-hidden context menu window for the mascot overlay
   try {
     createContextMenuWindow();
@@ -168,15 +182,8 @@ async function bootstrap(): Promise<void> {
     logger.warn('Failed to create mascot overlay:', error);
   }
 
-  // Wire window state changes to mascot visibility mode
-  mainWindow.on('minimize', () => updateMascotVisibilityForWindowState(false));
-  mainWindow.on('restore', () => updateMascotVisibilityForWindowState(true));
-  mainWindow.on('show', () => updateMascotVisibilityForWindowState(true));
-  mainWindow.on('hide', () => updateMascotVisibilityForWindowState(false));
-
-  // Discord RPC idle detection on window blur/focus
-  mainWindow.on('blur', () => onWindowBlur());
-  mainWindow.on('focus', () => onWindowFocus());
+  // Set up window-dependent services and event listeners
+  setupWindowDependentServices(mainWindow);
 }
 
 // Global error handling
@@ -220,7 +227,7 @@ app.on('activate', async () => {
     // NestJS is already running, clean up old IPC handlers and recreate the window
     cleanupIpcHandlers();
     mainWindow = await createMainWindow(browserManager);
-    initializeAutoUpdater(mainWindow, process.env.NODE_ENV === 'development');
+    setupWindowDependentServices(mainWindow);
   }
 });
 

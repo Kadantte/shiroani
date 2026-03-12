@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 bg-background text-foreground">
         <img
           src="/shiro-chibi.svg"
-          alt="ShiroAni mascot"
+          alt="Maskotka ShiroAni"
           className="w-32 h-32 opacity-60 drop-shadow-lg"
         />
         <div className="text-center space-y-2 max-w-md">

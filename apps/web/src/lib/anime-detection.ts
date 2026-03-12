@@ -115,9 +115,9 @@ function detectYoutube(parsed: URL, pageTitle: string): AnimeDetection | null {
  * Checks the given tab for anime content and updates Discord Rich Presence.
  * Should be called after tab URL or title changes.
  *
- * Parameters are optional for backward compatibility — when omitted, values
- * are read from useBrowserStore / useAppStore. New callers should prefer
- * passing data explicitly to avoid coupling a lib utility to store internals.
+ * Parameters are optional — when omitted, values are read from stores.
+ * New callers should prefer passing data explicitly to avoid coupling
+ * a lib utility to store internals.
  */
 export function updateAnimePresence(
   tabId: string,

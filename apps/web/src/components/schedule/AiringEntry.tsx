@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { formatTime, getAnimeTitle, getCoverUrl } from './schedule-utils';
@@ -10,7 +11,7 @@ export interface AiringEntryProps {
 }
 
 /** A single airing entry row used in the daily view */
-export function AiringEntry({ anime }: AiringEntryProps) {
+const AiringEntry = memo(function AiringEntry({ anime }: AiringEntryProps) {
   const title = getAnimeTitle(anime.media);
   const coverUrl = getCoverUrl(anime.media);
 
@@ -77,4 +78,6 @@ export function AiringEntry({ anime }: AiringEntryProps) {
       <SubscribeBellButton anime={anime} className="shrink-0 w-7 h-7" tooltipSide="left" />
     </div>
   );
-}
+});
+
+export { AiringEntry };

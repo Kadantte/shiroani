@@ -173,11 +173,16 @@ export const useBrowserStore = create<BrowserStore>()(
         set({ isAddressBarFocused: focused }, undefined, 'browser/setAddressBarFocused');
       },
 
-      setAdblockEnabled: (enabled: boolean) => {
+      setAdblockEnabled: async (enabled: boolean) => {
+        const previous = get().adblockEnabled;
         set({ adblockEnabled: enabled }, undefined, 'browser/setAdblockEnabled');
         // Adblock toggle still goes through IPC — the session-level webRequest
         // handlers live in the main process
-        window.electronAPI?.browser?.toggleAdblock(enabled);
+        try {
+          await window.electronAPI?.browser?.toggleAdblock(enabled);
+        } catch {
+          set({ adblockEnabled: previous }, undefined, 'browser/setAdblockEnabled:revert');
+        }
       },
 
       toggleAdblock: () => {

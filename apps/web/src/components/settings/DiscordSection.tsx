@@ -16,7 +16,9 @@ export function DiscordSection() {
   const [selectedActivity, setSelectedActivity] = useState<DiscordActivityType>('watching');
 
   useEffect(() => {
+    let mounted = true;
     window.electronAPI?.discordRpc?.getSettings().then((s: DiscordRpcSettings) => {
+      if (!mounted) return;
       if (s) {
         setSettings({
           ...s,
@@ -27,6 +29,9 @@ export function DiscordSection() {
         });
       }
     });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const updateField = useCallback(
@@ -198,7 +203,7 @@ export function DiscordSection() {
           <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
           <p className="text-xs font-medium text-muted-foreground/80">
             Discord Rich Presence wymaga uruchomionego klienta Discord na komputerze. Inni
-            użytkownicy zobaczą, co robisz w ShiroAni, na Twoim profilu Discord.
+            użytkownicy zobaczą na Twoim profilu Discord, co robisz w ShiroAni.
           </p>
         </div>
       </SettingsCard>

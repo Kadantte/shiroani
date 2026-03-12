@@ -309,9 +309,7 @@ export function ThemeEditorDialog({
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Zmień ustawienia motywu niestandardowego'
-              : 'Stwórz nowy motyw niestandardowy'}
+            {isEditing ? 'Zmień ustawienia własnego motywu' : 'Stwórz nowy własny motyw'}
           </DialogDescription>
         </DialogHeader>
 

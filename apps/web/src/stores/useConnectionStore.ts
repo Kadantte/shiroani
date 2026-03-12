@@ -119,7 +119,7 @@ export const useConnectionStore = create<ConnectionStore>()(
 
         throttledHandler = (payload: WsThrottledPayload) => {
           logger.warn(`Rate limited on "${payload.event}" — retry in ${payload.retryAfter}ms`);
-          toast.warning('Too many requests — please wait a moment', {
+          toast.warning('Zbyt wiele zapytań — poczekaj chwilę', {
             duration: 4000,
           });
         };

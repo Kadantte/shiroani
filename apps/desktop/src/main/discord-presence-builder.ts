@@ -86,7 +86,7 @@ function buildFromTemplate(
   return presence;
 }
 
-/** Build presence using the legacy hardcoded logic (backward compat) */
+/** Build presence using the default hardcoded logic */
 function buildLegacy(
   activity: DiscordPresenceActivity,
   settings: DiscordRpcSettings,

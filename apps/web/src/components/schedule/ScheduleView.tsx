@@ -12,17 +12,13 @@ import { DailyView } from './DailyView';
 import { WeeklyView } from './WeeklyView';
 import { TimetableView } from './TimetableView';
 
+const { selectDay, setViewMode, getEntriesForDay, getWeekDays } = useScheduleStore.getState();
+
 export function ScheduleView() {
-  const {
-    selectedDay,
-    viewMode,
-    isLoading,
-    selectDay,
-    setViewMode,
-    getEntriesForDay,
-    getWeekDays,
-    schedule,
-  } = useScheduleStore();
+  const selectedDay = useScheduleStore(s => s.selectedDay);
+  const viewMode = useScheduleStore(s => s.viewMode);
+  const isLoading = useScheduleStore(s => s.isLoading);
+  const schedule = useScheduleStore(s => s.schedule);
 
   const navigatePrevious = useCallback(() => {
     selectDay(addDays(selectedDay, viewMode === 'daily' ? -1 : -7));

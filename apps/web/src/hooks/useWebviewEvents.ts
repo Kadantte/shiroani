@@ -8,6 +8,24 @@ import {
 } from '@/components/browser/webviewRefs';
 import { updateAnimePresence } from '@/lib/anime-detection';
 
+interface WebviewNavigateEvent extends Event {
+  url: string;
+}
+interface WebviewTitleEvent extends Event {
+  title: string;
+  explicitSet: boolean;
+}
+interface WebviewFaviconEvent extends Event {
+  favicons: string[];
+}
+interface WebviewNavigateInPageEvent extends Event {
+  url: string;
+  isMainFrame: boolean;
+}
+interface WebviewFailLoadEvent extends Event {
+  errorCode: number;
+}
+
 // Script injected on dom-ready to patch iframe allow attributes for video player compatibility.
 const IFRAME_PATCH_SCRIPT = `
 (function() {
@@ -38,13 +56,15 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
 
     const { updateTabState } = useBrowserStore.getState();
 
+    // Register immediately so other code can access the webview ref before dom-ready
+    registerWebview(tabId, el);
+
     const onDomReady = () => {
-      registerWebview(tabId, el);
       el.executeJavaScript(IFRAME_PATCH_SCRIPT).catch(() => {});
     };
 
     const onDidNavigate = (e: Event) => {
-      const detail = e as Event & { url: string };
+      const detail = e as WebviewNavigateEvent;
       updateTabState(tabId, {
         url: detail.url,
         canGoBack: el.canGoBack(),
@@ -54,7 +74,7 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
     };
 
     const onDidNavigateInPage = (e: Event) => {
-      const detail = e as Event & { url: string; isMainFrame: boolean };
+      const detail = e as WebviewNavigateInPageEvent;
       if (detail.isMainFrame === false) return;
       updateTabState(tabId, {
         url: detail.url,
@@ -65,13 +85,13 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
     };
 
     const onPageTitleUpdated = (e: Event) => {
-      const detail = e as Event & { title: string };
+      const detail = e as WebviewTitleEvent;
       updateTabState(tabId, { title: detail.title });
       updateAnimePresence(tabId);
     };
 
     const onPageFaviconUpdated = (e: Event) => {
-      const detail = e as Event & { favicons: string[] };
+      const detail = e as WebviewFaviconEvent;
       if (detail.favicons?.length > 0) {
         updateTabState(tabId, { favicon: detail.favicons[0] });
       }
@@ -100,7 +120,7 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
     };
 
     const onDidFailLoad = (e: Event) => {
-      const detail = e as Event & { errorCode: number };
+      const detail = e as WebviewFailLoadEvent;
       if (detail.errorCode === -3) return; // Aborted (harmless redirect)
       updateTabState(tabId, { isLoading: false });
     };

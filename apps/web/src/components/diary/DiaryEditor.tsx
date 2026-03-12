@@ -135,6 +135,7 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
           {/* Close button */}
           <button
             onClick={onClose}
+            aria-label="Zamknij edytor"
             className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/20 text-white/80 hover:bg-black/30 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
@@ -143,6 +144,7 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
           {/* Pin toggle */}
           <button
             onClick={() => setIsPinned(!isPinned)}
+            aria-label={isPinned ? 'Odepnij wpis' : 'Przypnij wpis'}
             className={cn(
               'absolute top-2 left-2 p-1.5 rounded-lg transition-colors',
               isPinned ? 'bg-white/25 text-white' : 'bg-black/20 text-white/60 hover:text-white/80'

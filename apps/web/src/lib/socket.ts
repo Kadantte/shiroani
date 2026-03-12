@@ -143,11 +143,4 @@ export function connectSocket(): Promise<void> {
 }
 
 // Re-export socket helpers for convenient access
-export {
-  emitAsync,
-  emitWithErrorHandling,
-  emitWithSuccessHandling,
-  type EmitOptions,
-  type ErrorResponse,
-  type SuccessResponse,
-} from './socketHelpers';
+export { emitWithErrorHandling } from './socketHelpers';

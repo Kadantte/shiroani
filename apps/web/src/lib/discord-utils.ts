@@ -1,7 +1,7 @@
 import type { DiscordActivityType } from '@shiroani/shared';
 
 /** Sample data for live preview of Discord Rich Presence templates */
-export const PREVIEW_DATA: Record<
+const PREVIEW_DATA: Record<
   DiscordActivityType,
   { anime_title: string; episode: string; site_name: string; library_count: string }
 > = {

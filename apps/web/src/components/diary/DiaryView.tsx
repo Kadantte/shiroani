@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { NotebookPen, Plus, SearchX, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -19,30 +19,36 @@ const DIARY_FILTER_OPTIONS = [
   { value: 'with_anime' as const, label: 'Z anime' },
 ];
 
+const {
+  setFilter,
+  setSearchQuery,
+  setViewMode,
+  openEditor,
+  closeEditor,
+  createEntry,
+  updateEntry,
+  removeEntry,
+  fetchEntries,
+  initListeners,
+  cleanupListeners,
+} = useDiaryStore.getState();
+
 export function DiaryView() {
-  const {
-    entries,
-    activeFilter,
-    searchQuery,
-    viewMode,
-    isEditorOpen,
-    selectedEntry,
-    setFilter,
-    setSearchQuery,
-    setViewMode,
-    openEditor,
-    closeEditor,
-    createEntry,
-    updateEntry,
-    removeEntry,
-    fetchEntries,
-    initListeners,
-    cleanupListeners,
-  } = useDiaryStore();
+  const entries = useDiaryStore(s => s.entries);
+  const activeFilter = useDiaryStore(s => s.activeFilter);
+  const searchQuery = useDiaryStore(s => s.searchQuery);
+  const viewMode = useDiaryStore(s => s.viewMode);
+  const isEditorOpen = useDiaryStore(s => s.isEditorOpen);
+  const selectedEntry = useDiaryStore(s => s.selectedEntry);
 
   const [entryToRemove, setEntryToRemove] = useState<DiaryEntry | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+
+  const handleTogglePin = useCallback(
+    (e: DiaryEntry) => updateEntry({ id: e.id, isPinned: !e.isPinned }),
+    []
+  );
 
   useEffect(() => {
     initListeners();
@@ -137,7 +143,7 @@ export function DiaryView() {
             viewMode={viewMode}
             onSelect={openEditor}
             onRemove={setEntryToRemove}
-            onTogglePin={e => updateEntry({ id: e.id, isPinned: !e.isPinned })}
+            onTogglePin={handleTogglePin}
           />
         )}
       </div>
@@ -164,7 +170,7 @@ export function DiaryView() {
           if (!open) setEntryToRemove(null);
         }}
         title="Usuń wpis"
-        description={`Czy na pewno chcesz usunąć "${entryToRemove?.title || 'Bez tytułu'}" z pamiętnika?`}
+        description={`Czy na pewno chcesz usunąć "${entryToRemove?.title || 'Bez tytułu'}" z dziennika?`}
         onConfirm={() => {
           if (entryToRemove) {
             removeEntry(entryToRemove.id);

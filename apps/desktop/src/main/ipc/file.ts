@@ -15,7 +15,6 @@ function getAllowedDirectories(): string[] {
     app.getPath('documents'),
     app.getPath('downloads'),
     app.getPath('desktop'),
-    app.getPath('home'),
   ];
 }
 

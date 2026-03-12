@@ -12,12 +12,16 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('http://example.com')).toBe('http://example.com');
   });
 
-  it('returns URL as-is for custom protocols like ftp://', () => {
-    expect(normalizeUrl('ftp://files.example.com')).toBe('ftp://files.example.com');
+  it('treats non-http(s) protocols as search queries (ftp://)', () => {
+    expect(normalizeUrl('ftp://files.example.com')).toBe(
+      'https://www.google.com/search?q=ftp%3A%2F%2Ffiles.example.com'
+    );
   });
 
-  it('returns URL as-is for chrome:// protocol', () => {
-    expect(normalizeUrl('chrome://settings')).toBe('chrome://settings');
+  it('treats non-http(s) protocols as search queries (chrome://)', () => {
+    expect(normalizeUrl('chrome://settings')).toBe(
+      'https://www.google.com/search?q=chrome%3A%2F%2Fsettings'
+    );
   });
 
   // ── Domain-like inputs ──────────────────────────────────────────

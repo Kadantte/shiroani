@@ -12,7 +12,7 @@
  * - LOG_TIMESTAMPS: true/false (default: false)
  */
 
-export enum LogLevel {
+enum LogLevel {
   ERROR = 0,
   WARN = 1,
   INFO = 2,

@@ -106,7 +106,7 @@ function throttledUpdate(activity: DiscordPresenceActivity): void {
   const elapsed = now - lastUpdateTime;
 
   if (elapsed >= MIN_UPDATE_INTERVAL_MS) {
-    sendPresenceUpdate(activity);
+    sendPresenceUpdate(activity).catch(() => {});
     pendingActivity = null;
   } else {
     pendingActivity = activity;
@@ -114,7 +114,7 @@ function throttledUpdate(activity: DiscordPresenceActivity): void {
       throttleTimer = setTimeout(() => {
         throttleTimer = null;
         if (pendingActivity) {
-          sendPresenceUpdate(pendingActivity);
+          sendPresenceUpdate(pendingActivity).catch(() => {});
           pendingActivity = null;
         }
       }, MIN_UPDATE_INTERVAL_MS - elapsed);
@@ -122,7 +122,17 @@ function throttledUpdate(activity: DiscordPresenceActivity): void {
   }
 }
 
+let connectPromise: Promise<void> | null = null;
+
 async function connectClient(): Promise<void> {
+  if (connectPromise) return connectPromise;
+  connectPromise = doConnect().finally(() => {
+    connectPromise = null;
+  });
+  return connectPromise;
+}
+
+async function doConnect(): Promise<void> {
   if (client) {
     try {
       client.destroy();
@@ -142,9 +152,9 @@ async function connectClient(): Promise<void> {
 
     activityStartTime = new Date();
     if (currentActivity) {
-      sendPresenceUpdate(currentActivity);
+      sendPresenceUpdate(currentActivity).catch(() => {});
     } else {
-      sendPresenceUpdate({ view: 'browser' });
+      sendPresenceUpdate({ view: 'browser' }).catch(() => {});
     }
   });
 
@@ -220,7 +230,7 @@ export function updateDiscordRpcSettings(updates: Partial<DiscordRpcSettings>): 
     disconnectClient();
   } else if (isConnected && currentActivity) {
     // Settings changed while connected — re-send presence with new settings
-    sendPresenceUpdate(currentActivity);
+    sendPresenceUpdate(currentActivity).catch(() => {});
   }
 
   logger.info(
@@ -264,7 +274,7 @@ export function onWindowBlur(): void {
     idleTimer = null;
     isIdle = true;
     activityStartTime = new Date();
-    sendPresenceUpdate({ view: 'idle' });
+    sendPresenceUpdate({ view: 'idle' }).catch(() => {});
     logger.debug('Idle presence activated');
   }, IDLE_TIMEOUT_MS);
 }
@@ -279,7 +289,7 @@ export function onWindowFocus(): void {
     isIdle = false;
     if (currentActivity) {
       activityStartTime = new Date();
-      sendPresenceUpdate(currentActivity);
+      sendPresenceUpdate(currentActivity).catch(() => {});
       logger.debug('Restored presence from idle');
     }
   }

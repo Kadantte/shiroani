@@ -44,7 +44,14 @@ export function SettingsView() {
 
   // Fetch app version once for both UpdatesSection and AboutSection
   useEffect(() => {
-    window.electronAPI?.app?.getVersion().then(v => setVersion(v));
+    let mounted = true;
+    window.electronAPI?.app?.getVersion().then(v => {
+      if (!mounted) return;
+      if (v) setVersion(v);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

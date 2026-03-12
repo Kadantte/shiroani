@@ -75,7 +75,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
 
           <img
             src={APP_LOGO_URL}
-            alt="ShiroAni mascot"
+            alt="Maskotka ShiroAni"
             className="relative w-40 h-40 object-contain drop-shadow-lg animate-[splash-float_3s_ease-in-out_infinite]"
             draggable={false}
           />

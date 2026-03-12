@@ -5,15 +5,11 @@ import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
 export function BackgroundSettings() {
-  const {
-    customBackground,
-    backgroundOpacity,
-    backgroundBlur,
-    pickBackground,
-    removeBackground,
-    setBackgroundOpacity,
-    setBackgroundBlur,
-  } = useBackgroundStore();
+  const customBackground = useBackgroundStore(s => s.customBackground);
+  const backgroundOpacity = useBackgroundStore(s => s.backgroundOpacity);
+  const backgroundBlur = useBackgroundStore(s => s.backgroundBlur);
+  const { pickBackground, removeBackground, setBackgroundOpacity, setBackgroundBlur } =
+    useBackgroundStore.getState();
 
   return (
     <SettingsCard icon={Image} title="Tło" subtitle="Ustaw własne tło aplikacji (obraz lub GIF)">

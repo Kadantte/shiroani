@@ -17,7 +17,7 @@ export function AboutSection({ version }: AboutSectionProps) {
           <div className="w-14 h-14 rounded-xl bg-primary/10 border border-border-glass flex items-center justify-center overflow-hidden">
             <img
               src={APP_LOGO_URL}
-              alt="ShiroAni"
+              alt="Logo ShiroAni"
               className="w-12 h-12 object-contain"
               draggable={false}
             />

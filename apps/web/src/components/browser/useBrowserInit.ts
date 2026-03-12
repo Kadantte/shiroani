@@ -8,7 +8,7 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
  * If no tabs are restored, opens a default tab.
  */
 export function useBrowserInit() {
-  const { openTab, restoreTabs } = useBrowserStore();
+  const { openTab, restoreTabs } = useBrowserStore.getState();
   const tabs = useBrowserStore(s => s.tabs);
 
   const [initialCheckDone, setInitialCheckDone] = useState(false);
