@@ -57,7 +57,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
     <div
       className={cn(
         'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background',
-        'transition-all duration-600 ease-out',
+        'transition-[opacity,transform] duration-600 ease-out',
         isDismissing && 'opacity-0 scale-[1.02]',
         IS_ELECTRON && 'rounded-t-[10px]'
       )}
@@ -91,20 +91,26 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
 
         {/* Spinner + status */}
         <div
-          className="mt-4 flex flex-col items-center gap-2.5"
-          style={{
-            opacity: showSpinner ? 1 : 0,
-            transition: 'opacity 400ms ease-in',
-          }}
+          className={cn(
+            'mt-4 flex flex-col items-center gap-2.5 transition-opacity duration-400 ease-in',
+            showSpinner ? 'opacity-100' : 'opacity-0'
+          )}
           role="status"
           aria-live="polite"
         >
           {error ? (
             <div className="flex flex-col items-center gap-3 max-w-xs text-center animate-fade-in">
               <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-destructive" />
+                <AlertCircle className="w-5 h-5 text-destructive" aria-hidden="true" />
               </div>
               <p className="text-destructive text-sm">{error}</p>
+              <button
+                type="button"
+                className="text-sm text-primary hover:underline cursor-pointer"
+                onClick={() => window.location.reload()}
+              >
+                Spróbuj ponownie
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2.5 animate-[splash-fade-up_0.6s_ease-out_0.8s_both]">
