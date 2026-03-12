@@ -44,7 +44,7 @@ function TemplateToggle({
         <Icon className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-sm">{label}</span>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }

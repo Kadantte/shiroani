@@ -57,14 +57,21 @@ export function SettingsView() {
   return (
     <div className="flex-1 flex overflow-hidden animate-fade-in">
       {/* Section navigation */}
-      <div className="w-44 shrink-0 border-r border-border/40 p-3 space-y-0.5">
+      <div
+        className="w-44 shrink-0 border-r border-border/40 p-3 space-y-0.5"
+        role="tablist"
+        aria-label="Sekcje ustawień"
+      >
         {SECTIONS.map(section => (
           <button
             key={section.id}
+            role="tab"
+            aria-selected={activeSection === section.id}
             onClick={() => setActiveSection(section.id)}
             className={cn(
               'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm',
               'transition-all duration-150',
+              'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               activeSection === section.id
                 ? 'bg-primary/15 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
@@ -77,7 +84,11 @@ export function SettingsView() {
       </div>
 
       {/* Section content */}
-      <div className="flex-1 overflow-y-auto p-6 pb-20">
+      <div
+        className="flex-1 overflow-y-auto p-6 pb-20"
+        role="tabpanel"
+        aria-label={SECTIONS.find(s => s.id === activeSection)?.label}
+      >
         <div className="max-w-xl">
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}

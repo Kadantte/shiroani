@@ -101,12 +101,18 @@ export function DiscordSection() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Discord Rich Presence</h3>
+            <h4 id="discord-enabled-label" className="text-sm font-medium">
+              Włącz integrację
+            </h4>
             <p className="text-xs text-muted-foreground">
               Wyświetlaj swoją aktywność w ShiroAni na profilu Discord
             </p>
           </div>
-          <Switch checked={settings.enabled} onCheckedChange={v => updateField('enabled', v)} />
+          <Switch
+            aria-labelledby="discord-enabled-label"
+            checked={settings.enabled}
+            onCheckedChange={v => updateField('enabled', v)}
+          />
         </div>
 
         <Separator className="bg-border/50" />
@@ -116,12 +122,15 @@ export function DiscordSection() {
           <>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium">Pokaż tytuły anime</h3>
+                <h4 id="discord-details-label" className="text-sm font-medium">
+                  Pokaż tytuły anime
+                </h4>
                 <p className="text-xs text-muted-foreground">
                   Wyświetlaj tytuł oglądanego anime na Discordzie
                 </p>
               </div>
               <Switch
+                aria-labelledby="discord-details-label"
                 checked={settings.showAnimeDetails}
                 onCheckedChange={v => updateField('showAnimeDetails', v)}
                 disabled={!settings.enabled}
@@ -132,10 +141,13 @@ export function DiscordSection() {
 
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium">Pokaż czas</h3>
+                <h4 id="discord-time-label" className="text-sm font-medium">
+                  Pokaż czas
+                </h4>
                 <p className="text-xs text-muted-foreground">Wyświetlaj czas trwania aktywności</p>
               </div>
               <Switch
+                aria-labelledby="discord-time-label"
                 checked={settings.showElapsedTime}
                 onCheckedChange={v => updateField('showElapsedTime', v)}
                 disabled={!settings.enabled}
@@ -148,12 +160,15 @@ export function DiscordSection() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Własne szablony</h3>
+            <h4 id="discord-templates-label" className="text-sm font-medium">
+              Własne szablony
+            </h4>
             <p className="text-xs text-muted-foreground">
               Dostosuj tekst statusu dla każdej aktywności
             </p>
           </div>
           <Switch
+            aria-labelledby="discord-templates-label"
             checked={settings.useCustomTemplates}
             onCheckedChange={v => updateField('useCustomTemplates', v)}
             disabled={!settings.enabled}

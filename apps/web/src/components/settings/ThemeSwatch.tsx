@@ -25,6 +25,7 @@ export function ThemeSwatch({
         'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
         'transition-all duration-200',
         'hover:bg-accent/40 hover:scale-105',
+        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         isActive && 'ring-2 ring-primary/70 bg-primary/10'
       )}
     >
@@ -37,7 +38,9 @@ export function ThemeSwatch({
       >
         {isActive && (
           <div className="w-full h-full flex items-center justify-center">
-            <Check className="w-4 h-4 text-white drop-shadow" />
+            <Check
+              className={cn('w-4 h-4 drop-shadow', option.isDark ? 'text-white' : 'text-gray-800')}
+            />
           </div>
         )}
       </div>

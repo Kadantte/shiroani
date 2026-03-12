@@ -32,7 +32,7 @@ export function DiscordPreview({
                 <span className="text-lg">🎬</span>
               </div>
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-[#5865f2]/20 to-[#5865f2]/5 flex items-center justify-center">
                 <span className="text-[10px] font-bold text-white/40">SA</span>
               </div>
             )}

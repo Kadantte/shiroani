@@ -34,21 +34,19 @@ export function AboutSection({ version }: AboutSectionProps) {
 
       {/* Links */}
       <SettingsCard className="p-2">
-        <a
-          href="#"
-          onClick={e => {
-            e.preventDefault();
+        <button
+          onClick={() => {
             if (window.electronAPI?.browser) {
               useBrowserStore.getState().openTab(GITHUB_RELEASES_URL);
             } else {
               window.open(GITHUB_RELEASES_URL, '_blank');
             }
           }}
-          className="flex items-center gap-2.5 text-sm text-muted-foreground p-3 rounded-lg hover:bg-accent/50 hover:text-primary transition-colors cursor-pointer"
+          className="flex items-center gap-2.5 text-sm text-muted-foreground p-3 rounded-lg hover:bg-accent/50 hover:text-primary transition-colors cursor-pointer w-full"
         >
           <ExternalLink className="w-4 h-4" />
           GitHub
-        </a>
+        </button>
       </SettingsCard>
 
       {/* License */}

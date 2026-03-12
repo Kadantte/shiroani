@@ -36,16 +36,16 @@ export function ThemeGrid({
               onPreviewEnd={onPreviewEnd}
             />
             {/* Hover-reveal clone button */}
-            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
               <button
                 onClick={e => {
                   e.stopPropagation();
                   onClone(opt.value);
                 }}
-                className="w-5 h-5 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors"
+                className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Klonuj motyw"
               >
-                <Copy className="w-2.5 h-2.5 text-foreground" />
+                <Copy className="w-3 h-3 text-foreground" />
               </button>
             </div>
           </div>

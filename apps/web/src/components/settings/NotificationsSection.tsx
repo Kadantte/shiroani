@@ -95,19 +95,25 @@ export function NotificationsSection() {
         {/* Enable notifications */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Powiadomienia o odcinkach</h3>
+            <h4 id="notif-enabled-label" className="text-sm font-medium">
+              Powiadomienia o odcinkach
+            </h4>
             <p className="text-xs text-muted-foreground">
               Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany
             </p>
           </div>
-          <Switch checked={data.enabled} onCheckedChange={v => update({ enabled: v })} />
+          <Switch
+            checked={data.enabled}
+            onCheckedChange={v => update({ enabled: v })}
+            aria-labelledby="notif-enabled-label"
+          />
         </div>
 
         <Separator className="bg-border/50" />
 
         {/* Lead time */}
         <div>
-          <h3 className="text-sm font-medium mb-1">Powiadom przed emisją</h3>
+          <h4 className="text-sm font-medium mb-1">Powiadom przed emisją</h4>
           <p className="text-xs text-muted-foreground mb-2">
             Ile minut przed emisją wysłać powiadomienie
           </p>
@@ -135,7 +141,9 @@ export function NotificationsSection() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h3 className="text-sm font-medium">Cisza nocna</h3>
+              <h4 id="notif-quiet-label" className="text-sm font-medium">
+                Cisza nocna
+              </h4>
               <p className="text-xs text-muted-foreground">
                 Wstrzymaj powiadomienia w wybranych godzinach
               </p>
@@ -144,13 +152,17 @@ export function NotificationsSection() {
               checked={data.quietHoursEnabled}
               onCheckedChange={v => update({ quietHoursEnabled: v })}
               disabled={!data.enabled}
+              aria-labelledby="notif-quiet-label"
             />
           </div>
           {data.quietHoursEnabled && data.enabled && (
             <div className="flex items-center gap-3 mt-2">
               <div className="flex items-center gap-1.5">
-                <label className="text-xs text-muted-foreground">Od</label>
+                <label htmlFor="quiet-start" className="text-xs text-muted-foreground">
+                  Od
+                </label>
                 <input
+                  id="quiet-start"
                   type="time"
                   value={data.quietHoursStart}
                   onChange={e => update({ quietHoursStart: e.target.value })}
@@ -158,8 +170,11 @@ export function NotificationsSection() {
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <label className="text-xs text-muted-foreground">Do</label>
+                <label htmlFor="quiet-end" className="text-xs text-muted-foreground">
+                  Do
+                </label>
                 <input
+                  id="quiet-end"
                   type="time"
                   value={data.quietHoursEnd}
                   onChange={e => update({ quietHoursEnd: e.target.value })}
@@ -175,7 +190,9 @@ export function NotificationsSection() {
         {/* System sound */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Dźwięk systemowy</h3>
+            <h4 id="notif-sound-label" className="text-sm font-medium">
+              Dźwięk systemowy
+            </h4>
             <p className="text-xs text-muted-foreground">
               Odtwórz dźwięk przy wyświetlaniu powiadomienia
             </p>
@@ -184,6 +201,7 @@ export function NotificationsSection() {
             checked={data.useSystemSound}
             onCheckedChange={v => update({ useSystemSound: v })}
             disabled={!data.enabled}
+            aria-labelledby="notif-sound-label"
           />
         </div>
 
@@ -230,6 +248,7 @@ export function NotificationsSection() {
                 <Switch
                   checked={sub.enabled}
                   onCheckedChange={() => toggleSubscription(sub.anilistId)}
+                  aria-label={sub.title}
                 />
                 <TooltipButton
                   variant="ghost"

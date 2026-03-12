@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { oklchToHex, hexToOklch, isValidHexColor } from '@/lib/color-utils';
 
 interface ColorPickerFieldProps {
@@ -12,10 +13,14 @@ interface ColorPickerFieldProps {
 export function ColorPickerField({ label, variableName, value, onChange }: ColorPickerFieldProps) {
   const colorInputRef = useRef<HTMLInputElement>(null);
   const hexValue = value ? oklchToHex(value) : '#000000';
+  const [localHex, setLocalHex] = useState(hexValue);
+
+  useEffect(() => setLocalHex(hexValue), [hexValue]);
 
   const handleHexChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const hex = e.target.value;
+      setLocalHex(hex);
       if (isValidHexColor(hex)) {
         onChange(hexToOklch(hex));
       }
@@ -52,9 +57,12 @@ export function ColorPickerField({ label, variableName, value, onChange }: Color
         <div className="flex items-center gap-2">
           <span className="text-2xs text-foreground truncate">{label}</span>
           <Input
-            value={hexValue}
+            value={localHex}
             onChange={handleHexChange}
-            className="h-6 w-20 px-1.5 text-2xs font-mono shrink-0"
+            className={cn(
+              'h-6 w-20 px-1.5 text-2xs font-mono shrink-0',
+              localHex !== hexValue && localHex.length >= 4 && 'border-destructive'
+            )}
           />
         </div>
         <span className="text-[10px] text-muted-foreground/60 font-mono truncate">

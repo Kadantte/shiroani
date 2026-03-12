@@ -98,30 +98,48 @@ export function AppearanceSection() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-foreground">Automatyczne ukrywanie</p>
+            <p className="text-sm text-foreground" id="dock-autohide-label">
+              Automatyczne ukrywanie
+            </p>
             <p className="text-2xs text-muted-foreground/70">
               Dock zwija się do ikony i rozwija po najechaniu
             </p>
           </div>
-          <Switch checked={dockAutoHide} onCheckedChange={setDockAutoHide} />
+          <Switch
+            checked={dockAutoHide}
+            onCheckedChange={setDockAutoHide}
+            aria-labelledby="dock-autohide-label"
+          />
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-foreground">Pokaż etykiety</p>
+            <p className="text-sm text-foreground" id="dock-labels-label">
+              Pokaż etykiety
+            </p>
             <p className="text-2xs text-muted-foreground/70">
               Wyświetlaj nazwy pod ikonami nawigacji
             </p>
           </div>
-          <Switch checked={dockShowLabels} onCheckedChange={setDockShowLabels} />
+          <Switch
+            checked={dockShowLabels}
+            onCheckedChange={setDockShowLabels}
+            aria-labelledby="dock-labels-label"
+          />
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-foreground">Przeciąganie</p>
+            <p className="text-sm text-foreground" id="dock-draggable-label">
+              Przeciąganie
+            </p>
             <p className="text-2xs text-muted-foreground/70">
               Pozwól na zmianę pozycji docka przeciąganiem
             </p>
           </div>
-          <Switch checked={dockDraggable} onCheckedChange={setDockDraggable} />
+          <Switch
+            checked={dockDraggable}
+            onCheckedChange={setDockDraggable}
+            aria-labelledby="dock-draggable-label"
+          />
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -181,7 +199,8 @@ export function AppearanceSection() {
                 'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
                 'transition-all duration-200',
                 'hover:bg-accent/40 hover:scale-105',
-                'border border-dashed border-border-glass'
+                'border border-dashed border-border-glass',
+                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
               )}
             >
               <div className="w-10 h-10 rounded-full border-2 border-border-glass flex items-center justify-center">
@@ -302,36 +321,36 @@ function CustomThemeSwatchWrapper({
         onPreviewEnd={onPreviewEnd}
       />
       {/* Hover-reveal action buttons */}
-      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
         <button
           onClick={e => {
             e.stopPropagation();
             onEdit();
           }}
-          className="w-5 h-5 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors"
+          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Edytuj motyw"
         >
-          <Pencil className="w-2.5 h-2.5 text-foreground" />
+          <Pencil className="w-3 h-3 text-foreground" />
         </button>
         <button
           onClick={e => {
             e.stopPropagation();
             onExport();
           }}
-          className="w-5 h-5 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors"
+          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Eksportuj motyw"
         >
-          <Download className="w-2.5 h-2.5 text-foreground" />
+          <Download className="w-3 h-3 text-foreground" />
         </button>
         <button
           onClick={e => {
             e.stopPropagation();
-            onDelete();
+            if (window.confirm('Czy na pewno chcesz usunąć ten motyw?')) onDelete();
           }}
-          className="w-5 h-5 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-destructive/20 transition-colors"
+          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Usuń motyw"
         >
-          <Trash2 className="w-2.5 h-2.5 text-destructive" />
+          <Trash2 className="w-3 h-3 text-destructive" />
         </button>
       </div>
     </div>

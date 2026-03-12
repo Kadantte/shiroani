@@ -69,7 +69,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
         subtitle={isMac ? 'Aktualna wersja' : 'Aktualna wersja i kanał aktualizacji'}
       >
         <div>
-          <h3 className="text-sm font-medium mb-1">Wersja</h3>
+          <h4 className="text-sm font-medium mb-1">Wersja</h4>
           <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">
             {version || '...'}
           </p>
@@ -77,13 +77,13 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
 
         {!isMac && (
           <div>
-            <h3 className="text-sm font-medium mb-2">Kanał aktualizacji</h3>
+            <h4 className="text-sm font-medium mb-2">Kanał aktualizacji</h4>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setChannel('stable')}
                 disabled={isChannelSwitching}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   channel === 'stable'
                     ? 'border-primary/50 bg-primary/15 text-foreground'
                     : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
@@ -101,7 +101,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
                 onClick={() => setChannel('beta')}
                 disabled={isChannelSwitching}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   channel === 'beta'
                     ? 'border-primary/50 bg-primary/15 text-foreground'
                     : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
@@ -173,7 +173,14 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
 
             {/* Download progress */}
             {status === 'downloading' && progress && (
-              <div className="mt-2 w-full bg-primary/20 rounded-full h-1.5">
+              <div
+                className="mt-2 w-full bg-primary/20 rounded-full h-1.5"
+                role="progressbar"
+                aria-valuenow={Math.round(progress.percent)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Postęp pobierania"
+              >
                 <div
                   className="bg-primary h-full rounded-full transition-all duration-300"
                   style={{ width: `${progress.percent}%` }}

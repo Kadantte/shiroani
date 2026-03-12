@@ -8,8 +8,10 @@ export function BackgroundSettings() {
   const customBackground = useBackgroundStore(s => s.customBackground);
   const backgroundOpacity = useBackgroundStore(s => s.backgroundOpacity);
   const backgroundBlur = useBackgroundStore(s => s.backgroundBlur);
-  const { pickBackground, removeBackground, setBackgroundOpacity, setBackgroundBlur } =
-    useBackgroundStore.getState();
+  const pickBackground = useBackgroundStore(s => s.pickBackground);
+  const removeBackground = useBackgroundStore(s => s.removeBackground);
+  const setBackgroundOpacity = useBackgroundStore(s => s.setBackgroundOpacity);
+  const setBackgroundBlur = useBackgroundStore(s => s.setBackgroundBlur);
 
   return (
     <SettingsCard icon={Image} title="Tło" subtitle="Ustaw własne tło aplikacji (obraz lub GIF)">
@@ -47,12 +49,15 @@ export function BackgroundSettings() {
         <div className="mt-2 space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-muted-foreground">Przezroczystość</label>
+              <label id="bg-opacity-label" className="text-xs font-medium text-muted-foreground">
+                Przezroczystość
+              </label>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {Math.round(backgroundOpacity * 100)}%
               </span>
             </div>
             <Slider
+              aria-labelledby="bg-opacity-label"
               value={[backgroundOpacity]}
               onValueChange={([v]) => setBackgroundOpacity(v)}
               min={0.02}
@@ -63,10 +68,13 @@ export function BackgroundSettings() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-muted-foreground">Rozmycie</label>
+              <label id="bg-blur-label" className="text-xs font-medium text-muted-foreground">
+                Rozmycie
+              </label>
               <span className="text-xs text-muted-foreground tabular-nums">{backgroundBlur}px</span>
             </div>
             <Slider
+              aria-labelledby="bg-blur-label"
               value={[backgroundBlur]}
               onValueChange={([v]) => setBackgroundBlur(v)}
               min={0}

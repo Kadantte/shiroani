@@ -39,6 +39,12 @@ export function MascotSection() {
     });
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const handleToggle = async (value: boolean) => {
     setEnabled(value);
     await window.electronAPI?.overlay?.setEnabled(value);
@@ -76,12 +82,18 @@ export function MascotSection() {
       <SettingsCard icon={Cat} title="Maskotka" subtitle="Interaktywna maskotka na pulpicie">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Maskotka na pulpicie</h3>
+            <h4 id="mascot-enabled-label" className="text-sm font-medium">
+              Maskotka na pulpicie
+            </h4>
             <p className="text-xs text-muted-foreground">
               Wyświetl animowaną maskotkę chibi na pulpicie z ikonką w zasobniku systemowym
             </p>
           </div>
-          <Switch checked={enabled} onCheckedChange={handleToggle} />
+          <Switch
+            aria-labelledby="mascot-enabled-label"
+            checked={enabled}
+            onCheckedChange={handleToggle}
+          />
         </div>
       </SettingsCard>
 
@@ -89,10 +101,17 @@ export function MascotSection() {
         <SettingsCard>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium">Rozmiar maskotki</h3>
+              <h4 className="text-sm font-medium">Rozmiar maskotki</h4>
               <span className="text-xs text-muted-foreground tabular-nums">{size}px</span>
             </div>
-            <Slider value={[size]} min={48} max={256} step={8} onValueChange={handleSizeChange} />
+            <Slider
+              aria-label="Rozmiar maskotki"
+              value={[size]}
+              min={48}
+              max={256}
+              step={8}
+              onValueChange={handleSizeChange}
+            />
             <div className="flex justify-between mt-1">
               <span className="text-2xs text-muted-foreground">48px</span>
               <span className="text-2xs text-muted-foreground">256px</span>
@@ -102,7 +121,7 @@ export function MascotSection() {
           <Separator className="bg-border/50" />
 
           <div>
-            <h3 className="text-sm font-medium mb-1">Tryb widoczności</h3>
+            <h4 className="text-sm font-medium mb-1">Tryb widoczności</h4>
             <p className="text-xs text-muted-foreground mb-2">
               Kiedy maskotka ma być widoczna na pulpicie
             </p>
@@ -121,19 +140,25 @@ export function MascotSection() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Zablokuj pozycję</h3>
+              <h4 id="mascot-lock-label" className="text-sm font-medium">
+                Zablokuj pozycję
+              </h4>
               <p className="text-xs text-muted-foreground">
                 Zapobiega przypadkowemu przesuwaniu maskotki
               </p>
             </div>
-            <Switch checked={positionLocked} onCheckedChange={handleLockToggle} />
+            <Switch
+              aria-labelledby="mascot-lock-label"
+              checked={positionLocked}
+              onCheckedChange={handleLockToggle}
+            />
           </div>
 
           <Separator className="bg-border/50" />
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Resetuj pozycję</h3>
+              <h4 className="text-sm font-medium">Resetuj pozycję</h4>
               <p className="text-xs text-muted-foreground">
                 Przywróć maskotkę do domyślnej pozycji (prawy dolny róg)
               </p>

@@ -48,12 +48,15 @@ export function BrowserSection() {
         {/* Adblock */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Blokowanie reklam</h3>
+            <h4 id="browser-adblock-label" className="text-sm font-medium">
+              Blokowanie reklam
+            </h4>
             <p className="text-xs text-muted-foreground">
               Blokuj reklamy w wbudowanej przeglądarce
             </p>
           </div>
           <Switch
+            aria-labelledby="browser-adblock-label"
             checked={data.adblockEnabled}
             onCheckedChange={v => update({ adblockEnabled: v })}
           />
