@@ -8,13 +8,10 @@
 :root.evangelion {
   /* Deep purple-black backgrounds - NERV command center darkness */
   --background: oklch(0.08 0.03 290);
-  --background-50: oklch(0.08 0.03 290 / 0.5);
   --background-80: oklch(0.08 0.03 290 / 0.8);
 
   /* Text colors - terminal green-white readouts */
   --foreground: oklch(0.95 0.03 145);
-  --foreground-secondary: oklch(0.6 0.04 145);
-  --foreground-muted: oklch(0.45 0.03 290);
 
   /* Card and popover backgrounds - dark purple-grey panels */
   --card: oklch(0.14 0.04 290);
@@ -25,8 +22,6 @@
   /* Brand colors - NERV neon green UI */
   --primary: oklch(0.75 0.25 145);
   --primary-foreground: oklch(0.08 0.03 290);
-  --brand-400: oklch(0.8 0.22 145);
-  --brand-500: oklch(0.75 0.25 145);
   --brand-600: oklch(0.65 0.22 160);
 
   /* Secondary/muted surfaces - dark purple panels */
@@ -47,35 +42,14 @@
   --ring: oklch(0.75 0.25 145);
 
   /* Chart colors - Eva palette */
-  --chart-1: oklch(0.75 0.25 145); /* NERV green */
-  --chart-2: oklch(0.7 0.2 55); /* Warning orange */
-  --chart-3: oklch(0.6 0.2 290); /* Eva purple */
-  --chart-4: oklch(0.65 0.2 30); /* AT-Field red */
-  --chart-5: oklch(0.7 0.15 200); /* LCL teal */
 
   /* Sidebar - dark NERV command interface */
   --sidebar: oklch(0.06 0.03 290);
   --sidebar-foreground: oklch(0.95 0.03 145);
-  --sidebar-primary: oklch(0.75 0.25 145);
-  --sidebar-primary-foreground: oklch(0.08 0.03 290);
-  --sidebar-accent: oklch(0.18 0.04 290);
-  --sidebar-accent-foreground: oklch(0.95 0.03 145);
-  --sidebar-border: oklch(0.25 0.05 290);
-  --sidebar-ring: oklch(0.75 0.25 145);
 
   /* Action button colors - Eva UI */
-  --action-view: oklch(0.75 0.25 145); /* NERV green */
-  --action-view-hover: oklch(0.7 0.27 145);
-  --action-followup: oklch(0.65 0.2 200); /* LCL teal */
-  --action-followup-hover: oklch(0.6 0.22 200);
-  --action-commit: oklch(0.65 0.2 145); /* Green */
-  --action-commit-hover: oklch(0.6 0.22 145);
-  --action-verify: oklch(0.65 0.2 145);
-  --action-verify-hover: oklch(0.6 0.22 145);
 
   /* Running indicator - NERV green */
-  --running-indicator: oklch(0.75 0.25 145);
-  --running-indicator-text: oklch(0.8 0.22 145);
 
   /* Status colors - Eva tinted */
   --status-success: oklch(0.7 0.22 145);
@@ -88,11 +62,6 @@
   --status-info-bg: oklch(0.65 0.18 200 / 0.2);
   --status-pending: oklch(0.7 0.17 55);
   --status-pending-bg: oklch(0.7 0.17 55 / 0.2);
-  --status-accent: oklch(0.7 0.15 190);
-  --status-accent-bg: oklch(0.7 0.15 190 / 0.2);
-  --status-backlog: oklch(0.55 0.03 290);
-  --status-in-progress: oklch(0.7 0.2 55);
-  --status-waiting: oklch(0.7 0.18 50);
 
   /* Shadow tokens - deep NERV darkness */
   --shadow-xs: 0 1px 2px rgba(10, 0, 20, 0.4);
@@ -102,7 +71,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(10, 0, 20, 0.6), 0 10px 10px -5px rgba(10, 0, 20, 0.4);
 
   /* Vignette */
-  --vignette-color: oklch(0.05 0.03 290 / 0.2);
 
   /* Card-focused shadow - green glow */
   --shadow-card-focused:

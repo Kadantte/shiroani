@@ -8,13 +8,10 @@
 :root.chainsaw-man {
   /* Near-black with warm undertone — the grimy, brutal world */
   --background: oklch(0.06 0.01 15);
-  --background-50: oklch(0.06 0.01 15 / 0.5);
   --background-80: oklch(0.06 0.01 15 / 0.8);
 
   /* Text colors — pale with warm undertone, like old paper in dim light */
   --foreground: oklch(0.92 0.01 50);
-  --foreground-secondary: oklch(0.65 0.02 30);
-  --foreground-muted: oklch(0.48 0.02 20);
 
   /* Card — very dark warm brown-black, like dried blood on metal */
   --card: oklch(0.12 0.02 20);
@@ -27,8 +24,6 @@
   --primary-foreground: oklch(0.95 0.01 30);
 
   /* Brand — deep red range, arterial to venous */
-  --brand-400: oklch(0.55 0.22 25);
-  --brand-500: oklch(0.5 0.25 25);
   --brand-600: oklch(0.45 0.27 22);
 
   /* Secondary surfaces — dark chrome */
@@ -53,35 +48,14 @@
   --ring: oklch(0.5 0.25 25);
 
   /* Chart colors — Devils and blood palette */
-  --chart-1: oklch(0.5 0.25 25); /* Blood crimson */
-  --chart-2: oklch(0.7 0.18 55); /* Pochita orange */
-  --chart-3: oklch(0.65 0.2 140); /* Power's green */
-  --chart-4: oklch(0.6 0.2 280); /* Makima's violet */
-  --chart-5: oklch(0.75 0.12 70); /* Denji's amber */
 
   /* Sidebar — dark blood-tinged black */
   --sidebar: oklch(0.05 0.012 15);
   --sidebar-foreground: oklch(0.92 0.01 50);
-  --sidebar-primary: oklch(0.5 0.25 25);
-  --sidebar-primary-foreground: oklch(0.95 0.01 30);
-  --sidebar-accent: oklch(0.16 0.02 18);
-  --sidebar-accent-foreground: oklch(0.92 0.01 50);
-  --sidebar-border: oklch(0.24 0.03 20);
-  --sidebar-ring: oklch(0.5 0.25 25);
 
   /* Action button colors — raw and visceral */
-  --action-view: oklch(0.5 0.25 25); /* Blood red */
-  --action-view-hover: oklch(0.45 0.27 22);
-  --action-followup: oklch(0.65 0.18 55); /* Pochita orange */
-  --action-followup-hover: oklch(0.6 0.2 55);
-  --action-commit: oklch(0.6 0.18 145); /* Green */
-  --action-commit-hover: oklch(0.55 0.2 145);
-  --action-verify: oklch(0.6 0.18 145);
-  --action-verify-hover: oklch(0.55 0.2 145);
 
   /* Running indicator — blood pulse */
-  --running-indicator: oklch(0.5 0.25 25);
-  --running-indicator-text: oklch(0.55 0.22 25);
 
   /* Status colors — dark mode */
   --status-success: oklch(0.65 0.2 140);
@@ -94,11 +68,6 @@
   --status-info-bg: oklch(0.65 0.18 230 / 0.2);
   --status-pending: oklch(0.7 0.17 55);
   --status-pending-bg: oklch(0.7 0.17 55 / 0.2);
-  --status-accent: oklch(0.7 0.15 190);
-  --status-accent-bg: oklch(0.7 0.15 190 / 0.2);
-  --status-backlog: oklch(0.55 0.02 20);
-  --status-in-progress: oklch(0.7 0.18 55);
-  --status-waiting: oklch(0.65 0.15 50);
 
   /* Shadow tokens — heavy, oppressive darkness */
   --shadow-xs: 0 1px 2px rgba(10, 0, 0, 0.4);
@@ -108,7 +77,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(10, 0, 0, 0.6), 0 10px 10px -5px rgba(10, 0, 0, 0.4);
 
   /* Vignette — dark blood edge */
-  --vignette-color: oklch(0.15 0.05 15 / 0.2);
 
   /* Card-focused shadow — crimson glow */
   --shadow-card-focused:

@@ -23,6 +23,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'preferences.updateChannel',
   // Custom backgrounds
   'custom-backgrounds',
+  // Custom themes
+  'custom-themes',
   // Browser settings (homepage, adblock)
   'browser-settings',
   // Notification settings

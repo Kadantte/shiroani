@@ -8,13 +8,10 @@
 :root.sailor-moon {
   /* Very pale lavender-pink - moonlit sky */
   --background: oklch(0.97 0.015 310);
-  --background-50: oklch(0.97 0.015 310 / 0.5);
   --background-80: oklch(0.97 0.015 310 / 0.8);
 
   /* Deep cosmic navy text */
   --foreground: oklch(0.18 0.05 280);
-  --foreground-secondary: oklch(0.4 0.04 280);
-  --foreground-muted: oklch(0.55 0.03 300);
 
   /* Card and popover backgrounds - soft pink-white */
   --card: oklch(0.98 0.012 315);
@@ -25,8 +22,6 @@
   /* Brand colors - moon pink to violet */
   --primary: oklch(0.65 0.2 340);
   --primary-foreground: oklch(0.98 0.01 310);
-  --brand-400: oklch(0.7 0.18 340);
-  --brand-500: oklch(0.65 0.2 340);
   --brand-600: oklch(0.58 0.22 335);
 
   /* Secondary/muted surfaces - pale lilac */
@@ -48,35 +43,14 @@
   --ring: oklch(0.65 0.2 340);
 
   /* Chart colors - celestial palette */
-  --chart-1: oklch(0.65 0.2 340); /* Moon pink */
-  --chart-2: oklch(0.8 0.12 85); /* Crescent gold */
-  --chart-3: oklch(0.55 0.18 280); /* Cosmic navy */
-  --chart-4: oklch(0.65 0.18 300); /* Violet */
-  --chart-5: oklch(0.6 0.15 230); /* Mercury blue */
 
   /* Sidebar - light lavender */
   --sidebar: oklch(0.96 0.018 310);
   --sidebar-foreground: oklch(0.18 0.05 280);
-  --sidebar-primary: oklch(0.65 0.2 340);
-  --sidebar-primary-foreground: oklch(0.98 0.01 310);
-  --sidebar-accent: oklch(0.93 0.022 310);
-  --sidebar-accent-foreground: oklch(0.18 0.05 280);
-  --sidebar-border: oklch(0.9 0.02 310);
-  --sidebar-ring: oklch(0.65 0.2 340);
 
   /* Action button colors - magical palette */
-  --action-view: oklch(0.65 0.2 340); /* Moon pink */
-  --action-view-hover: oklch(0.58 0.22 340);
-  --action-followup: oklch(0.55 0.18 280); /* Cosmic navy */
-  --action-followup-hover: oklch(0.5 0.2 280);
-  --action-commit: oklch(0.55 0.15 145); /* Jupiter green */
-  --action-commit-hover: oklch(0.5 0.17 145);
-  --action-verify: oklch(0.55 0.15 145);
-  --action-verify-hover: oklch(0.5 0.17 145);
 
   /* Running indicator - moon pink */
-  --running-indicator: oklch(0.65 0.2 340);
-  --running-indicator-text: oklch(0.58 0.22 340);
 
   /* Status colors - celestial tones */
   --status-success: oklch(0.55 0.15 145);
@@ -89,11 +63,6 @@
   --status-info-bg: oklch(0.55 0.18 230 / 0.15);
   --status-pending: oklch(0.65 0.15 55);
   --status-pending-bg: oklch(0.65 0.15 55 / 0.15);
-  --status-accent: oklch(0.6 0.15 300);
-  --status-accent-bg: oklch(0.6 0.15 300 / 0.15);
-  --status-backlog: oklch(0.55 0.02 300);
-  --status-in-progress: oklch(0.7 0.15 70);
-  --status-waiting: oklch(0.65 0.12 55);
 
   /* Shadow tokens - soft magical shadows */
   --shadow-xs: 0 1px 2px rgba(40, 20, 60, 0.06);

@@ -8,13 +8,10 @@
 :root.one-piece {
   /* Warm parchment/sail white — treasure maps and ship logs */
   --background: oklch(0.97 0.01 80);
-  --background-50: oklch(0.97 0.01 80 / 0.5);
   --background-80: oklch(0.97 0.01 80 / 0.8);
 
   /* Text colors — warm dark ink, like quill on parchment */
   --foreground: oklch(0.2 0.02 60);
-  --foreground-secondary: oklch(0.42 0.015 60);
-  --foreground-muted: oklch(0.55 0.01 70);
 
   /* Card — warm cream-white, like a Wanted poster */
   --card: oklch(0.98 0.008 80);
@@ -27,8 +24,6 @@
   --primary-foreground: oklch(0.98 0.005 80);
 
   /* Brand — blue range, from coastal to deep ocean */
-  --brand-400: oklch(0.6 0.16 240);
-  --brand-500: oklch(0.55 0.18 240);
   --brand-600: oklch(0.5 0.2 245);
 
   /* Secondary surfaces — pale sail-cloth */
@@ -53,35 +48,14 @@
   --ring: oklch(0.55 0.18 240);
 
   /* Chart colors — Straw Hat crew inspired */
-  --chart-1: oklch(0.55 0.18 240); /* Ocean blue */
-  --chart-2: oklch(0.78 0.12 85); /* Straw gold */
-  --chart-3: oklch(0.55 0.22 20); /* Jolly Roger red */
-  --chart-4: oklch(0.6 0.15 160); /* Zoro green */
-  --chart-5: oklch(0.65 0.14 35); /* Nami's tangerine orange */
 
   /* Sidebar — pale sea blue, looking out to the horizon */
   --sidebar: oklch(0.965 0.012 220);
   --sidebar-foreground: oklch(0.2 0.02 60);
-  --sidebar-primary: oklch(0.55 0.18 240);
-  --sidebar-primary-foreground: oklch(0.98 0.005 80);
-  --sidebar-accent: oklch(0.94 0.015 220);
-  --sidebar-accent-foreground: oklch(0.2 0.02 60);
-  --sidebar-border: oklch(0.9 0.015 220);
-  --sidebar-ring: oklch(0.55 0.18 240);
 
   /* Action button colors — adventure-ready */
-  --action-view: oklch(0.55 0.18 240); /* Ocean blue */
-  --action-view-hover: oklch(0.5 0.2 245);
-  --action-followup: oklch(0.5 0.16 220); /* Deeper sea blue */
-  --action-followup-hover: oklch(0.45 0.18 220);
-  --action-commit: oklch(0.52 0.16 145); /* Zoro green */
-  --action-commit-hover: oklch(0.47 0.18 145);
-  --action-verify: oklch(0.52 0.16 145);
-  --action-verify-hover: oklch(0.47 0.18 145);
 
   /* Running indicator — ocean wave blue */
-  --running-indicator: oklch(0.55 0.18 240);
-  --running-indicator-text: oklch(0.5 0.2 240);
 
   /* Status colors */
   --status-success: oklch(0.52 0.16 145);
@@ -94,11 +68,6 @@
   --status-info-bg: oklch(0.55 0.18 240 / 0.15);
   --status-pending: oklch(0.65 0.14 55);
   --status-pending-bg: oklch(0.65 0.14 55 / 0.15);
-  --status-accent: oklch(0.55 0.14 190);
-  --status-accent-bg: oklch(0.55 0.14 190 / 0.15);
-  --status-backlog: oklch(0.55 0.01 70);
-  --status-in-progress: oklch(0.7 0.14 75);
-  --status-waiting: oklch(0.62 0.12 55);
 
   /* Shadow tokens — warm and natural, like sunlight through sails */
   --shadow-xs: 0 1px 2px rgba(30, 20, 5, 0.06);
@@ -108,7 +77,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(30, 20, 5, 0.12), 0 10px 10px -5px rgba(30, 20, 5, 0.05);
 
   /* Vignette — warm parchment edge */
-  --vignette-color: oklch(0.7 0.08 75 / 0.06);
 
   /* Card-focused shadow — ocean blue glow */
   --shadow-card-focused:

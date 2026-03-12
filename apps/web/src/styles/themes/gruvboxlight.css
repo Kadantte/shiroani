@@ -2,12 +2,9 @@
 
 :root.gruvboxlight {
   --background: oklch(0.96 0.02 85);
-  --background-50: oklch(0.96 0.02 85 / 0.5);
   --background-80: oklch(0.96 0.02 85 / 0.8);
 
   --foreground: oklch(0.25 0.04 65);
-  --foreground-secondary: oklch(0.4 0.04 65);
-  --foreground-muted: oklch(0.55 0.03 65);
 
   --card: oklch(0.98 0.015 85);
   --card-foreground: oklch(0.25 0.04 65);
@@ -16,8 +13,6 @@
 
   --primary: oklch(0.55 0.15 70);
   --primary-foreground: oklch(0.98 0.015 85);
-  --brand-400: oklch(0.6 0.13 70);
-  --brand-500: oklch(0.55 0.15 70);
   --brand-600: oklch(0.5 0.17 70);
 
   --secondary: oklch(0.93 0.025 85);
@@ -33,32 +28,8 @@
   --input: oklch(0.97 0.018 85);
   --ring: oklch(0.55 0.15 70);
 
-  --chart-1: oklch(0.55 0.15 70);
-  --chart-2: oklch(0.55 0.18 25);
-  --chart-3: oklch(0.5 0.15 145);
-  --chart-4: oklch(0.55 0.15 230);
-  --chart-5: oklch(0.55 0.15 300);
-
   --sidebar: oklch(0.95 0.022 85);
   --sidebar-foreground: oklch(0.25 0.04 65);
-  --sidebar-primary: oklch(0.55 0.15 70);
-  --sidebar-primary-foreground: oklch(0.98 0.015 85);
-  --sidebar-accent: oklch(0.92 0.028 85);
-  --sidebar-accent-foreground: oklch(0.25 0.04 65);
-  --sidebar-border: oklch(0.87 0.03 85);
-  --sidebar-ring: oklch(0.55 0.15 70);
-
-  --action-view: oklch(0.55 0.15 70);
-  --action-view-hover: oklch(0.5 0.17 70);
-  --action-followup: oklch(0.55 0.15 230);
-  --action-followup-hover: oklch(0.5 0.17 230);
-  --action-commit: oklch(0.5 0.15 145);
-  --action-commit-hover: oklch(0.45 0.17 145);
-  --action-verify: oklch(0.5 0.15 145);
-  --action-verify-hover: oklch(0.45 0.17 145);
-
-  --running-indicator: oklch(0.55 0.15 70);
-  --running-indicator-text: oklch(0.5 0.17 70);
 
   --status-success: oklch(0.5 0.15 145);
   --status-success-bg: oklch(0.5 0.15 145 / 0.15);
@@ -70,11 +41,6 @@
   --status-info-bg: oklch(0.55 0.15 230 / 0.15);
   --status-pending: oklch(0.6 0.17 55);
   --status-pending-bg: oklch(0.6 0.17 55 / 0.15);
-  --status-accent: oklch(0.55 0.15 190);
-  --status-accent-bg: oklch(0.55 0.15 190 / 0.15);
-  --status-backlog: oklch(0.6 0.03 65);
-  --status-in-progress: oklch(0.6 0.15 70);
-  --status-waiting: oklch(0.58 0.12 55);
 }
 
 .gruvboxlight .content-bg {

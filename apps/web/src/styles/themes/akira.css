@@ -9,13 +9,10 @@
 :root.akira {
   /* Neo-Tokyo concrete dark — oppressive urban grey */
   --background: oklch(0.08 0.005 250);
-  --background-50: oklch(0.08 0.005 250 / 0.5);
   --background-80: oklch(0.08 0.005 250 / 0.8);
 
   /* Text — harsh fluorescent white with steel undertone */
   --foreground: oklch(0.95 0.01 250);
-  --foreground-secondary: oklch(0.65 0.02 250);
-  --foreground-muted: oklch(0.48 0.02 250);
 
   /* Card — dark steel plating */
   --card: oklch(0.14 0.01 250);
@@ -26,8 +23,6 @@
   /* Primary — Kaneda's bike red */
   --primary: oklch(0.55 0.25 25);
   --primary-foreground: oklch(0.98 0 0);
-  --brand-400: oklch(0.6 0.22 25);
-  --brand-500: oklch(0.55 0.25 25);
   --brand-600: oklch(0.48 0.27 22);
 
   /* Secondary — industrial steel */
@@ -52,35 +47,14 @@
   --ring: oklch(0.55 0.25 25);
 
   /* Charts — Neo-Tokyo neon palette */
-  --chart-1: oklch(0.55 0.25 25); /* Akira red */
-  --chart-2: oklch(0.65 0.2 240); /* Electric blue */
-  --chart-3: oklch(0.75 0.18 60); /* Warning amber */
-  --chart-4: oklch(0.6 0.2 310); /* Psychic purple */
-  --chart-5: oklch(0.7 0.15 170); /* Teal pipes */
 
   /* Sidebar — deep concrete bunker */
   --sidebar: oklch(0.06 0.005 250);
   --sidebar-foreground: oklch(0.95 0.01 250);
-  --sidebar-primary: oklch(0.55 0.25 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.18 0.01 250);
-  --sidebar-accent-foreground: oklch(0.95 0.01 250);
-  --sidebar-border: oklch(0.25 0.01 250);
-  --sidebar-ring: oklch(0.55 0.25 25);
 
   /* Action buttons — red and blue energy */
-  --action-view: oklch(0.55 0.25 25); /* Bike red */
-  --action-view-hover: oklch(0.5 0.27 22);
-  --action-followup: oklch(0.6 0.2 240); /* Electric blue */
-  --action-followup-hover: oklch(0.55 0.22 240);
-  --action-commit: oklch(0.55 0.2 140); /* Operational green */
-  --action-commit-hover: oklch(0.5 0.22 140);
-  --action-verify: oklch(0.55 0.2 140);
-  --action-verify-hover: oklch(0.5 0.22 140);
 
   /* Running indicator — pulsing red */
-  --running-indicator: oklch(0.55 0.25 25);
-  --running-indicator-text: oklch(0.62 0.22 25);
 
   /* Status colors */
   --status-success: oklch(0.65 0.2 140);
@@ -93,11 +67,6 @@
   --status-info-bg: oklch(0.65 0.2 240 / 0.2);
   --status-pending: oklch(0.7 0.17 55);
   --status-pending-bg: oklch(0.7 0.17 55 / 0.2);
-  --status-accent: oklch(0.7 0.15 190);
-  --status-accent-bg: oklch(0.7 0.15 190 / 0.2);
-  --status-backlog: oklch(0.6 0 0);
-  --status-in-progress: oklch(0.75 0.15 70);
-  --status-waiting: oklch(0.7 0.18 50);
 
   /* Shadows — harsh urban lighting */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -107,7 +76,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 10px 10px -5px rgba(0, 0, 0, 0.35);
 
   /* Vignette — dark tunnel vision */
-  --vignette-color: oklch(0 0 0 / 0.18);
 
   /* Card focused shadow — red energy glow */
   --shadow-card-focused:

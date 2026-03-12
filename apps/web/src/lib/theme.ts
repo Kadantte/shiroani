@@ -31,15 +31,16 @@ import {
   Shield,
   Sparkle,
 } from 'lucide-react';
-import type { Theme } from '@shiroani/shared';
+import type { Theme, CustomThemeDefinition } from '@shiroani/shared';
 
 export interface ThemeOption {
   value: Theme;
   label: string;
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
   testId: string;
   isDark: boolean;
   isAnime?: boolean; // true for anime-inspired themes
+  isCustom?: boolean; // true for user-created custom themes
   color: string; // Primary/brand color for icon display
 }
 
@@ -388,7 +389,44 @@ export const animeLightThemes = themeOptions.filter(t => !t.isDark && t.isAnime)
 export const classicDarkThemes = themeOptions.filter(t => t.isDark && !t.isAnime);
 export const classicLightThemes = themeOptions.filter(t => !t.isDark && !t.isAnime);
 
-// Helper: Get theme option by value
-export function getThemeOption(theme: Theme): ThemeOption | undefined {
-  return themeOptions.find(t => t.value === theme);
+/**
+ * Build a complete list of theme options including custom themes.
+ * Custom themes appear first, followed by all built-in themes.
+ */
+export function getAllThemeOptions(customThemes: CustomThemeDefinition[]): ThemeOption[] {
+  const customOptions: ThemeOption[] = customThemes.map(ct => ({
+    value: ct.id as Theme,
+    label: ct.name,
+    testId: `${ct.id}-mode-button`,
+    isDark: ct.isDark,
+    isCustom: true,
+    color: ct.color,
+  }));
+
+  return [...customOptions, ...themeOptions];
+}
+
+// Helper: Get theme option by value (searches built-in themes, or all if custom themes provided)
+export function getThemeOption(
+  theme: Theme,
+  customThemes?: CustomThemeDefinition[]
+): ThemeOption | undefined {
+  const builtIn = themeOptions.find(t => t.value === theme);
+  if (builtIn) return builtIn;
+
+  if (customThemes) {
+    const ct = customThemes.find(t => t.id === theme);
+    if (ct) {
+      return {
+        value: ct.id as Theme,
+        label: ct.name,
+        testId: `${ct.id}-mode-button`,
+        isDark: ct.isDark,
+        isCustom: true,
+        color: ct.color,
+      };
+    }
+  }
+
+  return undefined;
 }

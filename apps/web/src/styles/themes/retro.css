@@ -3,13 +3,10 @@
 :root.retro {
   /* Retro / Cyberpunk Theme */
   --background: oklch(0 0 0); /* Pure Black */
-  --background-50: oklch(0 0 0 / 0.5);
   --background-80: oklch(0 0 0 / 0.8);
 
   /* Neon Green Text */
   --foreground: oklch(0.85 0.25 145); /* Neon Green */
-  --foreground-secondary: oklch(0.7 0.2 145);
-  --foreground-muted: oklch(0.5 0.15 145);
 
   /* Hard Edges */
   --radius: 0px;
@@ -23,8 +20,6 @@
   --primary: oklch(0.85 0.25 145); /* Neon Green */
   --primary-foreground: oklch(0 0 0); /* Black text on green */
 
-  --brand-400: oklch(0.85 0.25 145);
-  --brand-500: oklch(0.85 0.25 145);
   --brand-600: oklch(0.75 0.25 145);
 
   --secondary: oklch(0.1 0.1 145); /* Dark Green bg */
@@ -45,38 +40,17 @@
   --ring: oklch(0.85 0.25 145);
 
   /* Charts - various neons */
-  --chart-1: oklch(0.85 0.25 145); /* Green */
-  --chart-2: oklch(0.8 0.25 300); /* Purple Neon */
-  --chart-3: oklch(0.8 0.25 200); /* Cyan Neon */
-  --chart-4: oklch(0.8 0.25 60); /* Yellow Neon */
-  --chart-5: oklch(0.8 0.25 20); /* Red Neon */
 
   /* Sidebar */
   --sidebar: oklch(0 0 0);
   --sidebar-foreground: oklch(0.85 0.25 145);
-  --sidebar-primary: oklch(0.85 0.25 145);
-  --sidebar-primary-foreground: oklch(0 0 0);
-  --sidebar-accent: oklch(0.1 0.1 145);
-  --sidebar-accent-foreground: oklch(0.85 0.25 145);
-  --sidebar-border: oklch(0.3 0.15 145);
-  --sidebar-ring: oklch(0.85 0.25 145);
 
   /* Fonts */
   --font-sans: var(--font-geist-mono); /* Force Mono everywhere */
 
   /* Action button colors - All green neon for retro theme */
-  --action-view: oklch(0.85 0.25 145); /* Neon Green */
-  --action-view-hover: oklch(0.9 0.25 145);
-  --action-followup: oklch(0.85 0.25 145); /* Neon Green */
-  --action-followup-hover: oklch(0.9 0.25 145);
-  --action-commit: oklch(0.85 0.25 145); /* Neon Green */
-  --action-commit-hover: oklch(0.9 0.25 145);
-  --action-verify: oklch(0.85 0.25 145); /* Neon Green */
-  --action-verify-hover: oklch(0.9 0.25 145);
 
   /* Running indicator - Neon Green for retro */
-  --running-indicator: oklch(0.85 0.25 145);
-  --running-indicator-text: oklch(0.85 0.25 145);
 }
 
 /* ========================================

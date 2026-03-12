@@ -8,13 +8,10 @@
 :root.demon-slayer {
   /* Near-black with teal undertone - midnight demon hunting */
   --background: oklch(0.06 0.02 185);
-  --background-50: oklch(0.06 0.02 185 / 0.5);
   --background-80: oklch(0.06 0.02 185 / 0.8);
 
   /* Clean white text */
   --foreground: oklch(0.96 0 0);
-  --foreground-secondary: oklch(0.6 0.03 185);
-  --foreground-muted: oklch(0.45 0.03 185);
 
   /* Card and popover backgrounds - very dark teal-grey */
   --card: oklch(0.13 0.03 185);
@@ -25,8 +22,6 @@
   /* Brand colors - Tanjiro teal */
   --primary: oklch(0.6 0.15 185);
   --primary-foreground: oklch(0.96 0 0);
-  --brand-400: oklch(0.65 0.13 185);
-  --brand-500: oklch(0.6 0.15 185);
   --brand-600: oklch(0.55 0.17 188);
 
   /* Secondary/muted surfaces - dark teal panels */
@@ -47,35 +42,14 @@
   --ring: oklch(0.6 0.15 185);
 
   /* Chart colors - demon slayer palette */
-  --chart-1: oklch(0.6 0.15 185); /* Tanjiro teal */
-  --chart-2: oklch(0.7 0.2 45); /* Flame orange */
-  --chart-3: oklch(0.65 0.18 300); /* Wisteria purple */
-  --chart-4: oklch(0.55 0.25 20); /* Blood red */
-  --chart-5: oklch(0.75 0.12 85); /* Zenitsu gold */
 
   /* Sidebar - dark with teal tint */
   --sidebar: oklch(0.05 0.02 185);
   --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-primary: oklch(0.6 0.15 185);
-  --sidebar-primary-foreground: oklch(0.96 0 0);
-  --sidebar-accent: oklch(0.17 0.03 185);
-  --sidebar-accent-foreground: oklch(0.96 0 0);
-  --sidebar-border: oklch(0.25 0.04 185);
-  --sidebar-ring: oklch(0.6 0.15 185);
 
   /* Action button colors - breathing techniques */
-  --action-view: oklch(0.6 0.15 185); /* Water breathing teal */
-  --action-view-hover: oklch(0.55 0.17 185);
-  --action-followup: oklch(0.7 0.2 45); /* Flame breathing orange */
-  --action-followup-hover: oklch(0.65 0.22 45);
-  --action-commit: oklch(0.6 0.18 145); /* Green */
-  --action-commit-hover: oklch(0.55 0.2 145);
-  --action-verify: oklch(0.6 0.18 145);
-  --action-verify-hover: oklch(0.55 0.2 145);
 
   /* Running indicator - teal */
-  --running-indicator: oklch(0.6 0.15 185);
-  --running-indicator-text: oklch(0.65 0.13 185);
 
   /* Status colors - battle-ready */
   --status-success: oklch(0.65 0.18 145);
@@ -88,11 +62,6 @@
   --status-info-bg: oklch(0.6 0.15 185 / 0.2);
   --status-pending: oklch(0.7 0.15 55);
   --status-pending-bg: oklch(0.7 0.15 55 / 0.2);
-  --status-accent: oklch(0.65 0.15 300);
-  --status-accent-bg: oklch(0.65 0.15 300 / 0.2);
-  --status-backlog: oklch(0.55 0.02 185);
-  --status-in-progress: oklch(0.7 0.2 45);
-  --status-waiting: oklch(0.7 0.15 55);
 
   /* Shadow tokens - deep night shadows */
   --shadow-xs: 0 1px 2px rgba(0, 10, 15, 0.4);
@@ -102,7 +71,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 10, 15, 0.6), 0 10px 10px -5px rgba(0, 10, 15, 0.4);
 
   /* Vignette */
-  --vignette-color: oklch(0.03 0.02 185 / 0.2);
 
   /* Card-focused shadow - teal glow */
   --shadow-card-focused:

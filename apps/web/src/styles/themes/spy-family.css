@@ -9,13 +9,10 @@
 :root.spy-family {
   /* Spy noir — deep charcoal, Loid's world of shadows */
   --background: oklch(0.08 0.005 0);
-  --background-50: oklch(0.08 0.005 0 / 0.5);
   --background-80: oklch(0.08 0.005 0 / 0.8);
 
   /* Text — clean, elegant readability */
   --foreground: oklch(0.94 0.01 350);
-  --foreground-secondary: oklch(0.65 0.02 350);
-  --foreground-muted: oklch(0.48 0.02 350);
 
   /* Card — very dark warm grey, secret dossier */
   --card: oklch(0.14 0.008 350);
@@ -26,8 +23,6 @@
   /* Primary — Anya pink, her signature color */
   --primary: oklch(0.72 0.15 350);
   --primary-foreground: oklch(0.1 0.005 0);
-  --brand-400: oklch(0.77 0.13 350);
-  --brand-500: oklch(0.72 0.15 350);
   --brand-600: oklch(0.65 0.17 348);
 
   /* Secondary — dark warm surface */
@@ -52,35 +47,14 @@
   --ring: oklch(0.72 0.15 350);
 
   /* Charts — family palette */
-  --chart-1: oklch(0.72 0.15 350); /* Anya pink */
-  --chart-2: oklch(0.78 0.1 85); /* Elegant gold */
-  --chart-3: oklch(0.55 0.22 10); /* Yor crimson */
-  --chart-4: oklch(0.6 0.15 230); /* Loid's cool blue */
-  --chart-5: oklch(0.68 0.15 160); /* Bond's green */
 
   /* Sidebar — spy headquarters, deep shadow */
   --sidebar: oklch(0.06 0.005 0);
   --sidebar-foreground: oklch(0.94 0.01 350);
-  --sidebar-primary: oklch(0.72 0.15 350);
-  --sidebar-primary-foreground: oklch(0.1 0.005 0);
-  --sidebar-accent: oklch(0.17 0.008 350);
-  --sidebar-accent-foreground: oklch(0.94 0.01 350);
-  --sidebar-border: oklch(0.25 0.01 350);
-  --sidebar-ring: oklch(0.72 0.15 350);
 
   /* Action buttons — spy operation colors */
-  --action-view: oklch(0.72 0.15 350); /* Anya pink */
-  --action-view-hover: oklch(0.67 0.17 348);
-  --action-followup: oklch(0.7 0.1 85); /* Gold intel */
-  --action-followup-hover: oklch(0.65 0.12 85);
-  --action-commit: oklch(0.58 0.18 145); /* Mission green */
-  --action-commit-hover: oklch(0.53 0.2 145);
-  --action-verify: oklch(0.58 0.18 145);
-  --action-verify-hover: oklch(0.53 0.2 145);
 
   /* Running indicator — soft pink pulse */
-  --running-indicator: oklch(0.72 0.15 350);
-  --running-indicator-text: oklch(0.77 0.13 350);
 
   /* Status colors */
   --status-success: oklch(0.65 0.2 140);
@@ -93,11 +67,6 @@
   --status-info-bg: oklch(0.65 0.18 230 / 0.2);
   --status-pending: oklch(0.7 0.17 55);
   --status-pending-bg: oklch(0.7 0.17 55 / 0.2);
-  --status-accent: oklch(0.7 0.15 190);
-  --status-accent-bg: oklch(0.7 0.15 190 / 0.2);
-  --status-backlog: oklch(0.6 0 0);
-  --status-in-progress: oklch(0.75 0.15 70);
-  --status-waiting: oklch(0.7 0.18 50);
 
   /* Shadows — noir cinematography */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -107,7 +76,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 10px 10px -5px rgba(0, 0, 0, 0.35);
 
   /* Vignette — cinematic noir framing */
-  --vignette-color: oklch(0 0 0 / 0.15);
 
   /* Card focused shadow — soft pink glow */
   --shadow-card-focused:

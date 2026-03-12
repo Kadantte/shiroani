@@ -8,13 +8,10 @@
 :root.ghibli-forest {
   /* Warm off-white with green undertone - dappled forest light */
   --background: oklch(0.97 0.01 130);
-  --background-50: oklch(0.97 0.01 130 / 0.5);
   --background-80: oklch(0.97 0.01 130 / 0.8);
 
   /* Deep forest brown-black text */
   --foreground: oklch(0.2 0.04 80);
-  --foreground-secondary: oklch(0.4 0.03 80);
-  --foreground-muted: oklch(0.55 0.025 80);
 
   /* Card and popover backgrounds - pale moss/cream */
   --card: oklch(0.98 0.012 120);
@@ -25,8 +22,6 @@
   /* Brand colors - forest green */
   --primary: oklch(0.5 0.15 145);
   --primary-foreground: oklch(0.98 0.01 130);
-  --brand-400: oklch(0.55 0.13 145);
-  --brand-500: oklch(0.5 0.15 145);
   --brand-600: oklch(0.45 0.17 150);
 
   /* Secondary/muted surfaces - soft leaf tones */
@@ -48,35 +43,14 @@
   --ring: oklch(0.5 0.15 145);
 
   /* Chart colors - natural palette */
-  --chart-1: oklch(0.5 0.15 145); /* Forest green */
-  --chart-2: oklch(0.55 0.12 80); /* Earthy brown */
-  --chart-3: oklch(0.6 0.15 230); /* Sky blue */
-  --chart-4: oklch(0.65 0.15 70); /* Golden amber */
-  --chart-5: oklch(0.5 0.12 30); /* Autumn red */
 
   /* Sidebar - light moss green */
   --sidebar: oklch(0.95 0.015 130);
   --sidebar-foreground: oklch(0.2 0.04 80);
-  --sidebar-primary: oklch(0.5 0.15 145);
-  --sidebar-primary-foreground: oklch(0.98 0.01 130);
-  --sidebar-accent: oklch(0.92 0.025 130);
-  --sidebar-accent-foreground: oklch(0.2 0.04 80);
-  --sidebar-border: oklch(0.88 0.025 130);
-  --sidebar-ring: oklch(0.5 0.15 145);
 
   /* Action button colors - forest palette */
-  --action-view: oklch(0.5 0.15 145); /* Forest green */
-  --action-view-hover: oklch(0.45 0.17 145);
-  --action-followup: oklch(0.55 0.15 230); /* Sky blue */
-  --action-followup-hover: oklch(0.5 0.17 230);
-  --action-commit: oklch(0.5 0.15 145);
-  --action-commit-hover: oklch(0.45 0.17 145);
-  --action-verify: oklch(0.5 0.15 145);
-  --action-verify-hover: oklch(0.45 0.17 145);
 
   /* Running indicator - forest green */
-  --running-indicator: oklch(0.5 0.15 145);
-  --running-indicator-text: oklch(0.45 0.17 145);
 
   /* Status colors - natural tones */
   --status-success: oklch(0.5 0.15 145);
@@ -89,11 +63,6 @@
   --status-info-bg: oklch(0.55 0.15 230 / 0.15);
   --status-pending: oklch(0.62 0.15 70);
   --status-pending-bg: oklch(0.62 0.15 70 / 0.15);
-  --status-accent: oklch(0.55 0.12 190);
-  --status-accent-bg: oklch(0.55 0.12 190 / 0.15);
-  --status-backlog: oklch(0.55 0.02 80);
-  --status-in-progress: oklch(0.65 0.15 70);
-  --status-waiting: oklch(0.6 0.12 50);
 
   /* Shadow tokens - soft natural shadows */
   --shadow-xs: 0 1px 2px rgba(30, 20, 10, 0.06);

@@ -8,13 +8,10 @@
 :root.bocchi {
   /* Soft warm pink-white — Bocchi's gentle pastel world */
   --background: oklch(0.97 0.015 340);
-  --background-50: oklch(0.97 0.015 340 / 0.5);
   --background-80: oklch(0.97 0.015 340 / 0.8);
 
   /* Text colors — warm dark with pink undertone */
   --foreground: oklch(0.22 0.03 340);
-  --foreground-secondary: oklch(0.42 0.025 340);
-  --foreground-muted: oklch(0.55 0.02 340);
 
   /* Card — pale pink cream, like a concert flyer */
   --card: oklch(0.985 0.012 340);
@@ -27,8 +24,6 @@
   --primary-foreground: oklch(0.99 0.01 340);
 
   /* Brand — pink range, from pastel to deep */
-  --brand-400: oklch(0.7 0.16 345);
-  --brand-500: oklch(0.65 0.18 345);
   --brand-600: oklch(0.6 0.2 348);
 
   /* Secondary surfaces — pale pink */
@@ -53,35 +48,14 @@
   --ring: oklch(0.65 0.18 345);
 
   /* Chart colors — Kessoku Band palette */
-  --chart-1: oklch(0.65 0.18 345); /* Bocchi pink */
-  --chart-2: oklch(0.6 0.15 300); /* Guitar purple */
-  --chart-3: oklch(0.6 0.15 230); /* Nijika blue */
-  --chart-4: oklch(0.7 0.14 85); /* Kita gold */
-  --chart-5: oklch(0.55 0.12 160); /* Stage green */
 
   /* Sidebar — light lavender-pink, backstage warmth */
   --sidebar: oklch(0.965 0.018 330);
   --sidebar-foreground: oklch(0.22 0.03 340);
-  --sidebar-primary: oklch(0.65 0.18 345);
-  --sidebar-primary-foreground: oklch(0.99 0.01 340);
-  --sidebar-accent: oklch(0.94 0.022 335);
-  --sidebar-accent-foreground: oklch(0.22 0.03 340);
-  --sidebar-border: oklch(0.9 0.02 335);
-  --sidebar-ring: oklch(0.65 0.18 345);
 
   /* Action button colors — band performance themed */
-  --action-view: oklch(0.65 0.18 345); /* Bocchi pink */
-  --action-view-hover: oklch(0.6 0.2 348);
-  --action-followup: oklch(0.6 0.15 300); /* Guitar purple */
-  --action-followup-hover: oklch(0.55 0.17 300);
-  --action-commit: oklch(0.55 0.16 145); /* Encore green */
-  --action-commit-hover: oklch(0.5 0.18 145);
-  --action-verify: oklch(0.55 0.16 145);
-  --action-verify-hover: oklch(0.5 0.18 145);
 
   /* Running indicator — Bocchi pink pulse */
-  --running-indicator: oklch(0.65 0.18 345);
-  --running-indicator-text: oklch(0.6 0.2 345);
 
   /* Status colors */
   --status-success: oklch(0.55 0.16 145);
@@ -94,11 +68,6 @@
   --status-info-bg: oklch(0.55 0.16 230 / 0.15);
   --status-pending: oklch(0.64 0.14 55);
   --status-pending-bg: oklch(0.64 0.14 55 / 0.15);
-  --status-accent: oklch(0.55 0.14 190);
-  --status-accent-bg: oklch(0.55 0.14 190 / 0.15);
-  --status-backlog: oklch(0.58 0.02 340);
-  --status-in-progress: oklch(0.68 0.14 75);
-  --status-waiting: oklch(0.62 0.12 55);
 
   /* Shadow tokens — soft and warm */
   --shadow-xs: 0 1px 2px rgba(40, 5, 20, 0.05);
@@ -108,7 +77,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(40, 5, 20, 0.1), 0 10px 10px -5px rgba(40, 5, 20, 0.04);
 
   /* Vignette — soft pink glow */
-  --vignette-color: oklch(0.65 0.18 345 / 0.05);
 
   /* Card-focused shadow — concert spotlight pink glow */
   --shadow-card-focused:

@@ -10,13 +10,10 @@
 :root.your-name {
   /* Pale dawn sky — the moment before sunrise */
   --background: oklch(0.97 0.01 250);
-  --background-50: oklch(0.97 0.01 250 / 0.5);
   --background-80: oklch(0.97 0.01 250 / 0.8);
 
   /* Text — deep twilight ink */
   --foreground: oklch(0.18 0.02 255);
-  --foreground-secondary: oklch(0.4 0.02 255);
-  --foreground-muted: oklch(0.55 0.02 255);
 
   /* Card — soft sky white, layered clouds */
   --card: oklch(0.99 0.005 250);
@@ -27,8 +24,6 @@
   /* Primary — twilight blue, the deep sky at dusk */
   --primary: oklch(0.5 0.18 255);
   --primary-foreground: oklch(0.98 0 0);
-  --brand-400: oklch(0.56 0.16 255);
-  --brand-500: oklch(0.5 0.18 255);
   --brand-600: oklch(0.44 0.2 260);
 
   /* Secondary — pale cloud layer */
@@ -53,35 +48,14 @@
   --ring: oklch(0.5 0.18 255);
 
   /* Charts — Shinkai sky gradient palette */
-  --chart-1: oklch(0.5 0.18 255); /* Twilight blue */
-  --chart-2: oklch(0.7 0.15 40); /* Comet orange */
-  --chart-3: oklch(0.6 0.18 340); /* Kumihimo red-pink */
-  --chart-4: oklch(0.55 0.15 180); /* Lake teal */
-  --chart-5: oklch(0.65 0.17 80); /* Dawn amber */
 
   /* Sidebar — soft sky backdrop */
   --sidebar: oklch(0.96 0.01 250);
   --sidebar-foreground: oklch(0.18 0.02 255);
-  --sidebar-primary: oklch(0.5 0.18 255);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.02 250);
-  --sidebar-accent-foreground: oklch(0.22 0.02 255);
-  --sidebar-border: oklch(0.88 0.02 250);
-  --sidebar-ring: oklch(0.5 0.18 255);
 
   /* Action buttons — sky and comet colors */
-  --action-view: oklch(0.5 0.18 255); /* Twilight blue */
-  --action-view-hover: oklch(0.45 0.2 258);
-  --action-followup: oklch(0.6 0.15 40); /* Comet orange */
-  --action-followup-hover: oklch(0.55 0.17 40);
-  --action-commit: oklch(0.5 0.18 145); /* Itomori green */
-  --action-commit-hover: oklch(0.45 0.2 145);
-  --action-verify: oklch(0.5 0.18 145);
-  --action-verify-hover: oklch(0.45 0.2 145);
 
   /* Running indicator — twilight pulse */
-  --running-indicator: oklch(0.5 0.18 255);
-  --running-indicator-text: oklch(0.56 0.16 255);
 
   /* Status colors — light mode variants */
   --status-success: oklch(0.5 0.18 145);
@@ -94,11 +68,6 @@
   --status-info-bg: oklch(0.5 0.18 230 / 0.12);
   --status-pending: oklch(0.6 0.17 55);
   --status-pending-bg: oklch(0.6 0.17 55 / 0.12);
-  --status-accent: oklch(0.55 0.15 190);
-  --status-accent-bg: oklch(0.55 0.15 190 / 0.12);
-  --status-backlog: oklch(0.5 0 0);
-  --status-in-progress: oklch(0.65 0.15 70);
-  --status-waiting: oklch(0.6 0.18 50);
 
   /* Shadows — soft, dreamy, Shinkai-style light diffusion */
   --shadow-xs: 0 1px 2px rgba(30, 40, 80, 0.06);
@@ -108,7 +77,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(30, 40, 80, 0.12), 0 10px 10px -5px rgba(30, 40, 80, 0.05);
 
   /* Vignette — very subtle, dreamy edge softness */
-  --vignette-color: oklch(0.3 0.05 255 / 0.05);
 
   /* Card focused shadow — twilight blue glow */
   --shadow-card-focused:

@@ -2,12 +2,9 @@
 
 :root.solarized {
   --background: oklch(0.2 0.02 230); /* #002b36 base03 */
-  --background-50: oklch(0.2 0.02 230 / 0.5);
   --background-80: oklch(0.2 0.02 230 / 0.8);
 
   --foreground: oklch(0.75 0.02 90); /* #839496 base0 */
-  --foreground-secondary: oklch(0.6 0.03 200); /* #657b83 base00 */
-  --foreground-muted: oklch(0.5 0.04 200); /* #586e75 base01 */
 
   --card: oklch(0.23 0.02 230); /* #073642 base02 */
   --card-foreground: oklch(0.75 0.02 90);
@@ -17,8 +14,6 @@
   --primary: oklch(0.65 0.15 220); /* #268bd2 blue */
   --primary-foreground: oklch(0.2 0.02 230);
 
-  --brand-400: oklch(0.7 0.15 220);
-  --brand-500: oklch(0.65 0.15 220); /* #268bd2 */
   --brand-600: oklch(0.6 0.17 220);
 
   --secondary: oklch(0.25 0.02 230);
@@ -38,34 +33,12 @@
   --input: oklch(0.23 0.02 230);
   --ring: oklch(0.65 0.15 220);
 
-  --chart-1: oklch(0.65 0.15 220); /* Blue */
-  --chart-2: oklch(0.6 0.18 180); /* Cyan #2aa198 */
-  --chart-3: oklch(0.65 0.2 140); /* Green #859900 */
-  --chart-4: oklch(0.7 0.18 55); /* Yellow #b58900 */
-  --chart-5: oklch(0.6 0.2 30); /* Orange #cb4b16 */
-
   --sidebar: oklch(0.18 0.02 230);
   --sidebar-foreground: oklch(0.75 0.02 90);
-  --sidebar-primary: oklch(0.65 0.15 220);
-  --sidebar-primary-foreground: oklch(0.2 0.02 230);
-  --sidebar-accent: oklch(0.25 0.02 230);
-  --sidebar-accent-foreground: oklch(0.75 0.02 90);
-  --sidebar-border: oklch(0.35 0.03 230);
-  --sidebar-ring: oklch(0.65 0.15 220);
 
   /* Action button colors - Solarized blue/cyan theme */
-  --action-view: oklch(0.65 0.15 220); /* Blue */
-  --action-view-hover: oklch(0.6 0.17 220);
-  --action-followup: oklch(0.6 0.18 180); /* Cyan */
-  --action-followup-hover: oklch(0.55 0.2 180);
-  --action-commit: oklch(0.65 0.2 140); /* Green */
-  --action-commit-hover: oklch(0.6 0.22 140);
-  --action-verify: oklch(0.65 0.2 140); /* Green */
-  --action-verify-hover: oklch(0.6 0.22 140);
 
   /* Running indicator - Blue */
-  --running-indicator: oklch(0.65 0.15 220);
-  --running-indicator-text: oklch(0.7 0.13 220);
 }
 
 /* ========================================

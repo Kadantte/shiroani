@@ -2,12 +2,9 @@
 
 :root.solarizedlight {
   --background: oklch(0.98 0.01 90);
-  --background-50: oklch(0.98 0.01 90 / 0.5);
   --background-80: oklch(0.98 0.01 90 / 0.8);
 
   --foreground: oklch(0.35 0.05 200);
-  --foreground-secondary: oklch(0.5 0.05 200);
-  --foreground-muted: oklch(0.6 0.04 200);
 
   --card: oklch(0.95 0.01 90);
   --card-foreground: oklch(0.35 0.05 200);
@@ -16,8 +13,6 @@
 
   --primary: oklch(0.55 0.15 230);
   --primary-foreground: oklch(0.98 0.01 90);
-  --brand-400: oklch(0.6 0.13 230);
-  --brand-500: oklch(0.55 0.15 230);
   --brand-600: oklch(0.5 0.17 230);
 
   --secondary: oklch(0.92 0.01 90);
@@ -33,32 +28,8 @@
   --input: oklch(0.97 0.008 90);
   --ring: oklch(0.55 0.15 230);
 
-  --chart-1: oklch(0.55 0.15 230);
-  --chart-2: oklch(0.6 0.18 25);
-  --chart-3: oklch(0.55 0.15 300);
-  --chart-4: oklch(0.6 0.15 180);
-  --chart-5: oklch(0.65 0.12 80);
-
   --sidebar: oklch(0.96 0.01 90);
   --sidebar-foreground: oklch(0.35 0.05 200);
-  --sidebar-primary: oklch(0.55 0.15 230);
-  --sidebar-primary-foreground: oklch(0.98 0.01 90);
-  --sidebar-accent: oklch(0.92 0.01 90);
-  --sidebar-accent-foreground: oklch(0.35 0.05 200);
-  --sidebar-border: oklch(0.88 0.015 90);
-  --sidebar-ring: oklch(0.55 0.15 230);
-
-  --action-view: oklch(0.55 0.15 230);
-  --action-view-hover: oklch(0.5 0.17 230);
-  --action-followup: oklch(0.6 0.18 25);
-  --action-followup-hover: oklch(0.55 0.2 25);
-  --action-commit: oklch(0.55 0.15 145);
-  --action-commit-hover: oklch(0.5 0.17 145);
-  --action-verify: oklch(0.55 0.15 145);
-  --action-verify-hover: oklch(0.5 0.17 145);
-
-  --running-indicator: oklch(0.55 0.15 230);
-  --running-indicator-text: oklch(0.5 0.17 230);
 
   --status-success: oklch(0.55 0.15 145);
   --status-success-bg: oklch(0.55 0.15 145 / 0.15);
@@ -70,11 +41,6 @@
   --status-info-bg: oklch(0.55 0.15 230 / 0.15);
   --status-pending: oklch(0.65 0.17 60);
   --status-pending-bg: oklch(0.65 0.17 60 / 0.15);
-  --status-accent: oklch(0.55 0.15 190);
-  --status-accent-bg: oklch(0.55 0.15 190 / 0.15);
-  --status-backlog: oklch(0.6 0.04 200);
-  --status-in-progress: oklch(0.65 0.15 80);
-  --status-waiting: oklch(0.6 0.12 50);
 }
 
 .solarizedlight .content-bg {

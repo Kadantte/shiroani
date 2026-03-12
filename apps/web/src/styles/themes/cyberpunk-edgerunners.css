@@ -8,13 +8,10 @@
 :root.cyberpunk-edgerunners {
   /* Deep navy-black — Night City after dark */
   --background: oklch(0.05 0.02 270);
-  --background-50: oklch(0.05 0.02 270 / 0.5);
   --background-80: oklch(0.05 0.02 270 / 0.8);
 
   /* Text colors — cool chrome white */
   --foreground: oklch(0.93 0.01 270);
-  --foreground-secondary: oklch(0.68 0.03 270);
-  --foreground-muted: oklch(0.5 0.03 270);
 
   /* Card — dark chrome navy, like a vehicle dashboard */
   --card: oklch(0.12 0.03 270);
@@ -27,8 +24,6 @@
   --primary-foreground: oklch(0.95 0 0);
 
   /* Brand — magenta to violet range */
-  --brand-400: oklch(0.65 0.26 340);
-  --brand-500: oklch(0.6 0.28 340);
   --brand-600: oklch(0.55 0.3 338);
 
   /* Secondary surfaces — dark chrome */
@@ -53,35 +48,14 @@
   --ring: oklch(0.6 0.28 340);
 
   /* Chart colors — Night City neon spectrum */
-  --chart-1: oklch(0.6 0.28 340); /* Neon pink */
-  --chart-2: oklch(0.85 0.18 95); /* Cyber yellow */
-  --chart-3: oklch(0.7 0.2 200); /* Electric cyan */
-  --chart-4: oklch(0.6 0.22 280); /* Neon violet */
-  --chart-5: oklch(0.65 0.2 145); /* Matrix green */
 
   /* Sidebar — dark Night City chrome */
   --sidebar: oklch(0.04 0.02 270);
   --sidebar-foreground: oklch(0.93 0.01 270);
-  --sidebar-primary: oklch(0.6 0.28 340);
-  --sidebar-primary-foreground: oklch(0.95 0 0);
-  --sidebar-accent: oklch(0.16 0.03 270);
-  --sidebar-accent-foreground: oklch(0.93 0.01 270);
-  --sidebar-border: oklch(0.25 0.04 270);
-  --sidebar-ring: oklch(0.6 0.28 340);
 
   /* Action button colors — neon interface */
-  --action-view: oklch(0.6 0.28 340); /* Neon pink */
-  --action-view-hover: oklch(0.55 0.3 338);
-  --action-followup: oklch(0.7 0.2 200); /* Electric cyan */
-  --action-followup-hover: oklch(0.65 0.22 200);
-  --action-commit: oklch(0.65 0.2 145); /* Matrix green */
-  --action-commit-hover: oklch(0.6 0.22 145);
-  --action-verify: oklch(0.65 0.2 145);
-  --action-verify-hover: oklch(0.6 0.22 145);
 
   /* Running indicator — neon pink pulse */
-  --running-indicator: oklch(0.6 0.28 340);
-  --running-indicator-text: oklch(0.65 0.26 340);
 
   /* Status colors — Night City HUD */
   --status-success: oklch(0.65 0.2 145);
@@ -94,11 +68,6 @@
   --status-info-bg: oklch(0.7 0.2 200 / 0.2);
   --status-pending: oklch(0.82 0.17 90);
   --status-pending-bg: oklch(0.82 0.17 90 / 0.2);
-  --status-accent: oklch(0.65 0.18 280);
-  --status-accent-bg: oklch(0.65 0.18 280 / 0.2);
-  --status-backlog: oklch(0.55 0.03 270);
-  --status-in-progress: oklch(0.82 0.17 90);
-  --status-waiting: oklch(0.7 0.15 55);
 
   /* Shadow tokens — heavy neon-bleed shadows */
   --shadow-xs: 0 1px 2px rgba(5, 0, 20, 0.4);
@@ -108,7 +77,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(5, 0, 20, 0.6), 0 10px 10px -5px rgba(5, 0, 20, 0.4);
 
   /* Vignette — deep neon-dark edge */
-  --vignette-color: oklch(0.1 0.04 280 / 0.2);
 
   /* Card-focused shadow — neon pink glow */
   --shadow-card-focused:

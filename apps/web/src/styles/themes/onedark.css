@@ -2,12 +2,9 @@
 
 :root.onedark {
   --background: oklch(0.19 0.01 250); /* #282c34 */
-  --background-50: oklch(0.19 0.01 250 / 0.5);
   --background-80: oklch(0.19 0.01 250 / 0.8);
 
   --foreground: oklch(0.85 0.02 240); /* #abb2bf */
-  --foreground-secondary: oklch(0.7 0.02 240);
-  --foreground-muted: oklch(0.5 0.03 240); /* #5c6370 */
 
   --card: oklch(0.23 0.01 250); /* #21252b */
   --card-foreground: oklch(0.85 0.02 240);
@@ -17,8 +14,6 @@
   --primary: oklch(0.7 0.18 230); /* #61afef blue */
   --primary-foreground: oklch(0.19 0.01 250);
 
-  --brand-400: oklch(0.75 0.18 230);
-  --brand-500: oklch(0.7 0.18 230); /* Blue */
   --brand-600: oklch(0.65 0.2 230);
 
   --secondary: oklch(0.25 0.01 250);
@@ -38,34 +33,12 @@
   --input: oklch(0.23 0.01 250);
   --ring: oklch(0.7 0.18 230);
 
-  --chart-1: oklch(0.7 0.18 230); /* Blue */
-  --chart-2: oklch(0.75 0.15 320); /* Magenta #c678dd */
-  --chart-3: oklch(0.75 0.18 150); /* Green #98c379 */
-  --chart-4: oklch(0.8 0.15 80); /* Yellow #e5c07b */
-  --chart-5: oklch(0.7 0.15 180); /* Cyan #56b6c2 */
-
   --sidebar: oklch(0.17 0.01 250);
   --sidebar-foreground: oklch(0.85 0.02 240);
-  --sidebar-primary: oklch(0.7 0.18 230);
-  --sidebar-primary-foreground: oklch(0.19 0.01 250);
-  --sidebar-accent: oklch(0.25 0.01 250);
-  --sidebar-accent-foreground: oklch(0.85 0.02 240);
-  --sidebar-border: oklch(0.35 0.02 250);
-  --sidebar-ring: oklch(0.7 0.18 230);
 
   /* Action button colors - One Dark blue/magenta theme */
-  --action-view: oklch(0.7 0.18 230); /* Blue */
-  --action-view-hover: oklch(0.65 0.2 230);
-  --action-followup: oklch(0.75 0.15 320); /* Magenta */
-  --action-followup-hover: oklch(0.7 0.17 320);
-  --action-commit: oklch(0.75 0.18 150); /* Green */
-  --action-commit-hover: oklch(0.7 0.2 150);
-  --action-verify: oklch(0.75 0.18 150); /* Green */
-  --action-verify-hover: oklch(0.7 0.2 150);
 
   /* Running indicator - Blue */
-  --running-indicator: oklch(0.7 0.18 230);
-  --running-indicator-text: oklch(0.75 0.16 230);
 }
 
 /* ========================================

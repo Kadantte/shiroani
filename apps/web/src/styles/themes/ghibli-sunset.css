@@ -8,13 +8,10 @@
 :root.ghibli-sunset {
   /* Deep twilight indigo - the sky as Chihiro enters the spirit world */
   --background: oklch(0.1 0.04 280);
-  --background-50: oklch(0.1 0.04 280 / 0.5);
   --background-80: oklch(0.1 0.04 280 / 0.8);
 
   /* Warm lantern white text */
   --foreground: oklch(0.93 0.02 75);
-  --foreground-secondary: oklch(0.65 0.04 75);
-  --foreground-muted: oklch(0.48 0.04 280);
 
   /* Card and popover backgrounds - dark indigo with warm undertone */
   --card: oklch(0.16 0.05 278);
@@ -25,8 +22,6 @@
   /* Brand colors - bathhouse gold to amber */
   --primary: oklch(0.75 0.15 75);
   --primary-foreground: oklch(0.1 0.04 280);
-  --brand-400: oklch(0.8 0.13 75);
-  --brand-500: oklch(0.75 0.15 75);
   --brand-600: oklch(0.68 0.17 65);
 
   /* Secondary/muted surfaces - warm indigo panels */
@@ -47,35 +42,14 @@
   --ring: oklch(0.75 0.15 75);
 
   /* Chart colors - twilight palette */
-  --chart-1: oklch(0.75 0.15 75); /* Gold */
-  --chart-2: oklch(0.65 0.18 15); /* Crimson */
-  --chart-3: oklch(0.6 0.18 280); /* Indigo */
-  --chart-4: oklch(0.7 0.15 55); /* Amber */
-  --chart-5: oklch(0.65 0.15 190); /* Teal lantern */
 
   /* Sidebar - deep twilight with transparency */
   --sidebar: oklch(0.08 0.04 280 / 0.9);
   --sidebar-foreground: oklch(0.93 0.02 75);
-  --sidebar-primary: oklch(0.75 0.15 75);
-  --sidebar-primary-foreground: oklch(0.1 0.04 280);
-  --sidebar-accent: oklch(0.2 0.05 278);
-  --sidebar-accent-foreground: oklch(0.93 0.02 75);
-  --sidebar-border: oklch(0.28 0.06 278);
-  --sidebar-ring: oklch(0.75 0.15 75);
 
   /* Action button colors - bathhouse palette */
-  --action-view: oklch(0.75 0.15 75); /* Gold */
-  --action-view-hover: oklch(0.7 0.17 75);
-  --action-followup: oklch(0.6 0.18 280); /* Indigo */
-  --action-followup-hover: oklch(0.55 0.2 280);
-  --action-commit: oklch(0.6 0.18 145); /* Green */
-  --action-commit-hover: oklch(0.55 0.2 145);
-  --action-verify: oklch(0.6 0.18 145);
-  --action-verify-hover: oklch(0.55 0.2 145);
 
   /* Running indicator - gold */
-  --running-indicator: oklch(0.75 0.15 75);
-  --running-indicator-text: oklch(0.8 0.13 75);
 
   /* Status colors - twilight tinted */
   --status-success: oklch(0.65 0.18 145);
@@ -88,11 +62,6 @@
   --status-info-bg: oklch(0.65 0.18 230 / 0.2);
   --status-pending: oklch(0.72 0.15 55);
   --status-pending-bg: oklch(0.72 0.15 55 / 0.2);
-  --status-accent: oklch(0.7 0.13 190);
-  --status-accent-bg: oklch(0.7 0.13 190 / 0.2);
-  --status-backlog: oklch(0.55 0.03 280);
-  --status-in-progress: oklch(0.75 0.15 65);
-  --status-waiting: oklch(0.7 0.15 55);
 
   /* Shadow tokens - deep twilight shadows */
   --shadow-xs: 0 1px 2px rgba(10, 5, 25, 0.4);
@@ -102,7 +71,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(10, 5, 25, 0.6), 0 10px 10px -5px rgba(10, 5, 25, 0.4);
 
   /* Vignette */
-  --vignette-color: oklch(0.05 0.04 280 / 0.2);
 
   /* Card-focused shadow - warm gold glow */
   --shadow-card-focused:

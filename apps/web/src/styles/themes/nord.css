@@ -2,12 +2,9 @@
 
 :root.nord {
   --background: oklch(0.23 0.02 240); /* #2e3440 */
-  --background-50: oklch(0.23 0.02 240 / 0.5);
   --background-80: oklch(0.23 0.02 240 / 0.8);
 
   --foreground: oklch(0.9 0.01 230); /* #eceff4 */
-  --foreground-secondary: oklch(0.75 0.02 230); /* #d8dee9 */
-  --foreground-muted: oklch(0.6 0.03 230); /* #4c566a */
 
   --card: oklch(0.27 0.02 240); /* #3b4252 */
   --card-foreground: oklch(0.9 0.01 230);
@@ -17,8 +14,6 @@
   --primary: oklch(0.7 0.12 220); /* #88c0d0 frost */
   --primary-foreground: oklch(0.23 0.02 240);
 
-  --brand-400: oklch(0.75 0.12 220);
-  --brand-500: oklch(0.7 0.12 220); /* #88c0d0 */
   --brand-600: oklch(0.65 0.14 220); /* #81a1c1 */
 
   --secondary: oklch(0.31 0.02 240); /* #434c5e */
@@ -38,34 +33,12 @@
   --input: oklch(0.27 0.02 240);
   --ring: oklch(0.7 0.12 220);
 
-  --chart-1: oklch(0.7 0.12 220); /* Frost blue */
-  --chart-2: oklch(0.65 0.14 220); /* #81a1c1 */
-  --chart-3: oklch(0.7 0.15 140); /* #a3be8c green */
-  --chart-4: oklch(0.7 0.2 320); /* #b48ead purple */
-  --chart-5: oklch(0.75 0.15 70); /* #ebcb8b yellow */
-
   --sidebar: oklch(0.21 0.02 240);
   --sidebar-foreground: oklch(0.9 0.01 230);
-  --sidebar-primary: oklch(0.7 0.12 220);
-  --sidebar-primary-foreground: oklch(0.23 0.02 240);
-  --sidebar-accent: oklch(0.31 0.02 240);
-  --sidebar-accent-foreground: oklch(0.9 0.01 230);
-  --sidebar-border: oklch(0.35 0.03 240);
-  --sidebar-ring: oklch(0.7 0.12 220);
 
   /* Action button colors - Nord frost blue theme */
-  --action-view: oklch(0.7 0.12 220); /* Frost blue */
-  --action-view-hover: oklch(0.65 0.14 220);
-  --action-followup: oklch(0.65 0.14 220); /* Darker frost */
-  --action-followup-hover: oklch(0.6 0.16 220);
-  --action-commit: oklch(0.7 0.15 140); /* Green */
-  --action-commit-hover: oklch(0.65 0.17 140);
-  --action-verify: oklch(0.7 0.15 140); /* Green */
-  --action-verify-hover: oklch(0.65 0.17 140);
 
   /* Running indicator - Frost blue */
-  --running-indicator: oklch(0.7 0.12 220);
-  --running-indicator-text: oklch(0.75 0.1 220);
 }
 
 /* ========================================
