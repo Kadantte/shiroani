@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createLogger } from '@shiroani/shared';
+import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
 
 const logger = createLogger('BackgroundStore');
 
@@ -81,9 +82,9 @@ function applyBackgroundToDOM(url: string | null, opacity: number, blur: number)
 async function persistBackgroundSettings(settings: BackgroundSettings | null): Promise<void> {
   try {
     if (settings) {
-      await window.electronAPI?.store?.set(BG_STORE_KEY, settings);
+      await electronStoreSet(BG_STORE_KEY, settings);
     } else {
-      await window.electronAPI?.store?.delete(BG_STORE_KEY);
+      await electronStoreDelete(BG_STORE_KEY);
     }
   } catch (err) {
     logger.warn('Failed to persist background settings:', err);
@@ -235,7 +236,7 @@ export const useBackgroundStore = create<BackgroundStore>()(
       restoreBackground: async () => {
         logger.debug('restoreBackground');
         try {
-          const saved = await window.electronAPI?.store?.get<BackgroundSettings>(BG_STORE_KEY);
+          const saved = await electronStoreGet<BackgroundSettings>(BG_STORE_KEY);
           if (!saved || !saved.fileName) {
             set({ backgroundLoaded: true }, undefined, 'background/restore:empty');
             return;

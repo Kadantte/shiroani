@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Bell, Check, X, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -13,6 +13,7 @@ import {
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useElectronSettings } from '@/hooks/useElectronSettings';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
@@ -23,15 +24,53 @@ const LEAD_TIME_OPTIONS = [
   { value: '60', label: '1 godzina' },
 ];
 
+interface NotifFormData {
+  enabled: boolean;
+  leadTime: string;
+  quietHoursEnabled: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+  useSystemSound: boolean;
+}
+
+const defaultNotifData: NotifFormData = {
+  enabled: false,
+  leadTime: '15',
+  quietHoursEnabled: false,
+  quietHoursStart: '23:00',
+  quietHoursEnd: '07:00',
+  useSystemSound: true,
+};
+
 export function NotificationsSection() {
-  const [enabled, setEnabled] = useState(false);
-  const [leadTime, setLeadTime] = useState('15');
-  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
-  const [quietHoursStart, setQuietHoursStart] = useState('23:00');
-  const [quietHoursEnd, setQuietHoursEnd] = useState('07:00');
-  const [useSystemSound, setUseSystemSound] = useState(true);
-  const [saved, setSaved] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const { data, update, loaded, saved, save } = useElectronSettings<NotifFormData>({
+    defaultValue: defaultNotifData,
+    load: useCallback(async () => {
+      const settings = await window.electronAPI?.notifications?.getSettings();
+      if (!settings) return undefined;
+      return {
+        enabled: settings.enabled,
+        leadTime: String(settings.leadTimeMinutes),
+        quietHoursEnabled: settings.quietHours?.enabled ?? false,
+        quietHoursStart: settings.quietHours?.start ?? '23:00',
+        quietHoursEnd: settings.quietHours?.end ?? '07:00',
+        useSystemSound: settings.useSystemSound ?? true,
+      };
+    }, []),
+    save: useCallback(async (d: NotifFormData) => {
+      const settings: Partial<NotificationSettings> = {
+        enabled: d.enabled,
+        leadTimeMinutes: Number(d.leadTime),
+        quietHours: {
+          enabled: d.quietHoursEnabled,
+          start: d.quietHoursStart,
+          end: d.quietHoursEnd,
+        },
+        useSystemSound: d.useSystemSound,
+      };
+      await window.electronAPI?.notifications?.updateSettings(settings);
+    }, []),
+  });
 
   const subscriptions = useNotificationStore(state => state.subscriptions);
   const loadSubscriptions = useNotificationStore(state => state.loadSubscriptions);
@@ -39,45 +78,10 @@ export function NotificationsSection() {
   const unsubscribe = useNotificationStore(state => state.unsubscribe);
   const toggleSubscription = useNotificationStore(state => state.toggleSubscription);
 
-  // Load persisted notification settings on mount
-  useEffect(() => {
-    window.electronAPI?.notifications?.getSettings().then((settings: NotificationSettings) => {
-      if (settings) {
-        setEnabled(settings.enabled);
-        setLeadTime(String(settings.leadTimeMinutes));
-        if (settings.quietHours) {
-          setQuietHoursEnabled(settings.quietHours.enabled);
-          setQuietHoursStart(settings.quietHours.start);
-          setQuietHoursEnd(settings.quietHours.end);
-        }
-        setUseSystemSound(settings.useSystemSound ?? true);
-      }
-      setLoaded(true);
-    });
-  }, []);
-
   // Load subscriptions
   useEffect(() => {
     if (!notifLoaded) loadSubscriptions();
   }, [notifLoaded, loadSubscriptions]);
-
-  const handleSave = async () => {
-    const settings: Partial<NotificationSettings> = {
-      enabled,
-      leadTimeMinutes: Number(leadTime),
-      quietHours: {
-        enabled: quietHoursEnabled,
-        start: quietHoursStart,
-        end: quietHoursEnd,
-      },
-      useSystemSound,
-    };
-
-    await window.electronAPI?.notifications?.updateSettings(settings);
-
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   if (!loaded) return null;
 
@@ -96,7 +100,7 @@ export function NotificationsSection() {
               Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany
             </p>
           </div>
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
+          <Switch checked={data.enabled} onCheckedChange={v => update({ enabled: v })} />
         </div>
 
         <Separator className="bg-border/50" />
@@ -107,7 +111,11 @@ export function NotificationsSection() {
           <p className="text-xs text-muted-foreground mb-2">
             Ile minut przed emisją wysłać powiadomienie
           </p>
-          <Select value={leadTime} onValueChange={setLeadTime} disabled={!enabled}>
+          <Select
+            value={data.leadTime}
+            onValueChange={v => update({ leadTime: v })}
+            disabled={!data.enabled}
+          >
             <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
               <SelectValue />
             </SelectTrigger>
@@ -133,19 +141,19 @@ export function NotificationsSection() {
               </p>
             </div>
             <Switch
-              checked={quietHoursEnabled}
-              onCheckedChange={setQuietHoursEnabled}
-              disabled={!enabled}
+              checked={data.quietHoursEnabled}
+              onCheckedChange={v => update({ quietHoursEnabled: v })}
+              disabled={!data.enabled}
             />
           </div>
-          {quietHoursEnabled && enabled && (
+          {data.quietHoursEnabled && data.enabled && (
             <div className="flex items-center gap-3 mt-2">
               <div className="flex items-center gap-1.5">
                 <label className="text-xs text-muted-foreground">Od</label>
                 <input
                   type="time"
-                  value={quietHoursStart}
-                  onChange={e => setQuietHoursStart(e.target.value)}
+                  value={data.quietHoursStart}
+                  onChange={e => update({ quietHoursStart: e.target.value })}
                   className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
                 />
               </div>
@@ -153,8 +161,8 @@ export function NotificationsSection() {
                 <label className="text-xs text-muted-foreground">Do</label>
                 <input
                   type="time"
-                  value={quietHoursEnd}
-                  onChange={e => setQuietHoursEnd(e.target.value)}
+                  value={data.quietHoursEnd}
+                  onChange={e => update({ quietHoursEnd: e.target.value })}
                   className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
                 />
               </div>
@@ -173,14 +181,14 @@ export function NotificationsSection() {
             </p>
           </div>
           <Switch
-            checked={useSystemSound}
-            onCheckedChange={setUseSystemSound}
-            disabled={!enabled}
+            checked={data.useSystemSound}
+            onCheckedChange={v => update({ useSystemSound: v })}
+            disabled={!data.enabled}
           />
         </div>
 
         <div className="pt-2 border-t border-border/30">
-          <Button size="sm" onClick={handleSave}>
+          <Button size="sm" onClick={save}>
             {saved ? <Check className="w-4 h-4" /> : null}
             {saved ? 'Zapisano' : 'Zapisz'}
           </Button>

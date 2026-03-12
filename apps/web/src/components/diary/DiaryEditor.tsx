@@ -3,10 +3,12 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { X, Pin, Bold, Italic, Strikethrough, Heading2, Check } from 'lucide-react';
+import { X, Pin, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { EditorToolbar } from './EditorToolbar';
+import { BubbleMenuBar } from './BubbleMenuBar';
+import { GradientPicker } from './GradientPicker';
 import type {
   DiaryEntry,
   DiaryCreatePayload,
@@ -151,31 +153,7 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
         </div>
 
         {/* Gradient picker */}
-        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border/30 bg-card/50">
-          <span className="text-2xs text-muted-foreground/60 mr-1">Okładka:</span>
-          {Object.entries(DIARY_GRADIENTS).map(([key, { label, css }]) => (
-            <button
-              key={key}
-              onClick={() => setCoverGradient(key as DiaryGradient)}
-              title={label}
-              className={cn(
-                'w-5 h-5 rounded-full border-2 transition-all duration-150 hover:scale-110',
-                coverGradient === key
-                  ? 'border-primary ring-2 ring-primary/30 scale-110'
-                  : 'border-transparent hover:border-foreground/20'
-              )}
-              style={{ background: css }}
-            />
-          ))}
-          {coverGradient && (
-            <button
-              onClick={() => setCoverGradient(undefined)}
-              className="ml-1 text-2xs text-muted-foreground/50 hover:text-foreground/70 transition-colors"
-            >
-              Usuń
-            </button>
-          )}
-        </div>
+        <GradientPicker value={coverGradient} onChange={setCoverGradient} />
 
         {/* Title input */}
         <div className="px-5 pt-3">
@@ -244,53 +222,7 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
         <div className="flex-1 overflow-y-auto">
           {editor && (
             <BubbleMenu editor={editor}>
-              <div className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
-                <button
-                  onClick={() => editor.chain().focus().toggleBold().run()}
-                  className={cn(
-                    'rounded px-1.5 py-1',
-                    editor.isActive('bold')
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                  )}
-                >
-                  <Bold className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleItalic().run()}
-                  className={cn(
-                    'rounded px-1.5 py-1',
-                    editor.isActive('italic')
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                  )}
-                >
-                  <Italic className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleStrike().run()}
-                  className={cn(
-                    'rounded px-1.5 py-1',
-                    editor.isActive('strike')
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                  )}
-                >
-                  <Strikethrough className="w-3.5 h-3.5" />
-                </button>
-                <div className="w-px h-4 bg-border/50 mx-0.5" />
-                <button
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  className={cn(
-                    'rounded px-1.5 py-1',
-                    editor.isActive('heading', { level: 2 })
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                  )}
-                >
-                  <Heading2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <BubbleMenuBar editor={editor} />
             </BubbleMenu>
           )}
           <EditorContent editor={editor} />

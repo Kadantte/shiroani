@@ -1,11 +1,11 @@
-import { useMemo, useCallback } from 'react';
-import { Calendar, Clock, Bell, BellRing } from 'lucide-react';
+import { useMemo } from 'react';
+import { Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_SHORT } from '@/lib/constants';
 import { formatTime, getAnimeTitle, getCoverUrl, isToday } from './schedule-utils';
+import { formatScore } from '@/lib/anime-utils';
 import { DayColumnHeader } from './DayColumnHeader';
-import { TooltipButton } from '@/components/ui/tooltip-button';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { SubscribeBellButton } from './SubscribeBellButton';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface WeeklyViewProps {
@@ -16,22 +16,6 @@ export interface WeeklyViewProps {
 }
 
 export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewProps) {
-  const subscribedIds = useNotificationStore(state => state.subscribedIds);
-  const subscribe = useNotificationStore(state => state.subscribe);
-  const unsubscribe = useNotificationStore(state => state.unsubscribe);
-
-  const handleBellClick = useCallback(
-    (e: React.MouseEvent, anime: AiringAnime) => {
-      e.stopPropagation();
-      if (subscribedIds.has(anime.media.id)) {
-        unsubscribe(anime.media.id);
-      } else {
-        subscribe(anime);
-      }
-    },
-    [subscribedIds, subscribe, unsubscribe]
-  );
-
   const weekData = useMemo(() => {
     const map = new Map<string, AiringAnime[]>();
     for (const day of weekDays) {
@@ -67,7 +51,6 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                 {dayEntries.map((anime: AiringAnime) => {
                   const title = getAnimeTitle(anime.media);
                   const coverUrl = getCoverUrl(anime.media);
-                  const isSub = subscribedIds.has(anime.media.id);
 
                   return (
                     <div
@@ -97,32 +80,18 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                           </div>
                           {anime.media.averageScore != null && (
                             <span className="text-2xs font-semibold text-primary/80 tabular-nums">
-                              {(anime.media.averageScore / 10).toFixed(1)}
+                              {formatScore(anime.media.averageScore)}
                             </span>
                           )}
                         </div>
                       </div>
 
                       {/* Bell icon overlay - top right */}
-                      {anime.media.id && (
-                        <TooltipButton
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            'absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity',
-                            isSub && 'opacity-100'
-                          )}
-                          tooltip={isSub ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
-                          tooltipSide="top"
-                          onClick={e => handleBellClick(e, anime)}
-                        >
-                          {isSub ? (
-                            <BellRing className="w-3 h-3 text-primary" />
-                          ) : (
-                            <Bell className="w-3 h-3" />
-                          )}
-                        </TooltipButton>
-                      )}
+                      <SubscribeBellButton
+                        anime={anime}
+                        className="absolute top-1 right-1 w-6 h-6"
+                        iconClassName="w-3 h-3"
+                      />
                     </div>
                   );
                 })}

@@ -58,7 +58,7 @@ export const MOOD_OPTIONS: {
   { value: 'terrible', label: 'Okropnie', Icon: Frown, color: 'text-red-400' },
 ];
 
-export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+import { formatDate as sharedFormatDate } from '@shiroani/shared';
+
+/** Format date in short Polish format for diary entries (e.g. "15 sty 2024") */
+export const formatDate = (dateStr: string): string => sharedFormatDate(dateStr, 'short');

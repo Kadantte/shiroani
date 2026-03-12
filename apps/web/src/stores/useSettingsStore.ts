@@ -18,8 +18,6 @@ interface SettingsState {
   theme: Theme;
   /** Preview theme (for hover preview) */
   previewTheme: Theme | null;
-  /** Whether adblock is enabled for embedded browser */
-  adblockEnabled: boolean;
   /** Preferred language for anime titles/subtitles */
   preferredLanguage: 'japanese' | 'english' | 'romaji';
 }
@@ -32,8 +30,6 @@ interface SettingsActions {
   setTheme: (theme: Theme) => void;
   /** Set preview theme (for hover) */
   setPreviewTheme: (theme: Theme | null) => void;
-  /** Toggle adblock */
-  setAdblockEnabled: (enabled: boolean) => void;
   /** Set preferred language */
   setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => void;
   /** Initialize settings (theme + background restore) */
@@ -140,7 +136,6 @@ export const useSettingsStore = create<SettingsStore>()(
         // Initial state
         theme: initialTheme,
         previewTheme: null,
-        adblockEnabled: true,
         preferredLanguage: 'romaji',
 
         // Actions
@@ -161,11 +156,6 @@ export const useSettingsStore = create<SettingsStore>()(
             // Restore actual theme when preview ends
             applyThemeToDOM(state.theme);
           }
-        },
-
-        setAdblockEnabled: (enabled: boolean) => {
-          logger.debug('setAdblockEnabled', enabled);
-          set({ adblockEnabled: enabled }, undefined, 'settings/setAdblockEnabled');
         },
 
         setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => {

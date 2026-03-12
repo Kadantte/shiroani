@@ -1,7 +1,7 @@
 import { IS_ELECTRON } from '@/lib/platform';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
-import type { DiscordPresenceActivity } from '@shiroani/shared';
+import type { BrowserTab, DiscordPresenceActivity } from '@shiroani/shared';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -114,17 +114,28 @@ function detectYoutube(parsed: URL, pageTitle: string): AnimeDetection | null {
 /**
  * Checks the given tab for anime content and updates Discord Rich Presence.
  * Should be called after tab URL or title changes.
+ *
+ * Parameters are optional for backward compatibility — when omitted, values
+ * are read from useBrowserStore / useAppStore. New callers should prefer
+ * passing data explicitly to avoid coupling a lib utility to store internals.
  */
-export function updateAnimePresence(tabId: string): void {
+export function updateAnimePresence(
+  tabId: string,
+  tabs?: BrowserTab[],
+  activeTabId?: string | null,
+  activeView?: string
+): void {
   if (!IS_ELECTRON) return;
 
-  const { tabs, activeTabId } = useBrowserStore.getState();
-  const { activeView } = useAppStore.getState();
+  const _tabs = tabs ?? useBrowserStore.getState().tabs;
+  const _activeTabId =
+    activeTabId !== undefined ? activeTabId : useBrowserStore.getState().activeTabId;
+  const _activeView = activeView ?? useAppStore.getState().activeView;
 
   // Only update for the active tab while the browser view is visible
-  if (tabId !== activeTabId || activeView !== 'browser') return;
+  if (tabId !== _activeTabId || _activeView !== 'browser') return;
 
-  const tab = tabs.find(t => t.id === tabId);
+  const tab = _tabs.find(t => t.id === tabId);
   if (!tab) return;
 
   const detection = detectAnimeFromUrl(tab.url, tab.title);

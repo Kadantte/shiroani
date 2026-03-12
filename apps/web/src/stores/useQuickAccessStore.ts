@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { createLogger, isNewTabUrl } from '@shiroani/shared';
 import type { QuickAccessSite, FrequentSite } from '@shiroani/shared';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
+import { createDebouncedPersist, electronStoreGet } from '@/lib/electron-store';
 
 const logger = createLogger('QuickAccessStore');
 
@@ -36,9 +37,8 @@ interface QuickAccessActions {
 
 type QuickAccessStore = QuickAccessState & QuickAccessActions;
 
-let sitePersistTimer: ReturnType<typeof setTimeout> | null = null;
-let frequentPersistTimer: ReturnType<typeof setTimeout> | null = null;
-const PERSIST_DEBOUNCE_MS = 500;
+const debouncedPersistSites = createDebouncedPersist(SITES_STORE_KEY);
+const debouncedPersistFrequent = createDebouncedPersist(FREQUENT_STORE_KEY);
 
 export const useQuickAccessStore = create<QuickAccessStore>()(
   devtools(
@@ -152,12 +152,12 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
 
       loadSites: async () => {
         try {
-          const saved = await window.electronAPI?.store?.get<{
+          const saved = await electronStoreGet<{
             sites: QuickAccessSite[];
             hiddenPredefinedIds: string[];
           }>(SITES_STORE_KEY);
 
-          const frequent = await window.electronAPI?.store?.get<FrequentSite[]>(FREQUENT_STORE_KEY);
+          const frequent = await electronStoreGet<FrequentSite[]>(FREQUENT_STORE_KEY);
 
           set(
             {
@@ -178,21 +178,15 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
       },
 
       persistSites: () => {
-        if (sitePersistTimer) clearTimeout(sitePersistTimer);
-        sitePersistTimer = setTimeout(() => {
-          const { sites, hiddenPredefinedIds } = get();
-          window.electronAPI?.store?.set(SITES_STORE_KEY, { sites, hiddenPredefinedIds });
-          logger.debug('Persisted quick access sites');
-        }, PERSIST_DEBOUNCE_MS);
+        const { sites, hiddenPredefinedIds } = get();
+        debouncedPersistSites({ sites, hiddenPredefinedIds });
+        logger.debug('Persisted quick access sites');
       },
 
       persistFrequent: () => {
-        if (frequentPersistTimer) clearTimeout(frequentPersistTimer);
-        frequentPersistTimer = setTimeout(() => {
-          const { frequentSites } = get();
-          window.electronAPI?.store?.set(FREQUENT_STORE_KEY, frequentSites);
-          logger.debug('Persisted frequent sites');
-        }, PERSIST_DEBOUNCE_MS);
+        const { frequentSites } = get();
+        debouncedPersistFrequent(frequentSites);
+        logger.debug('Persisted frequent sites');
       },
 
       getVisibleSites: () => {

@@ -1,22 +1,9 @@
 import { useState, useCallback } from 'react';
-import {
-  Copy,
-  Download,
-  Image,
-  Palette,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Sparkles,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { Download, Palette, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
 import {
   animeDarkThemes,
@@ -29,21 +16,13 @@ import { removeCustomThemeCSS } from '@/lib/custom-theme-css';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
 import { SettingsCard } from '@/components/settings/SettingsCard';
+import { BackgroundSettings } from '@/components/settings/BackgroundSettings';
+import { ThemeGrid } from '@/components/settings/ThemeGrid';
 import { cn } from '@/lib/utils';
-import type { ThemeOption } from '@/lib/theme';
 import type { Theme } from '@shiroani/shared';
 
 export function AppearanceSection() {
   const { theme, setTheme, setPreviewTheme } = useSettingsStore();
-  const {
-    customBackground,
-    backgroundOpacity,
-    backgroundBlur,
-    pickBackground,
-    removeBackground,
-    setBackgroundOpacity,
-    setBackgroundBlur,
-  } = useBackgroundStore();
   const customThemes = useCustomThemeStore(s => s.customThemes);
   const deleteTheme = useCustomThemeStore(s => s.deleteTheme);
   const exportTheme = useCustomThemeStore(s => s.exportTheme);
@@ -88,76 +67,12 @@ export function AppearanceSection() {
   // Build custom theme options for rendering
   const customThemeOptions = getAllThemeOptions(customThemes).filter(t => t.isCustom);
 
+  const clearPreview = useCallback(() => setPreviewTheme(null), [setPreviewTheme]);
+
   return (
     <div className="space-y-4">
-      {/* Custom background — shown first */}
-      <SettingsCard icon={Image} title="Tło" subtitle="Ustaw własne tło aplikacji (obraz lub GIF)">
-        {customBackground && (
-          <div className="rounded-xl overflow-hidden border border-border-glass h-24">
-            <img src={customBackground} alt="Podgląd tła" className="w-full h-full object-cover" />
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border-glass"
-            onClick={pickBackground}
-          >
-            <Image className="w-4 h-4" />
-            Wybierz obraz
-          </Button>
-          {customBackground && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="border-border-glass"
-              onClick={removeBackground}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Usuń tło
-            </Button>
-          )}
-        </div>
-
-        {/* Opacity & blur sliders - only shown when a background is set */}
-        {customBackground && (
-          <div className="mt-2 space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-muted-foreground">Przezroczystość</label>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {Math.round(backgroundOpacity * 100)}%
-                </span>
-              </div>
-              <Slider
-                value={[backgroundOpacity]}
-                onValueChange={([v]) => setBackgroundOpacity(v)}
-                min={0.02}
-                max={1}
-                step={0.01}
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-muted-foreground">Rozmycie</label>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {backgroundBlur}px
-                </span>
-              </div>
-              <Slider
-                value={[backgroundBlur]}
-                onValueChange={([v]) => setBackgroundBlur(v)}
-                min={0}
-                max={20}
-                step={1}
-              />
-            </div>
-          </div>
-        )}
-      </SettingsCard>
+      {/* Custom background */}
+      <BackgroundSettings />
 
       {/* Theme picker */}
       <SettingsCard icon={Palette} title="Motyw" subtitle="Wybierz motyw kolorystyczny aplikacji">
@@ -187,7 +102,7 @@ export function AppearanceSection() {
                 isActive={theme === opt.value}
                 onSelect={setTheme}
                 onPreview={setPreviewTheme}
-                onPreviewEnd={() => setPreviewTheme(null)}
+                onPreviewEnd={clearPreview}
                 onEdit={() => handleEditTheme(opt.value)}
                 onDelete={() => handleDeleteTheme(opt.value)}
                 onExport={() => exportTheme(opt.value)}
@@ -221,41 +136,25 @@ export function AppearanceSection() {
             Anime
           </h4>
 
-          {/* Anime dark */}
-          <div className="mb-3">
-            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Ciemne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
-              {animeDarkThemes.map(opt => (
-                <BuiltInThemeSwatchWrapper
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                  onClone={() => handleCloneTheme(opt.value)}
-                />
-              ))}
-            </div>
-          </div>
+          <ThemeGrid
+            themes={animeDarkThemes}
+            label="Ciemne"
+            activeTheme={theme}
+            onSelect={setTheme}
+            onPreview={setPreviewTheme}
+            onPreviewEnd={clearPreview}
+            onClone={handleCloneTheme}
+          />
 
-          {/* Anime light */}
-          <div>
-            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Jasne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
-              {animeLightThemes.map(opt => (
-                <BuiltInThemeSwatchWrapper
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                  onClone={() => handleCloneTheme(opt.value)}
-                />
-              ))}
-            </div>
-          </div>
+          <ThemeGrid
+            themes={animeLightThemes}
+            label="Jasne"
+            activeTheme={theme}
+            onSelect={setTheme}
+            onPreview={setPreviewTheme}
+            onPreviewEnd={clearPreview}
+            onClone={handleCloneTheme}
+          />
         </div>
 
         <Separator className="bg-border/50" />
@@ -267,41 +166,25 @@ export function AppearanceSection() {
             Klasyczne
           </h4>
 
-          {/* Classic dark */}
-          <div className="mb-3">
-            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Ciemne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
-              {classicDarkThemes.map(opt => (
-                <BuiltInThemeSwatchWrapper
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                  onClone={() => handleCloneTheme(opt.value)}
-                />
-              ))}
-            </div>
-          </div>
+          <ThemeGrid
+            themes={classicDarkThemes}
+            label="Ciemne"
+            activeTheme={theme}
+            onSelect={setTheme}
+            onPreview={setPreviewTheme}
+            onPreviewEnd={clearPreview}
+            onClone={handleCloneTheme}
+          />
 
-          {/* Classic light */}
-          <div>
-            <p className="text-2xs text-muted-foreground mb-2 ml-0.5">Jasne</p>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
-              {classicLightThemes.map(opt => (
-                <BuiltInThemeSwatchWrapper
-                  key={opt.value}
-                  option={opt}
-                  isActive={theme === opt.value}
-                  onSelect={setTheme}
-                  onPreview={setPreviewTheme}
-                  onPreviewEnd={() => setPreviewTheme(null)}
-                  onClone={() => handleCloneTheme(opt.value)}
-                />
-              ))}
-            </div>
-          </div>
+          <ThemeGrid
+            themes={classicLightThemes}
+            label="Jasne"
+            activeTheme={theme}
+            onSelect={setTheme}
+            onPreview={setPreviewTheme}
+            onPreviewEnd={clearPreview}
+            onClone={handleCloneTheme}
+          />
         </div>
       </SettingsCard>
 
@@ -384,49 +267,6 @@ function CustomThemeSwatchWrapper({
           aria-label="Usuń motyw"
         >
           <Trash2 className="w-2.5 h-2.5 text-destructive" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Built-in theme swatch with clone overlay ──────────────────────
-
-function BuiltInThemeSwatchWrapper({
-  option,
-  isActive,
-  onSelect,
-  onPreview,
-  onPreviewEnd,
-  onClone,
-}: {
-  option: ThemeOption;
-  isActive: boolean;
-  onSelect: (theme: Theme) => void;
-  onPreview: (theme: Theme) => void;
-  onPreviewEnd: () => void;
-  onClone: () => void;
-}) {
-  return (
-    <div className="relative group">
-      <ThemeSwatch
-        option={option}
-        isActive={isActive}
-        onSelect={onSelect}
-        onPreview={onPreview}
-        onPreviewEnd={onPreviewEnd}
-      />
-      {/* Hover-reveal clone button */}
-      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            onClone();
-          }}
-          className="w-5 h-5 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors"
-          aria-label="Klonuj motyw"
-        >
-          <Copy className="w-2.5 h-2.5 text-foreground" />
         </button>
       </div>
     </div>

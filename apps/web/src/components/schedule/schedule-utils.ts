@@ -1,16 +1,11 @@
-import { toLocalDate } from '@shiroani/shared';
+import { toLocalDate, formatDate } from '@shiroani/shared';
 
+export { formatDate };
 export { getAnimeTitle, getCoverUrl } from '@/lib/anime-utils';
 
 export function formatTime(timestamp: number): string {
   const d = new Date(timestamp * 1000);
   return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-}
-
-export function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function addDays(dateStr: string, days: number): string {

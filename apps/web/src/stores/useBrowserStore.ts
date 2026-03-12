@@ -5,6 +5,7 @@ import type { BrowserTab } from '@shiroani/shared';
 import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
 import { normalizeUrl } from '@/lib/url-utils';
+import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
 
 const logger = createLogger('BrowserStore');
 
@@ -193,7 +194,7 @@ export const useBrowserStore = create<BrowserStore>()(
           const filtered = tabs.filter(t => t.url && t.url !== 'about:blank');
 
           if (filtered.length === 0) {
-            window.electronAPI?.store?.delete('browser-tabs');
+            electronStoreDelete('browser-tabs');
             return;
           }
 
@@ -204,14 +205,14 @@ export const useBrowserStore = create<BrowserStore>()(
             activeIndex: Math.max(0, activeIndex),
           };
 
-          window.electronAPI?.store?.set('browser-tabs', state);
+          electronStoreSet('browser-tabs', state);
           logger.debug(`Persisted ${filtered.length} tab(s)`);
         }, PERSIST_DEBOUNCE_MS);
       },
 
       restoreTabs: async () => {
         // Restore adblock setting
-        const settings = await window.electronAPI?.store?.get<{
+        const settings = await electronStoreGet<{
           adblockEnabled?: boolean;
         }>('browser-settings');
 
@@ -222,7 +223,7 @@ export const useBrowserStore = create<BrowserStore>()(
         }
 
         // Restore tabs
-        const saved = await window.electronAPI?.store?.get<{
+        const saved = await electronStoreGet<{
           tabs: Array<{ url: string; title: string }>;
           activeIndex: number;
         }>('browser-tabs');

@@ -1,9 +1,8 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { TooltipButton } from '@/components/ui/tooltip-button';
-import { Bell, BellRing } from 'lucide-react';
 import { formatTime, getAnimeTitle, getCoverUrl } from './schedule-utils';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { formatEpisodeProgress, formatScore } from '@/lib/anime-utils';
+import { SubscribeBellButton } from './SubscribeBellButton';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface AiringEntryProps {
@@ -14,20 +13,6 @@ export interface AiringEntryProps {
 export function AiringEntry({ anime }: AiringEntryProps) {
   const title = getAnimeTitle(anime.media);
   const coverUrl = getCoverUrl(anime.media);
-  const mediaId = anime.media.id;
-
-  const isSubscribed = useNotificationStore(state => state.subscribedIds.has(mediaId));
-  const subscribe = useNotificationStore(state => state.subscribe);
-  const unsubscribe = useNotificationStore(state => state.unsubscribe);
-
-  const handleBellClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isSubscribed) {
-      unsubscribe(mediaId);
-    } else {
-      subscribe(anime);
-    }
-  };
 
   return (
     <div
@@ -62,8 +47,7 @@ export function AiringEntry({ anime }: AiringEntryProps) {
         <h4 className="text-sm font-medium truncate">{title}</h4>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs text-muted-foreground">
-            Odc. {anime.episode}
-            {anime.media.episodes ? `/${anime.media.episodes}` : ''}
+            {formatEpisodeProgress(anime.episode, anime.media.episodes)}
           </span>
           {anime.media.format && (
             <Badge variant="secondary" className="text-2xs py-0 h-4 rounded-full">
@@ -85,30 +69,12 @@ export function AiringEntry({ anime }: AiringEntryProps) {
       {/* Score */}
       {anime.media.averageScore != null && (
         <span className="text-xs font-semibold text-primary/80 shrink-0 tabular-nums">
-          {(anime.media.averageScore / 10).toFixed(1)}
+          {formatScore(anime.media.averageScore)}
         </span>
       )}
 
       {/* Bell subscription button */}
-      {mediaId && (
-        <TooltipButton
-          variant="ghost"
-          size="icon"
-          className={cn(
-            'shrink-0 w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity',
-            isSubscribed && 'opacity-100'
-          )}
-          tooltip={isSubscribed ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
-          tooltipSide="left"
-          onClick={handleBellClick}
-        >
-          {isSubscribed ? (
-            <BellRing className="w-3.5 h-3.5 text-primary" />
-          ) : (
-            <Bell className="w-3.5 h-3.5" />
-          )}
-        </TooltipButton>
-      )}
+      <SubscribeBellButton anime={anime} className="shrink-0 w-7 h-7" tooltipSide="left" />
     </div>
   );
 }

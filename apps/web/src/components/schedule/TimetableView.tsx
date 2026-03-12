@@ -1,11 +1,11 @@
-import { useMemo, useCallback } from 'react';
-import { Calendar, Clock, Bell, BellRing } from 'lucide-react';
+import { useMemo } from 'react';
+import { Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_FULL } from '@/lib/constants';
 import { formatTime, getAnimeTitle, isToday } from './schedule-utils';
+import { formatEpisodeProgress, formatScore } from '@/lib/anime-utils';
 import { DayColumnHeader } from './DayColumnHeader';
-import { TooltipButton } from '@/components/ui/tooltip-button';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { SubscribeBellButton } from './SubscribeBellButton';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface TimetableViewProps {
@@ -16,22 +16,6 @@ export interface TimetableViewProps {
 }
 
 export function TimetableView({ weekDays, getEntriesForDay, schedule }: TimetableViewProps) {
-  const subscribedIds = useNotificationStore(state => state.subscribedIds);
-  const subscribe = useNotificationStore(state => state.subscribe);
-  const unsubscribe = useNotificationStore(state => state.unsubscribe);
-
-  const handleBellClick = useCallback(
-    (e: React.MouseEvent, anime: AiringAnime) => {
-      e.stopPropagation();
-      if (subscribedIds.has(anime.media.id)) {
-        unsubscribe(anime.media.id);
-      } else {
-        subscribe(anime);
-      }
-    },
-    [subscribedIds, subscribe, unsubscribe]
-  );
-
   const weekData = useMemo(() => {
     const map = new Map<string, AiringAnime[]>();
     for (const day of weekDays) {
@@ -68,7 +52,6 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                   const title = getAnimeTitle(anime.media);
                   // Timetable prefers large cover for the card layout
                   const coverUrl = anime.media.coverImage.large || anime.media.coverImage.medium;
-                  const isSub = subscribedIds.has(anime.media.id);
 
                   return (
                     <div
@@ -83,8 +66,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                       {/* Info strip -- episode & time */}
                       <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/40 backdrop-blur-sm text-2xs">
                         <span className="font-medium text-foreground/80">
-                          Odc. {anime.episode}
-                          {anime.media.episodes ? `/${anime.media.episodes}` : ''}
+                          {formatEpisodeProgress(anime.episode, anime.media.episodes)}
                         </span>
                         <div className="flex items-center gap-1 text-muted-foreground/70">
                           <Clock className="w-3 h-3" />
@@ -108,26 +90,10 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                         )}
 
                         {/* Bell icon overlay - top right */}
-                        {anime.media.id && (
-                          <TooltipButton
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              'absolute top-1 right-1 w-7 h-7 bg-background/60 backdrop-blur-sm',
-                              'opacity-0 group-hover:opacity-100 transition-opacity',
-                              isSub && 'opacity-100'
-                            )}
-                            tooltip={isSub ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
-                            tooltipSide="top"
-                            onClick={e => handleBellClick(e, anime)}
-                          >
-                            {isSub ? (
-                              <BellRing className="w-3.5 h-3.5 text-primary" />
-                            ) : (
-                              <Bell className="w-3.5 h-3.5" />
-                            )}
-                          </TooltipButton>
-                        )}
+                        <SubscribeBellButton
+                          anime={anime}
+                          className="absolute top-1 right-1 w-7 h-7 bg-background/60 backdrop-blur-sm"
+                        />
 
                         {/* Title overlay at bottom */}
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/60 to-transparent p-2.5 pt-8">
@@ -136,7 +102,7 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                           </p>
                           {anime.media.averageScore != null && (
                             <span className="text-2xs font-semibold text-primary/80 tabular-nums mt-0.5 inline-block">
-                              {(anime.media.averageScore / 10).toFixed(1)}
+                              {formatScore(anime.media.averageScore)}
                             </span>
                           )}
                         </div>

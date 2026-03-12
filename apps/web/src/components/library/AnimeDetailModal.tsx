@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -22,10 +21,12 @@ import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
-import { useAppStore } from '@/stores/useAppStore';
 import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
 import { STATUS_OPTIONS } from '@/lib/constants';
+import { useAnimeDetailForm } from '@/hooks/useAnimeDetailForm';
+import { useNavigateToBrowser } from '@/hooks/useNavigateToBrowser';
+import { SliderInputField } from './SliderInputField';
 
 interface AnimeDetailModalProps {
   entry: AnimeEntry | null;
@@ -35,37 +36,26 @@ interface AnimeDetailModalProps {
 
 export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModalProps) {
   const { updateEntry, removeFromLibrary } = useLibraryStore();
-  const { openTab } = useBrowserStore();
-  const navigateTo = useAppStore(s => s.navigateTo);
+  const navigateToBrowser = useNavigateToBrowser();
 
-  const [status, setStatus] = useState<AnimeStatus>('watching');
-  const [currentEpisode, setCurrentEpisode] = useState(0);
-  const [score, setScore] = useState(0);
-  const [notes, setNotes] = useState('');
-  const [resumeUrl, setResumeUrl] = useState('');
-  const [anilistId, setAnilistId] = useState<string>('');
+  const {
+    status,
+    setStatus,
+    currentEpisode,
+    setCurrentEpisode,
+    score,
+    setScore,
+    notes,
+    setNotes,
+    resumeUrl,
+    setResumeUrl,
+    anilistId,
+    setAnilistId,
+  } = useAnimeDetailForm(entry);
+
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Sync form state when entry changes
-  useEffect(() => {
-    if (entry) {
-      setStatus(entry.status);
-      setCurrentEpisode(entry.currentEpisode);
-      setScore(entry.score ?? 0);
-      setNotes(entry.notes ?? '');
-      setResumeUrl(entry.resumeUrl ?? '');
-      setAnilistId(entry.anilistId ? String(entry.anilistId) : '');
-    }
-  }, [entry]);
-
   const isCompleted = status === 'completed' && !!entry?.episodes && entry.episodes > 0;
-
-  // Auto-set current episode to total when status is completed
-  useEffect(() => {
-    if (status === 'completed' && entry?.episodes && entry.episodes > 0) {
-      setCurrentEpisode(entry.episodes);
-    }
-  }, [status, entry?.episodes]);
 
   const handleSave = useCallback(() => {
     if (!entry) return;
@@ -100,13 +90,12 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
   const handleOpenInBrowser = useCallback(() => {
     if (entry?.resumeUrl) {
-      openTab(entry.resumeUrl);
+      navigateToBrowser(entry.resumeUrl);
     } else {
-      openTab();
+      navigateToBrowser();
     }
     onOpenChange(false);
-    navigateTo('browser');
-  }, [entry, openTab, onOpenChange, navigateTo]);
+  }, [entry, navigateToBrowser, onOpenChange]);
 
   const handleUpdateUrl = useCallback(() => {
     if (!entry) return;
@@ -194,54 +183,24 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
           </div>
 
           {/* Progress */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">
-                Postęp: {currentEpisode} / {entry.episodes ?? '?'} odcinków
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={maxEpisodes}
-                value={currentEpisode}
-                onChange={e =>
-                  setCurrentEpisode(
-                    Math.max(0, Math.min(maxEpisodes, parseInt(e.target.value) || 0))
-                  )
-                }
-                className="w-16 h-7 text-xs text-center"
-                disabled={isCompleted}
-              />
-            </div>
-            {entry.episodes && entry.episodes > 0 && (
-              <Slider
-                value={[currentEpisode]}
-                onValueChange={v => setCurrentEpisode(v[0])}
-                min={0}
-                max={entry.episodes}
-                step={1}
-                disabled={isCompleted}
-              />
-            )}
-          </div>
+          <SliderInputField
+            label={`Postęp: ${currentEpisode} / ${entry.episodes ?? '?'} odcinków`}
+            value={currentEpisode}
+            onChange={setCurrentEpisode}
+            min={0}
+            max={maxEpisodes}
+            showSlider={!!entry.episodes && entry.episodes > 0}
+            disabled={isCompleted}
+          />
 
           {/* Score */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">
-                Ocena: {score > 0 ? `${score}/10` : 'Brak'}
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={10}
-                value={score}
-                onChange={e => setScore(Math.max(0, Math.min(10, parseInt(e.target.value) || 0)))}
-                className="w-16 h-7 text-xs text-center"
-              />
-            </div>
-            <Slider value={[score]} onValueChange={v => setScore(v[0])} min={0} max={10} step={1} />
-          </div>
+          <SliderInputField
+            label={score > 0 ? `Ocena: ${score}/10` : 'Ocena: Brak'}
+            value={score}
+            onChange={setScore}
+            min={0}
+            max={10}
+          />
 
           {/* Notes */}
           <div className="space-y-1.5">

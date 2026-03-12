@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
+import { toLocalDate } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -33,9 +34,7 @@ export function ScheduleView() {
 
   const navigateToday = useCallback(() => {
     const today = new Date();
-    selectDay(
-      `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    );
+    selectDay(toLocalDate(today));
   }, [selectDay]);
 
   const todayEntries = useMemo(() => {

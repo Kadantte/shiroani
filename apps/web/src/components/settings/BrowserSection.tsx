@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { Check, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useElectronSettings } from '@/hooks/useElectronSettings';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
 const BROWSER_SETTINGS_KEY = 'browser-settings';
@@ -12,35 +13,28 @@ interface BrowserSettings {
 }
 
 export function BrowserSection() {
-  const { adblockEnabled, setAdblockEnabled } = useSettingsStore();
-  const [saved, setSaved] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const setStoreAdblock = useBrowserStore(state => state.setAdblockEnabled);
 
-  // Load persisted browser settings on mount
-  useEffect(() => {
-    window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY).then(settings => {
-      if (settings) {
-        if (typeof settings.adblockEnabled === 'boolean') {
-          setAdblockEnabled(settings.adblockEnabled);
-        }
+  const { data, update, loaded, saved, save } = useElectronSettings<BrowserSettings>({
+    defaultValue: { adblockEnabled: true },
+    load: useCallback(async () => {
+      const settings = await window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY);
+      if (settings && typeof settings.adblockEnabled === 'boolean') {
+        setStoreAdblock(settings.adblockEnabled);
+        return settings;
       }
-      setLoaded(true);
-    });
-  }, [setAdblockEnabled]);
-
-  const handleSave = async () => {
-    const settings: BrowserSettings = {
-      adblockEnabled,
-    };
-
-    await window.electronAPI?.store?.set(BROWSER_SETTINGS_KEY, settings);
-
-    // Toggle adblock on the actual browser session
-    window.electronAPI?.browser?.toggleAdblock(settings.adblockEnabled);
-
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+      return undefined;
+    }, [setStoreAdblock]),
+    save: useCallback(
+      async (d: BrowserSettings) => {
+        await window.electronAPI?.store?.set(BROWSER_SETTINGS_KEY, d);
+        // Sync to browser store and toggle adblock on the actual browser session
+        setStoreAdblock(d.adblockEnabled);
+        window.electronAPI?.browser?.toggleAdblock(d.adblockEnabled);
+      },
+      [setStoreAdblock]
+    ),
+  });
 
   if (!loaded) return null;
 
@@ -59,7 +53,10 @@ export function BrowserSection() {
               Blokuj reklamy w wbudowanej przegladarce
             </p>
           </div>
-          <Switch checked={adblockEnabled} onCheckedChange={setAdblockEnabled} />
+          <Switch
+            checked={data.adblockEnabled}
+            onCheckedChange={v => update({ adblockEnabled: v })}
+          />
         </div>
 
         {/* Info about new tab quick access */}
@@ -70,7 +67,7 @@ export function BrowserSection() {
         </div>
 
         <div className="pt-2 border-t border-border/30">
-          <Button size="sm" onClick={handleSave}>
+          <Button size="sm" onClick={save}>
             {saved ? <Check className="w-4 h-4" /> : null}
             {saved ? 'Zapisano' : 'Zapisz'}
           </Button>
