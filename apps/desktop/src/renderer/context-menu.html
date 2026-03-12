@@ -9,6 +9,16 @@
     />
     <title>Menu</title>
     <style>
+      :root {
+        --menu-bg: rgba(20, 20, 30, 0.92);
+        --menu-fg: #e8e8f0;
+        --menu-primary: #ff6b8a;
+        --menu-primary-rgb: 255, 107, 138;
+        --menu-border: rgba(255, 107, 138, 0.3);
+        --menu-destructive: #cc3355;
+        --menu-muted: #a0a0b0;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -29,10 +39,10 @@
       }
 
       .menu {
-        background: rgba(20, 20, 30, 0.92);
+        background: var(--menu-bg);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 107, 138, 0.3);
+        border: 1px solid var(--menu-border);
         border-radius: 12px;
         padding: 6px 0;
         min-width: 200px;
@@ -56,20 +66,27 @@
         display: flex;
         align-items: center;
         padding: 8px 14px;
-        color: #e8e8f0;
+        color: var(--menu-fg);
         font-size: 13px;
         cursor: pointer;
         transition: background 150ms ease;
         gap: 10px;
         position: relative;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+        outline: none;
       }
 
-      .menu-item:hover {
-        background: rgba(255, 107, 138, 0.15);
+      .menu-item:hover,
+      .menu-item:focus-visible {
+        background: rgba(var(--menu-primary-rgb), 0.15);
       }
 
       .menu-item:active {
-        background: rgba(255, 107, 138, 0.25);
+        background: rgba(var(--menu-primary-rgb), 0.25);
       }
 
       .menu-item .icon {
@@ -85,7 +102,7 @@
 
       .menu-item .check {
         font-size: 12px;
-        color: #ff6b8a;
+        color: var(--menu-primary);
         opacity: 0;
         transition: opacity 150ms ease;
       }
@@ -101,54 +118,55 @@
       }
 
       .menu-item.quit .label {
-        color: #cc3355;
+        color: var(--menu-destructive);
       }
 
-      .menu-item.quit:hover {
+      .menu-item.quit:hover,
+      .menu-item.quit:focus-visible {
         background: rgba(204, 51, 85, 0.15);
       }
 
       .menu-item.open-app .label {
-        color: #ff6b8a;
+        color: var(--menu-primary);
         font-weight: 600;
       }
     </style>
   </head>
   <body>
-    <div class="menu" id="menu">
-      <div class="menu-item open-app" data-action="open-app">
+    <div class="menu" id="menu" role="menu">
+      <button class="menu-item open-app" data-action="open-app" role="menuitem" tabindex="-1">
         <span class="icon">&#x1F4FA;</span>
         <span class="label">Otwórz ShiroAni</span>
-      </div>
-      <div class="separator"></div>
-      <div class="menu-item" data-action="navigate:schedule">
+      </button>
+      <div class="separator" role="separator"></div>
+      <button class="menu-item" data-action="navigate:schedule" role="menuitem" tabindex="-1">
         <span class="icon">&#x1F4C5;</span>
         <span class="label">Plan</span>
-      </div>
-      <div class="menu-item" data-action="navigate:library">
+      </button>
+      <button class="menu-item" data-action="navigate:library" role="menuitem" tabindex="-1">
         <span class="icon">&#x1F4DA;</span>
         <span class="label">Biblioteka</span>
-      </div>
-      <div class="separator"></div>
-      <div class="menu-item" data-action="lock-position" id="lockItem">
+      </button>
+      <div class="separator" role="separator"></div>
+      <button class="menu-item" data-action="lock-position" id="lockItem" role="menuitem" tabindex="-1">
         <span class="icon">&#x1F512;</span>
         <span class="label">Zablokuj pozycję</span>
         <span class="check" id="lockCheck">&#x2713;</span>
-      </div>
-      <div class="separator"></div>
-      <div class="menu-item" data-action="toggle-visibility" id="visibilityItem">
+      </button>
+      <div class="separator" role="separator"></div>
+      <button class="menu-item" data-action="toggle-visibility" id="visibilityItem" role="menuitem" tabindex="-1">
         <span class="icon" id="visibilityIcon">&#x1F441;</span>
         <span class="label" id="visibilityLabel">Ukryj maskotkę</span>
-      </div>
-      <div class="menu-item" data-action="navigate:settings">
+      </button>
+      <button class="menu-item" data-action="navigate:settings" role="menuitem" tabindex="-1">
         <span class="icon">&#x2699;</span>
         <span class="label">Ustawienia</span>
-      </div>
-      <div class="separator"></div>
-      <div class="menu-item quit" data-action="quit">
+      </button>
+      <div class="separator" role="separator"></div>
+      <button class="menu-item quit" data-action="quit" role="menuitem" tabindex="-1">
         <span class="icon">&#x2715;</span>
         <span class="label">Zamknij</span>
-      </div>
+      </button>
     </div>
 
     <script>
@@ -160,55 +178,141 @@
 
         var currentState = { visible: true, positionLocked: false };
 
+        function getMenuItems() {
+          return Array.from(menu.querySelectorAll('.menu-item'));
+        }
+
+        function focusItem(item) {
+          if (item) item.focus();
+        }
+
+        function focusNextItem(current, direction) {
+          var items = getMenuItems();
+          var idx = items.indexOf(current);
+          if (idx === -1) return;
+
+          var next = idx;
+          do {
+            next = next + direction;
+            if (next < 0) next = items.length - 1;
+            if (next >= items.length) next = 0;
+          } while (next !== idx && items[next].hasAttribute('data-skip'));
+
+          focusItem(items[next]);
+        }
+
+        function applyTheme(theme) {
+          if (!theme) return;
+          var root = document.documentElement;
+          if (theme.popover) root.style.setProperty('--menu-bg', theme.popover);
+          if (theme.popoverForeground) root.style.setProperty('--menu-fg', theme.popoverForeground);
+          if (theme.primary) root.style.setProperty('--menu-primary', theme.primary);
+          if (theme.border) root.style.setProperty('--menu-border', theme.border);
+          if (theme.destructive) root.style.setProperty('--menu-destructive', theme.destructive);
+          if (theme.mutedForeground) root.style.setProperty('--menu-muted', theme.mutedForeground);
+        }
+
         function updateUI(state) {
           currentState = state;
 
-          // Update lock checkmark
           if (state.positionLocked) {
             lockCheck.classList.add('active');
           } else {
             lockCheck.classList.remove('active');
           }
 
-          // Update visibility toggle text
           if (state.visible) {
             visibilityLabel.textContent = 'Ukryj maskotkę';
             visibilityIcon.textContent = '\uD83D\uDC41';
           } else {
             visibilityLabel.textContent = 'Pokaż maskotkę';
-            visibilityIcon.textContent = '\uD83D\uDC41';
+            visibilityIcon.textContent = '\uD83D\uDE48';
           }
+
+          applyTheme(state.theme);
         }
 
-        // Listen for state updates from main process
-        window.menuAPI.onStateUpdate(function (state) {
-          updateUI(state);
-          // Show the menu with animation
-          requestAnimationFrame(function () {
-            menu.classList.add('show');
-          });
-        });
-
-        // Handle menu item clicks
-        menu.addEventListener('click', function (e) {
-          var item = e.target.closest('.menu-item');
+        function activateItem(item) {
           if (!item) return;
-
           var action = item.dataset.action;
           if (!action) return;
 
-          // Handle toggle-visibility specially
           if (action === 'toggle-visibility') {
             action = currentState.visible ? 'hide' : 'show';
           }
 
           window.menuAPI.selectItem(action);
+        }
+
+        window.menuAPI.onStateUpdate(function (state) {
+          updateUI(state);
+          requestAnimationFrame(function () {
+            menu.classList.add('show');
+            var items = getMenuItems();
+            if (items.length > 0) focusItem(items[0]);
+          });
         });
 
-        // Hide animation class when menu is about to be hidden
-        // (The main process hides the BrowserWindow)
+        window.menuAPI.onHide(function () {
+          menu.classList.remove('show');
+          menu.addEventListener(
+            'transitionend',
+            function () {
+              window.menuAPI.hidden();
+            },
+            { once: true }
+          );
+        });
 
-        // Signal ready
+        menu.addEventListener('click', function (e) {
+          var item = e.target.closest('.menu-item');
+          if (!item) return;
+          activateItem(item);
+        });
+
+        menu.addEventListener('keydown', function (e) {
+          var target = e.target.closest('.menu-item');
+          switch (e.key) {
+            case 'ArrowDown':
+              e.preventDefault();
+              if (target) {
+                focusNextItem(target, 1);
+              } else {
+                var items = getMenuItems();
+                if (items.length > 0) focusItem(items[0]);
+              }
+              break;
+            case 'ArrowUp':
+              e.preventDefault();
+              if (target) {
+                focusNextItem(target, -1);
+              } else {
+                var items = getMenuItems();
+                if (items.length > 0) focusItem(items[items.length - 1]);
+              }
+              break;
+            case 'Home':
+              e.preventDefault();
+              var items = getMenuItems();
+              if (items.length > 0) focusItem(items[0]);
+              break;
+            case 'End':
+              e.preventDefault();
+              var items = getMenuItems();
+              if (items.length > 0) focusItem(items[items.length - 1]);
+              break;
+            case 'Enter':
+            case ' ':
+              e.preventDefault();
+              if (target) activateItem(target);
+              break;
+            case 'Escape':
+              e.preventDefault();
+              window.menuAPI.dismiss();
+              break;
+          }
+        });
+
         window.menuAPI.ready();
       })();
     </script>

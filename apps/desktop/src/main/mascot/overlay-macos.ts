@@ -86,11 +86,11 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
 
   mascotWindow
     .loadFile(getMascotHtmlPath())
-    .then(() => {
+    .then(async () => {
       const spriteFile = path.join(getResourcesPath(), 'chibi_base.png');
       let spriteSrc: string;
       try {
-        const data = fs.readFileSync(spriteFile);
+        const data = await fs.promises.readFile(spriteFile);
         spriteSrc = `data:image/png;base64,${data.toString('base64')}`;
       } catch (err) {
         logger.error('Failed to read mascot sprite:', err);

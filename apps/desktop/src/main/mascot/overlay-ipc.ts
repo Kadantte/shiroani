@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, ipcMain, screen } from 'electron';
 import { store } from '../store';
 import { showContextMenu, type MenuState } from './context-menu';
 import { isMascotPositionLocked } from './mascot-position';
@@ -21,9 +21,17 @@ export function registerMacIpcHandlers(
     const mascotWindow = getMascotWindow();
     if (!mascotWindow || mascotWindow.isDestroyed()) return;
     const bounds = mascotWindow.getBounds();
+    let newX = bounds.x + dx;
+    let newY = bounds.y + dy;
+
+    const display = screen.getDisplayNearestPoint({ x: newX, y: newY });
+    const workArea = display.workArea;
+    newX = Math.max(workArea.x - bounds.width + 20, Math.min(newX, workArea.x + workArea.width - 20));
+    newY = Math.max(workArea.y - bounds.height + 20, Math.min(newY, workArea.y + workArea.height - 20));
+
     mascotWindow.setBounds({
-      x: bounds.x + dx,
-      y: bounds.y + dy,
+      x: newX,
+      y: newY,
       width: bounds.width,
       height: bounds.height,
     });

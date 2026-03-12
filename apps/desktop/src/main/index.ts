@@ -28,7 +28,7 @@ import {
   setMainWindow,
   updateMascotVisibilityForWindowState,
 } from './mascot/overlay';
-import { createContextMenuWindow, destroyContextMenu } from './mascot/context-menu';
+import { createContextMenuWindow, destroyContextMenu, setMainWindowRef } from './mascot/context-menu';
 import { safeCleanup } from './cleanup-utils';
 
 // Register custom protocol scheme for background images.
@@ -170,6 +170,7 @@ async function bootstrap(): Promise<void> {
 
   // Create the pre-hidden context menu window for the mascot overlay
   try {
+    setMainWindowRef(mainWindow);
     createContextMenuWindow();
   } catch (error) {
     logger.warn('Failed to create context menu window:', error);

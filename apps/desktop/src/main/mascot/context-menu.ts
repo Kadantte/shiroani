@@ -7,26 +7,43 @@ export interface MenuState {
   positionLocked: boolean;
 }
 
+interface ThemeColors {
+  popover?: string;
+  popoverForeground?: string;
+  primary?: string;
+  border?: string;
+  destructive?: string;
+  mutedForeground?: string;
+}
+
 type MenuSelectHandler = (action: string) => void;
 
 const MENU_WIDTH = 220;
 const MENU_HEIGHT = 320;
+const EXIT_ANIMATION_MS = 150;
+
+const THEME_VARS = [
+  ['--popover', 'popover'],
+  ['--popover-foreground', 'popoverForeground'],
+  ['--primary', 'primary'],
+  ['--border', 'border'],
+  ['--destructive', 'destructive'],
+  ['--muted-foreground', 'mutedForeground'],
+] as const;
 
 let menuWindow: BrowserWindow | null = null;
+let mainWindowRef: BrowserWindow | null = null;
 let onMenuSelect: MenuSelectHandler | null = null;
+let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
-/**
- * Check if the context menu is currently visible.
- */
 export function isContextMenuVisible(): boolean {
   return menuWindow !== null && !menuWindow.isDestroyed() && menuWindow.isVisible();
 }
 
-/**
- * Get the path to the context menu HTML file.
- * In dev mode, the source file is used directly.
- * In production, it is compiled to dist/renderer/.
- */
+export function setMainWindowRef(win: BrowserWindow | null): void {
+  mainWindowRef = win;
+}
+
 function getMenuHtmlPath(): string {
   if (!app.isPackaged) {
     return path.join(__dirname, '../../../src/renderer/context-menu.html');
@@ -34,17 +51,10 @@ function getMenuHtmlPath(): string {
   return path.join(app.getAppPath(), 'dist/renderer/context-menu.html');
 }
 
-/**
- * Get the path to the compiled menu preload script.
- */
 function getMenuPreloadPath(): string {
   return path.join(__dirname, '../menu-preload.js');
 }
 
-/**
- * Create the hidden context menu BrowserWindow.
- * Should be called once during app startup, after mainWindow is created.
- */
 export function createContextMenuWindow(): void {
   if (menuWindow) return;
 
@@ -63,25 +73,20 @@ export function createContextMenuWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      // Use a separate session so the main app's restrictive CSP
-      // (set on defaultSession) doesn't block inline scripts in the menu HTML.
       partition: 'mascot-menu',
     },
   });
 
-  // Set always-on-top level to pop-up-menu so it appears above the mascot overlay
   menuWindow.setAlwaysOnTop(true, 'pop-up-menu');
 
   menuWindow.loadFile(getMenuHtmlPath()).catch(err => {
     logger.error('Failed to load context menu HTML:', err);
   });
 
-  // Auto-dismiss on blur (clicking outside)
   menuWindow.on('blur', () => {
     hideContextMenu();
   });
 
-  // Prevent the menu window from being destroyed on close, just hide it
   menuWindow.on('close', event => {
     if (menuWindow && !menuWindow.isDestroyed()) {
       event.preventDefault();
@@ -89,8 +94,6 @@ export function createContextMenuWindow(): void {
     }
   });
 
-  // Register IPC handlers for the context menu.
-  // Remove any existing listener first to prevent accumulation if called twice.
   ipcMain.removeAllListeners('menu:select');
   ipcMain.on('menu:select', (_event, action: string) => {
     hideContextMenu();
@@ -99,27 +102,68 @@ export function createContextMenuWindow(): void {
     }
   });
 
+  ipcMain.removeAllListeners('menu:ready');
   ipcMain.on('menu:ready', () => {
     logger.info('Context menu renderer ready');
   });
+
+  ipcMain.removeAllListeners('menu:dismiss');
+  ipcMain.on('menu:dismiss', () => {
+    hideContextMenu();
+  });
+
+  ipcMain.removeAllListeners('menu:hidden');
+  ipcMain.on('menu:hidden', () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+    if (menuWindow && !menuWindow.isDestroyed()) {
+      menuWindow.hide();
+    }
+  });
 }
 
-/**
- * Show the context menu at the given screen coordinates.
- * Clamps position to stay within screen bounds.
- */
-export function showContextMenu(x: number, y: number, state: MenuState): void {
+async function extractThemeColors(): Promise<ThemeColors | undefined> {
+  if (!mainWindowRef || mainWindowRef.isDestroyed()) return undefined;
+
+  try {
+    const js = THEME_VARS.map(
+      ([cssVar]) =>
+        `getComputedStyle(document.documentElement).getPropertyValue('${cssVar}').trim()`
+    ).join(',');
+
+    const results = await mainWindowRef.webContents.executeJavaScript(`[${js}]`);
+
+    const theme: ThemeColors = {};
+    THEME_VARS.forEach(([, key], i) => {
+      const val = results[i];
+      if (val) {
+        (theme as Record<string, string>)[key] = val;
+      }
+    });
+
+    return Object.keys(theme).length > 0 ? theme : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function showContextMenu(x: number, y: number, state: MenuState): Promise<void> {
   if (!menuWindow || menuWindow.isDestroyed()) {
     logger.warn('Context menu window not available');
     return;
   }
 
-  // Get the display that contains the cursor position
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+
   const cursorPoint = { x, y };
   const display = screen.getDisplayNearestPoint(cursorPoint);
   const bounds = display.workArea;
 
-  // Clamp menu position to stay within screen bounds
   let menuX = x;
   let menuY = y;
 
@@ -130,7 +174,6 @@ export function showContextMenu(x: number, y: number, state: MenuState): void {
     menuX = bounds.x;
   }
 
-  // Position menu above the cursor if it would go off the bottom
   if (menuY + MENU_HEIGHT > bounds.y + bounds.height) {
     menuY = y - MENU_HEIGHT;
   }
@@ -138,10 +181,11 @@ export function showContextMenu(x: number, y: number, state: MenuState): void {
     menuY = bounds.y;
   }
 
-  // Send state to the renderer before showing
-  menuWindow.webContents.send('menu:state', state);
+  const theme = await extractThemeColors();
+  const fullState = { ...state, theme };
 
-  // Position and show the window
+  menuWindow.webContents.send('menu:state', fullState);
+
   menuWindow.setBounds({
     x: Math.round(menuX),
     y: Math.round(menuY),
@@ -149,38 +193,44 @@ export function showContextMenu(x: number, y: number, state: MenuState): void {
     height: MENU_HEIGHT,
   });
 
-  menuWindow.showInactive();
-  menuWindow.focus();
+  menuWindow.show();
 }
 
-/**
- * Hide the context menu window.
- */
 export function hideContextMenu(): void {
-  if (menuWindow && !menuWindow.isDestroyed() && menuWindow.isVisible()) {
-    menuWindow.hide();
-  }
+  if (!menuWindow || menuWindow.isDestroyed() || !menuWindow.isVisible()) return;
+
+  if (hideTimeout) return;
+
+  menuWindow.webContents.send('menu:hide');
+
+  hideTimeout = setTimeout(() => {
+    hideTimeout = null;
+    if (menuWindow && !menuWindow.isDestroyed()) {
+      menuWindow.hide();
+    }
+  }, EXIT_ANIMATION_MS);
 }
 
-/**
- * Set the handler for menu item selections.
- */
 export function setMenuSelectHandler(handler: MenuSelectHandler): void {
   onMenuSelect = handler;
 }
 
-/**
- * Destroy the context menu window. Call on app quit.
- */
 export function destroyContextMenu(): void {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+
   if (menuWindow && !menuWindow.isDestroyed()) {
-    // Remove the close prevention handler so it actually destroys
     menuWindow.removeAllListeners('close');
     menuWindow.destroy();
   }
   menuWindow = null;
+  mainWindowRef = null;
   onMenuSelect = null;
 
   ipcMain.removeAllListeners('menu:select');
   ipcMain.removeAllListeners('menu:ready');
+  ipcMain.removeAllListeners('menu:dismiss');
+  ipcMain.removeAllListeners('menu:hidden');
 }
