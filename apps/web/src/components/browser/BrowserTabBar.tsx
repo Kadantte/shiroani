@@ -38,6 +38,8 @@ function TabContent({
   onClose?: (e: React.MouseEvent) => void;
   isDragOverlay?: boolean;
 }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div
       className={cn(
@@ -51,14 +53,12 @@ function TabContent({
     >
       {tab.isLoading ? (
         <Loader2 className="w-3 h-3 shrink-0 animate-spin text-primary" />
-      ) : tab.favicon ? (
+      ) : tab.favicon && !imgError ? (
         <img
           src={tab.favicon}
           alt=""
           className="w-3 h-3 shrink-0 rounded-sm"
-          onError={e => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
+          onError={() => setImgError(true)}
         />
       ) : (
         <Globe className="w-3 h-3 shrink-0" />
@@ -67,6 +67,7 @@ function TabContent({
       {onClose && (
         <button
           onClick={onClose}
+          aria-label="Zamknij kartę"
           className={cn(
             'w-4 h-4 flex items-center justify-center rounded-sm shrink-0',
             'opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive',
@@ -111,14 +112,28 @@ function SortableTab({
     onSelect();
   }, [onSelect, wasDragging]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onSelect();
+      }
+    },
+    [onSelect]
+  );
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn('cursor-pointer transition-all duration-150', isDragging && 'z-10')}
-      onClick={handleClick}
       {...attributes}
       {...listeners}
+      className={cn('cursor-pointer transition-all duration-150', isDragging && 'z-10')}
+      role="tab"
+      aria-selected={isActive}
+      tabIndex={isActive ? 0 : -1}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <TabContent tab={tab} isActive={isActive} onClose={onClose} />
     </div>
@@ -189,7 +204,7 @@ export function BrowserTabBar({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+        <div role="tablist" className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
           <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
             {tabs.map(tab => (
               <SortableTab

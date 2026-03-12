@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Plus, X, Eye } from 'lucide-react';
 import { APP_NAME } from '@shiroani/shared';
-import type { QuickAccessSite } from '@shiroani/shared';
+import type { QuickAccessSite, FrequentSite } from '@shiroani/shared';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
 import { useShallow } from 'zustand/react/shallow';
@@ -68,7 +68,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
         removeSite(site.id);
       }
     },
-    [hidePredefined, removeSite]
+    []
   );
 
   const hiddenPredefined = PREDEFINED_SITES.filter(s => hiddenPredefinedIds.includes(s.id));
@@ -86,7 +86,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
           <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
             Szybki dostęp
           </h2>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
             {sites.map(site => (
               <SiteCard
                 key={site.id}
@@ -119,7 +119,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
                 <button
                   key={site.id}
                   onClick={() => showPredefined(site.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/30 hover:bg-muted/50 text-xs text-muted-foreground transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-md bg-muted/30 hover:bg-muted/50 text-xs text-muted-foreground transition-colors cursor-pointer"
                 >
                   <Eye className="w-3 h-3" />
                   {site.name}
@@ -135,27 +135,13 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
             <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
               Często odwiedzane
             </h2>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {frequentSites.map(site => (
-                <button
+                <FrequentSiteButton
                   key={site.url}
+                  site={site}
                   onClick={() => onNavigate(site.url)}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/40 transition-colors text-left cursor-pointer"
-                >
-                  {site.favicon ? (
-                    <img
-                      src={site.favicon}
-                      alt=""
-                      className="w-5 h-5 rounded-sm shrink-0"
-                      onError={e => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-5 h-5 rounded-sm bg-muted shrink-0" />
-                  )}
-                  <span className="text-xs text-foreground/80 truncate">{site.title}</span>
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -176,12 +162,14 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
               placeholder="Nazwa"
               value={newSiteName}
               onChange={e => setNewSiteName(e.target.value)}
+              aria-label="Nazwa strony"
               className="h-8 text-sm"
             />
             <Input
               placeholder="https://example.com"
               value={newSiteUrl}
               onChange={e => setNewSiteUrl(e.target.value)}
+              aria-label="Adres URL strony"
               onKeyDown={e => {
                 if (e.key === 'Enter') handleAddSite();
               }}
@@ -216,20 +204,20 @@ function SiteCard({
   onClick: () => void;
   onRemove: () => void;
 }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="group relative">
       <button
         onClick={onClick}
         className="w-full flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-border/30 hover:border-border/60 hover:bg-accent/30 transition-all cursor-pointer min-h-[100px]"
       >
-        {site.icon ? (
+        {site.icon && !imgError ? (
           <img
             src={site.icon}
             alt=""
             className="w-10 h-10 rounded-md"
-            onError={e => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
@@ -244,10 +232,40 @@ function SiteCard({
           onRemove();
         }}
         aria-label="Usuń stronę"
-        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 border border-border/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
+        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 border border-border/50 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
       >
         <X className="w-3 h-3" />
       </button>
     </div>
+  );
+}
+
+/** Frequent site button with React-managed favicon fallback */
+function FrequentSiteButton({
+  site,
+  onClick,
+}: {
+  site: FrequentSite;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/40 transition-colors text-left cursor-pointer"
+    >
+      {site.favicon && !imgError ? (
+        <img
+          src={site.favicon}
+          alt=""
+          className="w-5 h-5 rounded-sm shrink-0"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="w-5 h-5 rounded-sm bg-muted shrink-0" />
+      )}
+      <span className="text-xs text-foreground/80 truncate">{site.title}</span>
+    </button>
   );
 }

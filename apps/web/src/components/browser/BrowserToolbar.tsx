@@ -141,7 +141,7 @@ export function BrowserToolbar({
         className={cn('w-8 h-8', adblockEnabled && 'text-status-success')}
         onClick={onToggleAdblock}
         tooltip={adblockEnabled ? 'Adblock włączony' : 'Adblock wyłączony'}
-        tooltipSide="top"
+        tooltipSide="bottom"
       >
         {adblockEnabled ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
       </TooltipButton>
@@ -152,7 +152,7 @@ export function BrowserToolbar({
         className="w-8 h-8"
         onClick={onGoHome}
         tooltip="Strona główna"
-        tooltipSide="top"
+        tooltipSide="bottom"
       >
         <Home className="w-4 h-4" />
       </TooltipButton>

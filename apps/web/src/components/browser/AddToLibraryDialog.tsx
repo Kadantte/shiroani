@@ -162,7 +162,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
         <div className="min-w-0 space-y-4 py-2">
           {/* Cover image preview + URL */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Okładka</label>
+            <label htmlFor="add-lib-cover" className="text-xs font-medium text-muted-foreground">Okładka</label>
             <div className="flex items-start gap-3">
               {/* Thumbnail preview */}
               <div className="w-16 h-[86px] rounded-md border border-border overflow-hidden bg-muted shrink-0 flex items-center justify-center">
@@ -181,6 +181,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               </div>
               <div className="flex-1 min-w-0 space-y-1.5">
                 <Input
+                  id="add-lib-cover"
                   value={coverImage}
                   onChange={e => setCoverImage(e.target.value)}
                   placeholder="URL obrazka okładki..."
@@ -208,8 +209,9 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
           {/* Title input */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Tytuł</label>
+            <label htmlFor="add-lib-title" className="text-xs font-medium text-muted-foreground">Tytuł</label>
             <Input
+              id="add-lib-title"
               value={editableTitle}
               onChange={e => setEditableTitle(e.target.value)}
               placeholder="Wpisz tytuł..."
@@ -220,9 +222,9 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
 
           {/* Status select */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Status</label>
+            <label htmlFor="add-lib-status" className="text-xs font-medium text-muted-foreground">Status</label>
             <Select value={status} onValueChange={v => setStatus(v as AnimeStatus)}>
-              <SelectTrigger className="h-8">
+              <SelectTrigger id="add-lib-status" className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -238,10 +240,12 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
           {/* Episodes row */}
           <div className="flex items-end gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Bieżący odcinek</label>
+              <label htmlFor="add-lib-current-ep" className="text-xs font-medium text-muted-foreground">Bieżący odcinek</label>
               <Input
+                id="add-lib-current-ep"
                 type="number"
                 min={0}
+                max={9999}
                 value={currentEpisode}
                 onChange={e => setCurrentEpisode(Math.max(0, parseInt(e.target.value) || 0))}
                 className="h-8 text-sm w-24"
@@ -249,10 +253,12 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Liczba odcinków</label>
+              <label htmlFor="add-lib-total-ep" className="text-xs font-medium text-muted-foreground">Liczba odcinków</label>
               <Input
+                id="add-lib-total-ep"
                 type="number"
                 min={0}
+                max={9999}
                 value={totalEpisodes}
                 onChange={e => setTotalEpisodes(Math.max(0, parseInt(e.target.value) || 0))}
                 placeholder="?"
