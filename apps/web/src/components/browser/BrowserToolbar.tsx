@@ -118,6 +118,7 @@ export function BrowserToolbar({
           onFocus={handleUrlFocus}
           onBlur={handleUrlBlur}
           placeholder="Wpisz adres URL lub wyszukaj..."
+          aria-label="Pasek adresu"
           className="h-7 text-xs bg-background/50 border-border/50"
         />
       </div>
@@ -129,7 +130,7 @@ export function BrowserToolbar({
         onClick={onAddToLibrary}
         disabled={!hasActiveTab}
         tooltip="Dodaj do biblioteki"
-        tooltipSide="top"
+        tooltipSide="bottom"
       >
         <BookmarkPlus className="w-4 h-4" />
       </TooltipButton>

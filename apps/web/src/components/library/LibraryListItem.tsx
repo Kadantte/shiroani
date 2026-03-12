@@ -18,11 +18,20 @@ const LibraryListItem = memo(function LibraryListItem({
 }: LibraryListItemProps) {
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
         'flex items-center gap-3 p-2.5 rounded-xl cursor-pointer',
-        'hover:bg-accent/40 transition-all duration-150',
+        'hover:bg-accent/40 transition-colors duration-150',
         'border border-transparent hover:border-border-glass',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-accent/40',
         'group/list-item'
       )}
     >

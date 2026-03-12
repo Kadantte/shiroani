@@ -135,27 +135,27 @@ type AccentType = 'primary' | 'info' | 'success' | 'warning';
 
 const ACCENT_STYLES: Record<
   AccentType,
-  { iconBg: string; iconColor: string; valueGradient: string }
+  { iconBg: string; iconColor: string; glowVar: string }
 > = {
   primary: {
     iconBg: 'bg-primary/10',
     iconColor: 'text-primary',
-    valueGradient: 'from-primary to-primary/70',
+    glowVar: 'var(--primary)',
   },
   info: {
     iconBg: 'bg-status-info/10',
     iconColor: 'text-status-info',
-    valueGradient: 'from-status-info to-status-info/70',
+    glowVar: 'var(--status-info)',
   },
   success: {
     iconBg: 'bg-status-success/10',
     iconColor: 'text-status-success',
-    valueGradient: 'from-status-success to-status-success/70',
+    glowVar: 'var(--status-success)',
   },
   warning: {
     iconBg: 'bg-status-warning/10',
     iconColor: 'text-status-warning',
-    valueGradient: 'from-status-warning to-status-warning/70',
+    glowVar: 'var(--status-warning)',
   },
 };
 
@@ -187,13 +187,9 @@ function StatCard({
     >
       {/* Subtle accent glow behind */}
       <div
-        className={cn(
-          'absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-[0.07]',
-          'blur-xl transition-opacity duration-300 group-hover:opacity-[0.12]',
-          styles.iconBg.replace('/10', '')
-        )}
+        className="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-[0.07] blur-xl transition-opacity duration-300 group-hover:opacity-[0.12]"
         style={{
-          background: `radial-gradient(circle, var(--${accent === 'primary' ? 'primary' : `status-${accent}`}) 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${styles.glowVar} 0%, transparent 70%)`,
         }}
       />
 

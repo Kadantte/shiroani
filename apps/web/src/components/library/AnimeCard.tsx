@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useCallback } from 'react';
 import { Play, Pencil, Trash2, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,15 @@ const AnimeCard = memo(function AnimeCard({
   onContinue,
   onRemove,
 }: AnimeCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onSelect(entry);
+      }
+    },
+    [onSelect, entry]
+  );
 
   const progressText = entry.episodes
     ? `Odc. ${entry.currentEpisode}/${entry.episodes}`
@@ -33,15 +41,18 @@ const AnimeCard = memo(function AnimeCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${entry.title} — ${STATUS_CONFIG[entry.status].label}`}
       className={cn(
         'group relative rounded-lg overflow-hidden cursor-pointer',
-        'bg-card/80 backdrop-blur-sm border border-border-glass',
-        'transition-all duration-200',
-        'hover:shadow-primary-glow hover:scale-[1.02]'
+        'bg-card/80 border border-border-glass',
+        'transition-shadow duration-200',
+        'hover:shadow-primary-glow focus-visible:shadow-primary-glow',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onSelect(entry)}
+      onKeyDown={handleKeyDown}
     >
       {/* Cover image */}
       <div className="relative aspect-[3/4] overflow-hidden">
@@ -63,7 +74,11 @@ const AnimeCard = memo(function AnimeCard({
 
         {/* Status indicator */}
         <div className="absolute top-2 left-2">
-          <div className={cn('w-2.5 h-2.5 rounded-full', STATUS_CONFIG[entry.status].color)} />
+          <div
+            className={cn('w-2.5 h-2.5 rounded-full', STATUS_CONFIG[entry.status].color)}
+            aria-label={STATUS_CONFIG[entry.status].label}
+            role="img"
+          />
         </div>
 
         {/* Episode progress badge */}
@@ -105,13 +120,15 @@ const AnimeCard = memo(function AnimeCard({
           </div>
         )}
 
-        {/* Hover overlay with action buttons */}
+        {/* Hover/focus overlay with action buttons */}
         <div
           className={cn(
             'absolute inset-0 bg-gradient-to-t from-background/60 via-background/30 to-background/10',
-            'backdrop-blur-[2px] flex items-center justify-center gap-2.5',
-            'transition-all duration-250',
-            isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            'flex items-center justify-center gap-2.5',
+            'transition-opacity duration-250',
+            'opacity-0 pointer-events-none',
+            'group-hover:opacity-100 group-hover:pointer-events-auto',
+            'group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
           )}
         >
           {onContinue && entry.resumeUrl && (
@@ -120,13 +137,13 @@ const AnimeCard = memo(function AnimeCard({
                 e.stopPropagation();
                 onContinue(entry);
               }}
+              aria-label="Kontynuuj"
               className={cn(
                 'w-8 h-8 rounded-full bg-primary text-primary-foreground shadow-md',
                 'flex items-center justify-center',
-                'hover:bg-primary/90 hover:scale-110 active:scale-95',
-                'transition-all duration-150'
+                'hover:bg-primary/90 active:scale-95',
+                'transition-colors duration-150'
               )}
-              title="Kontynuuj"
             >
               <Play className="w-3.5 h-3.5" />
             </button>
@@ -136,13 +153,13 @@ const AnimeCard = memo(function AnimeCard({
               e.stopPropagation();
               onSelect(entry);
             }}
+            aria-label="Edytuj"
             className={cn(
               'w-8 h-8 rounded-full bg-accent text-accent-foreground shadow-md',
               'flex items-center justify-center',
-              'hover:bg-accent/90 hover:scale-110 active:scale-95',
-              'transition-all duration-150'
+              'hover:bg-accent/90 active:scale-95',
+              'transition-colors duration-150'
             )}
-            title="Edytuj"
           >
             <Pencil className="w-3 h-3" />
           </button>
@@ -152,13 +169,13 @@ const AnimeCard = memo(function AnimeCard({
                 e.stopPropagation();
                 onRemove(entry);
               }}
+              aria-label="Usuń"
               className={cn(
                 'w-8 h-8 rounded-full bg-destructive text-destructive-foreground shadow-md',
                 'flex items-center justify-center',
-                'hover:bg-destructive/90 hover:scale-110 active:scale-95',
-                'transition-all duration-150'
+                'hover:bg-destructive/90 active:scale-95',
+                'transition-colors duration-150'
               )}
-              title="Usuń"
             >
               <Trash2 className="w-3 h-3" />
             </button>

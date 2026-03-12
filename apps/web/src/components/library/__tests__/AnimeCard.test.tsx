@@ -80,7 +80,8 @@ describe('AnimeCard', () => {
     render(<AnimeCard entry={createEntry({ coverImage: undefined })} onSelect={onSelect} />);
 
     expect(screen.getByText('Brak okładki')).toBeInTheDocument();
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // No <img> tag rendered — the status dot has role="img" but no actual image
+    expect(screen.queryByRole('img', { name: /Steins;Gate/i })).not.toBeInTheDocument();
   });
 
   it('shows cover image when coverImage is provided', () => {
@@ -105,13 +106,13 @@ describe('AnimeCard', () => {
       <AnimeCard entry={entry} onSelect={onSelect} onContinue={onContinue} onRemove={onRemove} />
     );
 
-    expect(screen.getByTitle('Edytuj')).toBeInTheDocument();
+    expect(screen.getByLabelText('Edytuj')).toBeInTheDocument();
 
     await user.hover(screen.getByText('Steins;Gate'));
 
-    expect(screen.getByTitle('Kontynuuj')).toBeInTheDocument();
-    expect(screen.getByTitle('Edytuj')).toBeInTheDocument();
-    expect(screen.getByTitle('Usuń')).toBeInTheDocument();
+    expect(screen.getByLabelText('Kontynuuj')).toBeInTheDocument();
+    expect(screen.getByLabelText('Edytuj')).toBeInTheDocument();
+    expect(screen.getByLabelText('Usuń')).toBeInTheDocument();
   });
 
   it('shows continue button only when resumeUrl exists', () => {
@@ -123,7 +124,7 @@ describe('AnimeCard', () => {
       />
     );
 
-    expect(screen.queryByTitle('Kontynuuj')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Kontynuuj')).not.toBeInTheDocument();
 
     rerender(
       <AnimeCard
@@ -133,7 +134,7 @@ describe('AnimeCard', () => {
       />
     );
 
-    expect(screen.getByTitle('Kontynuuj')).toBeInTheDocument();
+    expect(screen.getByLabelText('Kontynuuj')).toBeInTheDocument();
   });
 
   it('does not show continue button when onContinue is not provided', () => {
@@ -144,7 +145,7 @@ describe('AnimeCard', () => {
       />
     );
 
-    expect(screen.queryByTitle('Kontynuuj')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Kontynuuj')).not.toBeInTheDocument();
   });
 
   it('calls onRemove when remove button is clicked', async () => {
@@ -152,7 +153,7 @@ describe('AnimeCard', () => {
     const { user } = render(<AnimeCard entry={entry} onSelect={onSelect} onRemove={onRemove} />);
 
     await user.hover(screen.getByText('Steins;Gate'));
-    await user.click(screen.getByTitle('Usuń'));
+    await user.click(screen.getByLabelText('Usuń'));
 
     expect(onRemove).toHaveBeenCalledWith(entry);
   });
@@ -162,7 +163,7 @@ describe('AnimeCard', () => {
     const { user } = render(<AnimeCard entry={entry} onSelect={onSelect} onRemove={onRemove} />);
 
     await user.hover(screen.getByText('Steins;Gate'));
-    await user.click(screen.getByTitle('Usuń'));
+    await user.click(screen.getByLabelText('Usuń'));
 
     // onSelect should only have been called 0 times from the button click
     // (stopPropagation prevents the card click)
@@ -178,6 +179,6 @@ describe('AnimeCard', () => {
   it('does not show remove button when onRemove is not provided', () => {
     render(<AnimeCard entry={createEntry()} onSelect={onSelect} />);
 
-    expect(screen.queryByTitle('Usuń')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Usuń')).not.toBeInTheDocument();
   });
 });

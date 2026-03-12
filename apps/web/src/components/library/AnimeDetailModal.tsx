@@ -114,7 +114,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     toast.success('URL zaktualizowany', {
       description: activeTab.url,
     });
-  }, [entry]);
+  }, [entry, setResumeUrl]);
 
   if (!entry) return null;
 
@@ -168,9 +168,9 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* Status */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Status</label>
+            <label htmlFor="detail-status" className="text-xs font-medium text-muted-foreground">Status</label>
             <Select value={status} onValueChange={v => setStatus(v as AnimeStatus)}>
-              <SelectTrigger className="h-8">
+              <SelectTrigger id="detail-status" className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -205,8 +205,9 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Notatki</label>
+            <label htmlFor="detail-notes" className="text-xs font-medium text-muted-foreground">Notatki</label>
             <textarea
+              id="detail-notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Dodaj notatki..."
@@ -223,7 +224,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
           {/* Resume URL */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">
+              <label htmlFor="detail-resume-url" className="text-xs font-medium text-muted-foreground">
                 Link do kontynuacji
               </label>
               <Button
@@ -237,6 +238,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
               </Button>
             </div>
             <Input
+              id="detail-resume-url"
               value={resumeUrl}
               onChange={e => setResumeUrl(e.target.value)}
               placeholder="https://..."
@@ -246,11 +248,12 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* AniList ID */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">AniList ID</label>
+            <label htmlFor="detail-anilist-id" className="text-xs font-medium text-muted-foreground">AniList ID</label>
             <p className="text-2xs text-muted-foreground/70">
               Wymagane do powiadomień i odliczania odcinków
             </p>
             <Input
+              id="detail-anilist-id"
               type="number"
               min={1}
               value={anilistId}

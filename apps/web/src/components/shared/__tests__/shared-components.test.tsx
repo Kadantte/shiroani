@@ -105,13 +105,10 @@ describe('ViewHeader', () => {
       <ViewHeader {...baseProps} viewMode="grid" onViewModeChange={onViewModeChange} />
     );
 
-    // Two view-mode toggle buttons (grid + list) plus the 2 filter buttons = 4 buttons total
+    // Two view-mode toggle buttons (role=button) — filter buttons are now role=tab
     const allButtons = screen.getAllByRole('button');
-    expect(allButtons.length).toBe(4);
+    expect(allButtons.length).toBe(2);
 
-    // Click the list-mode toggle (second of the two icon-only buttons)
-    // The view mode buttons are the first two (before filters) in the DOM — actually they're in the top row
-    // Let's find them by their lack of text content (they only have SVG icons)
     const iconOnlyButtons = allButtons.filter(btn => btn.textContent === '');
     expect(iconOnlyButtons.length).toBe(2);
 
@@ -127,9 +124,10 @@ describe('ViewHeader', () => {
   it('does not render view mode toggles when onViewModeChange is not provided', () => {
     render(<ViewHeader {...baseProps} />);
 
-    const allButtons = screen.getAllByRole('button');
-    // Only 2 filter buttons, no view mode toggles
-    expect(allButtons.length).toBe(2);
+    // Filter buttons are now role=tab, so no role=button elements should exist
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    // Filter tabs still render
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
 });
 
