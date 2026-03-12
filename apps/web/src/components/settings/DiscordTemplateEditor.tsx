@@ -130,7 +130,7 @@ export function DiscordTemplateEditor({
 
       {/* Available variables */}
       <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
-        <p className="text-xs font-medium text-muted-foreground">Dostępne znaczniki:</p>
+        <p className="text-xs font-medium text-muted-foreground">Dostępne zmienne:</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {DISCORD_TEMPLATE_VARIABLES.map(v => (
             <span key={v.key} className="text-xs text-muted-foreground">
@@ -144,7 +144,7 @@ export function DiscordTemplateEditor({
       {/* Reset button */}
       <div className="flex justify-end">
         <Button variant="ghost" size="sm" className="text-xs" onClick={onReset}>
-          Resetuj do domyślnych
+          Przywróć domyślne
         </Button>
       </div>
     </SettingsCard>

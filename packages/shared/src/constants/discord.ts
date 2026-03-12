@@ -17,7 +17,7 @@ export const DISCORD_ACTIVITY_LABELS: Record<DiscordActivityType, string> = {
   diary: 'Dziennik',
   schedule: 'Harmonogram',
   settings: 'Ustawienia',
-  idle: 'Bezczynny',
+  idle: 'Bez aktywności',
 };
 
 /** Variables available for template substitution */
@@ -65,14 +65,14 @@ export const DEFAULT_DISCORD_TEMPLATES: DiscordPresenceTemplates = {
     showButton: false,
   },
   settings: {
-    details: 'Konfiguracja ustawień',
+    details: 'Przeglądanie ustawień',
     state: '',
     showTimestamp: true,
     showLargeImage: true,
     showButton: false,
   },
   idle: {
-    details: 'Korzysta z ShiroAni',
+    details: 'Oczekiwanie',
     state: '',
     showTimestamp: true,
     showLargeImage: true,

@@ -131,7 +131,7 @@ export function AppearanceSection() {
             </p>
           </div>
           <Button variant="outline" size="sm" className="h-7 text-xs" onClick={resetDockPosition}>
-            Resetuj pozycję
+            Przywróć pozycję
           </Button>
         </div>
       </SettingsCard>

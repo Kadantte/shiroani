@@ -240,7 +240,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Strategia duplikatów</p>
+                <p className="text-sm font-medium text-foreground">Co zrobić z duplikatami?</p>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"

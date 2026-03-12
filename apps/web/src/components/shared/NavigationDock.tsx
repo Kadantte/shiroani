@@ -15,12 +15,12 @@ const ALL_ITEMS: NavItem[] = [
   { id: 'browser', label: 'Internet' },
   { id: 'library', label: 'Biblioteka' },
   { id: 'diary', label: 'Dziennik' },
-  { id: 'schedule', label: 'Plan' },
+  { id: 'schedule', label: 'Harmonogram' },
   { id: 'settings', label: 'Ustawienia' },
 ];
 
 // Layout constants (px) — keep in sync with classNames below
-const ITEM_W = 56; // w-14
+const ITEM_W = 72; // w-18 — wide enough for "Harmonogram" and "Ustawienia"
 const ITEM_W_COMPACT = 40; // w-10 (icon-only)
 const ITEM_H = 48; // h-12
 const ITEM_H_COMPACT = 40; // h-10 (icon-only)
@@ -127,7 +127,7 @@ function DockItem({
         showLabel
           ? isVertical
             ? 'w-12 h-14'
-            : 'w-14 h-12'
+            : 'w-[72px] h-12'
           : isVertical
             ? 'w-10 h-10'
             : 'w-10 h-10',
@@ -140,7 +140,7 @@ function DockItem({
       {showLabel && (
         <span
           className={cn(
-            'text-[10px] leading-none font-medium',
+            'text-[10px] leading-none font-medium truncate max-w-full',
             isActive ? 'text-primary-foreground/90' : 'text-sidebar-foreground/40'
           )}
         >

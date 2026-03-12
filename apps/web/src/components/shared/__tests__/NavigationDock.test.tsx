@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { id: 'browser', label: 'Internet' },
   { id: 'library', label: 'Biblioteka' },
   { id: 'diary', label: 'Dziennik' },
-  { id: 'schedule', label: 'Plan' },
+  { id: 'schedule', label: 'Harmonogram' },
   { id: 'settings', label: 'Ustawienia' },
 ] as const;
 
@@ -71,7 +71,7 @@ describe('NavigationDock', () => {
     await user.click(screen.getByRole('button', { name: 'Dziennik' }));
     expect(navigateTo).toHaveBeenCalledWith('diary');
 
-    await user.click(screen.getByRole('button', { name: 'Plan' }));
+    await user.click(screen.getByRole('button', { name: 'Harmonogram' }));
     expect(navigateTo).toHaveBeenCalledWith('schedule');
 
     await user.click(screen.getByRole('button', { name: 'Ustawienia' }));

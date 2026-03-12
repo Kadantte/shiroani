@@ -396,7 +396,7 @@ export function ThemeEditorDialog({
         <DialogFooter className="pt-4 border-t border-border-glass gap-2">
           <Button variant="ghost" size="sm" onClick={handleReset} className="mr-auto">
             <RotateCcw className="w-3.5 h-3.5" />
-            Resetuj
+            Przywróć
           </Button>
           <Button variant="outline" size="sm" onClick={handleCancel}>
             Anuluj

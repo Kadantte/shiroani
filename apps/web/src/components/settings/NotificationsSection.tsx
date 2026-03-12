@@ -107,7 +107,7 @@ export function NotificationsSection() {
 
         {/* Lead time */}
         <div>
-          <h3 className="text-sm font-medium mb-1">Wyprzedzenie</h3>
+          <h3 className="text-sm font-medium mb-1">Powiadom przed emisją</h3>
           <p className="text-xs text-muted-foreground mb-2">
             Ile minut przed emisją wysłać powiadomienie
           </p>
