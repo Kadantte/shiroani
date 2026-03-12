@@ -1,5 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Palette, Globe, Download, Info, Bell, Cat, Database, MessageCircle } from 'lucide-react';
+import {
+  Palette,
+  Globe,
+  Download,
+  Info,
+  Bell,
+  Cat,
+  Database,
+  MessageCircle,
+  Settings,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_WINDOWS, IS_MAC } from '@/lib/platform';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
@@ -10,8 +20,11 @@ import { NotificationsSection } from '@/components/settings/NotificationsSection
 import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
 import { DiscordSection } from '@/components/settings/DiscordSection';
+import { GeneralSection } from '@/components/settings/GeneralSection';
+import { IS_ELECTRON } from '@/lib/platform';
 
 type SettingsSection =
+  | 'general'
   | 'appearance'
   | 'browser'
   | 'notifications'
@@ -22,6 +35,7 @@ type SettingsSection =
   | 'about';
 
 const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
+  { id: 'general', label: 'Ogólne', Icon: Settings },
   { id: 'appearance', label: 'Wygląd', Icon: Palette },
   { id: 'browser', label: 'Przeglądarka', Icon: Globe },
   { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
@@ -33,12 +47,19 @@ const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }
 ];
 
 export function SettingsView() {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('appearance');
+  const [activeSection, setActiveSection] = useState<SettingsSection>(
+    IS_ELECTRON ? 'general' : 'appearance'
+  );
   const [version, setVersion] = useState('');
 
-  // Show mascot section on Windows and macOS
+  // Filter platform-specific sections
   const SECTIONS = useMemo(
-    () => ALL_SECTIONS.filter(s => s.id !== 'mascot' || IS_WINDOWS || IS_MAC),
+    () =>
+      ALL_SECTIONS.filter(s => {
+        if (s.id === 'mascot') return IS_WINDOWS || IS_MAC;
+        if (s.id === 'general') return IS_ELECTRON;
+        return true;
+      }),
     []
   );
 
@@ -90,6 +111,7 @@ export function SettingsView() {
         aria-label={SECTIONS.find(s => s.id === activeSection)?.label}
       >
         <div className="max-w-xl">
+          {activeSection === 'general' && <GeneralSection />}
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}
           {activeSection === 'notifications' && <NotificationsSection />}

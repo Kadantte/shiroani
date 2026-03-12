@@ -28,7 +28,12 @@ import {
   setMainWindow,
   updateMascotVisibilityForWindowState,
 } from './mascot/overlay';
-import { createContextMenuWindow, destroyContextMenu, setMainWindowRef } from './mascot/context-menu';
+import {
+  createContextMenuWindow,
+  destroyContextMenu,
+  setMainWindowRef,
+} from './mascot/context-menu';
+import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
 
 // Register custom protocol scheme for background images.
@@ -185,6 +190,13 @@ async function bootstrap(): Promise<void> {
 
   // Set up window-dependent services and event listeners
   setupWindowDependentServices(mainWindow);
+
+  // Create system tray icon
+  try {
+    createTray(mainWindow);
+  } catch (error) {
+    logger.warn('Failed to create system tray:', error);
+  }
 }
 
 // Global error handling
@@ -247,6 +259,7 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    await safeCleanup('system tray', () => destroyTray(), logger);
     await safeCleanup('context menu', () => destroyContextMenu(), logger);
     await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
     await safeCleanup('discord rpc', () => cleanupDiscordRpc(), logger);

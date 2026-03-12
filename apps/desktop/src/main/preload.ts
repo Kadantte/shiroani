@@ -65,6 +65,8 @@ export interface ElectronAPI {
     openLogsFolder: () => Promise<void>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
+    getAutoLaunch: () => Promise<boolean>;
+    setAutoLaunch: (enabled: boolean) => Promise<boolean>;
   };
   browser: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
@@ -162,6 +164,9 @@ const electronAPI: ElectronAPI = {
     openLogsFolder: () => ipcRenderer.invoke('app:open-logs-folder') as Promise<void>,
     listLogFiles: () => ipcRenderer.invoke('app:list-log-files'),
     readLogFile: (fileName: string) => ipcRenderer.invoke('app:read-log-file', fileName),
+    getAutoLaunch: () => ipcRenderer.invoke('app:get-auto-launch') as Promise<boolean>,
+    setAutoLaunch: (enabled: boolean) =>
+      ipcRenderer.invoke('app:set-auto-launch', enabled) as Promise<boolean>,
   },
   browser: {
     toggleAdblock: (enabled: boolean) =>

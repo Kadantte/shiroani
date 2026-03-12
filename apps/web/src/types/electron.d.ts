@@ -48,6 +48,8 @@ interface ElectronAPI {
     getBackendPort: () => Promise<number>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
+    getAutoLaunch: () => Promise<boolean>;
+    setAutoLaunch: (enabled: boolean) => Promise<boolean>;
   };
   browser?: {
     toggleAdblock: (enabled: boolean) => Promise<void>;

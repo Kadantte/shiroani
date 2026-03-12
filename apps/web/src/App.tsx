@@ -19,6 +19,7 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useDockStore } from '@/stores/useDockStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
+import { ConnectionBanner } from '@/components/shared/ConnectionBanner';
 
 function App() {
   const activeView = useAppStore(s => s.activeView);
@@ -77,9 +78,7 @@ function App() {
       <SplashScreen ready={ready} error={error} onDismissed={handleSplashDismissed} />
 
       {/* Onboarding wizard — shown after splash on first launch */}
-      {splashDone && !onboardingDone && (
-        <OnboardingWizard onComplete={handleOnboardingComplete} />
-      )}
+      {splashDone && !onboardingDone && <OnboardingWizard onComplete={handleOnboardingComplete} />}
 
       {splashDone && onboardingDone && (
         <div
@@ -94,6 +93,9 @@ function App() {
 
           {/* Custom title bar for frameless window — hidden in fullscreen */}
           {IS_ELECTRON && !isFullScreen && <TitleBar />}
+
+          {/* Connection status banner */}
+          <ConnectionBanner />
 
           {/* Content area — full width, with bottom padding for the dock */}
           <main

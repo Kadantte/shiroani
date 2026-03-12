@@ -49,6 +49,20 @@ export function registerAppHandlers(): void {
     clipboard.writeText(text);
   });
 
+  ipcMain.handle('app:get-auto-launch', () => {
+    logger.debug('app:get-auto-launch invoked');
+    return app.getLoginItemSettings().openAtLogin;
+  });
+
+  ipcMain.handle('app:set-auto-launch', (_event, enabled: boolean) => {
+    logger.debug(`app:set-auto-launch invoked: ${enabled}`);
+    if (typeof enabled !== 'boolean') {
+      throw new Error('set-auto-launch expects a boolean');
+    }
+    app.setLoginItemSettings({ openAtLogin: enabled });
+    return app.getLoginItemSettings().openAtLogin;
+  });
+
   ipcMain.handle('app:get-backend-port', () => {
     logger.debug('app:get-backend-port invoked');
     return getBackendPort();
@@ -123,6 +137,8 @@ export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-version');
   ipcMain.removeHandler('app:open-logs-folder');
   ipcMain.removeHandler('app:clipboard-write');
+  ipcMain.removeHandler('app:get-auto-launch');
+  ipcMain.removeHandler('app:set-auto-launch');
   ipcMain.removeHandler('app:get-backend-port');
   ipcMain.removeHandler('app:list-log-files');
   ipcMain.removeHandler('app:read-log-file');

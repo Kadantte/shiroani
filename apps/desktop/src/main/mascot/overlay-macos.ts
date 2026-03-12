@@ -2,7 +2,7 @@ import { app, BrowserWindow, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from '../logger';
-import { setMenuSelectHandler, isContextMenuVisible } from './context-menu';
+import { setMenuSelectHandler, isContextMenuVisible, hideContextMenu } from './context-menu';
 import { handleOverlayAction } from './mascot-actions';
 import { isMascotPositionLocked, registerPositionCallbacks } from './mascot-position';
 import {
@@ -77,7 +77,10 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
   });
 
   mascotWindow.setAlwaysOnTop(true, 'floating');
-  mascotWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  mascotWindow.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true,
+    skipTransformProcessType: true,
+  });
 
   // Hide from Mission Control
   if (typeof mascotWindow.setHiddenInMissionControl === 'function') {
@@ -132,8 +135,11 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
   // When the mascot is clicked, immediately return focus to the previously active window.
   mascotWindow.on('focus', () => {
     if (mascotWindow && !mascotWindow.isDestroyed()) {
-      // Don't steal focus back when the context menu is open
-      if (isContextMenuVisible()) return;
+      // Dismiss context menu if it's open when mascot gets focus
+      if (isContextMenuVisible()) {
+        hideContextMenu();
+        return;
+      }
       mascotWindow.blur();
       // If the main window was visible, refocus it
       if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {

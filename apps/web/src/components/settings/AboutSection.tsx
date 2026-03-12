@@ -54,7 +54,11 @@ export function AboutSection({ version }: AboutSectionProps) {
       </SettingsCard>
 
       {/* Onboarding */}
-      <SettingsCard icon={Sparkles} title="Kreator konfiguracji" subtitle="Ponownie przejdź kreator pierwszego uruchomienia">
+      <SettingsCard
+        icon={Sparkles}
+        title="Kreator konfiguracji"
+        subtitle="Ponownie przejdź kreator pierwszego uruchomienia"
+      >
         <Button
           variant="outline"
           size="sm"
@@ -65,7 +69,7 @@ export function AboutSection({ version }: AboutSectionProps) {
           Uruchom kreator ponownie
         </Button>
         <p className="text-2xs text-muted-foreground/60">
-          Po kliknięciu kreator pojawi się przy następnym uruchomieniu aplikacji
+          Po kliknięciu kreator uruchomi się od razu — Shiro-chan przeprowadzi Cię jeszcze raz!
         </p>
       </SettingsCard>
 

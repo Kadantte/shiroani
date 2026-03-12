@@ -3,7 +3,9 @@
 <div align="center">
   <img src="assets/icon.png" alt="ShiroAni" width="128" height="128" />
 
-  <h1>ShiroAni</h1>
+  <h1>白アニ &nbsp;·&nbsp; ShiroAni</h1>
+
+  <p><strong>Your cozy little corner for all things anime.</strong></p>
 
   <p>
     <a href="https://github.com/Shironex/shiroani/releases/latest">
@@ -12,9 +14,6 @@
     <a href="https://github.com/Shironex/shiroani/releases">
       <img src="https://img.shields.io/github/downloads/Shironex/shiroani/total?style=flat&color=green" alt="Downloads" />
     </a>
-    <img src="https://img.shields.io/badge/Electron-40-47848F?logo=electron&logoColor=white" alt="Electron" />
-    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" alt="React" />
-    <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey" alt="Platform" />
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/License-Source%20Available-orange" alt="License" />
@@ -22,15 +21,15 @@
   </p>
 
   <p>
-    <a href="https://github.com/Shironex/shiroani/releases/latest">Download Latest Release</a>
+    <a href="https://github.com/Shironex/shiroani/releases/latest"><strong>Download</strong></a>
   </p>
 
   <p>
-    <a href="#english">English</a> | <a href="#polski">Polski</a>
+    <a href="#english">English</a> · <a href="#polski">Polski</a>
   </p>
 
   <blockquote>
-    <p>⚠️ This project is in early development. Expect bugs and missing features — they will be addressed in future releases.</p>
+    <p>Shiro-chan is still growing up! The app is in early development — some things might be rough around the edges, but new stuff lands with every release.</p>
   </blockquote>
 </div>
 
@@ -39,87 +38,118 @@
 <a name="english"></a>
 
 <details open>
-<summary><h2>🇬🇧 English</h2></summary>
+<summary><h2>English</h2></summary>
 
-### About
+### What is ShiroAni?
 
-ShiroAni is a desktop application for browsing and tracking anime. It combines a built-in browser with ad-blocking, a personal anime library, airing schedule from AniList, a rich-text diary, and a desktop mascot companion — all in one app.
+ShiroAni is a desktop app that brings everything anime into one place — browse and watch with a built-in ad-free browser, keep track of what you're watching, check airing schedules, write in your personal diary, and hang out with a little chibi companion on your desktop. All wrapped in a cozy, themeable UI that feels like home.
 
-> **Note:** The UI is currently in Polish. English language support is planned for future releases.
+> **Heads up:** The interface is currently in Polish. English is on the way!
 
 ### Screenshots
 
-<!-- Screenshots coming soon -->
+<p align="center">
+  <img src="assets/splashscreen.png" alt="Splash screen" width="720" />
+  <br />
+  <em>Shiro-chan greets you while the app wakes up~</em>
+</p>
 
-### Features
+<p align="center">
+  <img src="assets/welcome-wizard.jpeg" alt="Welcome wizard" width="720" />
+  <br />
+  <em>First launch? Shiro-chan walks you through setting up your anime nest</em>
+</p>
 
-| Feature               | Description                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------ |
-| Built-in Browser      | Watch anime with built-in ad-blocking powered by Ghostery                                              |
-| Anime Library         | Track anime with statuses: watching, completed, plan to watch, on hold, dropped                        |
-| Airing Schedule       | Weekly, daily, and timetable views powered by AniList                                                  |
-| Diary                 | Personal journal with a rich text editor                                                               |
-| Desktop Mascot        | Chibi companion that sits on your desktop with multiple poses and animations (Windows, macOS fallback) |
-| Themes                | 39 built-in themes (including 15 anime-inspired) with visual theme editor                              |
-| Custom Themes         | Visual theme editor for creating custom themes                                                         |
-| Custom Backgrounds    | Personalize app background with custom wallpapers                                                      |
-| Discord Rich Presence | Shows current anime activity on Discord profile with customizable templates                            |
-| Quick Access New Tab  | Predefined anime sites on new tab page                                                                 |
-| Floating Dock         | Modern floating dock for app navigation                                                                |
-| Notifications         | Get notified when new episodes air                                                                     |
-| Import / Export       | Back up and restore your library and diary data                                                        |
-| Auto Updates          | Automatic updates on Windows via GitHub Releases                                                       |
+<p align="center">
+  <img src="assets/my-library.jpeg" alt="Anime library" width="720" />
+  <br />
+  <em>Your personal anime library — track everything you're watching</em>
+</p>
 
-### Installation
+<p align="center">
+  <img src="assets/schedule.jpeg" alt="Airing schedule" width="720" />
+  <br />
+  <em>Weekly airing schedule so you never miss a new episode</em>
+</p>
 
-Download the latest release for your platform from the [Releases](https://github.com/Shironex/shiroani/releases/latest) page.
+<p align="center">
+  <img src="assets/new-tab.jpeg" alt="New tab page" width="720" />
+  <br />
+  <em>Quick access to your favorite anime sites, right from new tab</em>
+</p>
+
+<p align="center">
+  <img src="assets/settings.jpeg" alt="Settings" width="720" />
+  <br />
+  <em>Themes, backgrounds, dock — make it feel like yours</em>
+</p>
+
+### What's inside
+
+|                           |                                                                            |
+| ------------------------- | -------------------------------------------------------------------------- |
+| **Built-in Browser**      | Watch anime without ads — powered by Ghostery's ad-blocker                 |
+| **Your Anime Library**    | Track everything: watching, completed, plan to watch, on hold, dropped     |
+| **Airing Schedule**       | Never miss a new episode — weekly, daily, and timetable views from AniList |
+| **Diary**                 | A personal journal with a rich text editor, just for you                   |
+| **Desktop Mascot**        | A chibi companion who lives on your desktop with poses and animations      |
+| **39 Themes**             | Including 15 anime-inspired ones, plus a visual editor to create your own  |
+| **Custom Backgrounds**    | Make it yours with your favorite wallpapers                                |
+| **Discord Rich Presence** | Show your friends what you're watching with customizable templates         |
+| **Quick Access**          | Favorite anime sites one click away on new tabs                            |
+| **Floating Dock**         | A sleek floating dock for navigating the app                               |
+| **Episode Notifications** | Get notified when new episodes drop                                        |
+| **Import / Export**       | Back up and restore your library and diary anytime                         |
+| **Auto Updates**          | Stays up-to-date automatically on Windows                                  |
+
+### Getting started
+
+Grab the latest version for your system from [Releases](https://github.com/Shironex/shiroani/releases/latest).
 
 #### Windows
 
-1. Download the `.exe` installer from the latest release.
-2. Run the installer — you may see a SmartScreen warning since the app is not code-signed. Click **"More info"** and then **"Run anyway"** to proceed.
-3. Once installed, the app will update automatically when new versions are available.
+1. Download the `.exe` installer.
+2. Run it — Windows might show a SmartScreen warning since the app isn't code-signed. Click **"More info"** then **"Run anyway"**.
+3. That's it! Future updates install automatically.
 
 #### macOS
 
-1. Download the `.dmg` file from the latest release.
-2. Open the `.dmg` and drag ShiroAni to your Applications folder.
-3. The app is not code-signed, so macOS will block it by default. To allow it, run the following command in Terminal:
+1. Download the `.dmg` file.
+2. Open it and drag ShiroAni to your Applications folder.
+3. macOS will block it because it's not code-signed. Open Terminal and run:
    ```bash
    xattr -cr /Applications/ShiroAni.app
    ```
-4. **Auto-updates are not available on macOS** due to the lack of code signing. To update, download the latest `.dmg` from the [Releases](https://github.com/Shironex/shiroani/releases) page manually.
+4. Auto-updates aren't available on macOS yet, so grab new versions manually from [Releases](https://github.com/Shironex/shiroani/releases).
 
 #### Linux
 
-Linux support is planned for future releases.
+Coming soon!
 
-### Tech Stack
+### Built with
 
-| Layer         | Technology                                        |
-| ------------- | ------------------------------------------------- |
-| Desktop       | Electron 40                                       |
-| Backend       | NestJS 10 (embedded)                              |
-| Frontend      | React 18, Vite 7, Tailwind CSS 4                  |
-| Database      | better-sqlite3                                    |
-| Rich Text     | TipTap                                            |
-| UI Components | Radix UI, Lucide Icons                            |
-| Real-time     | Socket.IO                                         |
-| State         | Zustand                                           |
-| Native        | C++ overlay module (node-addon-api, Windows only) |
-| Code Quality  | ESLint, Prettier, Husky                           |
-| Testing       | Jest, Vitest                                      |
-| CI/CD         | GitHub Actions                                    |
+|           |                                              |
+| --------- | -------------------------------------------- |
+| Desktop   | Electron 40                                  |
+| Backend   | NestJS 10 (embedded)                         |
+| Frontend  | React 18, Vite 7, Tailwind CSS 4             |
+| Database  | better-sqlite3                               |
+| Rich Text | TipTap                                       |
+| UI        | Radix UI, Lucide Icons                       |
+| Real-time | Socket.IO                                    |
+| State     | Zustand                                      |
+| Native    | C++ overlay module (node-addon-api, Windows) |
+| Quality   | ESLint, Prettier, Husky                      |
+| Tests     | Jest, Vitest                                 |
+| CI/CD     | GitHub Actions                               |
 
-### Building from Source
+### Building from source
 
-#### Requirements
+You'll need:
 
-- [Node.js](https://nodejs.org/) >= 22.0.0
-- [pnpm](https://pnpm.io/) >= 10.0.0
-- C++ compiler for native modules (Xcode CLI tools on macOS, Visual Studio Build Tools on Windows)
-
-#### Setup
+- [Node.js](https://nodejs.org/) >= 22
+- [pnpm](https://pnpm.io/) >= 10
+- A C++ compiler (Xcode CLI tools on macOS, Visual Studio Build Tools on Windows)
 
 ```bash
 git clone https://github.com/Shironex/shiroani.git
@@ -128,14 +158,15 @@ pnpm install
 pnpm dev
 ```
 
-#### Commands
+<details>
+<summary>All commands</summary>
 
 ```bash
-pnpm dev           # Run in development mode
-pnpm dev:debug     # Run in debug mode with verbose logging
+pnpm dev           # Development mode
+pnpm dev:debug     # Debug mode with verbose logging
 pnpm lint          # Run linter
 pnpm format        # Format code
-pnpm format:check  # Check code formatting
+pnpm format:check  # Check formatting
 pnpm typecheck     # Type check
 pnpm test          # Run tests
 pnpm build         # Build the app
@@ -143,7 +174,9 @@ pnpm package:win   # Package for Windows
 pnpm package:mac   # Package for macOS
 ```
 
-### Project Structure
+</details>
+
+### Project structure
 
 ```
 shiroani/
@@ -157,12 +190,6 @@ shiroani/
 └── assets/               # Logo, screenshots
 ```
 
-### Roadmap
-
-- [ ] English language support
-- [ ] Linux support
-- [ ] macOS code signing and auto-updates
-
 </details>
 
 ---
@@ -170,85 +197,116 @@ shiroani/
 <a name="polski"></a>
 
 <details>
-<summary><h2>🇵🇱 Polski</h2></summary>
+<summary><h2>Polski</h2></summary>
 
-### O projekcie
+### Czym jest ShiroAni?
 
-ShiroAni to aplikacja desktopowa do przeglądania i śledzenia anime. Łączy w sobie wbudowaną przeglądarkę z blokowaniem reklam, osobistą bibliotekę anime, harmonogram emisji z AniList, pamiętnik z edytorem tekstu oraz maskotkę na pulpicie — wszystko w jednej aplikacji.
+ShiroAni to aplikacja desktopowa, która zbiera wszystko co anime w jednym miejscu — przeglądaj i oglądaj z wbudowaną przeglądarką bez reklam, śledź co oglądasz, sprawdzaj harmonogramy emisji, pisz w osobistym pamiętniku i spędzaj czas z małą chibi towarzyszką na pulpicie. Wszystko w przytulnym, konfigurowalnym interfejsie, który czuje się jak dom.
 
 ### Zrzuty ekranu
 
-<!-- Zrzuty ekranu wkrotce -->
+<p align="center">
+  <img src="assets/splashscreen.png" alt="Ekran powitalny" width="720" />
+  <br />
+  <em>Shiro-chan wita Cię, gdy aplikacja się budzi~</em>
+</p>
 
-### Funkcje
+<p align="center">
+  <img src="assets/welcome-wizard.jpeg" alt="Kreator powitania" width="720" />
+  <br />
+  <em>Pierwszy raz? Shiro-chan pomoże Ci urządzić Twoje anime-gniazdko</em>
+</p>
 
-| Funkcja                   | Opis                                                                                     |
-| ------------------------- | ---------------------------------------------------------------------------------------- |
-| Wbudowana przeglądarka    | Oglądaj anime z wbudowanym blokowaniem reklam (Ghostery)                                 |
-| Biblioteka anime          | Śledź anime ze statusami: oglądane, ukończone, planowane, wstrzymane, porzucone          |
-| Harmonogram emisji        | Widok tygodniowy, dzienny i tabelaryczny z danymi z AniList                              |
-| Pamiętnik                 | Osobisty dziennik z edytorem tekstu                                                      |
-| Maskotka na pulpicie      | Chibi towarzyszka na pulpicie z różnymi pozami i animacjami (Windows, fallback na macOS) |
-| Motywy                    | 39 wbudowanych motywów (w tym 15 anime) z edytorem motywów                               |
-| Własne motywy             | Wizualny edytor motywów do tworzenia własnych motywów                                    |
-| Własne tła                | Personalizacja tła aplikacji własnymi tapetami                                           |
-| Discord Rich Presence     | Wyświetla aktualną aktywność anime na profilu Discord z konfigurowalnymi szablonami      |
-| Szybki dostęp             | Predefiniowane strony anime na stronie nowej karty                                       |
-| Pływający dock            | Nowoczesny pływający dock do nawigacji w aplikacji                                       |
-| Powiadomienia             | Otrzymuj powiadomienia o nowych odcinkach                                                |
-| Import / Eksport          | Twórz kopie zapasowe i przywracaj dane biblioteki oraz pamiętnika                        |
-| Automatyczne aktualizacje | Automatyczne aktualizacje na Windowsie przez GitHub Releases                             |
+<p align="center">
+  <img src="assets/my-library.jpeg" alt="Biblioteka anime" width="720" />
+  <br />
+  <em>Twoja osobista biblioteka anime — wszystko w jednym miejscu</em>
+</p>
 
-### Instalacja
+<p align="center">
+  <img src="assets/schedule.jpeg" alt="Harmonogram emisji" width="720" />
+  <br />
+  <em>Tygodniowy harmonogram, żeby nie przegapić żadnego odcinka</em>
+</p>
 
-Pobierz najnowszą wersję dla swojego systemu ze strony [Releases](https://github.com/Shironex/shiroani/releases/latest).
+<p align="center">
+  <img src="assets/new-tab.jpeg" alt="Nowa karta" width="720" />
+  <br />
+  <em>Szybki dostęp do ulubionych stron anime, prosto z nowej karty</em>
+</p>
+
+<p align="center">
+  <img src="assets/settings.jpeg" alt="Ustawienia" width="720" />
+  <br />
+  <em>Motywy, tła, dock — dopasuj wszystko do siebie</em>
+</p>
+
+### Co znajdziesz w środku
+
+|                               |                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| **Wbudowana przeglądarka**    | Oglądaj anime bez reklam — blokowanie przez Ghostery                           |
+| **Biblioteka anime**          | Śledź wszystko: oglądane, ukończone, planowane, wstrzymane, porzucone          |
+| **Harmonogram emisji**        | Nigdy nie przegap odcinka — widok tygodniowy, dzienny i tabelaryczny z AniList |
+| **Pamiętnik**                 | Osobisty dziennik z edytorem tekstu, tylko dla Ciebie                          |
+| **Maskotka na pulpicie**      | Chibi towarzyszka z różnymi pozami i animacjami                                |
+| **39 motywów**                | W tym 15 inspirowanych anime, plus wizualny edytor do tworzenia własnych       |
+| **Własne tła**                | Spersonalizuj aplikację swoimi ulubionymi tapetami                             |
+| **Discord Rich Presence**     | Pokaż znajomym co oglądasz z konfigurowalnymi szablonami                       |
+| **Szybki dostęp**             | Ulubione strony anime jednym kliknięciem na nowej karcie                       |
+| **Pływający dock**            | Elegancki pływający dock do nawigacji                                          |
+| **Powiadomienia**             | Dostaniesz znać, gdy wyjdzie nowy odcinek                                      |
+| **Import / Eksport**          | Twórz kopie zapasowe i przywracaj dane w każdej chwili                         |
+| **Automatyczne aktualizacje** | Na Windowsie aktualizuje się sam                                               |
+
+### Jak zacząć
+
+Pobierz najnowszą wersję ze strony [Releases](https://github.com/Shironex/shiroani/releases/latest).
 
 #### Windows
 
-1. Pobierz instalator `.exe` z najnowszego wydania.
-2. Uruchom instalator — może pojawić się ostrzeżenie SmartScreen, ponieważ aplikacja nie posiada podpisu cyfrowego. Kliknij **"Więcej informacji"**, a następnie **"Uruchom mimo to"**, żeby kontynuować.
-3. Po zainstalowaniu aplikacja będzie aktualizować się automatycznie, gdy pojawią się nowe wersje.
+1. Pobierz instalator `.exe`.
+2. Uruchom go — Windows może pokazać ostrzeżenie SmartScreen, bo aplikacja nie ma podpisu cyfrowego. Kliknij **"Więcej informacji"**, potem **"Uruchom mimo to"**.
+3. Gotowe! Przyszłe aktualizacje zainstalują się same.
 
 #### macOS
 
-1. Pobierz plik `.dmg` z najnowszego wydania.
-2. Otwórz `.dmg` i przeciągnij ShiroAni do folderu Aplikacje.
-3. Aplikacja nie posiada podpisu cyfrowego, więc macOS domyślnie ją zablokuje. Aby ją odblokować, uruchom w Terminalu:
+1. Pobierz plik `.dmg`.
+2. Otwórz go i przeciągnij ShiroAni do folderu Aplikacje.
+3. macOS zablokuje aplikację, bo nie ma podpisu cyfrowego. Otwórz Terminal i wpisz:
    ```bash
    xattr -cr /Applications/ShiroAni.app
    ```
-4. **Automatyczne aktualizacje nie są dostępne na macOS** ze względu na brak podpisu cyfrowego. Aby zaktualizować aplikację, pobierz najnowszy plik `.dmg` ręcznie ze strony [Releases](https://github.com/Shironex/shiroani/releases).
+4. Automatyczne aktualizacje na macOS nie są jeszcze dostępne — nowe wersje pobieraj ręcznie z [Releases](https://github.com/Shironex/shiroani/releases).
 
 #### Linux
 
-Wsparcie dla Linuxa jest planowane w przyszłych wydaniach.
+Już niedługo!
 
-### Stos technologiczny
+### Zbudowane z
 
-| Warstwa                           | Technologia                         |
-| --------------------------------- | ----------------------------------- |
-| Aplikacja desktopowa              | Electron 40                         |
-| Backend                           | NestJS 10 (wbudowany)               |
-| Frontend                          | React 18, Vite 7, Tailwind CSS 4    |
-| Baza danych                       | better-sqlite3                      |
-| Edytor tekstu                     | TipTap                              |
-| Komponenty UI                     | Radix UI, Lucide Icons              |
-| Komunikacja w czasie rzeczywistym | Socket.IO                           |
-| Zarządzanie stanem                | Zustand                             |
-| Moduł natywny                     | C++ (node-addon-api, tylko Windows) |
-| Jakość kodu                       | ESLint, Prettier, Husky             |
-| Testy                             | Jest, Vitest                        |
-| CI/CD                             | GitHub Actions                      |
+|                      |                                     |
+| -------------------- | ----------------------------------- |
+| Aplikacja desktopowa | Electron 40                         |
+| Backend              | NestJS 10 (wbudowany)               |
+| Frontend             | React 18, Vite 7, Tailwind CSS 4    |
+| Baza danych          | better-sqlite3                      |
+| Edytor tekstu        | TipTap                              |
+| UI                   | Radix UI, Lucide Icons              |
+| Komunikacja          | Socket.IO                           |
+| Stan                 | Zustand                             |
+| Moduł natywny        | C++ (node-addon-api, tylko Windows) |
+| Jakość kodu          | ESLint, Prettier, Husky             |
+| Testy                | Jest, Vitest                        |
+| CI/CD                | GitHub Actions                      |
 
 ### Budowanie ze źródeł
 
-#### Wymagania
+Będziesz potrzebować:
 
-- [Node.js](https://nodejs.org/) >= 22.0.0
-- [pnpm](https://pnpm.io/) >= 10.0.0
-- Kompilator C++ do modułów natywnych (Xcode CLI tools na macOS, Visual Studio Build Tools na Windows)
-
-#### Konfiguracja
+- [Node.js](https://nodejs.org/) >= 22
+- [pnpm](https://pnpm.io/) >= 10
+- Kompilator C++ (Xcode CLI tools na macOS, Visual Studio Build Tools na Windows)
 
 ```bash
 git clone https://github.com/Shironex/shiroani.git
@@ -257,20 +315,23 @@ pnpm install
 pnpm dev
 ```
 
-#### Komendy
+<details>
+<summary>Wszystkie komendy</summary>
 
 ```bash
-pnpm dev           # Uruchom w trybie deweloperskim
-pnpm dev:debug     # Uruchom w trybie debug z rozszerzonym logowaniem
+pnpm dev           # Tryb deweloperski
+pnpm dev:debug     # Tryb debug z rozszerzonym logowaniem
 pnpm lint          # Uruchom linter
 pnpm format        # Formatuj kod
-pnpm format:check  # Sprawdź formatowanie kodu
+pnpm format:check  # Sprawdź formatowanie
 pnpm typecheck     # Sprawdź typy
 pnpm test          # Uruchom testy
 pnpm build         # Zbuduj aplikację
 pnpm package:win   # Spakuj na Windows
 pnpm package:mac   # Spakuj na macOS
 ```
+
+</details>
 
 ### Struktura projektu
 
@@ -286,21 +347,15 @@ shiroani/
 └── assets/               # Logo, zrzuty ekranu
 ```
 
-### Plany na przyszłość
-
-- [ ] Wsparcie dla języka angielskiego
-- [ ] Wsparcie dla Linuxa
-- [ ] Podpis cyfrowy na macOS i automatyczne aktualizacje
-
 </details>
 
 ---
 
 ## License / Licencja
 
-This project is source-available — see the [LICENSE](LICENSE) file for details. You are free to use the app and study the code, but redistribution, reselling, and creating derivative works are not permitted.
+This project is source-available — see the [LICENSE](LICENSE) file for details. You're free to use the app and explore the code, but redistribution, reselling, and derivative works are not permitted.
 
-Ten projekt jest udostępniony jako source-available — szczegóły w pliku [LICENSE](LICENSE). Możesz swobodnie korzystać z aplikacji i przeglądać kod źródłowy, ale redystrybucja, odsprzedaż i tworzenie prac pochodnych są zabronione.
+Ten projekt jest udostępniony jako source-available — szczegóły w pliku [LICENSE](LICENSE). Możesz swobodnie korzystać z aplikacji i przeglądać kod, ale redystrybucja, odsprzedaż i tworzenie prac pochodnych są zabronione.
 
 ---
 
