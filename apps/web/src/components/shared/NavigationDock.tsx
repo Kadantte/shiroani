@@ -113,16 +113,27 @@ function DockItem({
   showLabel: boolean;
   onClick: () => void;
 }) {
+  const [ripple, setRipple] = useState(false);
+
+  const handleClick = useCallback(() => {
+    if (!isActive) {
+      setRipple(true);
+    }
+    onClick();
+  }, [isActive, onClick]);
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
+      onAnimationEnd={() => ripple && setRipple(false)}
       aria-current={isActive ? 'page' : undefined}
       aria-label={item.label}
       className={cn(
         'group relative z-[1] flex items-center justify-center',
-        'rounded-xl',
-        'transition-colors duration-200 ease-out',
+        'rounded-xl overflow-hidden',
+        'transition-[color,transform] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
         'motion-reduce:transition-none',
+        'hover:scale-110 active:scale-95',
         showLabel && 'gap-1 flex-col',
         showLabel
           ? isVertical
@@ -136,6 +147,15 @@ function DockItem({
           : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
       )}
     >
+      {/* Click ripple */}
+      {ripple && (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center motion-reduce:hidden"
+          aria-hidden="true"
+        >
+          <span className="absolute h-6 w-6 rounded-full bg-primary-foreground/25 animate-[dock-ripple_400ms_ease-out_both]" />
+        </span>
+      )}
       <DockIcon id={item.id} isActive={isActive} />
       {showLabel && (
         <span
@@ -255,6 +275,9 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Track collapsing state for exit animation
   const [isCollapsing, setIsCollapsing] = useState(false);
+  // Track snap bounce after drag ends
+  const [justSnapped, setJustSnapped] = useState(false);
+  const prevDragging = useRef(isDragging);
 
   const activeIndex = ALL_ITEMS.findIndex(item => item.id === activeView);
   const vertical = isVerticalEdge(edge);
@@ -264,6 +287,14 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
 
   // Show expanded dock (full nav) when: not auto-hide, or expanded, or collapsing (exit anim)
   const showFullDock = !autoHide || isExpanded || isCollapsing || isDragging;
+
+  // Detect drag→snap transition for bounce animation
+  useEffect(() => {
+    if (prevDragging.current && !isDragging) {
+      setJustSnapped(true);
+    }
+    prevDragging.current = isDragging;
+  }, [isDragging]);
 
   // Clamp dock position on window resize so it doesn't go off-screen
   useEffect(() => {
@@ -379,12 +410,17 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
       style={dockStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onAnimationEnd={handleAnimationEnd}
     >
       <div
         onPointerDown={draggable ? dragHandlers.onPointerDown : undefined}
         onPointerMove={draggable ? dragHandlers.onPointerMove : undefined}
         onPointerUp={draggable ? dragHandlers.onPointerUp : undefined}
+        onAnimationEnd={e => {
+          handleAnimationEnd(e);
+          if (justSnapped && e.animationName === 'dock-snap') {
+            setJustSnapped(false);
+          }
+        }}
         className={cn(
           'relative flex items-center gap-1 rounded-2xl',
           'border border-white/[0.06]',
@@ -392,7 +428,9 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           draggable && 'cursor-grab active:cursor-grabbing',
           'touch-none select-none',
           isDragging && 'opacity-80 scale-95',
-          getAnimationClass(),
+          justSnapped &&
+            'animate-[dock-snap_500ms_cubic-bezier(0.34,1.56,0.64,1)_both] motion-reduce:animate-none',
+          !justSnapped && getAnimationClass(),
           'transition-[opacity,transform,box-shadow] duration-200',
           vertical ? 'flex-col px-1.5 py-2' : 'flex-row px-2 py-1.5',
           hasBg ? 'bg-black/35 backdrop-blur-xl' : 'bg-sidebar/85 backdrop-blur-md'
@@ -411,7 +449,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           className={cn(
             'absolute rounded-xl',
             'bg-primary/90',
-            'shadow-[0_2px_8px_var(--primary)/0.3,0_0_20px_var(--primary)/0.15]',
+            'animate-[dock-pill-glow_3s_ease-in-out_infinite] motion-reduce:animate-none',
             'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
             'motion-reduce:transition-none',
             vertical ? 'left-1.5 w-[calc(100%-12px)]' : 'top-1.5 h-[calc(100%-12px)]'
