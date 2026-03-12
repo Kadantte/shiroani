@@ -46,6 +46,14 @@ export function DiaryEntryGrid({
           <div
             key={entry.id}
             onClick={() => onSelect(entry)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === ' ') e.preventDefault();
+                onSelect(entry);
+              }
+            }}
+            role="button"
+            tabIndex={0}
             className={cn(
               'flex items-center gap-3 p-2.5 rounded-xl cursor-pointer',
               'hover:bg-accent/40 transition-all duration-150',

@@ -48,9 +48,17 @@ const DiaryEntryCard = memo(function DiaryEntryCard({
   return (
     <div
       onClick={() => onSelect(entry)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === ' ') e.preventDefault();
+          onSelect(entry);
+        }
+      }}
+      role="button"
+      tabIndex={0}
       className={cn(
-        'group/card relative bg-card/80 backdrop-blur-sm border border-border-glass rounded-xl overflow-hidden cursor-pointer',
-        'hover:shadow-primary-glow hover:scale-[1.02] transition-all duration-200'
+        'group/card relative bg-card/80 border border-border-glass rounded-xl overflow-hidden cursor-pointer',
+        'hover:shadow-primary-glow transition-all duration-200'
       )}
     >
       {/* Gradient header */}
@@ -73,14 +81,15 @@ const DiaryEntryCard = memo(function DiaryEntryCard({
         )}
 
         {/* Action buttons (visible on hover) */}
-        <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+        <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 group-focus-within/card:opacity-100 transition-opacity">
           <button
             onClick={e => {
               e.stopPropagation();
               onTogglePin(entry);
             }}
+            aria-label={entry.isPinned ? 'Odepnij' : 'Przypnij'}
             className={cn(
-              'p-1 rounded-md transition-colors',
+              'p-1.5 rounded-md transition-colors',
               entry.isPinned
                 ? 'bg-white/20 text-white hover:bg-white/30'
                 : 'bg-black/20 text-white/70 hover:bg-black/30 hover:text-white'
@@ -93,7 +102,8 @@ const DiaryEntryCard = memo(function DiaryEntryCard({
               e.stopPropagation();
               onRemove(entry);
             }}
-            className="p-1 rounded-md bg-black/20 text-white/70 hover:bg-red-500/40 hover:text-white transition-colors"
+            aria-label="Usuń"
+            className="p-1.5 rounded-md bg-black/20 text-white/70 hover:bg-red-500/40 hover:text-white transition-colors"
           >
             <Trash2 className="w-3 h-3" />
           </button>

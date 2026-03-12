@@ -100,6 +100,7 @@ export function ViewHeader<T extends string = string>({
         {searchQuery && (
           <button
             onClick={() => onSearchChange('')}
+            aria-label="Wyczyść wyszukiwanie"
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
           >
             <SearchX className="w-3.5 h-3.5" />
@@ -108,12 +109,14 @@ export function ViewHeader<T extends string = string>({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+      <div role="tablist" className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
         {filters.map(tab => {
           const isActive = activeFilter === tab.value;
           return (
             <button
               key={tab.value}
+              role="tab"
+              aria-selected={isActive}
               onClick={() => onFilterChange(tab.value)}
               className={cn(
                 'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',

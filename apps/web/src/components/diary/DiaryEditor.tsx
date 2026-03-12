@@ -122,10 +122,16 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
     : 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+      onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
+    >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="diary-editor-title"
         className={cn(
-          'relative w-full max-w-2xl max-h-[85vh] flex flex-col',
+          'relative w-full sm:max-w-2xl mx-4 max-h-[85vh] flex flex-col',
           'bg-card border border-border-glass rounded-2xl overflow-hidden',
           'shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.05)]'
         )}
@@ -160,9 +166,12 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
         {/* Title input */}
         <div className="px-5 pt-3">
           <input
+            id="diary-editor-title"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Tytuł wpisu..."
+            aria-label="Tytuł wpisu"
+            autoFocus
             className="w-full text-lg font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 text-foreground"
           />
         </div>
@@ -177,6 +186,8 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
                 key={opt.value}
                 onClick={() => setMood(mood === opt.value ? undefined : opt.value)}
                 title={opt.label}
+                aria-label={opt.label}
+                aria-pressed={mood === opt.value}
                 className={cn(
                   'p-1 rounded-md transition-all',
                   mood === opt.value
@@ -197,8 +208,8 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
                 className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-2xs bg-primary/10 text-primary/80"
               >
                 {tag}
-                <button onClick={() => handleTagRemove(tag)} className="hover:text-primary ml-0.5">
-                  <X className="w-2.5 h-2.5" />
+                <button onClick={() => handleTagRemove(tag)} aria-label={`Usuń tag ${tag}`} className="p-1 hover:text-primary ml-0.5">
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
@@ -212,6 +223,7 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
                 }
               }}
               placeholder="+ Tag"
+              aria-label="Dodaj tag"
               className="w-16 text-2xs bg-transparent border-none outline-none placeholder:text-muted-foreground/40 text-foreground"
             />
           </div>

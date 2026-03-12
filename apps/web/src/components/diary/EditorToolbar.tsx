@@ -31,6 +31,7 @@ function ToolbarButton({ onClick, isActive, disabled, children, title }: Toolbar
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
       className={cn(
         'p-1.5 rounded-md transition-colors',
         isActive

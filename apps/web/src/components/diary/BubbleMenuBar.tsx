@@ -10,18 +10,21 @@ const FORMATTING_BUTTONS = [
   {
     key: 'bold',
     Icon: Bold,
+    'aria-label': 'Pogrubienie',
     toggle: (e: Editor) => e.chain().focus().toggleBold().run(),
     isActive: (e: Editor) => e.isActive('bold'),
   },
   {
     key: 'italic',
     Icon: Italic,
+    'aria-label': 'Kursywa',
     toggle: (e: Editor) => e.chain().focus().toggleItalic().run(),
     isActive: (e: Editor) => e.isActive('italic'),
   },
   {
     key: 'strike',
     Icon: Strikethrough,
+    'aria-label': 'Przekreślenie',
     toggle: (e: Editor) => e.chain().focus().toggleStrike().run(),
     isActive: (e: Editor) => e.isActive('strike'),
   },
@@ -37,9 +40,10 @@ const HEADING_BUTTON = {
 export function BubbleMenuBar({ editor }: BubbleMenuBarProps) {
   return (
     <div className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
-      {FORMATTING_BUTTONS.map(({ key, Icon, toggle, isActive }) => (
+      {FORMATTING_BUTTONS.map(({ key, Icon, 'aria-label': ariaLabel, toggle, isActive }) => (
         <button
           key={key}
+          aria-label={ariaLabel}
           onClick={() => toggle(editor)}
           className={cn(
             'rounded px-1.5 py-1',
@@ -53,6 +57,7 @@ export function BubbleMenuBar({ editor }: BubbleMenuBarProps) {
       ))}
       <div className="w-px h-4 bg-border/50 mx-0.5" />
       <button
+        aria-label="Nagłówek 2"
         onClick={() => HEADING_BUTTON.toggle(editor)}
         className={cn(
           'rounded px-1.5 py-1',
