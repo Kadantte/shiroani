@@ -12,13 +12,20 @@ import { shallow } from 'zustand/shallow';
  * );
  */
 export function createMemoizedSelector<S, R>(selector: (state: S) => R): (state: S) => R {
-  let lastResult: R | undefined;
+  let lastInput: S | undefined;
+  let lastResult: R;
+  let hasResult = false;
 
   return (state: S) => {
+    // Skip computation entirely if the input state reference is the same
+    if (hasResult && lastInput === state) return lastResult;
     const result = selector(state);
-    if (lastResult !== undefined && shallow(lastResult, result)) {
+    if (hasResult && shallow(lastResult, result)) {
+      lastInput = state;
       return lastResult;
     }
+    hasResult = true;
+    lastInput = state;
     lastResult = result;
     return result;
   };
