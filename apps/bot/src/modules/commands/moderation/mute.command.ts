@@ -12,7 +12,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
-import { successEmbed, errorEmbed } from '@/common/utils';
+import { DEFAULT_REASON } from '@/common/constants';
+import { successEmbed, errorEmbed, parseDuration, validateModerationTarget } from '@/common/utils';
 
 class MuteOptions {
   @UserOption({
@@ -65,7 +66,7 @@ export class MuteCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { user, duration, reason }: MuteOptions
   ) {
-    const member = interaction.guild!.members.cache.get(user.id);
+    const member = await interaction.guild!.members.fetch(user.id).catch(() => null);
 
     if (!member) {
       return interaction.reply({
@@ -74,38 +75,32 @@ export class MuteCommand {
       });
     }
 
-    if (user.id === interaction.user.id) {
-      return interaction.reply({
-        embeds: [errorEmbed('Nie możesz wyciszyć samego siebie.')],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
     const moderator = interaction.member as GuildMember;
-    if (member.roles.highest.position >= moderator.roles.highest.position) {
+    const validationError = validateModerationTarget({
+      targetUser: user,
+      targetMember: member,
+      moderator,
+      botMember: null,
+      action: 'mute',
+    });
+
+    if (validationError) {
       return interaction.reply({
-        embeds: [errorEmbed('Nie możesz wyciszyć użytkownika z wyższą lub równą rolą.')],
+        embeds: [errorEmbed(validationError)],
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    if (!member.moderatable) {
-      return interaction.reply({
-        embeds: [errorEmbed('Nie mogę wyciszyć tego użytkownika.')],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const seconds = this.parseDuration(duration);
-    if (!seconds || seconds < 1 || seconds > 2419200) {
+    const MAX_TIMEOUT_SECONDS = 28 * 24 * 60 * 60; // 28 days
+    const seconds = parseDuration(duration);
+    if (!seconds || seconds < 1 || seconds > MAX_TIMEOUT_SECONDS) {
       return interaction.reply({
         embeds: [errorEmbed('Nieprawidłowy czas. Użyj formatu: 30s, 10m, 2h, 7d (max 28d).')],
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    const defaultReason = 'Brak podanego powodu';
-    const effectiveReason = reason ?? defaultReason;
+    const effectiveReason = reason ?? DEFAULT_REASON;
 
     try {
       await member.timeout(seconds * 1000, effectiveReason);
@@ -117,26 +112,19 @@ export class MuteCommand {
       });
     }
 
-    try {
-      await this.modLog.log({
-        guildId: interaction.guildId!,
-        action: 'MUTE',
-        targetUserId: user.id,
-        moderatorId: interaction.user.id,
-        reason: effectiveReason,
-        duration: seconds,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, guildId: interaction.guildId },
-        'Failed to create mod log for /mute'
-      );
-    }
+    await this.modLog.log({
+      guildId: interaction.guildId!,
+      action: 'MUTE',
+      targetUserId: user.id,
+      moderatorId: interaction.user.id,
+      reason: effectiveReason,
+      duration: seconds,
+    });
 
     return interaction.reply({
       embeds: [
         successEmbed(
-          `**${user.tag}** został wyciszony na **${duration}**.${reason ? ` Powód: ${reason}` : ''}`
+          `**${user.username}** został wyciszony na **${duration}**.${reason ? ` Powód: ${reason}` : ''}`
         ),
       ],
     });
@@ -153,7 +141,7 @@ export class MuteCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { user }: UnmuteOptions
   ) {
-    const member = interaction.guild!.members.cache.get(user.id);
+    const member = await interaction.guild!.members.fetch(user.id).catch(() => null);
 
     if (!member) {
       return interaction.reply({
@@ -179,31 +167,15 @@ export class MuteCommand {
       });
     }
 
-    try {
-      await this.modLog.log({
-        guildId: interaction.guildId!,
-        action: 'UNMUTE',
-        targetUserId: user.id,
-        moderatorId: interaction.user.id,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, guildId: interaction.guildId },
-        'Failed to create mod log for /unmute'
-      );
-    }
+    await this.modLog.log({
+      guildId: interaction.guildId!,
+      action: 'UNMUTE',
+      targetUserId: user.id,
+      moderatorId: interaction.user.id,
+    });
 
     return interaction.reply({
-      embeds: [successEmbed(`**${user.tag}** został odciszony.`)],
+      embeds: [successEmbed(`**${user.username}** został odciszony.`)],
     });
-  }
-
-  private parseDuration(input: string): number | null {
-    const match = input.match(/^(\d+)(s|m|h|d)$/i);
-    if (!match) return null;
-    const value = parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
-    const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
-    return value * (multipliers[unit] ?? 0);
   }
 }

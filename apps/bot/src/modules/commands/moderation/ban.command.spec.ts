@@ -23,6 +23,7 @@ describe('BanCommand', () => {
 
     (interaction.guild as any).members.fetch = fetchMock;
     (interaction.guild as any).members.ban = jest.fn().mockResolvedValue(undefined);
+    (interaction.guild as any).members.me = { id: '999888777' };
 
     return interaction;
   }

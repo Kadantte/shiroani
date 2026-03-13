@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 
 @Injectable()
 export class GuildService {
@@ -26,6 +26,16 @@ export class GuildService {
   async findByDiscordId(discordId: string) {
     return this.prisma.guild.findUnique({
       where: { discordId },
+    });
+  }
+
+  /**
+   * Update a single guild setting field.
+   */
+  async updateSetting(discordId: string, field: string, value: string | null) {
+    await this.prisma.guild.update({
+      where: { discordId },
+      data: { [field]: value },
     });
   }
 

@@ -12,7 +12,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
-import { successEmbed, errorEmbed } from '@/common/utils';
+import { DEFAULT_REASON } from '@/common/constants';
+import { successEmbed, errorEmbed, validateModerationTarget } from '@/common/utils';
 
 class BanOptions {
   @UserOption({
@@ -50,40 +51,25 @@ export class BanCommand {
     @Options() { user, reason }: BanOptions
   ) {
     const member = await interaction.guild!.members.fetch(user.id).catch(() => null);
+    const moderator = interaction.member as GuildMember;
+    const botMember = interaction.guild!.members.me ?? null;
 
-    if (user.id === interaction.user.id) {
+    const validationError = validateModerationTarget({
+      targetUser: user,
+      targetMember: member,
+      moderator,
+      botMember,
+      action: 'ban',
+    });
+
+    if (validationError) {
       return interaction.reply({
-        embeds: [errorEmbed('Nie możesz zbanować samego siebie.')],
+        embeds: [errorEmbed(validationError)],
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    if (user.id === interaction.client.user!.id) {
-      return interaction.reply({
-        embeds: [errorEmbed('Nie mogę zbanować samego siebie.')],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    if (member) {
-      const moderator = interaction.member as GuildMember;
-      if (member.roles.highest.position >= moderator.roles.highest.position) {
-        return interaction.reply({
-          embeds: [errorEmbed('Nie możesz zbanować użytkownika z wyższą lub równą rolą.')],
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      if (!member.bannable) {
-        return interaction.reply({
-          embeds: [errorEmbed('Nie mogę zbanować tego użytkownika. Sprawdź hierarchię ról bota.')],
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
-    const defaultReason = 'Brak podanego powodu';
-    const effectiveReason = reason ?? defaultReason;
+    const effectiveReason = reason ?? DEFAULT_REASON;
 
     try {
       await interaction.guild!.members.ban(user.id, {
@@ -97,24 +83,17 @@ export class BanCommand {
       });
     }
 
-    try {
-      await this.modLog.log({
-        guildId: interaction.guildId!,
-        action: 'BAN',
-        targetUserId: user.id,
-        moderatorId: interaction.user.id,
-        reason: effectiveReason,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, guildId: interaction.guildId },
-        'Failed to create mod log for /ban'
-      );
-    }
+    await this.modLog.log({
+      guildId: interaction.guildId!,
+      action: 'BAN',
+      targetUserId: user.id,
+      moderatorId: interaction.user.id,
+      reason: effectiveReason,
+    });
 
     return interaction.reply({
       embeds: [
-        successEmbed(`**${user.tag}** został zbanowany.${reason ? ` Powód: ${reason}` : ''}`),
+        successEmbed(`**${user.username}** został zbanowany.${reason ? ` Powód: ${reason}` : ''}`),
       ],
     });
   }

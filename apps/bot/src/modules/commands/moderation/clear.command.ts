@@ -56,20 +56,12 @@ export class ClearCommand {
       });
     }
 
-    // Log to mod log independently — failures here must not affect the user reply
-    try {
-      await this.modLog.log({
-        guildId: interaction.guildId!,
-        action: 'CLEAR_MESSAGES',
-        moderatorId: interaction.user.id,
-        messagesCleared: deleted.size,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, guildId: interaction.guildId },
-        'Failed to create mod log for /clear'
-      );
-    }
+    await this.modLog.log({
+      guildId: interaction.guildId!,
+      action: 'CLEAR_MESSAGES',
+      moderatorId: interaction.user.id,
+      messagesCleared: deleted.size,
+    });
 
     return interaction.reply({
       embeds: [
