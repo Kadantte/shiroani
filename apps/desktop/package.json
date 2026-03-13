@@ -48,7 +48,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.7.1",
+    "@electron/rebuild": "^4.0.3",
     "@nestjs/testing": "^10.4.22",
     "@types/better-sqlite3": "^7.6.12",
     "@types/jest": "^30.0.0",
