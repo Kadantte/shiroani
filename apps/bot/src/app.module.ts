@@ -9,6 +9,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { CommandsModule } from './modules/commands/commands.module';
 import { EventsModule } from './modules/events/events.module';
 import { ReactionRoleCacheModule } from './modules/reaction-role-cache/reaction-role-cache.module';
+import { LevelingModule } from './modules/leveling/leveling.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ReactionRoleCacheModule } from './modules/reaction-role-cache/reaction-
     GuildModule,
     RedisModule,
     ReactionRoleCacheModule,
+    LevelingModule,
     CommandsModule,
     EventsModule,
   ],
