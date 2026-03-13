@@ -3,41 +3,15 @@ import { Context, On, ContextOf } from 'necord';
 import { MessageReaction, PartialMessageReaction, User, PartialUser } from 'discord.js';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { ReactionRoleCacheService } from '@/modules/reaction-role-cache/reaction-role-cache.service';
 
 @Injectable()
 export class ReactionRoleEvent {
-  private readonly knownMessageIds = new Set<string>();
-  private initPromise: Promise<void> | null = null;
-
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cache: ReactionRoleCacheService,
     @InjectPinoLogger(ReactionRoleEvent.name) private readonly logger: PinoLogger
   ) {}
-
-  private ensureInitialized() {
-    if (!this.initPromise) {
-      this.initPromise = this.doInit();
-    }
-    return this.initPromise;
-  }
-
-  private async doInit() {
-    const mappings = await this.prisma.reactionRole.findMany({
-      select: { messageId: true },
-      distinct: ['messageId'],
-    });
-    for (const m of mappings) this.knownMessageIds.add(m.messageId);
-  }
-
-  /** Add a message ID to the known set (called from command on rr-add). */
-  addKnownMessage(messageId: string) {
-    this.knownMessageIds.add(messageId);
-  }
-
-  /** Remove a message ID from the known set (called from command on rr-remove when last mapping deleted). */
-  removeKnownMessage(messageId: string) {
-    this.knownMessageIds.delete(messageId);
-  }
 
   @On('messageReactionAdd')
   async onReactionAdd(@Context() [reaction, user]: ContextOf<'messageReactionAdd'>) {
@@ -65,8 +39,8 @@ export class ReactionRoleEvent {
       }
     }
 
-    await this.ensureInitialized();
-    if (!this.knownMessageIds.has(reaction.message.id)) return;
+    await this.cache.ensureInitialized();
+    if (!this.cache.has(reaction.message.id)) return;
 
     const emoji = reaction.emoji.id ?? reaction.emoji.name;
     if (!emoji) return;

@@ -21,7 +21,7 @@ import {
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { GuildService } from '@/modules/guild/guild.service';
-import { ReactionRoleEvent } from '@/modules/events/reaction-role.event';
+import { ReactionRoleCacheService } from '@/modules/reaction-role-cache/reaction-role-cache.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, Cooldown } from '@/common/decorators';
 import { successEmbed, errorEmbed, infoEmbed } from '@/common/utils';
@@ -71,6 +71,14 @@ class RrAddOptions {
     required: true,
   })
   role!: Role;
+
+  @ChannelOption({
+    name: 'kanał',
+    description: 'Kanał z wiadomością (opcjonalnie)',
+    required: false,
+    channel_types: [ChannelType.GuildText],
+  })
+  channel?: TextChannel;
 }
 
 class RrRemoveOptions {
@@ -87,6 +95,14 @@ class RrRemoveOptions {
     required: true,
   })
   emoji!: string;
+
+  @ChannelOption({
+    name: 'kanał',
+    description: 'Kanał z wiadomością (opcjonalnie)',
+    required: false,
+    channel_types: [ChannelType.GuildText],
+  })
+  channel?: TextChannel;
 }
 
 @Injectable()
@@ -95,7 +111,7 @@ export class ReactionRoleCommand {
   constructor(
     private readonly prisma: PrismaService,
     private readonly guildService: GuildService,
-    private readonly reactionRoleEvent: ReactionRoleEvent,
+    private readonly cache: ReactionRoleCacheService,
     @InjectPinoLogger(ReactionRoleCommand.name) private readonly logger: PinoLogger
   ) {}
 
@@ -146,13 +162,16 @@ export class ReactionRoleCommand {
   @Cooldown({ duration: 3 })
   async onRrAdd(
     @Context() [interaction]: SlashCommandContext,
-    @Options() { messageId, emoji, role }: RrAddOptions
+    @Options() { messageId, emoji, role, channel }: RrAddOptions
   ) {
     const guild = interaction.guild!;
     const resolvedEmoji = this.resolveEmoji(emoji);
 
-    // Find the message across guild text channels
-    const message = await this.findMessage(guild, messageId);
+    // Find the message — use provided channel or fall back to searching
+    const message = channel
+      ? await this.fetchFromChannel(channel, messageId)
+      : await this.findMessage(guild, messageId);
+
     if (!message) {
       return interaction.reply({
         embeds: [errorEmbed('Nie znaleziono wiadomości o podanym ID.')],
@@ -186,7 +205,7 @@ export class ReactionRoleCommand {
       },
     });
 
-    this.reactionRoleEvent.addKnownMessage(messageId);
+    this.cache.add(messageId);
 
     // React to the message using the resolved emoji (ID for custom, unicode for standard)
     try {
@@ -212,7 +231,7 @@ export class ReactionRoleCommand {
   @Cooldown({ duration: 3 })
   async onRrRemove(
     @Context() [interaction]: SlashCommandContext,
-    @Options() { messageId, emoji }: RrRemoveOptions
+    @Options() { messageId, emoji, channel }: RrRemoveOptions
   ) {
     const guild = interaction.guild!;
     const resolvedEmoji = this.resolveEmoji(emoji);
@@ -235,11 +254,14 @@ export class ReactionRoleCommand {
     // Remove from cache if no more mappings for this message
     const remaining = await this.prisma.reactionRole.count({ where: { messageId } });
     if (remaining === 0) {
-      this.reactionRoleEvent.removeKnownMessage(messageId);
+      this.cache.remove(messageId);
     }
 
-    // Remove bot's reaction from the message
-    const message = await this.findMessage(guild, messageId);
+    // Remove bot's reaction from the message — use provided channel or fall back to searching
+    const message = channel
+      ? await this.fetchFromChannel(channel, messageId)
+      : await this.findMessage(guild, messageId);
+
     if (message) {
       const botReaction = message.reactions.cache.find(
         r => (r.emoji.id ?? r.emoji.name) === resolvedEmoji
@@ -325,6 +347,17 @@ export class ReactionRoleCommand {
   private resolveEmoji(emoji: string): string {
     const customMatch = emoji.match(/<a?:\w+:(\d+)>/);
     return customMatch ? customMatch[1] : emoji;
+  }
+
+  /**
+   * Fetch a message directly from a specific channel.
+   */
+  private async fetchFromChannel(channel: TextChannel, messageId: string): Promise<Message | null> {
+    try {
+      return await channel.messages.fetch(messageId);
+    } catch {
+      return null;
+    }
   }
 
   /**
