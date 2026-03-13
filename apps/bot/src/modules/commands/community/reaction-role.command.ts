@@ -21,6 +21,7 @@ import {
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { GuildService } from '@/modules/guild/guild.service';
+import { ReactionRoleEvent } from '@/modules/events/reaction-role.event';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, Cooldown } from '@/common/decorators';
 import { successEmbed, errorEmbed, infoEmbed } from '@/common/utils';
@@ -94,6 +95,7 @@ export class ReactionRoleCommand {
   constructor(
     private readonly prisma: PrismaService,
     private readonly guildService: GuildService,
+    private readonly reactionRoleEvent: ReactionRoleEvent,
     @InjectPinoLogger(ReactionRoleCommand.name) private readonly logger: PinoLogger
   ) {}
 
@@ -184,6 +186,8 @@ export class ReactionRoleCommand {
       },
     });
 
+    this.reactionRoleEvent.addKnownMessage(messageId);
+
     // React to the message using the resolved emoji (ID for custom, unicode for standard)
     try {
       await message.react(resolvedEmoji);
@@ -227,6 +231,12 @@ export class ReactionRoleCommand {
     await this.prisma.reactionRole.delete({
       where: { messageId_emoji: { messageId, emoji: resolvedEmoji } },
     });
+
+    // Remove from cache if no more mappings for this message
+    const remaining = await this.prisma.reactionRole.count({ where: { messageId } });
+    if (remaining === 0) {
+      this.reactionRoleEvent.removeKnownMessage(messageId);
+    }
 
     // Remove bot's reaction from the message
     const message = await this.findMessage(guild, messageId);

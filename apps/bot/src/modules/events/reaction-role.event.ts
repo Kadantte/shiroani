@@ -7,18 +7,26 @@ import { PrismaService } from '@/modules/prisma/prisma.service';
 @Injectable()
 export class ReactionRoleEvent {
   private readonly knownMessageIds = new Set<string>();
-  private initialized = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     @InjectPinoLogger(ReactionRoleEvent.name) private readonly logger: PinoLogger
   ) {}
 
-  private async ensureInitialized() {
-    if (this.initialized) return;
-    const mappings = await this.prisma.reactionRole.findMany({ select: { messageId: true } });
+  private ensureInitialized() {
+    if (!this.initPromise) {
+      this.initPromise = this.doInit();
+    }
+    return this.initPromise;
+  }
+
+  private async doInit() {
+    const mappings = await this.prisma.reactionRole.findMany({
+      select: { messageId: true },
+      distinct: ['messageId'],
+    });
     for (const m of mappings) this.knownMessageIds.add(m.messageId);
-    this.initialized = true;
   }
 
   /** Add a message ID to the known set (called from command on rr-add). */
@@ -74,27 +82,20 @@ export class ReactionRoleEvent {
     const member = await guild.members.fetch(user.id).catch(() => null);
     if (!member) return;
 
-    if (action === 'add') {
-      await member.roles.add(mapping.roleId).catch(error => {
-        this.logger.error(
-          { error, userId: user.id, roleId: mapping.roleId },
-          'Failed to add reaction role'
-        );
-      });
+    try {
+      if (action === 'add') {
+        await member.roles.add(mapping.roleId);
+      } else {
+        await member.roles.remove(mapping.roleId);
+      }
       this.logger.debug(
         { userId: user.id, roleId: mapping.roleId, guildId: guild.id },
-        'Added reaction role'
+        action === 'add' ? 'Added reaction role' : 'Removed reaction role'
       );
-    } else {
-      await member.roles.remove(mapping.roleId).catch(error => {
-        this.logger.error(
-          { error, userId: user.id, roleId: mapping.roleId },
-          'Failed to remove reaction role'
-        );
-      });
-      this.logger.debug(
-        { userId: user.id, roleId: mapping.roleId, guildId: guild.id },
-        'Removed reaction role'
+    } catch (error) {
+      this.logger.error(
+        { error, userId: user.id, roleId: mapping.roleId },
+        `Failed to ${action} reaction role`
       );
     }
   }

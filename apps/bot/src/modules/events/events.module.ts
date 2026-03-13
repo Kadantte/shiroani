@@ -7,5 +7,6 @@ import { ReactionRoleEvent } from './reaction-role.event';
 
 @Module({
   providers: [ReadyEvent, GuildMemberEvent, GuildEvent, MessageAuditEvent, ReactionRoleEvent],
+  exports: [ReactionRoleEvent],
 })
 export class EventsModule {}

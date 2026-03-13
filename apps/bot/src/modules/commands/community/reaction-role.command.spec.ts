@@ -3,11 +3,15 @@ import { ReactionRoleCommand } from './reaction-role.command';
 import { createMockInteraction, createMockLogger, createMockPrismaService } from '@/test/mocks';
 import { GuildService } from '@/modules/guild/guild.service';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { ReactionRoleEvent } from '@/modules/events/reaction-role.event';
 
 describe('ReactionRoleCommand', () => {
   let command: ReactionRoleCommand;
   let prisma: ReturnType<typeof createMockPrismaService>;
   let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild' | 'findByDiscordId'>>;
+  let reactionRoleEvent: jest.Mocked<
+    Pick<ReactionRoleEvent, 'addKnownMessage' | 'removeKnownMessage'>
+  >;
   let logger: ReturnType<typeof createMockLogger>;
 
   const dbGuild = { id: 'internal-1', discordId: '987654321', name: 'Test Guild' };
@@ -18,10 +22,15 @@ describe('ReactionRoleCommand', () => {
       ensureGuild: jest.fn().mockResolvedValue(dbGuild),
       findByDiscordId: jest.fn().mockResolvedValue(dbGuild),
     };
+    reactionRoleEvent = {
+      addKnownMessage: jest.fn(),
+      removeKnownMessage: jest.fn(),
+    };
     logger = createMockLogger();
     command = new ReactionRoleCommand(
       prisma as unknown as PrismaService,
       guildService as unknown as GuildService,
+      reactionRoleEvent as unknown as ReactionRoleEvent,
       logger as any
     );
   });
@@ -229,6 +238,7 @@ describe('ReactionRoleCommand', () => {
         roleId: 'role-789',
       });
       prisma.reactionRole.delete.mockResolvedValue(undefined);
+      prisma.reactionRole.count.mockResolvedValue(0);
       prisma.reactionRole.findFirst.mockResolvedValue(null);
 
       (interaction.guild as any).channels = {
