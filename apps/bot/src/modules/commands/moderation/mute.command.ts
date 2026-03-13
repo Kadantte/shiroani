@@ -80,7 +80,7 @@ export class MuteCommand {
       targetUser: user,
       targetMember: member,
       moderator,
-      botMember: null,
+      botMember: interaction.guild!.members.me ?? null,
       action: 'mute',
     });
 

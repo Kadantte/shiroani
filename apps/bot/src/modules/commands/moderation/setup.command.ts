@@ -85,7 +85,7 @@ export class SetupCommand {
 
   private async setupChannel(
     interaction: ChatInputCommandInteraction,
-    field: string,
+    field: 'welcomeChannelId' | 'goodbyeChannelId' | 'modLogChannelId',
     channel: TextChannel,
     label: string
   ) {

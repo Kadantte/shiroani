@@ -5,6 +5,7 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
+import { DEFAULT_REASON } from '@/common/constants';
 import { successEmbed, errorEmbed } from '@/common/utils';
 
 class UnbanOptions {
@@ -49,7 +50,7 @@ export class UnbanCommand {
       });
     }
 
-    const effectiveReason = reason ?? 'Brak podanego powodu';
+    const effectiveReason = reason ?? DEFAULT_REASON;
 
     try {
       await interaction.guild!.members.unban(userId, effectiveReason);
@@ -61,20 +62,13 @@ export class UnbanCommand {
       });
     }
 
-    try {
-      await this.modLog.log({
-        guildId: interaction.guildId!,
-        action: 'UNBAN',
-        targetUserId: userId,
-        moderatorId: interaction.user.id,
-        reason: effectiveReason,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, guildId: interaction.guildId },
-        'Failed to create mod log for /unban'
-      );
-    }
+    await this.modLog.log({
+      guildId: interaction.guildId!,
+      action: 'UNBAN',
+      targetUserId: userId,
+      moderatorId: interaction.user.id,
+      reason: effectiveReason,
+    });
 
     return interaction.reply({
       embeds: [

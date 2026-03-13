@@ -29,10 +29,25 @@ export class GuildService {
     });
   }
 
+  /** Settable guild channel/config fields. */
+  static readonly SETTING_FIELDS = [
+    'welcomeChannelId',
+    'goodbyeChannelId',
+    'modLogChannelId',
+    'activityChannelId',
+    'verifyChannelId',
+    'verifyRoleId',
+    'verifyMessageId',
+  ] as const;
+
   /**
    * Update a single guild setting field.
    */
-  async updateSetting(discordId: string, field: string, value: string | null) {
+  async updateSetting(
+    discordId: string,
+    field: (typeof GuildService.SETTING_FIELDS)[number],
+    value: string | null
+  ) {
     await this.prisma.guild.update({
       where: { discordId },
       data: { [field]: value },

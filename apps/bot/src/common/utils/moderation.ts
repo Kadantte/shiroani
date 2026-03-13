@@ -1,8 +1,6 @@
 import { GuildMember, User } from 'discord.js';
 
-export interface ModerationValidationResult {
-  error: string | null;
-}
+const ACTION_LABELS = { ban: 'zbanować', mute: 'wyciszyć', unmute: 'odciszyć' } as const;
 
 /**
  * Validate that a moderator can act on a target user.
@@ -19,21 +17,18 @@ export function validateModerationTarget(options: {
 
   // Can't act on yourself
   if (targetUser.id === moderator.id) {
-    const actionLabels = { ban: 'zbanować', mute: 'wyciszyć', unmute: 'odciszyć' };
-    return `Nie możesz ${actionLabels[action]} samego siebie.`;
+    return `Nie możesz ${ACTION_LABELS[action]} samego siebie.`;
   }
 
   // Can't act on the bot
   if (botMember && targetUser.id === botMember.id) {
-    const actionLabels = { ban: 'zbanować', mute: 'wyciszyć', unmute: 'odciszyć' };
-    return `Nie mogę ${actionLabels[action]} samego siebie.`;
+    return `Nie mogę ${ACTION_LABELS[action]} samego siebie.`;
   }
 
   // If member is on the server, check role hierarchy
   if (targetMember) {
     if (targetMember.roles.highest.position >= moderator.roles.highest.position) {
-      const actionLabels = { ban: 'zbanować', mute: 'wyciszyć', unmute: 'odciszyć' };
-      return `Nie możesz ${actionLabels[action]} użytkownika z wyższą lub równą rolą.`;
+      return `Nie możesz ${ACTION_LABELS[action]} użytkownika z wyższą lub równą rolą.`;
     }
 
     if (action === 'ban' && !targetMember.bannable) {
