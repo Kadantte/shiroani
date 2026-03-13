@@ -23,6 +23,131 @@ function createIpcListener<T>(channel: string): (callback: (data: T) => void) =>
   };
 }
 
+/**
+ * Channels allowed for generic IPC helpers. Restricts the surface exposed
+ * via contextBridge so renderer code cannot invoke arbitrary handlers.
+ */
+const ALLOWED_IPC_CHANNELS = new Set([
+  'window:is-maximized',
+  'store:get',
+  'store:set',
+  'store:delete',
+  'app:get-version',
+  'app:get-backend-port',
+  'app:get-path',
+  'app:clipboard-write',
+  'app:open-logs-folder',
+  'app:list-log-files',
+  'app:read-log-file',
+  'app:get-auto-launch',
+  'app:set-auto-launch',
+  'dialog:open-directory',
+  'dialog:open-file',
+  'dialog:save-file',
+  'dialog:message',
+  'file:write-json',
+  'file:read-json',
+  'background:pick',
+  'background:remove',
+  'background:get-url',
+  'browser:toggle-adblock',
+  'browser:set-fullscreen',
+  'updater:check-for-updates',
+  'updater:start-download',
+  'updater:install-now',
+  'updater:get-channel',
+  'updater:set-channel',
+  'notifications:get-settings',
+  'notifications:update-settings',
+  'notifications:get-subscriptions',
+  'notifications:add-subscription',
+  'notifications:remove-subscription',
+  'notifications:toggle-subscription',
+  'notifications:is-subscribed',
+  'discord-rpc:get-settings',
+  'discord-rpc:update-settings',
+  'discord-rpc:update-presence',
+  'discord-rpc:clear-presence',
+  'overlay:show',
+  'overlay:hide',
+  'overlay:toggle',
+  'overlay:get-status',
+  'overlay:set-enabled',
+  'overlay:is-enabled',
+  'overlay:set-size',
+  'overlay:get-size',
+  'overlay:set-visibility-mode',
+  'overlay:get-visibility-mode',
+  'overlay:set-position-locked',
+  'overlay:get-position-locked',
+  'overlay:reset-position',
+]);
+
+function assertAllowedChannel(channel: string): void {
+  if (!ALLOWED_IPC_CHANNELS.has(channel)) {
+    throw new Error(`IPC channel not allowed: "${channel}"`);
+  }
+}
+
+/**
+ * IPC invoke with timeout.
+ * Races ipcRenderer.invoke against a timer so the renderer never hangs
+ * if the main process fails to respond. Restricted to allowed channels.
+ */
+function invokeWithTimeout<T>(channel: string, timeout: number, ...args: unknown[]): Promise<T> {
+  assertAllowedChannel(channel);
+  const invokePromise = ipcRenderer.invoke(channel, ...args) as Promise<T>;
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`IPC timeout: "${channel}" did not respond within ${timeout}ms`));
+      // Swallow any late rejection to prevent unhandled promise rejection
+      invokePromise.catch(() => {});
+    }, timeout);
+    if (typeof timer === 'object' && 'unref' in timer) {
+      timer.unref();
+    }
+  });
+  return Promise.race([invokePromise.finally(() => clearTimeout(timer)), timeoutPromise]);
+}
+
+/**
+ * Cancellable IPC invoke.
+ * Returns a handle with `promise` and `cancel()`. Calling `cancel()` rejects
+ * the promise with a cancellation error. Restricted to allowed channels.
+ */
+function cancellableInvoke<T>(
+  channel: string,
+  ...args: unknown[]
+): { promise: Promise<T>; cancel: () => void } {
+  assertAllowedChannel(channel);
+  let settled = false;
+  let rejectFn: ((reason?: unknown) => void) | null = null;
+  const promise = new Promise<T>((resolve, reject) => {
+    rejectFn = reject;
+    ipcRenderer
+      .invoke(channel, ...args)
+      .then((result: T) => {
+        if (!settled) {
+          settled = true;
+          resolve(result);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!settled) {
+          settled = true;
+          reject(error);
+        }
+      });
+  });
+  const cancel = () => {
+    if (settled) return;
+    settled = true;
+    rejectFn?.(new Error(`IPC request cancelled: "${channel}"`));
+  };
+  return { promise, cancel };
+}
+
 export interface ElectronAPI {
   window: {
     minimize: () => void;
@@ -120,6 +245,13 @@ export interface ElectronAPI {
     isPositionLocked: () => Promise<boolean>;
     resetPosition: () => Promise<{ success: boolean }>;
     onNavigate: (callback: (view: string) => void) => () => void;
+  };
+  ipc: {
+    invokeWithTimeout: <T>(channel: string, timeout: number, ...args: unknown[]) => Promise<T>;
+    cancellableInvoke: <T>(
+      channel: string,
+      ...args: unknown[]
+    ) => { promise: Promise<T>; cancel: () => void };
   };
   platform: NodeJS.Platform;
 }
@@ -249,6 +381,12 @@ const electronAPI: ElectronAPI = {
     isPositionLocked: () => ipcRenderer.invoke('overlay:get-position-locked') as Promise<boolean>,
     resetPosition: () => ipcRenderer.invoke('overlay:reset-position'),
     onNavigate: createIpcListener<string>('navigate'),
+  },
+  ipc: {
+    invokeWithTimeout: <T>(channel: string, timeout: number, ...args: unknown[]) =>
+      invokeWithTimeout<T>(channel, timeout, ...args),
+    cancellableInvoke: <T>(channel: string, ...args: unknown[]) =>
+      cancellableInvoke<T>(channel, ...args),
   },
   platform: process.platform,
 };

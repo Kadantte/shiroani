@@ -6,6 +6,7 @@ import {
   createSocketActions,
   createSocketListeners,
 } from '@/stores/utils/createSocketStore';
+import { createMemoizedSelector } from '@/stores/utils/createMemoizedSelector';
 import {
   type DiaryEntry,
   type DiaryCreatePayload,
@@ -216,32 +217,37 @@ export const useDiaryStore = create<DiaryStore>()(
   )
 );
 
-export const getFilteredDiaryEntries = (
-  state: Pick<DiaryState, 'entries' | 'activeFilter' | 'searchQuery'>
-): DiaryEntry[] => {
-  const { entries, activeFilter, searchQuery } = state;
+/**
+ * Selector that returns filtered and sorted diary entries. Memoized to return
+ * a stable reference when the result is shallowly equal, preventing
+ * unnecessary re-renders.
+ */
+export const getFilteredDiaryEntries = createMemoizedSelector(
+  (state: Pick<DiaryState, 'entries' | 'activeFilter' | 'searchQuery'>): DiaryEntry[] => {
+    const { entries, activeFilter, searchQuery } = state;
 
-  let filtered = entries;
+    let filtered = entries;
 
-  if (activeFilter === 'pinned') {
-    filtered = filtered.filter(e => e.isPinned);
-  } else if (activeFilter === 'with_anime') {
-    filtered = filtered.filter(e => e.animeId != null);
+    if (activeFilter === 'pinned') {
+      filtered = filtered.filter(e => e.isPinned);
+    } else if (activeFilter === 'with_anime') {
+      filtered = filtered.filter(e => e.animeId != null);
+    }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        e =>
+          e.title.toLowerCase().includes(query) ||
+          e.animeTitle?.toLowerCase().includes(query) ||
+          e.tags?.some(t => t.toLowerCase().includes(query))
+      );
+    }
+
+    // Pinned first, then by updated_at desc
+    return [...filtered].sort((a, b) => {
+      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
   }
-
-  if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase();
-    filtered = filtered.filter(
-      e =>
-        e.title.toLowerCase().includes(query) ||
-        e.animeTitle?.toLowerCase().includes(query) ||
-        e.tags?.some(t => t.toLowerCase().includes(query))
-    );
-  }
-
-  // Pinned first, then by updated_at desc
-  return [...filtered].sort((a, b) => {
-    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-  });
-};
+);

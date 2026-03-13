@@ -40,7 +40,22 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (/node_modules\/(react|react-dom)\//.test(id)) return 'vendor';
+          if (!id.includes('node_modules/')) return;
+
+          // Rich text editor (Tiptap + ProseMirror) — checked before react
+          // to prevent @tiptap/react from landing in vendor-react and creating a cycle
+          if (id.includes('/@tiptap/') || id.includes('/prosemirror-')) return 'vendor-tiptap';
+          // Core framework (+ zustand which is tiny and depends on react internals)
+          if (/\/(react|react-dom|zustand|use-sync-external-store)\//.test(id))
+            return 'vendor-react';
+          // Radix UI primitives
+          if (id.includes('/@radix-ui/')) return 'vendor-radix';
+          // Drag-and-drop toolkit
+          if (id.includes('/@dnd-kit/')) return 'vendor-dndkit';
+          // WebSocket client (socket.io-client + related parsers)
+          if (id.includes('/socket.io')) return 'vendor-socket';
+          // Icon library
+          if (id.includes('/lucide-react/')) return 'vendor-icons';
         },
       },
     },
