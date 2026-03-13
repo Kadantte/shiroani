@@ -37,3 +37,6 @@ export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';
 
 // Discord RPC handlers
 export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord-rpc';
+
+// IPC helpers (timeout & cancellation wrappers for renderer use)
+export { invokeWithTimeout, cancellableInvoke } from './ipc-helpers';

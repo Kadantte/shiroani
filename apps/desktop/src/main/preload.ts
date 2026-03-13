@@ -8,6 +8,7 @@ import type {
   DiscordRpcSettings,
   DiscordPresenceActivity,
 } from '@shiroani/shared';
+import { invokeWithTimeout, cancellableInvoke } from './ipc/ipc-helpers';
 
 /**
  * Create a typed IPC listener that returns an unsubscribe function.
@@ -120,6 +121,13 @@ export interface ElectronAPI {
     isPositionLocked: () => Promise<boolean>;
     resetPosition: () => Promise<{ success: boolean }>;
     onNavigate: (callback: (view: string) => void) => () => void;
+  };
+  ipc: {
+    invokeWithTimeout: <T>(channel: string, timeout: number, ...args: unknown[]) => Promise<T>;
+    cancellableInvoke: <T>(
+      channel: string,
+      ...args: unknown[]
+    ) => { promise: Promise<T>; cancel: () => void };
   };
   platform: NodeJS.Platform;
 }
@@ -249,6 +257,12 @@ const electronAPI: ElectronAPI = {
     isPositionLocked: () => ipcRenderer.invoke('overlay:get-position-locked') as Promise<boolean>,
     resetPosition: () => ipcRenderer.invoke('overlay:reset-position'),
     onNavigate: createIpcListener<string>('navigate'),
+  },
+  ipc: {
+    invokeWithTimeout: <T>(channel: string, timeout: number, ...args: unknown[]) =>
+      invokeWithTimeout<T>(channel, timeout, ...args),
+    cancellableInvoke: <T>(channel: string, ...args: unknown[]) =>
+      cancellableInvoke<T>(channel, ...args),
   },
   platform: process.platform,
 };
