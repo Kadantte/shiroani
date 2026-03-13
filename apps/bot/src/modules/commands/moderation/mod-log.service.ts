@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Client, TextChannel } from 'discord.js';
-import { ModerationAction } from '../../../generated/prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
-import { moderationEmbed } from '@/common/utils';
+import { ModerationAction } from '@/generated/prisma/client';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import { moderationEmbed, formatDuration } from '@/common/utils';
 
 export interface ModLogEntry {
   guildId: string;
@@ -24,45 +24,50 @@ export class ModLogService {
   ) {}
 
   async log(entry: ModLogEntry) {
-    this.logger.debug({ entry }, 'ModLogService.log() called');
+    try {
+      this.logger.debug({ entry }, 'ModLogService.log() called');
 
-    // Resolve internal guild ID from Discord guild ID
-    const guild = await this.prisma.guild.findUnique({
-      where: { discordId: entry.guildId },
-    });
+      // Resolve internal guild ID from Discord guild ID
+      const guild = await this.prisma.guild.findUnique({
+        where: { discordId: entry.guildId },
+      });
 
-    if (!guild) {
-      this.logger.warn(
-        { guildId: entry.guildId },
-        'Guild not found in database — skipping mod log'
+      if (!guild) {
+        this.logger.warn(
+          { guildId: entry.guildId },
+          'Guild not found in database — skipping mod log'
+        );
+        return null;
+      }
+
+      this.logger.debug(
+        { internalGuildId: guild.id, modLogChannelId: guild.modLogChannelId },
+        'Resolved guild from database'
       );
+
+      // Save to database
+      const record = await this.prisma.moderationLog.create({
+        data: {
+          guildId: guild.id,
+          action: entry.action,
+          targetUserId: entry.targetUserId,
+          moderatorId: entry.moderatorId,
+          reason: entry.reason,
+          duration: entry.duration,
+          messagesCleared: entry.messagesCleared,
+        },
+      });
+
+      this.logger.debug({ recordId: record.id }, 'Moderation log saved to database');
+
+      // Post to mod log channel
+      await this.postToChannel(entry, guild.modLogChannelId);
+
+      return record;
+    } catch (error) {
+      this.logger.error({ error, entry }, 'Failed to create moderation log');
       return null;
     }
-
-    this.logger.debug(
-      { internalGuildId: guild.id, modLogChannelId: guild.modLogChannelId },
-      'Resolved guild from database'
-    );
-
-    // Save to database
-    const record = await this.prisma.moderationLog.create({
-      data: {
-        guildId: guild.id,
-        action: entry.action,
-        targetUserId: entry.targetUserId,
-        moderatorId: entry.moderatorId,
-        reason: entry.reason,
-        duration: entry.duration,
-        messagesCleared: entry.messagesCleared,
-      },
-    });
-
-    this.logger.debug({ recordId: record.id }, 'Moderation log saved to database');
-
-    // Post to mod log channel
-    await this.postToChannel(entry, guild.modLogChannelId);
-
-    return record;
   }
 
   private async postToChannel(entry: ModLogEntry, modLogChannelId: string | null) {
@@ -113,13 +118,13 @@ export class ModLogService {
         target: isClear
           ? undefined
           : targetUser
-            ? `${targetUser.tag} (${entry.targetUserId})`
+            ? `${targetUser.username} (${entry.targetUserId})`
             : entry.targetUserId,
         moderator: moderatorUser
-          ? `${moderatorUser.tag} (${entry.moderatorId})`
+          ? `${moderatorUser.username} (${entry.moderatorId})`
           : entry.moderatorId,
         reason: entry.reason,
-        duration: entry.duration ? this.formatDuration(entry.duration) : undefined,
+        duration: entry.duration ? formatDuration(entry.duration) : undefined,
         targetAvatarUrl: isClear ? undefined : targetUser?.displayAvatarURL({ size: 256 }),
         moderatorAvatarUrl: moderatorUser?.displayAvatarURL({ size: 256 }),
       });
@@ -140,12 +145,5 @@ export class ModLogService {
     } catch (error) {
       this.logger.error({ error, guildId: entry.guildId }, 'Failed to post to mod log channel');
     }
-  }
-
-  private formatDuration(seconds: number): string {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-    return `${Math.floor(seconds / 86400)}d`;
   }
 }

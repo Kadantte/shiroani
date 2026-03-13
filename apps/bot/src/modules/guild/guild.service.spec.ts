@@ -51,6 +51,30 @@ describe('GuildService', () => {
     });
   });
 
+  describe('updateSetting', () => {
+    it('should update a single guild setting field', async () => {
+      (prisma.guild.update as jest.Mock).mockResolvedValue({});
+
+      await service.updateSetting('123', 'welcomeChannelId', 'ch-new');
+
+      expect(prisma.guild.update).toHaveBeenCalledWith({
+        where: { discordId: '123' },
+        data: { welcomeChannelId: 'ch-new' },
+      });
+    });
+
+    it('should set a field to null', async () => {
+      (prisma.guild.update as jest.Mock).mockResolvedValue({});
+
+      await service.updateSetting('123', 'modLogChannelId', null);
+
+      expect(prisma.guild.update).toHaveBeenCalledWith({
+        where: { discordId: '123' },
+        data: { modLogChannelId: null },
+      });
+    });
+  });
+
   describe('clearChannelConfig', () => {
     it('should clear all channel IDs for an existing guild', async () => {
       (prisma.guild.findUnique as jest.Mock).mockResolvedValue({

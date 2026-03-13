@@ -1,8 +1,13 @@
 import { Injectable, UseGuards } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext, ChannelOption } from 'necord';
-import { ChannelType, MessageFlags, PermissionsBitField, TextChannel } from 'discord.js';
-import { PrismaService } from '../../prisma/prisma.service';
-import { GuildService } from '../../guild/guild.service';
+import {
+  ChannelType,
+  ChatInputCommandInteraction,
+  MessageFlags,
+  PermissionsBitField,
+  TextChannel,
+} from 'discord.js';
+import { GuildService } from '@/modules/guild/guild.service';
 import { CommandGuard } from '@/common/guards';
 import { RequirePermissions } from '@/common/decorators';
 import { successEmbed } from '@/common/utils';
@@ -40,10 +45,7 @@ class SetupModLogOptions {
 @Injectable()
 @UseGuards(CommandGuard)
 export class SetupCommand {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly guildService: GuildService
-  ) {}
+  constructor(private readonly guildService: GuildService) {}
 
   @SlashCommand({
     name: 'setup-welcome',
@@ -54,19 +56,7 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupWelcomeOptions
   ) {
-    const guild = await this.guildService.ensureGuild(
-      interaction.guildId!,
-      interaction.guild!.name
-    );
-    await this.prisma.guild.update({
-      where: { id: guild.id },
-      data: { welcomeChannelId: channel.id },
-    });
-
-    return interaction.reply({
-      embeds: [successEmbed(`Kanał powitalny ustawiony na ${channel}.`)],
-      flags: MessageFlags.Ephemeral,
-    });
+    return this.setupChannel(interaction, 'welcomeChannelId', channel, 'Kanał powitalny');
   }
 
   @SlashCommand({
@@ -78,19 +68,7 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupGoodbyeOptions
   ) {
-    const guild = await this.guildService.ensureGuild(
-      interaction.guildId!,
-      interaction.guild!.name
-    );
-    await this.prisma.guild.update({
-      where: { id: guild.id },
-      data: { goodbyeChannelId: channel.id },
-    });
-
-    return interaction.reply({
-      embeds: [successEmbed(`Kanał pożegnalny ustawiony na ${channel}.`)],
-      flags: MessageFlags.Ephemeral,
-    });
+    return this.setupChannel(interaction, 'goodbyeChannelId', channel, 'Kanał pożegnalny');
   }
 
   @SlashCommand({
@@ -102,17 +80,19 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupModLogOptions
   ) {
-    const guild = await this.guildService.ensureGuild(
-      interaction.guildId!,
-      interaction.guild!.name
-    );
-    await this.prisma.guild.update({
-      where: { id: guild.id },
-      data: { modLogChannelId: channel.id },
-    });
+    return this.setupChannel(interaction, 'modLogChannelId', channel, 'Kanał logów moderacji');
+  }
 
+  private async setupChannel(
+    interaction: ChatInputCommandInteraction,
+    field: 'welcomeChannelId' | 'goodbyeChannelId' | 'modLogChannelId',
+    channel: TextChannel,
+    label: string
+  ) {
+    await this.guildService.ensureGuild(interaction.guildId!, interaction.guild!.name);
+    await this.guildService.updateSetting(interaction.guildId!, field, channel.id);
     return interaction.reply({
-      embeds: [successEmbed(`Kanał logów moderacji ustawiony na ${channel}.`)],
+      embeds: [successEmbed(`${label} ustawiony na ${channel}.`)],
       flags: MessageFlags.Ephemeral,
     });
   }

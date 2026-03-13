@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UseGuards } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { CommandGuard } from '@/common/guards';
 
 @Injectable()
+@UseGuards(CommandGuard)
 export class PingCommand {
   @SlashCommand({
     name: 'ping',

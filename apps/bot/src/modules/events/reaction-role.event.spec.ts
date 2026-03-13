@@ -1,10 +1,14 @@
 import { ReactionRoleEvent } from './reaction-role.event';
 import { createMockLogger, createMockPrismaService } from '@/test/mocks';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { ReactionRoleCacheService } from '@/modules/reaction-role-cache/reaction-role-cache.service';
 
 describe('ReactionRoleEvent', () => {
   let event: ReactionRoleEvent;
   let prisma: ReturnType<typeof createMockPrismaService>;
+  let cache: jest.Mocked<
+    Pick<ReactionRoleCacheService, 'ensureInitialized' | 'has' | 'add' | 'remove'>
+  >;
   let logger: ReturnType<typeof createMockLogger>;
 
   const mapping = {
@@ -20,10 +24,17 @@ describe('ReactionRoleEvent', () => {
   beforeEach(() => {
     prisma = createMockPrismaService();
     logger = createMockLogger();
-    event = new ReactionRoleEvent(prisma as unknown as PrismaService, logger as any);
-
-    // Default: ensureInitialized loads msg-123 into the known set
-    prisma.reactionRole.findMany.mockResolvedValue([{ messageId: 'msg-123' }]);
+    cache = {
+      ensureInitialized: jest.fn().mockResolvedValue(undefined),
+      has: jest.fn().mockReturnValue(true), // msg-123 is known by default
+      add: jest.fn(),
+      remove: jest.fn(),
+    };
+    event = new ReactionRoleEvent(
+      prisma as unknown as PrismaService,
+      cache as unknown as ReactionRoleCacheService,
+      logger as any
+    );
   });
 
   function createMockReaction(overrides: Record<string, unknown> = {}) {
@@ -65,6 +76,8 @@ describe('ReactionRoleEvent', () => {
 
       await event.onReactionAdd([reaction, user] as any);
 
+      expect(cache.ensureInitialized).toHaveBeenCalled();
+      expect(cache.has).toHaveBeenCalledWith('msg-123');
       expect(prisma.reactionRole.findUnique).toHaveBeenCalledWith({
         where: { messageId_emoji: { messageId: 'msg-123', emoji: '🎮' } },
       });
@@ -82,8 +95,7 @@ describe('ReactionRoleEvent', () => {
     });
 
     it('should skip reactions on unknown messages (not in cache)', async () => {
-      // ensureInitialized loads empty set
-      prisma.reactionRole.findMany.mockResolvedValue([]);
+      cache.has.mockReturnValue(false);
       const reaction = createMockReaction({
         message: { id: 'unknown-msg', guild: { id: '987654321' } },
       });
@@ -187,55 +199,6 @@ describe('ReactionRoleEvent', () => {
       expect(reaction.fetch).toHaveBeenCalled();
       const member = await reaction.message.guild.members.fetch.mock.results[0].value;
       expect(member.roles.remove).toHaveBeenCalledWith('role-789');
-    });
-  });
-
-  describe('cache management', () => {
-    it('should allow adding known message IDs', async () => {
-      prisma.reactionRole.findMany.mockResolvedValue([]);
-      const reaction = createMockReaction({
-        message: {
-          id: 'new-msg',
-          guild: {
-            id: '987654321',
-            members: {
-              fetch: jest
-                .fn()
-                .mockResolvedValue({ roles: { add: jest.fn().mockResolvedValue(undefined) } }),
-            },
-          },
-        },
-      });
-      const user = createMockUser();
-
-      // Before adding, reaction on new-msg should be skipped
-      await event.onReactionAdd([reaction, user] as any);
-      expect(prisma.reactionRole.findUnique).not.toHaveBeenCalled();
-
-      // Add to cache and retry
-      event.addKnownMessage('new-msg');
-      prisma.reactionRole.findUnique.mockResolvedValue(mapping);
-
-      await event.onReactionAdd([reaction, user] as any);
-      expect(prisma.reactionRole.findUnique).toHaveBeenCalled();
-    });
-
-    it('should allow removing known message IDs', async () => {
-      const reaction = createMockReaction();
-      const user = createMockUser();
-      prisma.reactionRole.findUnique.mockResolvedValue(mapping);
-
-      // First call should work (msg-123 is in cache from ensureInitialized)
-      await event.onReactionAdd([reaction, user] as any);
-      expect(prisma.reactionRole.findUnique).toHaveBeenCalled();
-
-      // Remove from cache
-      event.removeKnownMessage('msg-123');
-      prisma.reactionRole.findUnique.mockClear();
-
-      // Now should be skipped
-      await event.onReactionAdd([reaction, user] as any);
-      expect(prisma.reactionRole.findUnique).not.toHaveBeenCalled();
     });
   });
 });

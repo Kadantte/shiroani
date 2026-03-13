@@ -8,6 +8,8 @@ export class ReadyEvent {
 
   @Once('clientReady')
   onReady(@Context() [client]: ContextOf<'clientReady'>) {
-    this.logger.info(`Bot logged in as ${client.user.tag} | Guilds: ${client.guilds.cache.size}`);
+    this.logger.info(
+      `Bot logged in as ${client.user.username} | Guilds: ${client.guilds.cache.size}`
+    );
   }
 }

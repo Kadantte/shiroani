@@ -13,7 +13,7 @@ describe('ReadyEvent', () => {
 
   it('should log bot info on ready', () => {
     const client = {
-      user: { tag: 'ShiroBot#0001' },
+      user: { username: 'ShiroBot' },
       guilds: {
         cache: new Collection([
           ['1', {}],
@@ -24,7 +24,7 @@ describe('ReadyEvent', () => {
 
     event.onReady([client] as any);
 
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('ShiroBot#0001'));
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('ShiroBot'));
     expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('2'));
   });
 });

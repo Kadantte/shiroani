@@ -1,4 +1,4 @@
-import { Collection, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import { MuteCommand } from './mute.command';
 import { ModLogService } from './mod-log.service';
 import { createMockInteraction, createMockUser } from '@/test/mocks';
@@ -13,13 +13,11 @@ describe('MuteCommand', () => {
   });
 
   function setupInteraction(targetUser: any, targetMember?: any) {
-    const membersCache = new Collection<string, any>();
-    if (targetMember) {
-      membersCache.set(targetUser.id, targetMember);
-    }
-
     const interaction = createMockInteraction({ commandName: 'mute' });
-    (interaction.guild as any).members.cache = membersCache;
+    (interaction.guild as any).members.fetch = jest.fn().mockImplementation((id: string) => {
+      if (targetMember && id === targetUser.id) return Promise.resolve(targetMember);
+      return Promise.reject(new Error('Unknown Member'));
+    });
     return interaction;
   }
 

@@ -8,6 +8,7 @@ import { GuildModule } from './modules/guild/guild.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { CommandsModule } from './modules/commands/commands.module';
 import { EventsModule } from './modules/events/events.module';
+import { ReactionRoleCacheModule } from './modules/reaction-role-cache/reaction-role-cache.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { EventsModule } from './modules/events/events.module';
     PrismaModule,
     GuildModule,
     RedisModule,
+    ReactionRoleCacheModule,
     CommandsModule,
     EventsModule,
   ],

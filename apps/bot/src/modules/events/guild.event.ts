@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Context, On, ContextOf } from 'necord';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { GuildService } from '../guild/guild.service';
+import { GuildService } from '@/modules/guild/guild.service';
 
 @Injectable()
 export class GuildEvent {

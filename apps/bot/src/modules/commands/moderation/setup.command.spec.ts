@@ -1,17 +1,11 @@
 import { MessageFlags } from 'discord.js';
 import { SetupCommand } from './setup.command';
-import {
-  createMockInteraction,
-  createMockPrismaService,
-  createMockTextChannel,
-} from '@/test/mocks';
-import { PrismaService } from '@/modules/prisma/prisma.service';
+import { createMockInteraction, createMockTextChannel } from '@/test/mocks';
 import { GuildService } from '@/modules/guild/guild.service';
 
 describe('SetupCommand', () => {
   let command: SetupCommand;
-  let prisma: ReturnType<typeof createMockPrismaService>;
-  let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild'>>;
+  let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild' | 'updateSetting'>>;
 
   const mockGuild = {
     id: 'internal-id-1',
@@ -20,15 +14,11 @@ describe('SetupCommand', () => {
   };
 
   beforeEach(() => {
-    prisma = createMockPrismaService();
     guildService = {
       ensureGuild: jest.fn().mockResolvedValue(mockGuild),
+      updateSetting: jest.fn().mockResolvedValue(undefined),
     };
-    (prisma.guild.update as jest.Mock).mockResolvedValue({});
-    command = new SetupCommand(
-      prisma as unknown as PrismaService,
-      guildService as unknown as GuildService
-    );
+    command = new SetupCommand(guildService as unknown as GuildService);
   });
 
   it('should set welcome channel', async () => {
@@ -41,10 +31,11 @@ describe('SetupCommand', () => {
       interaction.guildId,
       interaction.guild!.name
     );
-    expect(prisma.guild.update).toHaveBeenCalledWith({
-      where: { id: 'internal-id-1' },
-      data: { welcomeChannelId: 'welcome-ch' },
-    });
+    expect(guildService.updateSetting).toHaveBeenCalledWith(
+      interaction.guildId,
+      'welcomeChannelId',
+      'welcome-ch'
+    );
     expect(interaction.reply).toHaveBeenCalledWith(
       expect.objectContaining({
         flags: MessageFlags.Ephemeral,
@@ -58,10 +49,11 @@ describe('SetupCommand', () => {
 
     await command.onSetupGoodbye([interaction] as any, { channel });
 
-    expect(prisma.guild.update).toHaveBeenCalledWith({
-      where: { id: 'internal-id-1' },
-      data: { goodbyeChannelId: 'goodbye-ch' },
-    });
+    expect(guildService.updateSetting).toHaveBeenCalledWith(
+      interaction.guildId,
+      'goodbyeChannelId',
+      'goodbye-ch'
+    );
   });
 
   it('should set modlog channel', async () => {
@@ -70,10 +62,11 @@ describe('SetupCommand', () => {
 
     await command.onSetupModLog([interaction] as any, { channel });
 
-    expect(prisma.guild.update).toHaveBeenCalledWith({
-      where: { id: 'internal-id-1' },
-      data: { modLogChannelId: 'modlog-ch' },
-    });
+    expect(guildService.updateSetting).toHaveBeenCalledWith(
+      interaction.guildId,
+      'modLogChannelId',
+      'modlog-ch'
+    );
   });
 
   it('should call guildService.ensureGuild with correct args', async () => {

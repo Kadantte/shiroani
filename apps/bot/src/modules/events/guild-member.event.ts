@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Context, On, ContextOf } from 'necord';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { TextChannel } from 'discord.js';
-import { GuildService } from '../guild/guild.service';
+import { GuildService } from '@/modules/guild/guild.service';
 import { welcomeEmbed, goodbyeEmbed } from '@/common/utils';
 
 @Injectable()
@@ -15,8 +15,8 @@ export class GuildMemberEvent {
   @On('guildMemberAdd')
   async onMemberJoin(@Context() [member]: ContextOf<'guildMemberAdd'>) {
     try {
-      const guild = await this.guildService.ensureGuild(member.guild.id, member.guild.name);
-      if (!guild.welcomeChannelId) return;
+      const guild = await this.guildService.findByDiscordId(member.guild.id);
+      if (!guild?.welcomeChannelId) return;
 
       const channel = member.guild.channels.cache.get(guild.welcomeChannelId);
       if (!channel || !(channel instanceof TextChannel)) return;
@@ -37,8 +37,8 @@ export class GuildMemberEvent {
   @On('guildMemberRemove')
   async onMemberLeave(@Context() [member]: ContextOf<'guildMemberRemove'>) {
     try {
-      const guild = await this.guildService.ensureGuild(member.guild.id, member.guild.name);
-      if (!guild.goodbyeChannelId) return;
+      const guild = await this.guildService.findByDiscordId(member.guild.id);
+      if (!guild?.goodbyeChannelId) return;
 
       const channel = member.guild.channels.cache.get(guild.goodbyeChannelId);
       if (!channel || !(channel instanceof TextChannel)) return;

@@ -3,15 +3,13 @@ import { ReactionRoleCommand } from './reaction-role.command';
 import { createMockInteraction, createMockLogger, createMockPrismaService } from '@/test/mocks';
 import { GuildService } from '@/modules/guild/guild.service';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { ReactionRoleEvent } from '@/modules/events/reaction-role.event';
+import { ReactionRoleCacheService } from '@/modules/reaction-role-cache/reaction-role-cache.service';
 
 describe('ReactionRoleCommand', () => {
   let command: ReactionRoleCommand;
   let prisma: ReturnType<typeof createMockPrismaService>;
   let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild' | 'findByDiscordId'>>;
-  let reactionRoleEvent: jest.Mocked<
-    Pick<ReactionRoleEvent, 'addKnownMessage' | 'removeKnownMessage'>
-  >;
+  let cache: jest.Mocked<Pick<ReactionRoleCacheService, 'add' | 'remove' | 'has'>>;
   let logger: ReturnType<typeof createMockLogger>;
 
   const dbGuild = { id: 'internal-1', discordId: '987654321', name: 'Test Guild' };
@@ -22,15 +20,16 @@ describe('ReactionRoleCommand', () => {
       ensureGuild: jest.fn().mockResolvedValue(dbGuild),
       findByDiscordId: jest.fn().mockResolvedValue(dbGuild),
     };
-    reactionRoleEvent = {
-      addKnownMessage: jest.fn(),
-      removeKnownMessage: jest.fn(),
+    cache = {
+      add: jest.fn(),
+      remove: jest.fn(),
+      has: jest.fn().mockReturnValue(false),
     };
     logger = createMockLogger();
     command = new ReactionRoleCommand(
       prisma as unknown as PrismaService,
       guildService as unknown as GuildService,
-      reactionRoleEvent as unknown as ReactionRoleEvent,
+      cache as unknown as ReactionRoleCacheService,
       logger as any
     );
   });
@@ -139,12 +138,49 @@ describe('ReactionRoleCommand', () => {
           roleId: 'role-789',
         }),
       });
-      expect(message.react).toHaveBeenCalledWith('🎮'); // resolvedEmoji for unicode is same as input
+      expect(message.react).toHaveBeenCalledWith('🎮');
+      expect(cache.add).toHaveBeenCalledWith('msg-123');
       expect(interaction.reply).toHaveBeenCalledWith(
         expect.objectContaining({
           flags: MessageFlags.Ephemeral,
         })
       );
+    });
+
+    it('should use provided channel instead of searching', async () => {
+      const interaction = createMockInteraction({ commandName: 'rr-add' });
+      const message = createMessageMock();
+
+      prisma.reactionRole.findUnique.mockResolvedValue(null);
+      prisma.reactionRole.findMany.mockResolvedValue([]);
+      prisma.reactionRole.create.mockResolvedValue({
+        id: 'rr-1',
+        guildId: 'internal-1',
+        messageId: 'msg-123',
+        channelId: 'ch-456',
+        emoji: '🎮',
+        roleId: 'role-789',
+        createdAt: new Date(),
+      });
+
+      const providedChannel = {
+        id: 'ch-456',
+        messages: { fetch: jest.fn().mockResolvedValue(message) },
+      };
+
+      const role = { id: 'role-789', toString: () => '<@&role-789>' };
+
+      await command.onRrAdd([interaction] as any, {
+        messageId: 'msg-123',
+        emoji: '🎮',
+        role: role as any,
+        channel: providedChannel as any,
+      });
+
+      expect(providedChannel.messages.fetch).toHaveBeenCalledWith('msg-123');
+      expect(prisma.reactionRole.create).toHaveBeenCalled();
+      // Should NOT have searched via findFirst (no channel search)
+      expect(prisma.reactionRole.findFirst).not.toHaveBeenCalled();
     });
 
     it('should reject duplicate emoji on same message', async () => {
@@ -254,11 +290,46 @@ describe('ReactionRoleCommand', () => {
       expect(prisma.reactionRole.delete).toHaveBeenCalledWith({
         where: { messageId_emoji: { messageId: 'msg-123', emoji: '🎮' } },
       });
+      expect(cache.remove).toHaveBeenCalledWith('msg-123');
       expect(interaction.reply).toHaveBeenCalledWith(
         expect.objectContaining({
           flags: MessageFlags.Ephemeral,
         })
       );
+    });
+
+    it('should use provided channel for rr-remove', async () => {
+      const interaction = createMockInteraction({ commandName: 'rr-remove' });
+      const message = {
+        id: 'msg-123',
+        reactions: { cache: new Collection() },
+        embeds: [{ description: 'Test\u200B', title: 'Role', color: 0x5865f2 }],
+        edit: jest.fn().mockResolvedValue(undefined),
+      };
+
+      prisma.reactionRole.findUnique.mockResolvedValue({
+        id: 'rr-1',
+        messageId: 'msg-123',
+        emoji: '🎮',
+        roleId: 'role-789',
+      });
+      prisma.reactionRole.delete.mockResolvedValue(undefined);
+      prisma.reactionRole.count.mockResolvedValue(0);
+      prisma.reactionRole.findMany.mockResolvedValue([]);
+
+      const providedChannel = {
+        id: 'ch-456',
+        messages: { fetch: jest.fn().mockResolvedValue(message) },
+      };
+
+      await command.onRrRemove([interaction] as any, {
+        messageId: 'msg-123',
+        emoji: '🎮',
+        channel: providedChannel as any,
+      });
+
+      expect(providedChannel.messages.fetch).toHaveBeenCalledWith('msg-123');
+      expect(prisma.reactionRole.findFirst).not.toHaveBeenCalled();
     });
 
     it('should return error when mapping not found', async () => {

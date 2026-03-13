@@ -85,8 +85,8 @@ describe('ModLogService', () => {
     (client as any).guilds.cache = new Collection<string, any>();
     (client as any).guilds.cache.set('987654321', discordGuild);
 
-    const targetUser = createMockUser({ id: '555', tag: 'Target#0001' });
-    const modUser = createMockUser({ id: '123456789', tag: 'Mod#0001' });
+    const targetUser = createMockUser({ id: '555', username: 'Target' });
+    const modUser = createMockUser({ id: '123456789', username: 'Mod' });
     (client.users.fetch as jest.Mock)
       .mockResolvedValueOnce(targetUser)
       .mockResolvedValueOnce(modUser);
@@ -116,6 +116,18 @@ describe('ModLogService', () => {
       expect.stringContaining('Guild not found')
     );
     expect(prisma.moderationLog.create).not.toHaveBeenCalled();
+  });
+
+  it('should catch database errors and return null', async () => {
+    (prisma.guild.findUnique as jest.Mock).mockRejectedValue(new Error('DB connection lost'));
+
+    const result = await service.log(baseEntry);
+
+    expect(result).toBeNull();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.any(Error), entry: baseEntry }),
+      'Failed to create moderation log'
+    );
   });
 
   it('should handle missing mod log channel gracefully', async () => {
