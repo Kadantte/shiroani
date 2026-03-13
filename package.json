@@ -8,9 +8,14 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
       "electron",
       "esbuild",
-      "better-sqlite3"
+      "better-sqlite3",
+      "necord",
+      "prisma"
     ],
     "overrides": {
       "file-type": ">=21.3.1",
@@ -32,7 +37,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm build:packages && pnpm -r run test",
-    "typecheck": "pnpm build:packages && pnpm --filter @shiroani/web typecheck && pnpm --filter @shiroani/desktop typecheck",
+    "typecheck": "pnpm build:packages && pnpm --filter @shiroani/web typecheck && pnpm --filter @shiroani/desktop typecheck && pnpm --filter @shiroani/bot typecheck",
     "rebuild": "pnpm --filter @shiroani/desktop rebuild",
     "version:patch": "node scripts/bump-version.mjs patch",
     "version:minor": "node scripts/bump-version.mjs minor",
