@@ -23,8 +23,8 @@ import {
   Role,
   GuildMember,
 } from 'discord.js';
-import { PrismaService } from '../../prisma/prisma.service';
-import { GuildService } from '../../guild/guild.service';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import { GuildService } from '@/modules/guild/guild.service';
 import { CommandGuard } from '@/common/guards';
 import { RequirePermissions } from '@/common/decorators';
 import { successEmbed, errorEmbed } from '@/common/utils';
@@ -95,21 +95,28 @@ export class VerifyCommand {
         .setEmoji('✅')
     );
 
-    const message = await channel.send({ embeds: [embed], components: [row] });
+    try {
+      const message = await channel.send({ embeds: [embed], components: [row] });
 
-    await this.prisma.guild.update({
-      where: { id: guild.id },
-      data: {
-        verifyChannelId: channel.id,
-        verifyRoleId: role.id,
-        verifyMessageId: message.id,
-      },
-    });
+      await this.prisma.guild.update({
+        where: { id: guild.id },
+        data: {
+          verifyChannelId: channel.id,
+          verifyRoleId: role.id,
+          verifyMessageId: message.id,
+        },
+      });
 
-    return interaction.reply({
-      embeds: [successEmbed(`System weryfikacji ustawiony na ${channel} z rolą ${role}.`)],
-      flags: MessageFlags.Ephemeral,
-    });
+      return interaction.reply({
+        embeds: [successEmbed(`System weryfikacji ustawiony na ${channel} z rolą ${role}.`)],
+        flags: MessageFlags.Ephemeral,
+      });
+    } catch {
+      return interaction.reply({
+        embeds: [errorEmbed('Nie udało się wysłać embeda weryfikacji. Sprawdź uprawnienia bota.')],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
   }
 
   @Button('verify_button')

@@ -121,7 +121,7 @@ export class PostCommand {
     const image = interaction.fields.getTextInputValue('image');
     const footer = interaction.fields.getTextInputValue('footer');
 
-    const channel = interaction.guild?.channels.cache.get(channelId);
+    const channel = await interaction.guild?.channels.fetch(channelId).catch(() => null);
     if (!channel || !(channel instanceof TextChannel)) {
       return interaction.reply({
         embeds: [errorEmbed('Nie znaleziono kanału.')],
@@ -139,7 +139,14 @@ export class PostCommand {
     }
 
     if (image) {
-      embed.setImage(image);
+      try {
+        const url = new URL(image);
+        if (url.protocol === 'https:') {
+          embed.setImage(image);
+        }
+      } catch {
+        // Invalid URL — skip silently
+      }
     }
 
     if (footer) {
@@ -152,7 +159,7 @@ export class PostCommand {
     });
 
     try {
-      const content = ping ? `<@&${ping}>` : undefined;
+      const content = ping && /^\d{17,20}$/.test(ping) ? `<@&${ping}>` : undefined;
       const message = await channel.send({ content, embeds: [embed] });
 
       return interaction.reply({

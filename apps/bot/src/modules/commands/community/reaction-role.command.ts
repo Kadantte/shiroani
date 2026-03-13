@@ -12,6 +12,7 @@ import {
   ChannelType,
   Colors,
   EmbedBuilder,
+  Message,
   MessageFlags,
   PermissionsBitField,
   Role,
@@ -109,7 +110,7 @@ export class ReactionRoleCommand {
     const embed = new EmbedBuilder()
       .setColor(Colors.Blurple)
       .setTitle(title)
-      .setDescription(description);
+      .setDescription(`${description}\u200B`);
 
     let sentMessage;
     try {
@@ -183,15 +184,15 @@ export class ReactionRoleCommand {
       },
     });
 
-    // React to the message
+    // React to the message using the resolved emoji (ID for custom, unicode for standard)
     try {
-      await message.react(emoji);
+      await message.react(resolvedEmoji);
     } catch (error) {
-      this.logger.warn({ error, emoji, messageId }, 'Failed to react to message');
+      this.logger.warn({ error, emoji: resolvedEmoji, messageId }, 'Failed to react to message');
     }
 
     // Update the embed
-    await this.updateEmbed(guild, messageId);
+    await this.updateEmbed(message, guild);
 
     return interaction.reply({
       embeds: [successEmbed(`Dodano mapowanie ${emoji} → ${role} na wiadomości \`${messageId}\`.`)],
@@ -241,7 +242,7 @@ export class ReactionRoleCommand {
         }
       }
 
-      await this.updateEmbed(guild, messageId);
+      await this.updateEmbed(message, guild);
     }
 
     return interaction.reply({
@@ -357,14 +358,11 @@ export class ReactionRoleCommand {
   /**
    * Update the reaction role embed to reflect current mappings.
    */
-  private async updateEmbed(guild: import('discord.js').Guild, messageId: string) {
+  private async updateEmbed(message: Message, guild: import('discord.js').Guild) {
     const mappings = await this.prisma.reactionRole.findMany({
-      where: { messageId },
+      where: { messageId: message.id },
       orderBy: { createdAt: 'asc' },
     });
-
-    const message = await this.findMessage(guild, messageId);
-    if (!message) return;
 
     const existingEmbed = message.embeds[0];
     if (!existingEmbed) return;
@@ -377,18 +375,20 @@ export class ReactionRoleCommand {
 
     const embed = EmbedBuilder.from(existingEmbed);
 
-    // Preserve original description (first paragraph) and append mappings
+    // Preserve original description (split on zero-width space delimiter) and append mappings
     const originalDesc = existingEmbed.description ?? '';
-    const baseParagraph = originalDesc.split('\n\n')[0];
+    const [baseParagraph] = originalDesc.split('\u200B');
     const newDescription =
-      mappingLines.length > 0 ? `${baseParagraph}\n\n${mappingLines.join('\n')}` : baseParagraph;
+      mappingLines.length > 0
+        ? `${baseParagraph}\u200B\n\n${mappingLines.join('\n')}`
+        : baseParagraph;
 
     embed.setDescription(newDescription);
 
     try {
       await message.edit({ embeds: [embed] });
     } catch (error) {
-      this.logger.warn({ error, messageId }, 'Failed to update reaction role embed');
+      this.logger.warn({ error, messageId: message.id }, 'Failed to update reaction role embed');
     }
   }
 }

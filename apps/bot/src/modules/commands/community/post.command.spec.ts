@@ -12,11 +12,13 @@ function createMockModalInteraction(
     displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/avatars/123/abc.png'),
   };
 
+  const channelMap = new Map<string, unknown>();
   return {
     user,
     guild: {
       channels: {
-        cache: new Map<string, unknown>(),
+        fetch: jest.fn((id: string) => Promise.resolve(channelMap.get(id) ?? null)),
+        _map: channelMap,
       },
     },
     fields: {
@@ -65,12 +67,12 @@ describe('PostCommand', () => {
         [interaction] as any,
         {
           channel,
-          ping: '444555666',
+          ping: '44455566677788899',
         } as any
       );
 
       const modal = (interaction.showModal as jest.Mock).mock.calls[0][0];
-      expect(modal.data.custom_id).toBe('post_modal/111222333/444555666');
+      expect(modal.data.custom_id).toBe('post_modal/111222333/44455566677788899');
     });
   });
 
@@ -90,7 +92,7 @@ describe('PostCommand', () => {
         footer: 'Stopka testowa',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
       await command.onPostModal([modalInteraction] as any, '111222333', undefined);
 
@@ -129,7 +131,7 @@ describe('PostCommand', () => {
         footer: '',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
       await command.onPostModal([modalInteraction] as any, '111222333', undefined);
 
@@ -153,12 +155,12 @@ describe('PostCommand', () => {
         footer: '',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
-      await command.onPostModal([modalInteraction] as any, '111222333', '444555666');
+      await command.onPostModal([modalInteraction] as any, '111222333', '44455566677788899');
 
       const sendCall = (channel.send as jest.Mock).mock.calls[0][0];
-      expect(sendCall.content).toBe('<@&444555666>');
+      expect(sendCall.content).toBe('<@&44455566677788899>');
     });
 
     it('should return error when channel is not found', async () => {
@@ -194,7 +196,7 @@ describe('PostCommand', () => {
         footer: '',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
       await command.onPostModal([modalInteraction] as any, '111222333', undefined);
 
@@ -220,13 +222,84 @@ describe('PostCommand', () => {
         footer: '',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
       await command.onPostModal([modalInteraction] as any, '111222333', undefined);
 
       const sendCall = (channel.send as jest.Mock).mock.calls[0][0];
       const data = sendCall.embeds[0].toJSON();
       expect(data.color).toBe(0xaa11bb);
+    });
+
+    it('should skip image with non-https URL', async () => {
+      const sentMessage = { url: 'https://discord.com/channels/1/2/3' };
+      const channel = createMockTextChannel({
+        id: '111222333',
+        send: jest.fn().mockResolvedValue(sentMessage),
+      });
+
+      const modalInteraction = createMockModalInteraction({
+        title: 'HTTP image',
+        description: 'Opis',
+        color: '',
+        image: 'http://example.com/img.png',
+        footer: '',
+      });
+
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
+
+      await command.onPostModal([modalInteraction] as any, '111222333', undefined);
+
+      const sendCall = (channel.send as jest.Mock).mock.calls[0][0];
+      const data = sendCall.embeds[0].toJSON();
+      expect(data.image).toBeUndefined();
+    });
+
+    it('should skip image with invalid URL', async () => {
+      const sentMessage = { url: 'https://discord.com/channels/1/2/3' };
+      const channel = createMockTextChannel({
+        id: '111222333',
+        send: jest.fn().mockResolvedValue(sentMessage),
+      });
+
+      const modalInteraction = createMockModalInteraction({
+        title: 'Bad image',
+        description: 'Opis',
+        color: '',
+        image: 'not-a-url',
+        footer: '',
+      });
+
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
+
+      await command.onPostModal([modalInteraction] as any, '111222333', undefined);
+
+      const sendCall = (channel.send as jest.Mock).mock.calls[0][0];
+      const data = sendCall.embeds[0].toJSON();
+      expect(data.image).toBeUndefined();
+    });
+
+    it('should not send ping for non-snowflake ping value', async () => {
+      const sentMessage = { url: 'https://discord.com/channels/1/2/3' };
+      const channel = createMockTextChannel({
+        id: '111222333',
+        send: jest.fn().mockResolvedValue(sentMessage),
+      });
+
+      const modalInteraction = createMockModalInteraction({
+        title: 'Bad ping',
+        description: 'Opis',
+        color: '',
+        image: '',
+        footer: '',
+      });
+
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
+
+      await command.onPostModal([modalInteraction] as any, '111222333', 'not-a-snowflake');
+
+      const sendCall = (channel.send as jest.Mock).mock.calls[0][0];
+      expect(sendCall.content).toBeUndefined();
     });
 
     it('should fall back to default color on invalid hex', async () => {
@@ -244,7 +317,7 @@ describe('PostCommand', () => {
         footer: '',
       });
 
-      (modalInteraction.guild!.channels.cache as Map<string, unknown>).set('111222333', channel);
+      (modalInteraction.guild!.channels as any)._map.set('111222333', channel);
 
       await command.onPostModal([modalInteraction] as any, '111222333', undefined);
 

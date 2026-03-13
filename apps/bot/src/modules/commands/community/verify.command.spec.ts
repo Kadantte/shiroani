@@ -130,6 +130,26 @@ describe('VerifyCommand', () => {
         'Kliknij przycisk poniżej, aby zweryfikować się na serwerze.'
       );
     });
+    it('should return error when channel.send fails', async () => {
+      const channel = createMockTextChannel({ id: 'verify-ch' });
+      (channel.send as jest.Mock).mockRejectedValue(new Error('Missing Permissions'));
+
+      const role = createMockRole();
+      const interaction = withIconURL(createMockInteraction());
+
+      await command.onSetupVerify([interaction] as any, {
+        channel,
+        role: role as any,
+        rules: undefined,
+      });
+
+      expect(prisma.guild.update).not.toHaveBeenCalled();
+      expect(interaction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          flags: MessageFlags.Ephemeral,
+        })
+      );
+    });
   });
 
   describe('onVerifyButton', () => {

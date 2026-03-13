@@ -80,7 +80,7 @@ describe('ReactionRoleCommand', () => {
         id: 'msg-123',
         channel: { id: 'ch-456' },
         react: jest.fn().mockResolvedValue(undefined),
-        embeds: [{ description: 'Reaguj aby uzyskać rolę', title: 'Role', color: 0x5865f2 }],
+        embeds: [{ description: 'Reaguj aby uzyskać rolę\u200B', title: 'Role', color: 0x5865f2 }],
         edit: jest.fn().mockResolvedValue(undefined),
         reactions: { cache: new Collection() },
       };
@@ -130,7 +130,7 @@ describe('ReactionRoleCommand', () => {
           roleId: 'role-789',
         }),
       });
-      expect(message.react).toHaveBeenCalledWith('🎮');
+      expect(message.react).toHaveBeenCalledWith('🎮'); // resolvedEmoji for unicode is same as input
       expect(interaction.reply).toHaveBeenCalledWith(
         expect.objectContaining({
           flags: MessageFlags.Ephemeral,
