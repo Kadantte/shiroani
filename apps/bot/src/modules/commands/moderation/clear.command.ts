@@ -61,7 +61,6 @@ export class ClearCommand {
       await this.modLog.log({
         guildId: interaction.guildId!,
         action: 'CLEAR_MESSAGES',
-        targetUserId: interaction.user.id,
         moderatorId: interaction.user.id,
         messagesCleared: deleted.size,
       });

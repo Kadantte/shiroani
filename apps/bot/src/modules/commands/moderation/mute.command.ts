@@ -104,8 +104,11 @@ export class MuteCommand {
       });
     }
 
+    const defaultReason = 'Brak podanego powodu';
+    const effectiveReason = reason ?? defaultReason;
+
     try {
-      await member.timeout(seconds * 1000, reason ?? 'Brak podanego powodu');
+      await member.timeout(seconds * 1000, effectiveReason);
     } catch (error) {
       this.logger.error({ error, userId: user.id }, 'Failed to timeout user');
       return interaction.reply({
@@ -120,7 +123,7 @@ export class MuteCommand {
         action: 'MUTE',
         targetUserId: user.id,
         moderatorId: interaction.user.id,
-        reason,
+        reason: effectiveReason,
         duration: seconds,
       });
     } catch (error) {

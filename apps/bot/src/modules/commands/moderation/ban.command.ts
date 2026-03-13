@@ -49,7 +49,7 @@ export class BanCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { user, reason }: BanOptions
   ) {
-    const member = interaction.guild!.members.cache.get(user.id);
+    const member = await interaction.guild!.members.fetch(user.id).catch(() => null);
 
     if (user.id === interaction.user.id) {
       return interaction.reply({
@@ -82,9 +82,12 @@ export class BanCommand {
       }
     }
 
+    const defaultReason = 'Brak podanego powodu';
+    const effectiveReason = reason ?? defaultReason;
+
     try {
       await interaction.guild!.members.ban(user.id, {
-        reason: reason ?? 'Brak podanego powodu',
+        reason: effectiveReason,
       });
     } catch (error) {
       this.logger.error({ error, userId: user.id }, 'Failed to ban user');
@@ -100,7 +103,7 @@ export class BanCommand {
         action: 'BAN',
         targetUserId: user.id,
         moderatorId: interaction.user.id,
-        reason,
+        reason: effectiveReason,
       });
     } catch (error) {
       this.logger.error(

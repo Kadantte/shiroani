@@ -8,7 +8,7 @@ import { moderationEmbed } from '@/common/utils';
 export interface ModLogEntry {
   guildId: string;
   action: ModerationAction;
-  targetUserId: string;
+  targetUserId?: string;
   moderatorId: string;
   reason?: string;
   duration?: number;
@@ -93,7 +93,9 @@ export class ModLogService {
         return;
       }
 
-      const targetUser = await this.client.users.fetch(entry.targetUserId).catch(() => null);
+      const targetUser = entry.targetUserId
+        ? await this.client.users.fetch(entry.targetUserId).catch(() => null)
+        : null;
       const moderatorUser = await this.client.users.fetch(entry.moderatorId).catch(() => null);
 
       const actionLabels: Record<ModerationAction, string> = {

@@ -43,7 +43,7 @@ model ModerationLog {
   guildId String           @map("guild_id")
   action  ModerationAction
 
-  targetUserId    String  @map("target_user_id")
+  targetUserId    String?  @map("target_user_id")
   moderatorId     String  @map("moderator_id")
   reason          String?
   duration        Int? // Duration in seconds (for mutes)

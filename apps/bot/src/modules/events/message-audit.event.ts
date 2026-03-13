@@ -26,14 +26,8 @@ export class MessageAuditEvent {
       const hasContent = content !== null && content.length > 0;
       const hasAttachments = (message.attachments?.size ?? 0) > 0;
 
-      // If partial message with no cached content and no attachments, still log but show unavailable
-      if (!hasContent && !hasAttachments && message.partial) {
-        // Partial with no useful info — skip
-        return;
-      }
-
-      // Skip if truly empty (no content, no attachments, not partial — e.g. embed-only)
-      if (!hasContent && !hasAttachments && !message.partial) return;
+      // Skip if no useful content (no text, no attachments — covers both partial and embed-only)
+      if (!hasContent && !hasAttachments) return;
 
       const guild = await this.prisma.guild.findUnique({
         where: { discordId: message.guild.id },

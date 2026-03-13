@@ -1,4 +1,4 @@
-import { Collection, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import { BanCommand } from './ban.command';
 import { ModLogService } from './mod-log.service';
 import { createMockInteraction, createMockUser } from '@/test/mocks';
@@ -12,22 +12,22 @@ describe('BanCommand', () => {
     command = new BanCommand(modLog as unknown as ModLogService);
   });
 
-  function setupInteraction(targetUser: any, memberInCache?: any) {
-    const membersCache = new Collection<string, any>();
-    if (memberInCache) {
-      membersCache.set(targetUser.id, memberInCache);
-    }
-
+  function setupInteraction(targetUser: any, memberToFetch?: any) {
     const interaction = createMockInteraction({
       commandName: 'ban',
     });
-    (interaction.guild as any).members.cache = membersCache;
+
+    const fetchMock = memberToFetch
+      ? jest.fn().mockResolvedValue(memberToFetch)
+      : jest.fn().mockRejectedValue(new Error('Unknown Member'));
+
+    (interaction.guild as any).members.fetch = fetchMock;
     (interaction.guild as any).members.ban = jest.fn().mockResolvedValue(undefined);
 
     return interaction;
   }
 
-  it('should successfully ban a user', async () => {
+  it('should successfully ban a user not in the guild', async () => {
     const targetUser = createMockUser({ id: '555', tag: 'Target#0001' });
     const interaction = setupInteraction(targetUser);
 
@@ -50,10 +50,24 @@ describe('BanCommand', () => {
     );
   });
 
+  it('should successfully ban a member in the guild with lower role', async () => {
+    const targetUser = createMockUser({ id: '555', tag: 'Target#0001' });
+    const targetMember = {
+      roles: { highest: { position: 1 } },
+      bannable: true,
+    };
+    const interaction = setupInteraction(targetUser, targetMember);
+
+    await command.onBan([interaction] as any, { user: targetUser, reason: 'Rule violation' });
+
+    expect(interaction.guild!.members.ban).toHaveBeenCalledWith('555', {
+      reason: 'Rule violation',
+    });
+  });
+
   it('should prevent banning yourself', async () => {
     const selfUser = createMockUser({ id: '123456789' });
     const interaction = setupInteraction(selfUser);
-    // interaction.user.id is '123456789' by default from mock
 
     await command.onBan([interaction] as any, { user: selfUser });
 
@@ -129,5 +143,14 @@ describe('BanCommand', () => {
       moderatorId: interaction.user.id,
       reason: 'Rule violation',
     });
+  });
+
+  it('should fetch member from Discord API instead of only cache', async () => {
+    const targetUser = createMockUser({ id: '555', tag: 'Target#0001' });
+    const interaction = setupInteraction(targetUser);
+
+    await command.onBan([interaction] as any, { user: targetUser });
+
+    expect(interaction.guild!.members.fetch).toHaveBeenCalledWith('555');
   });
 });
