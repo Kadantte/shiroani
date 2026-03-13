@@ -3,8 +3,9 @@ import { ReadyEvent } from './ready.event';
 import { GuildMemberEvent } from './guild-member.event';
 import { GuildEvent } from './guild.event';
 import { MessageAuditEvent } from './message-audit.event';
+import { ReactionRoleEvent } from './reaction-role.event';
 
 @Module({
-  providers: [ReadyEvent, GuildMemberEvent, GuildEvent, MessageAuditEvent],
+  providers: [ReadyEvent, GuildMemberEvent, GuildEvent, MessageAuditEvent, ReactionRoleEvent],
 })
 export class EventsModule {}

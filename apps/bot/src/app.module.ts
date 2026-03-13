@@ -36,7 +36,7 @@ import { EventsModule } from './modules/events/events.module';
           IntentsBitField.Flags.GuildMessageReactions,
           IntentsBitField.Flags.MessageContent,
         ],
-        partials: [Partials.Message, Partials.Channel],
+        partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
         development:
           config.get<string>('NODE_ENV') !== 'production'
             ? [config.getOrThrow<string>('DISCORD_GUILD_ID')]
