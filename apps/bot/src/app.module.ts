@@ -4,6 +4,8 @@ import { NecordModule } from 'necord';
 import { LoggerModule } from 'nestjs-pino';
 import { IntentsBitField, Partials } from 'discord.js';
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { GuildModule } from './modules/guild/guild.module';
+import { RedisModule } from './modules/redis/redis.module';
 import { CommandsModule } from './modules/commands/commands.module';
 import { EventsModule } from './modules/events/events.module';
 
@@ -42,6 +44,8 @@ import { EventsModule } from './modules/events/events.module';
       }),
     }),
     PrismaModule,
+    GuildModule,
+    RedisModule,
     CommandsModule,
     EventsModule,
   ],

@@ -1,17 +1,19 @@
 import { Collection } from 'discord.js';
 import { GuildMemberEvent } from './guild-member.event';
-import { createMockPrismaService, createMockTextChannel, createMockLogger } from '@/test/mocks';
-import { PrismaService } from '@/modules/prisma/prisma.service';
+import { createMockTextChannel, createMockLogger } from '@/test/mocks';
+import { GuildService } from '@/modules/guild/guild.service';
 
 describe('GuildMemberEvent', () => {
   let event: GuildMemberEvent;
-  let prisma: ReturnType<typeof createMockPrismaService>;
+  let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild'>>;
   let logger: ReturnType<typeof createMockLogger>;
 
   beforeEach(() => {
-    prisma = createMockPrismaService();
+    guildService = {
+      ensureGuild: jest.fn(),
+    };
     logger = createMockLogger();
-    event = new GuildMemberEvent(prisma as unknown as PrismaService, logger as any);
+    event = new GuildMemberEvent(guildService as unknown as GuildService, logger as any);
   });
 
   function createMockMember(overrides: Record<string, any> = {}) {
@@ -38,10 +40,10 @@ describe('GuildMemberEvent', () => {
       const member = createMockMember();
       member.guild.channels.cache.set('welcome-ch', channel);
 
-      (prisma.guild.upsert as jest.Mock).mockResolvedValue({
+      guildService.ensureGuild.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: 'welcome-ch',
-      });
+      } as any);
 
       await event.onMemberJoin([member] as any);
 
@@ -59,31 +61,27 @@ describe('GuildMemberEvent', () => {
     it('should do nothing when welcome channel is not configured', async () => {
       const member = createMockMember();
 
-      (prisma.guild.upsert as jest.Mock).mockResolvedValue({
+      guildService.ensureGuild.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: null,
-      });
+      } as any);
 
       await event.onMemberJoin([member] as any);
 
       // No send calls should have been made
     });
 
-    it('should create guild if not exists', async () => {
+    it('should call guildService.ensureGuild with correct args', async () => {
       const member = createMockMember();
 
-      (prisma.guild.upsert as jest.Mock).mockResolvedValue({
+      guildService.ensureGuild.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: null,
-      });
+      } as any);
 
       await event.onMemberJoin([member] as any);
 
-      expect(prisma.guild.upsert).toHaveBeenCalledWith({
-        where: { discordId: '987654321' },
-        update: { name: 'Test Guild' },
-        create: { discordId: '987654321', name: 'Test Guild' },
-      });
+      expect(guildService.ensureGuild).toHaveBeenCalledWith('987654321', 'Test Guild');
     });
   });
 
@@ -93,10 +91,10 @@ describe('GuildMemberEvent', () => {
       const member = createMockMember();
       member.guild.channels.cache.set('goodbye-ch', channel);
 
-      (prisma.guild.upsert as jest.Mock).mockResolvedValue({
+      guildService.ensureGuild.mockResolvedValue({
         id: 'internal-1',
         goodbyeChannelId: 'goodbye-ch',
-      });
+      } as any);
 
       await event.onMemberLeave([member] as any);
 
@@ -114,10 +112,10 @@ describe('GuildMemberEvent', () => {
     it('should do nothing when goodbye channel is not configured', async () => {
       const member = createMockMember();
 
-      (prisma.guild.upsert as jest.Mock).mockResolvedValue({
+      guildService.ensureGuild.mockResolvedValue({
         id: 'internal-1',
         goodbyeChannelId: null,
-      });
+      } as any);
 
       await event.onMemberLeave([member] as any);
 

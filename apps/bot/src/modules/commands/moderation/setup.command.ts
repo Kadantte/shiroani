@@ -2,6 +2,7 @@ import { Injectable, UseGuards } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext, ChannelOption } from 'necord';
 import { ChannelType, MessageFlags, PermissionsBitField, TextChannel } from 'discord.js';
 import { PrismaService } from '../../prisma/prisma.service';
+import { GuildService } from '../../guild/guild.service';
 import { CommandGuard } from '@/common/guards';
 import { RequirePermissions } from '@/common/decorators';
 import { successEmbed } from '@/common/utils';
@@ -39,15 +40,10 @@ class SetupModLogOptions {
 @Injectable()
 @UseGuards(CommandGuard)
 export class SetupCommand {
-  constructor(private readonly prisma: PrismaService) {}
-
-  private async ensureGuild(discordId: string, name: string) {
-    return this.prisma.guild.upsert({
-      where: { discordId },
-      update: { name },
-      create: { discordId, name },
-    });
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly guildService: GuildService
+  ) {}
 
   @SlashCommand({
     name: 'setup-welcome',
@@ -58,7 +54,10 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupWelcomeOptions
   ) {
-    const guild = await this.ensureGuild(interaction.guildId!, interaction.guild!.name);
+    const guild = await this.guildService.ensureGuild(
+      interaction.guildId!,
+      interaction.guild!.name
+    );
     await this.prisma.guild.update({
       where: { id: guild.id },
       data: { welcomeChannelId: channel.id },
@@ -79,7 +78,10 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupGoodbyeOptions
   ) {
-    const guild = await this.ensureGuild(interaction.guildId!, interaction.guild!.name);
+    const guild = await this.guildService.ensureGuild(
+      interaction.guildId!,
+      interaction.guild!.name
+    );
     await this.prisma.guild.update({
       where: { id: guild.id },
       data: { goodbyeChannelId: channel.id },
@@ -100,7 +102,10 @@ export class SetupCommand {
     @Context() [interaction]: SlashCommandContext,
     @Options() { channel }: SetupModLogOptions
   ) {
-    const guild = await this.ensureGuild(interaction.guildId!, interaction.guild!.name);
+    const guild = await this.guildService.ensureGuild(
+      interaction.guildId!,
+      interaction.guild!.name
+    );
     await this.prisma.guild.update({
       where: { id: guild.id },
       data: { modLogChannelId: channel.id },

@@ -2,20 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { Context, On, ContextOf } from 'necord';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { TextChannel } from 'discord.js';
-import { PrismaService } from '../prisma/prisma.service';
+import { GuildService } from '../guild/guild.service';
 import { welcomeEmbed, goodbyeEmbed } from '@/common/utils';
 
 @Injectable()
 export class GuildMemberEvent {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly guildService: GuildService,
     @InjectPinoLogger(GuildMemberEvent.name) private readonly logger: PinoLogger
   ) {}
 
   @On('guildMemberAdd')
   async onMemberJoin(@Context() [member]: ContextOf<'guildMemberAdd'>) {
     try {
-      const guild = await this.getOrCreateGuild(member.guild.id, member.guild.name);
+      const guild = await this.guildService.ensureGuild(member.guild.id, member.guild.name);
       if (!guild.welcomeChannelId) return;
 
       const channel = member.guild.channels.cache.get(guild.welcomeChannelId);
@@ -37,7 +37,7 @@ export class GuildMemberEvent {
   @On('guildMemberRemove')
   async onMemberLeave(@Context() [member]: ContextOf<'guildMemberRemove'>) {
     try {
-      const guild = await this.getOrCreateGuild(member.guild.id, member.guild.name);
+      const guild = await this.guildService.ensureGuild(member.guild.id, member.guild.name);
       if (!guild.goodbyeChannelId) return;
 
       const channel = member.guild.channels.cache.get(guild.goodbyeChannelId);
@@ -52,13 +52,5 @@ export class GuildMemberEvent {
     } catch (error) {
       this.logger.error({ error, guildId: member.guild.id }, 'Failed to send goodbye message');
     }
-  }
-
-  private async getOrCreateGuild(discordId: string, name: string) {
-    return this.prisma.guild.upsert({
-      where: { discordId },
-      update: { name },
-      create: { discordId, name },
-    });
   }
 }
