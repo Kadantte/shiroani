@@ -8,3 +8,6 @@ export {
   messageDeleteEmbed,
   messageEditEmbed,
 } from './embeds';
+export { parseDuration, formatDuration } from './duration';
+export { validateModerationTarget } from './moderation';
+export type { ModerationValidationResult } from './moderation';
