@@ -38,6 +38,7 @@ export class GuildService {
     'verifyChannelId',
     'verifyRoleId',
     'verifyMessageId',
+    'levelUpChannelId',
   ] as const;
 
   /**
@@ -51,6 +52,16 @@ export class GuildService {
     await this.prisma.guild.update({
       where: { discordId },
       data: { [field]: value },
+    });
+  }
+
+  /**
+   * Toggle the XP system for a guild.
+   */
+  async updateXpEnabled(discordId: string, enabled: boolean) {
+    await this.prisma.guild.update({
+      where: { discordId },
+      data: { xpEnabled: enabled },
     });
   }
 
@@ -72,6 +83,7 @@ export class GuildService {
         verifyChannelId: null,
         verifyRoleId: null,
         verifyMessageId: null,
+        levelUpChannelId: null,
       },
     });
 
