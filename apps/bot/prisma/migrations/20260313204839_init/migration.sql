@@ -23,7 +23,7 @@ CREATE TABLE "moderation_logs" (
     "id" TEXT NOT NULL,
     "guild_id" TEXT NOT NULL,
     "action" "ModerationAction" NOT NULL,
-    "target_user_id" TEXT NOT NULL,
+    "target_user_id" TEXT,
     "moderator_id" TEXT NOT NULL,
     "reason" TEXT,
     "duration" INTEGER,
