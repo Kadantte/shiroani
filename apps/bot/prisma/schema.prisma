@@ -25,7 +25,13 @@ model Guild {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Verification
+  verifyChannelId String? @map("verify_channel_id")
+  verifyRoleId    String? @map("verify_role_id")
+  verifyMessageId String? @map("verify_message_id")
+
   moderationLogs ModerationLog[]
+  reactionRoles  ReactionRole[]
 
   @@map("guilds")
 }
@@ -57,4 +63,21 @@ model ModerationLog {
   @@index([targetUserId])
   @@index([moderatorId])
   @@map("moderation_logs")
+}
+
+model ReactionRole {
+  id        String @id @default(cuid())
+  guildId   String @map("guild_id")
+  messageId String @map("message_id")
+  channelId String @map("channel_id")
+  emoji     String // Unicode emoji or custom emoji ID
+  roleId    String @map("role_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, emoji])
+  @@index([guildId])
+  @@map("reaction_roles")
 }

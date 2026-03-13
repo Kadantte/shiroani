@@ -44,6 +44,9 @@ export class GuildService {
         goodbyeChannelId: null,
         modLogChannelId: null,
         activityChannelId: null,
+        verifyChannelId: null,
+        verifyRoleId: null,
+        verifyMessageId: null,
       },
     });
 
