@@ -25,16 +25,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/bot/node_modules ./apps/bot/node_modules
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/bot/package.json apps/bot/
 COPY --from=build /app/apps/bot/dist ./apps/bot/dist
 COPY --from=build /app/apps/bot/prisma ./apps/bot/prisma
-COPY --from=build /app/apps/bot/package.json ./apps/bot/
+RUN pnpm install --frozen-lockfile --filter @shiroani/bot --prod
 
 # Generate Prisma client for production
 RUN cd apps/bot && npx prisma generate
-
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD node -e "console.log('ok')" || exit 1
 
 CMD ["node", "apps/bot/dist/main.js"]

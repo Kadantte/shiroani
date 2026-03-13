@@ -22,9 +22,10 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      code: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.desktop == 'true' }}
+      code: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.desktop == 'true' || steps.filter.outputs.bot == 'true' }}
       web: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' }}
       desktop: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.desktop == 'true' }}
+      bot: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.bot == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,6 +51,8 @@ jobs:
               - 'apps/web/**'
             desktop:
               - 'apps/desktop/**'
+            bot:
+              - 'apps/bot/**'
 
   lint:
     name: Lint
@@ -98,6 +101,9 @@ jobs:
 
       - name: Build shared packages
         run: pnpm build:packages
+
+      - name: Generate Prisma client
+        run: pnpm --filter @shiroani/bot run db:generate
 
       - name: Type check
         run: pnpm typecheck
@@ -156,10 +162,37 @@ jobs:
       - name: Run desktop tests
         run: pnpm --filter @shiroani/desktop test
 
+  test-bot:
+    name: Test Bot
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @shiroani/bot run db:generate
+
+      - name: Run bot tests
+        run: pnpm --filter @shiroani/bot test
+
   ci-result:
     name: CI Result
     if: always()
-    needs: [lint, typecheck, test-web, test-desktop]
+    needs: [lint, typecheck, test-web, test-desktop, test-bot]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI outcome
