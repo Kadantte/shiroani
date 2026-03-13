@@ -13,14 +13,20 @@ jest.mock('necord', () => ({
   },
 }));
 
+const createMockRedis = () => ({
+  ttl: jest.fn().mockResolvedValue(-2),
+  set: jest.fn().mockResolvedValue('OK'),
+});
+
 describe('CooldownGuard', () => {
   let guard: CooldownGuard;
   let reflector: ReturnType<typeof createMockReflector>;
+  let redis: ReturnType<typeof createMockRedis>;
 
   beforeEach(() => {
     reflector = createMockReflector();
-    guard = new CooldownGuard(reflector);
-    jest.spyOn(Math, 'random').mockReturnValue(0.5); // prevent cleanup
+    redis = createMockRedis();
+    guard = new CooldownGuard(reflector, redis as any);
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -41,47 +47,48 @@ describe('CooldownGuard', () => {
     expect(await guard.canActivate(ctx)).toBe(true);
   });
 
-  it('should return true on first use', async () => {
+  it('should return true on first use (no existing key)', async () => {
     reflector.get.mockReturnValue({ duration: 5 });
+    redis.ttl.mockResolvedValue(-2);
     const interaction = createMockInteraction({ commandName: 'ping' });
     const ctx = setupContext(interaction);
 
     expect(await guard.canActivate(ctx)).toBe(true);
+    expect(redis.set).toHaveBeenCalledWith('cooldown:ping:user:123456789', '1', 'EX', 5);
   });
 
   it('should return false with remaining time when on cooldown', async () => {
     reflector.get.mockReturnValue({ duration: 10 });
+    redis.ttl.mockResolvedValue(7);
     const interaction = createMockInteraction({ commandName: 'test-cd' });
+    const ctx = setupContext(interaction);
 
-    // First call sets cooldown
-    const ctx1 = setupContext(interaction);
-    await guard.canActivate(ctx1);
-
-    // Second call should be blocked
-    const ctx2 = setupContext(interaction);
-    expect(await guard.canActivate(ctx2)).toBe(false);
+    expect(await guard.canActivate(ctx)).toBe(false);
     expect(interaction.reply).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.stringMatching(/Poczekaj.*\d+s/),
+        content: expect.stringMatching(/Poczekaj.*7s/),
       })
     );
+    expect(redis.set).not.toHaveBeenCalled();
   });
 
-  it('should return true after cooldown expires', async () => {
+  it('should return true after cooldown expires (ttl returns -2)', async () => {
     reflector.get.mockReturnValue({ duration: 1 });
+    redis.ttl.mockResolvedValue(-2);
     const interaction = createMockInteraction({ commandName: 'test-expire' });
+    const ctx = setupContext(interaction);
 
-    const ctx1 = setupContext(interaction);
-    await guard.canActivate(ctx1);
+    expect(await guard.canActivate(ctx)).toBe(true);
+    expect(redis.set).toHaveBeenCalledWith('cooldown:test-expire:user:123456789', '1', 'EX', 1);
+  });
 
-    // Manually expire the cooldown by manipulating the internal map
-    const cooldowns = (guard as any).cooldowns as Map<string, number>;
-    for (const [key] of cooldowns) {
-      cooldowns.set(key, Date.now() - 1000);
-    }
+  it('should return true when key exists but has no TTL (ttl returns -1)', async () => {
+    reflector.get.mockReturnValue({ duration: 5 });
+    redis.ttl.mockResolvedValue(-1);
+    const interaction = createMockInteraction({ commandName: 'no-ttl' });
+    const ctx = setupContext(interaction);
 
-    const ctx2 = setupContext(interaction);
-    expect(await guard.canActivate(ctx2)).toBe(true);
+    expect(await guard.canActivate(ctx)).toBe(true);
   });
 
   it('should scope correctly by user', async () => {
@@ -96,12 +103,17 @@ describe('CooldownGuard', () => {
       user: { id: 'user2', tag: 'User2#0001', username: 'User2' },
     });
 
+    // First user sets cooldown
+    redis.ttl.mockResolvedValue(-2);
     const ctx1 = setupContext(interaction1);
     await guard.canActivate(ctx1);
+    expect(redis.set).toHaveBeenCalledWith('cooldown:scoped:user:user1', '1', 'EX', 10);
 
     // Different user should not be blocked
+    redis.ttl.mockResolvedValue(-2);
     const ctx2 = setupContext(interaction2);
     expect(await guard.canActivate(ctx2)).toBe(true);
+    expect(redis.set).toHaveBeenCalledWith('cooldown:scoped:user:user2', '1', 'EX', 10);
   });
 
   it('should scope correctly by guild', async () => {
@@ -116,10 +128,13 @@ describe('CooldownGuard', () => {
       guildId: 'guild2',
     });
 
+    redis.ttl.mockResolvedValue(-2);
     const ctx1 = setupContext(interaction1);
     await guard.canActivate(ctx1);
+    expect(redis.set).toHaveBeenCalledWith('cooldown:guild-scoped:guild:guild1', '1', 'EX', 10);
 
     // Different guild should not be blocked
+    redis.ttl.mockResolvedValue(-2);
     const ctx2 = setupContext(interaction2);
     expect(await guard.canActivate(ctx2)).toBe(true);
   });
@@ -136,10 +151,18 @@ describe('CooldownGuard', () => {
       channelId: 'channel2',
     });
 
+    redis.ttl.mockResolvedValue(-2);
     const ctx1 = setupContext(interaction1);
     await guard.canActivate(ctx1);
+    expect(redis.set).toHaveBeenCalledWith(
+      'cooldown:channel-scoped:channel:channel1',
+      '1',
+      'EX',
+      10
+    );
 
     // Different channel should not be blocked
+    redis.ttl.mockResolvedValue(-2);
     const ctx2 = setupContext(interaction2);
     expect(await guard.canActivate(ctx2)).toBe(true);
   });

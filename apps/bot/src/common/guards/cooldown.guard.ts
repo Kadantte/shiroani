@@ -3,13 +3,14 @@ import { Reflector } from '@nestjs/core';
 import { NecordExecutionContext } from 'necord';
 import { ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { COOLDOWN_KEY, CooldownOptions } from '../decorators';
+import { RedisService } from '../../modules/redis/redis.service';
 
 @Injectable()
 export class CooldownGuard implements CanActivate {
-  /** Map<scope_key, expiry_timestamp> */
-  private readonly cooldowns = new Map<string, number>();
-
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly redis: RedisService
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const options = this.reflector.get<CooldownOptions>(COOLDOWN_KEY, context.getHandler());
@@ -21,26 +22,18 @@ export class CooldownGuard implements CanActivate {
 
     if (!interaction.isChatInputCommand()) return true;
 
-    const key = this.buildKey(interaction, options);
-    const now = Date.now();
-    const expiry = this.cooldowns.get(key);
+    const key = `cooldown:${this.buildKey(interaction, options)}`;
+    const ttl = await this.redis.ttl(key);
 
-    if (expiry && now < expiry) {
-      const remaining = Math.ceil((expiry - now) / 1000);
+    if (ttl > 0) {
       await interaction.reply({
-        content: `⏳ Poczekaj **${remaining}s** przed ponownym użyciem tej komendy.`,
+        content: `⏳ Poczekaj **${ttl}s** przed ponownym użyciem tej komendy.`,
         flags: MessageFlags.Ephemeral,
       });
       return false;
     }
 
-    this.cooldowns.set(key, now + options.duration * 1000);
-
-    // Cleanup old entries periodically (1 in 20 chance)
-    if (Math.random() < 0.05) {
-      this.cleanup(now);
-    }
-
+    await this.redis.set(key, '1', 'EX', options.duration);
     return true;
   }
 
@@ -54,12 +47,6 @@ export class CooldownGuard implements CanActivate {
         return `${command}:guild:${interaction.guildId}`;
       case 'channel':
         return `${command}:channel:${interaction.channelId}`;
-    }
-  }
-
-  private cleanup(now: number) {
-    for (const [key, expiry] of this.cooldowns) {
-      if (now >= expiry) this.cooldowns.delete(key);
     }
   }
 }
