@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { NecordExecutionContext } from 'necord';
 import { GuildMember, MessageFlags } from 'discord.js';
-import { REQUIRED_PERMISSIONS_KEY, REQUIRED_BOT_PERMISSIONS_KEY } from '../decorators';
+import { REQUIRED_PERMISSIONS_KEY, REQUIRED_BOT_PERMISSIONS_KEY } from '@/common/decorators';
 
 @Injectable()
 export class CommandGuard implements CanActivate {

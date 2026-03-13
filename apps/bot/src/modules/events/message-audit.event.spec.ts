@@ -1,17 +1,19 @@
 import { Collection } from 'discord.js';
 import { MessageAuditEvent } from './message-audit.event';
-import { createMockPrismaService, createMockTextChannel, createMockLogger } from '@/test/mocks';
-import { PrismaService } from '@/modules/prisma/prisma.service';
+import { createMockTextChannel, createMockLogger } from '@/test/mocks';
+import { GuildService } from '@/modules/guild/guild.service';
 
 describe('MessageAuditEvent', () => {
   let event: MessageAuditEvent;
-  let prisma: ReturnType<typeof createMockPrismaService>;
+  let guildService: jest.Mocked<Pick<GuildService, 'findByDiscordId'>>;
   let logger: ReturnType<typeof createMockLogger>;
 
   beforeEach(() => {
-    prisma = createMockPrismaService();
+    guildService = {
+      findByDiscordId: jest.fn().mockResolvedValue(null),
+    };
     logger = createMockLogger();
-    event = new MessageAuditEvent(prisma as unknown as PrismaService, logger as any);
+    event = new MessageAuditEvent(guildService as unknown as GuildService, logger as any);
   });
 
   function createMockMessage(overrides: Record<string, any> = {}) {
@@ -24,7 +26,7 @@ describe('MessageAuditEvent', () => {
       partial: false,
       author: {
         bot: false,
-        tag: 'TestUser#0001',
+        username: 'TestUser',
         displayAvatarURL: jest.fn().mockReturnValue('https://cdn.example.com/avatar.png'),
       },
       guild: {
@@ -43,7 +45,7 @@ describe('MessageAuditEvent', () => {
       const message = createMockMessage();
       message.guild.channels.cache.set('mod-log-ch', modLogChannel);
 
-      (prisma.guild.findUnique as jest.Mock).mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         modLogChannelId: 'mod-log-ch',
       });
@@ -63,12 +65,12 @@ describe('MessageAuditEvent', () => {
 
     it('should skip bot messages', async () => {
       const message = createMockMessage({
-        author: { bot: true, tag: 'Bot#0001', displayAvatarURL: jest.fn() },
+        author: { bot: true, username: 'Bot', displayAvatarURL: jest.fn() },
       });
 
       await event.onMessageDelete([message] as any);
 
-      expect(prisma.guild.findUnique).not.toHaveBeenCalled();
+      expect(guildService.findByDiscordId).not.toHaveBeenCalled();
     });
 
     it('should skip messages with no content and no attachments', async () => {
@@ -76,7 +78,7 @@ describe('MessageAuditEvent', () => {
 
       await event.onMessageDelete([message] as any);
 
-      expect(prisma.guild.findUnique).not.toHaveBeenCalled();
+      expect(guildService.findByDiscordId).not.toHaveBeenCalled();
     });
 
     it('should handle uncached (partial) messages gracefully', async () => {
@@ -106,7 +108,7 @@ describe('MessageAuditEvent', () => {
       const message = createMockMessage({ attachments });
       message.guild.channels.cache.set('mod-log-ch', modLogChannel);
 
-      (prisma.guild.findUnique as jest.Mock).mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         modLogChannelId: 'mod-log-ch',
       });
@@ -131,7 +133,7 @@ describe('MessageAuditEvent', () => {
       const message = createMockMessage({ channelId: 'mod-log-ch' });
       message.guild.channels.cache.set('mod-log-ch', modLogChannel);
 
-      (prisma.guild.findUnique as jest.Mock).mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         modLogChannelId: 'mod-log-ch',
       });
@@ -149,7 +151,7 @@ describe('MessageAuditEvent', () => {
       const newMessage = createMockMessage({ content: 'New content' });
       newMessage.guild.channels.cache.set('mod-log-ch', modLogChannel);
 
-      (prisma.guild.findUnique as jest.Mock).mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         modLogChannelId: 'mod-log-ch',
       });
@@ -178,17 +180,17 @@ describe('MessageAuditEvent', () => {
 
       await event.onMessageUpdate([oldMessage, newMessage] as any);
 
-      expect(prisma.guild.findUnique).not.toHaveBeenCalled();
+      expect(guildService.findByDiscordId).not.toHaveBeenCalled();
     });
 
     it('should skip bot messages', async () => {
-      const botAuthor = { bot: true, tag: 'Bot#0001', displayAvatarURL: jest.fn() };
+      const botAuthor = { bot: true, username: 'Bot', displayAvatarURL: jest.fn() };
       const oldMessage = createMockMessage({ content: 'Old', author: botAuthor });
       const newMessage = createMockMessage({ content: 'New', author: botAuthor });
 
       await event.onMessageUpdate([oldMessage, newMessage] as any);
 
-      expect(prisma.guild.findUnique).not.toHaveBeenCalled();
+      expect(guildService.findByDiscordId).not.toHaveBeenCalled();
     });
 
     it('should not log edits from the mod log channel itself', async () => {
@@ -197,7 +199,7 @@ describe('MessageAuditEvent', () => {
       const newMessage = createMockMessage({ content: 'New', channelId: 'mod-log-ch' });
       newMessage.guild.channels.cache.set('mod-log-ch', modLogChannel);
 
-      (prisma.guild.findUnique as jest.Mock).mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         modLogChannelId: 'mod-log-ch',
       });

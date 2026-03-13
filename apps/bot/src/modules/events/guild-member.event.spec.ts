@@ -5,12 +5,12 @@ import { GuildService } from '@/modules/guild/guild.service';
 
 describe('GuildMemberEvent', () => {
   let event: GuildMemberEvent;
-  let guildService: jest.Mocked<Pick<GuildService, 'ensureGuild'>>;
+  let guildService: jest.Mocked<Pick<GuildService, 'findByDiscordId'>>;
   let logger: ReturnType<typeof createMockLogger>;
 
   beforeEach(() => {
     guildService = {
-      ensureGuild: jest.fn(),
+      findByDiscordId: jest.fn().mockResolvedValue(null),
     };
     logger = createMockLogger();
     event = new GuildMemberEvent(guildService as unknown as GuildService, logger as any);
@@ -40,7 +40,7 @@ describe('GuildMemberEvent', () => {
       const member = createMockMember();
       member.guild.channels.cache.set('welcome-ch', channel);
 
-      guildService.ensureGuild.mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: 'welcome-ch',
       } as any);
@@ -61,7 +61,7 @@ describe('GuildMemberEvent', () => {
     it('should do nothing when welcome channel is not configured', async () => {
       const member = createMockMember();
 
-      guildService.ensureGuild.mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: null,
       } as any);
@@ -71,17 +71,17 @@ describe('GuildMemberEvent', () => {
       // No send calls should have been made
     });
 
-    it('should call guildService.ensureGuild with correct args', async () => {
+    it('should call guildService.findByDiscordId with correct guild id', async () => {
       const member = createMockMember();
 
-      guildService.ensureGuild.mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         welcomeChannelId: null,
       } as any);
 
       await event.onMemberJoin([member] as any);
 
-      expect(guildService.ensureGuild).toHaveBeenCalledWith('987654321', 'Test Guild');
+      expect(guildService.findByDiscordId).toHaveBeenCalledWith('987654321');
     });
   });
 
@@ -91,7 +91,7 @@ describe('GuildMemberEvent', () => {
       const member = createMockMember();
       member.guild.channels.cache.set('goodbye-ch', channel);
 
-      guildService.ensureGuild.mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         goodbyeChannelId: 'goodbye-ch',
       } as any);
@@ -112,7 +112,7 @@ describe('GuildMemberEvent', () => {
     it('should do nothing when goodbye channel is not configured', async () => {
       const member = createMockMember();
 
-      guildService.ensureGuild.mockResolvedValue({
+      guildService.findByDiscordId.mockResolvedValue({
         id: 'internal-1',
         goodbyeChannelId: null,
       } as any);

@@ -2,8 +2,8 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { NecordExecutionContext } from 'necord';
 import { ChatInputCommandInteraction, MessageFlags } from 'discord.js';
-import { COOLDOWN_KEY, CooldownOptions } from '../decorators';
-import { RedisService } from '../../modules/redis/redis.service';
+import { COOLDOWN_KEY, CooldownOptions } from '@/common/decorators';
+import { RedisService } from '@/modules/redis/redis.service';
 
 @Injectable()
 export class CooldownGuard implements CanActivate {

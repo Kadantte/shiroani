@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Context, On, ContextOf } from 'necord';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { TextChannel } from 'discord.js';
-import { PrismaService } from '../prisma/prisma.service';
+import { GuildService } from '@/modules/guild/guild.service';
 import { messageDeleteEmbed, messageEditEmbed } from '@/common/utils';
 
 @Injectable()
 export class MessageAuditEvent {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly guildService: GuildService,
     @InjectPinoLogger(MessageAuditEvent.name) private readonly logger: PinoLogger
   ) {}
 
@@ -29,9 +29,7 @@ export class MessageAuditEvent {
       // Skip if no useful content (no text, no attachments — covers both partial and embed-only)
       if (!hasContent && !hasAttachments) return;
 
-      const guild = await this.prisma.guild.findUnique({
-        where: { discordId: message.guild.id },
-      });
+      const guild = await this.guildService.findByDiscordId(message.guild.id);
 
       if (!guild?.modLogChannelId) return;
 
@@ -42,7 +40,7 @@ export class MessageAuditEvent {
       if (!channel || !(channel instanceof TextChannel)) return;
 
       const embed = messageDeleteEmbed({
-        authorTag: message.author?.tag ?? 'Nieznany użytkownik',
+        authorTag: message.author?.username ?? 'Nieznany użytkownik',
         authorAvatarUrl: message.author?.displayAvatarURL({ size: 256 }),
         channelMention: `<#${message.channelId}>`,
         content,
@@ -70,9 +68,7 @@ export class MessageAuditEvent {
       if (newContent === null) return;
       if (oldContent === newContent) return;
 
-      const guild = await this.prisma.guild.findUnique({
-        where: { discordId: newMessage.guild.id },
-      });
+      const guild = await this.guildService.findByDiscordId(newMessage.guild.id);
 
       if (!guild?.modLogChannelId) return;
 
@@ -83,7 +79,7 @@ export class MessageAuditEvent {
       if (!channel || !(channel instanceof TextChannel)) return;
 
       const { embed, row } = messageEditEmbed({
-        authorTag: newMessage.author?.tag ?? 'Nieznany użytkownik',
+        authorTag: newMessage.author?.username ?? 'Nieznany użytkownik',
         authorAvatarUrl: newMessage.author?.displayAvatarURL({ size: 256 }),
         channelMention: `<#${newMessage.channelId}>`,
         oldContent,
