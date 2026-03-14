@@ -8,7 +8,9 @@ import { Cooldown } from '@/common/decorators';
 import { errorEmbed } from '@/common/utils';
 
 function progressBar(current: number, total: number, length: number = 10): string {
-  const filled = Math.round((current / total) * length);
+  if (total <= 0) return '\u2591'.repeat(length);
+  const ratio = Math.min(current / total, 1);
+  const filled = Math.round(ratio * length);
   const empty = length - filled;
   return '\u2588'.repeat(filled) + '\u2591'.repeat(empty);
 }

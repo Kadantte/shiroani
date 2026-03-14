@@ -69,25 +69,21 @@ export class LeaderboardCommand {
 
   @Button('leaderboard:prev/:page')
   async onPrev(@Context() [interaction]: ButtonContext) {
-    const page = parseInt(interaction.customId.split(':')[2], 10);
-    const result = await this.buildLeaderboard(interaction.guildId!, interaction.client, page);
-
-    if ('error' in result) {
-      return interaction.update({
-        embeds: [errorEmbed(result.error)],
-        components: [],
-      });
-    }
-
-    return interaction.update({
-      embeds: [result.embed],
-      components: result.row ? [result.row] : [],
-    });
+    return this.handlePageButton(interaction);
   }
 
   @Button('leaderboard:next/:page')
   async onNext(@Context() [interaction]: ButtonContext) {
+    return this.handlePageButton(interaction);
+  }
+
+  private async handlePageButton(interaction: ButtonContext[0]) {
     const page = parseInt(interaction.customId.split(':')[2], 10);
+
+    if (isNaN(page) || page < 1) {
+      return interaction.update({ content: 'Nieprawidłowa strona.', embeds: [], components: [] });
+    }
+
     const result = await this.buildLeaderboard(interaction.guildId!, interaction.client, page);
 
     if ('error' in result) {
@@ -105,7 +101,7 @@ export class LeaderboardCommand {
 
   private async buildLeaderboard(
     guildDiscordId: string,
-    client: { users: { fetch: (id: string) => Promise<{ username: string }> } },
+    client: { users: { fetch: (id: string) => Promise<{ id: string; username: string }> } },
     page: number
   ): Promise<
     { embed: EmbedBuilder; row: ActionRowBuilder<ButtonBuilder> | null } | { error: string }
@@ -125,17 +121,19 @@ export class LeaderboardCommand {
     const entries = await this.xpService.getLeaderboard(guildDiscordId, page, PER_PAGE);
     const startRank = (page - 1) * PER_PAGE + 1;
 
+    const users = await Promise.all(
+      entries.map(e => client.users.fetch(e.userId).catch(() => null))
+    );
+    const userMap = new Map(
+      users.filter((u): u is NonNullable<typeof u> => u !== null).map(u => [u.id, u])
+    );
+
     const lines: string[] = [];
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
       const level = this.xpService.levelFromXp(entry.xp);
-      let username: string;
-      try {
-        const user = await client.users.fetch(entry.userId);
-        username = user.username;
-      } catch {
-        username = `<@${entry.userId}>`;
-      }
+      const user = userMap.get(entry.userId);
+      const username = user?.username ?? `<@${entry.userId}>`;
       lines.push(`**#${startRank + i}** ${username} \u2014 Poziom ${level} (${entry.xp} XP)`);
     }
 

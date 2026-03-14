@@ -19,6 +19,7 @@ export class XpMessageEvent {
   async onMessage(@Context() [message]: ContextOf<'messageCreate'>) {
     if (message.author.bot) return;
     if (!message.guild) return;
+    // Skip messages without text content (attachments/embeds only don't earn XP)
     if (!message.content) return;
 
     const guild = await this.guildService.findByDiscordId(message.guild.id);

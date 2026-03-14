@@ -1,11 +1,13 @@
 import { MessageFlags } from 'discord.js';
 import { SetupLevelsCommand } from './setup-levels.command';
+import { Prisma } from '@/generated/prisma/client';
 import { GuildService } from '@/modules/guild/guild.service';
 import { LevelRoleService } from '@/modules/leveling/level-role.service';
-import { createMockInteraction, createMockTextChannel } from '@/test/mocks';
+import { createMockInteraction, createMockTextChannel, createMockLogger } from '@/test/mocks';
 
 describe('SetupLevelsCommand', () => {
   let command: SetupLevelsCommand;
+  let logger: ReturnType<typeof createMockLogger>;
   let guildService: jest.Mocked<
     Pick<GuildService, 'ensureGuild' | 'updateSetting' | 'updateXpEnabled' | 'findByDiscordId'>
   >;
@@ -16,6 +18,7 @@ describe('SetupLevelsCommand', () => {
   const mockGuild = { id: 'internal-id-1', discordId: '987654321', name: 'Test Guild' };
 
   beforeEach(() => {
+    logger = createMockLogger();
     guildService = {
       ensureGuild: jest.fn().mockResolvedValue(mockGuild),
       updateSetting: jest.fn().mockResolvedValue(undefined),
@@ -28,6 +31,7 @@ describe('SetupLevelsCommand', () => {
       getLevelRoles: jest.fn().mockResolvedValue([]),
     };
     command = new SetupLevelsCommand(
+      logger as any,
       guildService as unknown as GuildService,
       levelRoleService as unknown as LevelRoleService
     );
@@ -91,16 +95,33 @@ describe('SetupLevelsCommand', () => {
     );
   });
 
-  it('should handle duplicate level role', async () => {
+  it('should handle duplicate level role (P2002)', async () => {
     const interaction = createMockInteraction();
     const role = { id: 'role-123', name: 'Level 5' };
-    levelRoleService.addLevelRole.mockRejectedValue(new Error('Unique constraint'));
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint', {
+      code: 'P2002',
+      clientVersion: '7.0.0',
+    });
+    levelRoleService.addLevelRole.mockRejectedValue(prismaError);
 
     await command.onLevelRoleAdd([interaction] as any, { level: 5, role: role as any });
 
     const replyCall = (interaction.reply as jest.Mock).mock.calls[0][0];
     const embed = replyCall.embeds[0];
     expect(embed.data.description).toContain('już istnieje');
+  });
+
+  it('should log and reply generic error for unexpected add failure', async () => {
+    const interaction = createMockInteraction();
+    const role = { id: 'role-123', name: 'Level 5' };
+    levelRoleService.addLevelRole.mockRejectedValue(new Error('Connection lost'));
+
+    await command.onLevelRoleAdd([interaction] as any, { level: 5, role: role as any });
+
+    expect(logger.error).toHaveBeenCalled();
+    const replyCall = (interaction.reply as jest.Mock).mock.calls[0][0];
+    const embed = replyCall.embeds[0];
+    expect(embed.data.description).toContain('Wystąpił błąd podczas dodawania roli');
   });
 
   it('should remove level role', async () => {
@@ -116,15 +137,31 @@ describe('SetupLevelsCommand', () => {
     );
   });
 
-  it('should handle removing nonexistent level role', async () => {
+  it('should handle removing nonexistent level role (P2025)', async () => {
     const interaction = createMockInteraction();
-    levelRoleService.removeLevelRole.mockRejectedValue(new Error('Record not found'));
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Record not found', {
+      code: 'P2025',
+      clientVersion: '7.0.0',
+    });
+    levelRoleService.removeLevelRole.mockRejectedValue(prismaError);
 
     await command.onLevelRoleRemove([interaction] as any, { level: 99 });
 
     const replyCall = (interaction.reply as jest.Mock).mock.calls[0][0];
     const embed = replyCall.embeds[0];
-    expect(embed.data.description).toContain('Brak roli za poziom');
+    expect(embed.data.description).toContain('Nie znaleziono roli na poziom');
+  });
+
+  it('should log and reply generic error for unexpected remove failure', async () => {
+    const interaction = createMockInteraction();
+    levelRoleService.removeLevelRole.mockRejectedValue(new Error('Connection lost'));
+
+    await command.onLevelRoleRemove([interaction] as any, { level: 99 });
+
+    expect(logger.error).toHaveBeenCalled();
+    const replyCall = (interaction.reply as jest.Mock).mock.calls[0][0];
+    const embed = replyCall.embeds[0];
+    expect(embed.data.description).toContain('Wystąpił błąd podczas usuwania roli');
   });
 
   it('should list level roles', async () => {

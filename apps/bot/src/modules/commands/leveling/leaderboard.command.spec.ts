@@ -20,7 +20,9 @@ describe('LeaderboardCommand', () => {
   it('should show leaderboard page 1', async () => {
     const interaction = createMockInteraction();
     (interaction.client as any).users = {
-      fetch: jest.fn().mockResolvedValue({ username: 'User1' }),
+      fetch: jest
+        .fn()
+        .mockImplementation((id: string) => Promise.resolve({ id, username: 'User1' })),
     };
     xpService.getLeaderboardSize.mockResolvedValue(3);
     xpService.getLeaderboard.mockResolvedValue([
@@ -60,7 +62,9 @@ describe('LeaderboardCommand', () => {
   it('should paginate correctly', async () => {
     const interaction = createMockInteraction();
     (interaction.client as any).users = {
-      fetch: jest.fn().mockResolvedValue({ username: 'User' }),
+      fetch: jest
+        .fn()
+        .mockImplementation((id: string) => Promise.resolve({ id, username: 'User' })),
     };
     xpService.getLeaderboardSize.mockResolvedValue(25);
     xpService.getLeaderboard.mockResolvedValue([

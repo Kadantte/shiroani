@@ -3,10 +3,17 @@ import { PrismaService } from '@/modules/prisma/prisma.service';
 export function createMockPrismaService(): jest.Mocked<
   Pick<
     PrismaService,
-    'guild' | 'moderationLog' | 'reactionRole' | 'member' | 'levelRole' | '$connect' | '$disconnect'
+    | 'guild'
+    | 'moderationLog'
+    | 'reactionRole'
+    | 'member'
+    | 'levelRole'
+    | '$connect'
+    | '$disconnect'
+    | '$transaction'
   >
 > {
-  return {
+  const mock: any = {
     guild: {
       upsert: jest.fn(),
       findUnique: jest.fn(),
@@ -43,5 +50,9 @@ export function createMockPrismaService(): jest.Mocked<
     } as any,
     $connect: jest.fn(),
     $disconnect: jest.fn(),
+    $transaction: jest.fn(),
   };
+  // Execute transaction callbacks with the same mock so existing assertions work
+  mock.$transaction.mockImplementation(async (fn: any) => fn(mock));
+  return mock;
 }

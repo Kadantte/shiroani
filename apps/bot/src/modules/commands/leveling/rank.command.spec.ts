@@ -125,4 +125,25 @@ describe('RankCommand', () => {
     expect(xpField.value).toContain('\u2588'.repeat(3));
     expect(xpField.value).toContain('\u2591'.repeat(7));
   });
+
+  it('should handle zero xpForNextLevel without crashing', async () => {
+    const interaction = createMockInteraction();
+    xpService.getMember.mockResolvedValue({
+      xp: 100,
+      level: 1,
+      messages: 5,
+    } as any);
+    xpService.levelFromXp.mockReturnValue(1);
+    xpService.totalXpForLevel.mockReturnValue(100);
+    xpService.xpForLevel.mockReturnValue(0); // zero total for next level
+    xpService.getRank.mockResolvedValue(1);
+
+    await command.onRank([interaction] as any, {});
+
+    const replyCall = (interaction.reply as jest.Mock).mock.calls[0][0];
+    const embed = replyCall.embeds[0];
+    const xpField = embed.data.fields[0];
+    // progressBar should return all empty when total <= 0
+    expect(xpField.value).toContain('\u2591'.repeat(10));
+  });
 });

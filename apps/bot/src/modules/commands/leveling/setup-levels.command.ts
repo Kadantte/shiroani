@@ -18,6 +18,8 @@ import {
   Role,
   TextChannel,
 } from 'discord.js';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { Prisma } from '@/generated/prisma/client';
 import { GuildService } from '@/modules/guild/guild.service';
 import { LevelRoleService } from '@/modules/leveling/level-role.service';
 import { CommandGuard } from '@/common/guards';
@@ -74,6 +76,7 @@ class LevelRoleRemoveOptions {
 @UseGuards(CommandGuard)
 export class SetupLevelsCommand {
   constructor(
+    @InjectPinoLogger(SetupLevelsCommand.name) private readonly logger: PinoLogger,
     private readonly guildService: GuildService,
     private readonly levelRoleService: LevelRoleService
   ) {}
@@ -131,9 +134,16 @@ export class SetupLevelsCommand {
 
     try {
       await this.levelRoleService.addLevelRole(guild.id, level, role.id);
-    } catch {
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return interaction.reply({
+          embeds: [errorEmbed(`Rola na poziom ${level} już istnieje.`)],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+      this.logger.error({ error, level }, 'Failed to add level role');
       return interaction.reply({
-        embeds: [errorEmbed(`Rola za poziom ${level} już istnieje. Usuń ją najpierw.`)],
+        embeds: [errorEmbed('Wystąpił błąd podczas dodawania roli.')],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -160,9 +170,16 @@ export class SetupLevelsCommand {
 
     try {
       await this.levelRoleService.removeLevelRole(guild.id, level);
-    } catch {
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return interaction.reply({
+          embeds: [errorEmbed(`Nie znaleziono roli na poziom ${level}.`)],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+      this.logger.error({ error, level }, 'Failed to remove level role');
       return interaction.reply({
-        embeds: [errorEmbed(`Brak roli za poziom ${level}.`)],
+        embeds: [errorEmbed('Wystąpił błąd podczas usuwania roli.')],
         flags: MessageFlags.Ephemeral,
       });
     }

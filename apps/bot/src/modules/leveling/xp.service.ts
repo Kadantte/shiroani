@@ -14,13 +14,11 @@ export class XpService {
     return 5 * (level * level) + 50 * level + 100;
   }
 
-  /** Total XP needed to reach a given level (cumulative) */
+  /** Total XP needed to reach a given level (cumulative, closed-form) */
   totalXpForLevel(level: number): number {
-    let total = 0;
-    for (let i = 0; i < level; i++) {
-      total += this.xpForLevel(i);
-    }
-    return total;
+    if (level <= 0) return 0;
+    const L = level;
+    return Math.floor((5 * (L - 1) * L * (2 * L - 1)) / 6 + (50 * (L - 1) * L) / 2 + 100 * L);
   }
 
   /** Calculate level from total XP */
@@ -59,41 +57,46 @@ export class XpService {
     newLevel: number;
     oldLevel: number;
   }> {
-    const member = await this.prisma.member.upsert({
-      where: { guildId_userId: { guildId: guildInternalId, userId } },
-      update: {
-        xp: { increment: amount },
-        messages: { increment: 1 },
-        lastXpAt: new Date(),
-      },
-      create: {
-        guildId: guildInternalId,
-        userId,
-        xp: amount,
-        messages: 1,
-        level: 0,
-        lastXpAt: new Date(),
-      },
+    const result = await this.prisma.$transaction(async tx => {
+      const member = await tx.member.upsert({
+        where: { guildId_userId: { guildId: guildInternalId, userId } },
+        update: {
+          xp: { increment: amount },
+          messages: { increment: 1 },
+          lastXpAt: new Date(),
+        },
+        create: {
+          guildId: guildInternalId,
+          userId,
+          xp: amount,
+          messages: 1,
+          level: 0,
+          lastXpAt: new Date(),
+        },
+      });
+
+      const newLevel = this.levelFromXp(member.xp);
+      const leveledUp = newLevel > member.level;
+      const oldLevel = member.level;
+
+      if (leveledUp) {
+        await tx.member.update({
+          where: { id: member.id },
+          data: { level: newLevel },
+        });
+      }
+
+      return { member, leveledUp, newLevel, oldLevel };
     });
 
-    const newLevel = this.levelFromXp(member.xp);
-    const leveledUp = newLevel > member.level;
-    const oldLevel = member.level;
-
-    if (leveledUp) {
-      await this.prisma.member.update({
-        where: { id: member.id },
-        data: { level: newLevel },
-      });
-    }
-
-    await this.redis.zadd(`xp:leaderboard:${guildDiscordId}`, member.xp, userId);
+    // Update Redis leaderboard (best-effort, outside transaction)
+    await this.redis.zadd(`xp:leaderboard:${guildDiscordId}`, result.member.xp, userId);
 
     return {
-      member: { xp: member.xp, level: newLevel, messages: member.messages },
-      leveledUp,
-      newLevel,
-      oldLevel,
+      member: { xp: result.member.xp, level: result.newLevel, messages: result.member.messages },
+      leveledUp: result.leveledUp,
+      newLevel: result.newLevel,
+      oldLevel: result.oldLevel,
     };
   }
 
