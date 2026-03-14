@@ -30,8 +30,17 @@ model Guild {
   verifyRoleId    String? @map("verify_role_id")
   verifyMessageId String? @map("verify_message_id")
 
+  // XP/Leveling settings
+  xpEnabled        Boolean  @default(false) @map("xp_enabled")
+  xpCooldown       Int      @default(60) @map("xp_cooldown") // seconds between XP awards
+  xpMinAmount      Int      @default(15) @map("xp_min_amount")
+  xpMaxAmount      Int      @default(25) @map("xp_max_amount")
+  levelUpChannelId String?  @map("level_up_channel_id")
+
   moderationLogs ModerationLog[]
   reactionRoles  ReactionRole[]
+  members        Member[]
+  levelRoles     LevelRole[]
 
   @@map("guilds")
 }
@@ -80,4 +89,38 @@ model ReactionRole {
   @@unique([messageId, emoji])
   @@index([guildId])
   @@map("reaction_roles")
+}
+
+model Member {
+  id       String @id @default(cuid())
+  guildId  String @map("guild_id")
+  userId   String @map("user_id")
+  xp       Int    @default(0)
+  level    Int    @default(0)
+  messages Int    @default(0)
+  lastXpAt DateTime? @map("last_xp_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([guildId, xp(sort: Desc)])
+  @@map("members")
+}
+
+model LevelRole {
+  id      String @id @default(cuid())
+  guildId String @map("guild_id")
+  level   Int
+  roleId  String @map("role_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, level])
+  @@index([guildId])
+  @@map("level_roles")
 }

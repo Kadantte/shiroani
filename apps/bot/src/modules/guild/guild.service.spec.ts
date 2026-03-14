@@ -99,6 +99,7 @@ describe('GuildService', () => {
           verifyChannelId: null,
           verifyRoleId: null,
           verifyMessageId: null,
+          levelUpChannelId: null,
         },
       });
       expect(logger.info).toHaveBeenCalledWith(
