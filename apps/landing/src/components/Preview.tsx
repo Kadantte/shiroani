@@ -44,6 +44,12 @@ export function Preview() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease }}
         >
+          <img
+            src="/mascot-think.png"
+            alt=""
+            className="mx-auto mb-4 h-20 w-20 opacity-80"
+            draggable={false}
+          />
           <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-gold-dim">
             Podgląd
           </p>

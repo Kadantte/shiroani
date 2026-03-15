@@ -7,12 +7,12 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
         <div className="flex items-center gap-3">
           <motion.img
-            src="/mascot-sit.png"
-            alt=""
+            src="/mascot-sleep.png"
+            alt="Shiro-chan śpi"
             className="h-10 w-10 opacity-70 select-none"
             draggable={false}
-            whileHover={{ rotate: [0, -8, 8, -4, 0], scale: 1.1 }}
-            transition={{ duration: 0.5 }}
+            whileHover={{ rotate: [0, -4, 4, -2, 0], scale: 1.05 }}
+            transition={{ duration: 0.8 }}
           />
           <div>
             <span className="text-sm font-bold">

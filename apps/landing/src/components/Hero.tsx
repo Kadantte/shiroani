@@ -150,8 +150,8 @@ function InteractiveMascot() {
       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
     >
       <img
-        src="/mascot.png"
-        alt="ShiroAni maskotka — Shiro-chan"
+        src="/mascot-wave.png"
+        alt="ShiroAni maskotka — Shiro-chan macha na powitanie"
         className="mx-auto mb-4 h-36 w-36 drop-shadow-2xl select-none sm:h-44 sm:w-44"
         draggable={false}
       />
