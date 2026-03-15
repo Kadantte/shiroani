@@ -1,50 +1,47 @@
 import { motion, useInView, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Globe, BookOpen, Palette, Calendar } from 'lucide-react';
+import { Globe, BookOpen, Palette, Calendar, Wifi, Heart, Bell, Paintbrush } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ease } from '@/lib/animations';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 interface Feature {
   icon: LucideIcon;
+  iconHover: LucideIcon;
   title: string;
   desc: string;
-  /** Small emoji/symbol that animates on hover */
-  charm: string;
-  /** Ticker: count up to this number on scroll */
   ticker?: { value: number; suffix: string };
 }
 
 const features: Feature[] = [
   {
     icon: Globe,
+    iconHover: Wifi,
     title: 'Wbudowana przeglądarka',
     desc: 'Oglądaj anime bez reklam dzięki wbudowanemu adblockerowi. Karty, zakładki, sesje.',
-    charm: '🌐',
     ticker: { value: 0, suffix: ' reklam' },
   },
   {
     icon: BookOpen,
+    iconHover: Heart,
     title: 'Biblioteka i pamiętnik',
     desc: 'Śledź co oglądasz, prowadź osobisty dziennik z edytorem tekstu, eksportuj dane.',
-    charm: '📖',
   },
   {
     icon: Calendar,
+    iconHover: Bell,
     title: 'Harmonogram emisji',
     desc: 'Nigdy nie przegap odcinka — widok tygodniowy, dzienny i powiadomienia z AniList.',
-    charm: '📅',
     ticker: { value: 7, suffix: ' dni w tygodniu' },
   },
   {
     icon: Palette,
+    iconHover: Paintbrush,
     title: '39 motywów',
     desc: 'Od Dracula i Nord, przez Evangelion i Spy×Family, po własny motyw w edytorze.',
-    charm: '🎨',
     ticker: { value: 39, suffix: ' motywów' },
   },
 ];
 
-/** Counter that ticks up when scrolled into view */
 function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
@@ -68,6 +65,38 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
       <motion.span>{rounded}</motion.span>
       <span className="text-primary/70">{suffix}</span>
     </span>
+  );
+}
+
+/** Icon that crossfades to a different icon on hover */
+function MorphIcon({
+  icon: Icon,
+  iconHover: IconHover,
+  hovered,
+}: {
+  icon: LucideIcon;
+  iconHover: LucideIcon;
+  hovered: boolean;
+}) {
+  return (
+    <div className="relative h-5 w-5">
+      <Icon
+        className="absolute inset-0 h-5 w-5 text-primary transition-all duration-200"
+        style={{
+          opacity: hovered ? 0 : 1,
+          transform: hovered ? 'scale(0.7) rotate(-10deg)' : 'scale(1) rotate(0)',
+        }}
+        strokeWidth={1.5}
+      />
+      <IconHover
+        className="absolute inset-0 h-5 w-5 text-primary transition-all duration-200"
+        style={{
+          opacity: hovered ? 1 : 0,
+          transform: hovered ? 'scale(1) rotate(0)' : 'scale(0.7) rotate(10deg)',
+        }}
+        strokeWidth={1.5}
+      />
+    </div>
   );
 }
 
@@ -95,50 +124,46 @@ export function Features() {
 
         <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2">
           {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              className="group relative bg-background p-8 transition-colors duration-300 hover:bg-card lg:p-10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.5, delay: i * 0.08, ease }}
-            >
-              {/* Icon + charm emoji */}
-              <div className="mb-5 flex items-center gap-3">
-                <f.icon
-                  className="h-5 w-5 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-6deg]"
-                  strokeWidth={1.5}
-                />
-                <motion.span
-                  className="text-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100 select-none"
-                  whileHover={{ rotate: [0, -15, 15, -10, 0], scale: [1, 1.3, 1] }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {f.charm}
-                </motion.span>
-              </div>
-
-              <h3 className="mb-2 font-display text-lg font-bold">{f.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-
-              {/* Ticker badge */}
-              {f.ticker && (
-                <div className="mt-4">
-                  <AnimatedCounter value={f.ticker.value} suffix={f.ticker.suffix} />
-                </div>
-              )}
-
-              {/* Subtle corner accent on hover */}
-              <div className="pointer-events-none absolute right-0 top-0 h-16 w-16 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div
-                  className="absolute right-3 top-3 h-8 w-8 rounded-full blur-xl"
-                  style={{ background: 'oklch(0.72 0.15 350 / 0.15)' }}
-                />
-              </div>
-            </motion.div>
+            <FeatureCard key={f.title} feature={f} index={i} />
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function FeatureCard({ feature: f, index: i }: { feature: Feature; index: number }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      className="group relative bg-background p-8 transition-colors duration-300 hover:bg-card lg:p-10"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.5, delay: i * 0.08, ease }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="mb-5">
+        <MorphIcon icon={f.icon} iconHover={f.iconHover} hovered={hovered} />
+      </div>
+
+      <h3 className="mb-2 font-display text-lg font-bold">{f.title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+
+      {f.ticker && (
+        <div className="mt-4">
+          <AnimatedCounter value={f.ticker.value} suffix={f.ticker.suffix} />
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute right-0 top-0 h-16 w-16 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div
+          className="absolute right-3 top-3 h-8 w-8 rounded-full blur-xl"
+          style={{ background: 'oklch(0.72 0.15 350 / 0.15)' }}
+        />
+      </div>
+    </motion.div>
   );
 }
