@@ -1,0 +1,24 @@
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10.9.0 --activate
+WORKDIR /app
+
+# Install dependencies
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/landing/package.json apps/landing/
+RUN pnpm install --frozen-lockfile --filter @shiroani/landing
+
+# Build
+FROM base AS build
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/landing/node_modules ./apps/landing/node_modules
+COPY apps/landing/ apps/landing/
+COPY tsconfig.base.json ./
+RUN pnpm --filter @shiroani/landing build
+
+# Serve static files — Coolify/Traefik handles TLS + routing
+FROM node:22-alpine AS production
+RUN npm install -g serve@14
+COPY --from=build /app/apps/landing/dist /app
+EXPOSE 3000
+CMD ["serve", "-s", "/app", "-l", "3000"]

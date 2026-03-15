@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Typography — warm geometric sans + sharp display */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Sora', 'DM Sans', system-ui, sans-serif;
+
+  /* Spy×Family palette — noir with Anya pink + Loid gold */
+  --color-background: oklch(0.08 0.005 0);
+  --color-foreground: oklch(0.94 0.01 350);
+  --color-muted: oklch(0.17 0.008 350);
+  --color-muted-foreground: oklch(0.48 0.02 350);
+  --color-primary: oklch(0.72 0.15 350);
+  --color-primary-foreground: oklch(0.1 0.005 0);
+  --color-brand: oklch(0.65 0.17 348);
+  --color-gold: oklch(0.75 0.12 85);
+  --color-gold-dim: oklch(0.55 0.08 85);
+  --color-card: oklch(0.14 0.008 350);
+  --color-card-foreground: oklch(0.94 0.01 350);
+  --color-surface: oklch(0.11 0.006 350);
+  --color-border: oklch(0.22 0.01 350);
+  --color-crimson: oklch(0.55 0.25 10);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-background);
+    color: var(--color-foreground);
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: oklch(0.72 0.15 350 / 0.35);
+    color: white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.25 0.01 350);
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .text-gradient-pink {
+    background: linear-gradient(135deg, oklch(0.78 0.13 350), oklch(0.65 0.17 348));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, oklch(0.8 0.1 85), oklch(0.65 0.12 60));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .grain::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 128px;
+  }
+
+  .screenshot-frame {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 25px 60px -15px oklch(0 0 0 / 0.6),
+      0 0 0 1px oklch(1 0 0 / 0.05);
+  }
+}
+
+/* Animations outside layers */
+@keyframes drift-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+  66% {
+    transform: translate(-15px, 15px) scale(0.97);
+  }
+}
+
+@keyframes float-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
