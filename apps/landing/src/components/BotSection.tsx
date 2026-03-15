@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import { Trophy, Shield, Sparkles, UserCheck, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-
-const ease = [0.16, 1, 0.3, 1] as const;
+import { ease } from '@/lib/animations';
 
 interface BotFeature {
   icon: LucideIcon;
@@ -35,7 +34,7 @@ const botFeatures: BotFeature[] = [
 
 export function BotSection() {
   return (
-    <section id="społeczność" className="relative px-6 py-28 lg:py-36">
+    <section id="spolecznosc" className="relative px-6 py-28 lg:py-36">
       <div className="mx-auto max-w-6xl">
         <div className="grid items-start gap-16 lg:grid-cols-5">
           {/* Left — editorial intro, 2 cols */}

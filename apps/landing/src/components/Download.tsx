@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
 import { Apple, Monitor, Github } from 'lucide-react';
+import { ease } from '@/lib/animations';
 
-const ease = [0.16, 1, 0.3, 1] as const;
+const platforms = [
+  { icon: Apple, label: 'macOS' },
+  { icon: Monitor, label: 'Windows' },
+];
 
 export function Download() {
   return (
@@ -27,39 +31,25 @@ export function Download() {
         <p className="mt-4 text-lg text-muted-foreground">Darmowe i open source. Na zawsze.</p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <motion.a
-            href="https://github.com/Shironex/shiroani/releases/latest"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 rounded-xl border border-border bg-card px-8 py-4 font-semibold"
-            whileHover={{
-              y: -3,
-              boxShadow: '0 8px 24px -6px oklch(0.72 0.15 350 / 0.2)',
-              borderColor: 'oklch(0.72 0.15 350 / 0.3)',
-            }}
-            whileTap={{ y: 1, scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          >
-            <Apple className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
-            macOS
-          </motion.a>
-
-          <motion.a
-            href="https://github.com/Shironex/shiroani/releases/latest"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 rounded-xl border border-border bg-card px-8 py-4 font-semibold"
-            whileHover={{
-              y: -3,
-              boxShadow: '0 8px 24px -6px oklch(0.72 0.15 350 / 0.2)',
-              borderColor: 'oklch(0.72 0.15 350 / 0.3)',
-            }}
-            whileTap={{ y: 1, scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          >
-            <Monitor className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
-            Windows
-          </motion.a>
+          {platforms.map(({ icon: Icon, label }) => (
+            <motion.a
+              key={label}
+              href="https://github.com/Shironex/shiroani/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 rounded-xl border border-border bg-card px-8 py-4 font-semibold"
+              whileHover={{
+                y: -3,
+                boxShadow: '0 8px 24px -6px oklch(0.72 0.15 350 / 0.2)',
+                borderColor: 'oklch(0.72 0.15 350 / 0.3)',
+              }}
+              whileTap={{ y: 1, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            >
+              <Icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+              {label}
+            </motion.a>
+          ))}
         </div>
 
         <a

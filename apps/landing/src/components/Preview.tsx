@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-
-const ease = [0.16, 1, 0.3, 1] as const;
+import { ease } from '@/lib/animations';
 
 const screenshots = [
   {
@@ -36,7 +35,7 @@ export function Preview() {
   };
 
   return (
-    <section id="podgląd" className="relative px-6 py-28 lg:py-36">
+    <section id="podglad" className="relative px-6 py-28 lg:py-36">
       <div className="mx-auto max-w-6xl">
         <motion.div
           className="mb-16 text-center"
@@ -103,9 +102,14 @@ export function Preview() {
                 alt={screenshots[active].label}
                 className="w-full"
                 custom={direction}
-                initial={{ opacity: 0, x: direction * 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: direction * -40 }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                variants={{
+                  enter: (d: number) => ({ opacity: 0, x: d * 40 }),
+                  center: { opacity: 1, x: 0 },
+                  exit: (d: number) => ({ opacity: 0, x: d * -40 }),
+                }}
                 transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
                 draggable={false}
               />

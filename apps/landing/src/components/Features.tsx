@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import { Globe, BookOpen, Palette, Calendar } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-
-const ease = [0.16, 1, 0.3, 1] as const;
+import { ease } from '@/lib/animations';
 
 interface Feature {
   icon: LucideIcon;

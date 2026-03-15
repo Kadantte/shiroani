@@ -1,6 +1,13 @@
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { useState } from 'react';
 
+const links = [
+  { label: 'Funkcje', href: '#funkcje' },
+  { label: 'Podgląd', href: '#podglad' },
+  { label: 'Społeczność', href: '#spolecznosc' },
+  { label: 'Pobierz', href: '#pobierz' },
+];
+
 export function Navbar() {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
@@ -25,10 +32,10 @@ export function Navbar() {
         </a>
 
         <div className="hidden items-center gap-8 md:flex">
-          {['Funkcje', 'Podgląd', 'Społeczność', 'Pobierz'].map(label => (
+          {links.map(({ label, href }) => (
             <a
               key={label}
-              href={`#${label.toLowerCase()}`}
+              href={href}
               className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
             >
               {label}

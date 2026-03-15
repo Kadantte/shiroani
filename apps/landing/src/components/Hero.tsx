@@ -1,17 +1,27 @@
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useEffect, useRef, useCallback } from 'react';
-
-const ease = [0.16, 1, 0.3, 1] as const;
+import { ease } from '@/lib/animations';
 
 /** Floating sparkle particles that follow cursor in hero */
 function useCursorSparkles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const particles = useRef<
-    { x: number; y: number; vx: number; vy: number; life: number; size: number; hue: number }[]
+    {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      size: number;
+      r: number;
+      g: number;
+      b: number;
+    }[]
   >([]);
   const raf = useRef<number>(0);
+  const isRunning = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,6 +36,33 @@ function useCursorSparkles() {
     };
     resize();
     window.addEventListener('resize', resize);
+
+    const startLoop = () => {
+      if (isRunning.current) return;
+      isRunning.current = true;
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.current = particles.current.filter(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 0.015;
+          if (p.life <= 0) return false;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${p.life * 0.6})`;
+          ctx.fill();
+          return true;
+        });
+        if (particles.current.length > 0) {
+          raf.current = requestAnimationFrame(animate);
+        } else {
+          isRunning.current = false;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      };
+      raf.current = requestAnimationFrame(animate);
+    };
 
     let lastSpawn = 0;
     const onMove = (e: MouseEvent) => {
@@ -44,34 +81,20 @@ function useCursorSparkles() {
             vy: -Math.random() * 1.2 - 0.3,
             life: 1,
             size: Math.random() * 2.5 + 1,
-            hue: 340 + Math.random() * 30,
+            r: 220 + Math.round(Math.random() * 35),
+            g: 130 + Math.round(Math.random() * 40),
+            b: 180 + Math.round(Math.random() * 40),
           });
         }
+        startLoop();
       }
     };
 
     section.addEventListener('mousemove', onMove);
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.current = particles.current.filter(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.015;
-        if (p.life <= 0) return false;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-        ctx.fillStyle = `oklch(0.75 0.15 ${p.hue} / ${p.life * 0.6})`;
-        ctx.fill();
-        return true;
-      });
-      raf.current = requestAnimationFrame(animate);
-    };
-    raf.current = requestAnimationFrame(animate);
-
     return () => {
       cancelAnimationFrame(raf.current);
+      isRunning.current = false;
       window.removeEventListener('resize', resize);
       section.removeEventListener('mousemove', onMove);
     };
@@ -260,6 +283,7 @@ export function Hero() {
       {/* Scroll hint */}
       <motion.a
         href="#funkcje"
+        aria-label="Przewiń do funkcji"
         className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
