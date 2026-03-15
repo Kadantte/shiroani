@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON } from '@/lib/platform';
-import { APP_LOGO_URL } from '@/lib/constants';
+import { MASCOT_THINK_URL } from '@/lib/constants';
 
 /** Minimum time the splash screen stays visible (ms) */
 const MIN_DISPLAY_MS = 3000;
@@ -50,7 +50,7 @@ function useSparkles() {
           duration: 1.5 + Math.random() * 1.5,
         };
       }),
-    [],
+    []
   );
 }
 
@@ -87,8 +87,8 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
   useEffect(() => {
     if (error) return;
     const timer = setInterval(
-      () => setMessageIndex((i) => (i + 1) % LOADING_MESSAGES.length),
-      MESSAGE_ROTATE_MS,
+      () => setMessageIndex(i => (i + 1) % LOADING_MESSAGES.length),
+      MESSAGE_ROTATE_MS
     );
     return () => clearInterval(timer);
   }, [error]);
@@ -114,7 +114,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
         'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background overflow-hidden',
         'transition-[opacity,transform] duration-600 ease-out',
         isDismissing && 'opacity-0 scale-[1.02]',
-        IS_ELECTRON && 'rounded-t-[10px]',
+        IS_ELECTRON && 'rounded-t-[10px]'
       )}
     >
       {/* Draggable region so the window can still be moved during splash */}
@@ -130,7 +130,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
 
           {/* Sparkles twinkling around the mascot */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            {sparkles.map((s) => (
+            {sparkles.map(s => (
               <div
                 key={s.id}
                 className="absolute rounded-full bg-primary"
@@ -146,7 +146,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
           </div>
 
           <img
-            src={APP_LOGO_URL}
+            src={MASCOT_THINK_URL}
             alt="Maskotka ShiroAni"
             className="relative w-40 h-40 object-contain drop-shadow-lg animate-[splash-float_3s_ease-in-out_0.7s_infinite]"
             draggable={false}
@@ -165,7 +165,7 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
         <div
           className={cn(
             'mt-4 flex flex-col items-center gap-2.5 transition-opacity duration-400 ease-in',
-            showSpinner ? 'opacity-100' : 'opacity-0',
+            showSpinner ? 'opacity-100' : 'opacity-0'
           )}
           role="status"
           aria-live="polite"

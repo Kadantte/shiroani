@@ -84,6 +84,10 @@
           }
         });
 
+        window.mascotAPI.onSetSprite(function (src) {
+          mascot.src = src;
+        });
+
         window.mascotAPI.onPositionLocked(function (locked) {
           positionLocked = locked;
           if (locked) {

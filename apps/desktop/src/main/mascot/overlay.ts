@@ -1,4 +1,6 @@
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
+import * as path from 'path';
+import * as fs from 'fs';
 import { logger } from '../logger';
 import { store } from '../store';
 import { registerVisibilitySetter } from './mascot-actions';
@@ -33,7 +35,143 @@ import {
   setDarwinSize,
   saveDarwinPosition,
   hasDarwinWindow,
+  setDarwinSprite,
 } from './overlay-macos';
+
+// ---------------------------------------------------------------------------
+// Pose switching (macOS only — Win32 native addon doesn't support static sprite swap)
+// ---------------------------------------------------------------------------
+
+export type MascotPose = 'idle' | 'wave' | 'sleep';
+
+const POSE_FILES: Record<MascotPose, string> = {
+  idle: 'chibi_base.png',
+  wave: 'chibi_wave.png',
+  sleep: 'chibi_sleep.png',
+};
+
+/** Duration (ms) after which lack of interaction triggers the sleep pose */
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+/** How often to check time-based pose changes (ms) */
+const TIME_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
+let currentPose: MascotPose = 'idle';
+let poseTimer: ReturnType<typeof setTimeout> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let timeCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+/** Cache base64-encoded sprites to avoid repeated file I/O */
+const spriteCache = new Map<MascotPose, string>();
+
+function getResourcesPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'mascot')
+    : path.join(__dirname, '../../../resources/mascot');
+}
+
+/**
+ * Read a pose sprite file (cached) and send its base64 data URL to the macOS overlay.
+ */
+async function sendPoseToOverlay(pose: MascotPose): Promise<void> {
+  if (process.platform !== 'darwin' || !hasDarwinWindow()) return;
+
+  let spriteSrc = spriteCache.get(pose);
+  if (!spriteSrc) {
+    const spriteFile = path.join(getResourcesPath(), POSE_FILES[pose]);
+    try {
+      const data = await fs.promises.readFile(spriteFile);
+      spriteSrc = `data:image/png;base64,${data.toString('base64')}`;
+      spriteCache.set(pose, spriteSrc);
+    } catch (err) {
+      logger.error(`Failed to read mascot pose sprite (${pose}):`, err);
+      return;
+    }
+  }
+  setDarwinSprite(spriteSrc);
+}
+
+/** Sequence counter to prevent stale async pose updates from overriding newer ones */
+let poseSeq = 0;
+
+/**
+ * Switch the mascot to a given pose (macOS only).
+ * If `durationMs` is provided, automatically revert to idle after that time.
+ */
+export async function setMascotPose(pose: MascotPose, durationMs?: number): Promise<void> {
+  if (process.platform !== 'darwin') return;
+
+  currentPose = pose;
+  const seq = ++poseSeq;
+  await sendPoseToOverlay(pose);
+
+  // Bail if another pose was set while we were reading the file
+  if (poseSeq !== seq) return;
+
+  if (poseTimer) {
+    clearTimeout(poseTimer);
+    poseTimer = null;
+  }
+  if (durationMs != null) {
+    poseTimer = setTimeout(() => {
+      poseTimer = null;
+      setMascotPose('idle');
+    }, durationMs);
+  }
+}
+
+/**
+ * Start / restart the idle inactivity timer.
+ * After IDLE_TIMEOUT_MS of no user interaction the mascot switches to sleep.
+ */
+function startIdleCheck(): void {
+  if (process.platform !== 'darwin') return;
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    if (currentPose === 'idle') {
+      setMascotPose('sleep');
+    }
+  }, IDLE_TIMEOUT_MS);
+}
+
+/**
+ * Apply time-of-day pose rules:
+ * 23:00 -- 05:59 -> sleep (if currently idle)
+ * 06:00 -- 22:59 -> idle (if currently sleeping from time check)
+ */
+function checkTimeBasedPose(): void {
+  const hour = new Date().getHours();
+  if (hour >= 23 || hour < 6) {
+    if (currentPose === 'idle') setMascotPose('sleep');
+  } else if (currentPose === 'sleep') {
+    setMascotPose('idle');
+  }
+}
+
+function startPoseTimers(): void {
+  if (process.platform !== 'darwin') return;
+  checkTimeBasedPose();
+  startIdleCheck();
+  if (timeCheckInterval) clearInterval(timeCheckInterval);
+  timeCheckInterval = setInterval(checkTimeBasedPose, TIME_CHECK_INTERVAL_MS);
+}
+
+function clearPoseTimers(): void {
+  if (poseTimer) {
+    clearTimeout(poseTimer);
+    poseTimer = null;
+  }
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+  if (timeCheckInterval) {
+    clearInterval(timeCheckInterval);
+    timeCheckInterval = null;
+  }
+  currentPose = 'idle';
+  spriteCache.clear();
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -86,13 +224,17 @@ export function createMascotOverlay(): boolean {
   // Wire up the visibility setter so mascot-actions can show/hide without circular imports
   registerVisibilitySetter(setMascotVisible);
 
-  // macOS: use BrowserWindow-based overlay
+  let result: boolean;
   if (process.platform === 'darwin') {
-    return initDarwinOverlay(mainWindow);
+    result = initDarwinOverlay(mainWindow);
+  } else {
+    result = createWin32Overlay(mainWindow, setMascotVisible);
   }
 
-  // Windows: use native addon
-  return createWin32Overlay(mainWindow, setMascotVisible);
+  if (result) {
+    startPoseTimers();
+  }
+  return result;
 }
 
 /**
@@ -125,6 +267,7 @@ export function resetMascotPosition(): void {
  * Destroy the mascot overlay and release all resources.
  */
 export function destroyMascotOverlay(): void {
+  clearPoseTimers();
   clearPositionCallbacks();
 
   if (process.platform === 'win32') {
@@ -206,6 +349,17 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
   if (!isMascotEnabled()) return;
 
   const mode = getMascotVisibilityMode();
+
+  // When the main window becomes visible and mascot is actually shown, greet with wave
+  if (windowVisible && currentPose !== 'wave' && mode === 'always') {
+    setMascotPose('wave', 3000);
+  }
+
+  // Only reset idle timer when user shows the window (active interaction)
+  if (windowVisible) {
+    startIdleCheck();
+  }
+
   if (mode === 'always') return;
 
   // "tray-only" mode: show mascot when window is hidden/minimized, hide when visible
