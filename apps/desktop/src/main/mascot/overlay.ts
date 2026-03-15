@@ -39,7 +39,7 @@ import {
 } from './overlay-macos';
 
 // ---------------------------------------------------------------------------
-// Pose switching
+// Pose switching (macOS only — Win32 native addon doesn't support static sprite swap)
 // ---------------------------------------------------------------------------
 
 export type MascotPose = 'idle' | 'wave' | 'sleep';
@@ -60,6 +60,9 @@ let poseTimer: ReturnType<typeof setTimeout> | null = null;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let timeCheckInterval: ReturnType<typeof setInterval> | null = null;
 
+/** Cache base64-encoded sprites to avoid repeated file I/O */
+const spriteCache = new Map<MascotPose, string>();
+
 function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
@@ -67,34 +70,48 @@ function getResourcesPath(): string {
 }
 
 /**
- * Read a pose sprite file and send its base64 data URL to the macOS overlay.
+ * Read a pose sprite file (cached) and send its base64 data URL to the macOS overlay.
  */
 async function sendPoseToOverlay(pose: MascotPose): Promise<void> {
   if (process.platform !== 'darwin' || !hasDarwinWindow()) return;
 
-  const spriteFile = path.join(getResourcesPath(), POSE_FILES[pose]);
-  try {
-    const data = await fs.promises.readFile(spriteFile);
-    const spriteSrc = `data:image/png;base64,${data.toString('base64')}`;
-    setDarwinSprite(spriteSrc);
-  } catch (err) {
-    logger.error(`Failed to read mascot pose sprite (${pose}):`, err);
+  let spriteSrc = spriteCache.get(pose);
+  if (!spriteSrc) {
+    const spriteFile = path.join(getResourcesPath(), POSE_FILES[pose]);
+    try {
+      const data = await fs.promises.readFile(spriteFile);
+      spriteSrc = `data:image/png;base64,${data.toString('base64')}`;
+      spriteCache.set(pose, spriteSrc);
+    } catch (err) {
+      logger.error(`Failed to read mascot pose sprite (${pose}):`, err);
+      return;
+    }
   }
+  setDarwinSprite(spriteSrc);
 }
 
+/** Sequence counter to prevent stale async pose updates from overriding newer ones */
+let poseSeq = 0;
+
 /**
- * Switch the mascot to a given pose.
+ * Switch the mascot to a given pose (macOS only).
  * If `durationMs` is provided, automatically revert to idle after that time.
  */
-export function setMascotPose(pose: MascotPose, durationMs?: number): void {
+export async function setMascotPose(pose: MascotPose, durationMs?: number): Promise<void> {
+  if (process.platform !== 'darwin') return;
+
   currentPose = pose;
-  sendPoseToOverlay(pose);
+  const seq = ++poseSeq;
+  await sendPoseToOverlay(pose);
+
+  // Bail if another pose was set while we were reading the file
+  if (poseSeq !== seq) return;
 
   if (poseTimer) {
     clearTimeout(poseTimer);
     poseTimer = null;
   }
-  if (durationMs) {
+  if (durationMs != null) {
     poseTimer = setTimeout(() => {
       poseTimer = null;
       setMascotPose('idle');
@@ -107,6 +124,7 @@ export function setMascotPose(pose: MascotPose, durationMs?: number): void {
  * After IDLE_TIMEOUT_MS of no user interaction the mascot switches to sleep.
  */
 function startIdleCheck(): void {
+  if (process.platform !== 'darwin') return;
   if (idleTimer) clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     idleTimer = null;
@@ -131,6 +149,7 @@ function checkTimeBasedPose(): void {
 }
 
 function startPoseTimers(): void {
+  if (process.platform !== 'darwin') return;
   checkTimeBasedPose();
   startIdleCheck();
   if (timeCheckInterval) clearInterval(timeCheckInterval);
@@ -151,6 +170,7 @@ function clearPoseTimers(): void {
     timeCheckInterval = null;
   }
   currentPose = 'idle';
+  spriteCache.clear();
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -204,16 +224,16 @@ export function createMascotOverlay(): boolean {
   // Wire up the visibility setter so mascot-actions can show/hide without circular imports
   registerVisibilitySetter(setMascotVisible);
 
-  // macOS: use BrowserWindow-based overlay
+  let result: boolean;
   if (process.platform === 'darwin') {
-    const result = initDarwinOverlay(mainWindow);
-    if (result) startPoseTimers();
-    return result;
+    result = initDarwinOverlay(mainWindow);
+  } else {
+    result = createWin32Overlay(mainWindow, setMascotVisible);
   }
 
-  // Windows: use native addon
-  const result = createWin32Overlay(mainWindow, setMascotVisible);
-  if (result) startPoseTimers();
+  if (result) {
+    startPoseTimers();
+  }
   return result;
 }
 
@@ -328,15 +348,18 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
   if (process.platform === 'darwin' && !hasDarwinWindow()) return;
   if (!isMascotEnabled()) return;
 
-  // User interaction detected -- reset the idle sleep timer
-  startIdleCheck();
+  const mode = getMascotVisibilityMode();
 
-  // When the main window becomes visible, greet with wave pose for 3 seconds
-  if (windowVisible && currentPose !== 'wave') {
+  // When the main window becomes visible and mascot is actually shown, greet with wave
+  if (windowVisible && currentPose !== 'wave' && mode === 'always') {
     setMascotPose('wave', 3000);
   }
 
-  const mode = getMascotVisibilityMode();
+  // Only reset idle timer when user shows the window (active interaction)
+  if (windowVisible) {
+    startIdleCheck();
+  }
+
   if (mode === 'always') return;
 
   // "tray-only" mode: show mascot when window is hidden/minimized, hide when visible
