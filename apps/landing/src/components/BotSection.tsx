@@ -1,7 +1,8 @@
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { Trophy, Shield, Sparkles, UserCheck, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ease } from '@/lib/animations';
+import { useRef } from 'react';
 
 interface BotFeature {
   icon: LucideIcon;
@@ -32,12 +33,84 @@ const botFeatures: BotFeature[] = [
   },
 ];
 
+/** Fake XP progress bar that fills on scroll */
+function XpProgressBar() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  return (
+    <div ref={ref} className="mt-8 overflow-hidden rounded-xl border border-border bg-card p-4">
+      <div className="mb-2 flex items-center justify-between text-xs">
+        <span className="font-semibold text-foreground">Poziom 7</span>
+        <span className="text-muted-foreground">2,450 / 2,850 XP</span>
+      </div>
+      <div className="relative h-3 overflow-hidden rounded-full bg-muted">
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            background: 'linear-gradient(90deg, oklch(0.65 0.17 348), oklch(0.72 0.15 350))',
+          }}
+          initial={{ width: '0%' }}
+          animate={inView ? { width: '86%' } : {}}
+          transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        />
+        {/* Shine effect on fill */}
+        {inView && (
+          <motion.div
+            className="absolute inset-y-0 w-12 rounded-full"
+            style={{
+              background: 'linear-gradient(90deg, transparent, oklch(1 0 0 / 0.2), transparent)',
+            }}
+            initial={{ left: '-3rem' }}
+            animate={{ left: '100%' }}
+            transition={{ duration: 0.8, delay: 1.5, ease: 'easeOut' }}
+          />
+        )}
+      </div>
+      <motion.p
+        className="mt-2 text-center text-xs font-medium text-primary"
+        initial={{ opacity: 0, y: 4 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 1.8, duration: 0.4 }}
+      >
+        ✨ Jeszcze 400 XP do Poziomu 8!
+      </motion.p>
+    </div>
+  );
+}
+
+/** Discord-style typing indicator */
+function TypingIndicator() {
+  return (
+    <motion.span
+      className="ml-1 inline-flex items-center gap-0.5"
+      initial={{ opacity: 0, width: 0 }}
+      whileHover={{ opacity: 1, width: 'auto' }}
+      transition={{ duration: 0.2 }}
+    >
+      {[0, 1, 2].map(i => (
+        <motion.span
+          key={i}
+          className="inline-block h-1 w-1 rounded-full bg-muted-foreground"
+          animate={{ y: [0, -3, 0] }}
+          transition={{
+            duration: 0.6,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </motion.span>
+  );
+}
+
 export function BotSection() {
   return (
     <section id="spolecznosc" className="relative px-6 py-28 lg:py-36">
       <div className="mx-auto max-w-6xl">
         <div className="grid items-start gap-16 lg:grid-cols-5">
-          {/* Left — editorial intro, 2 cols */}
+          {/* Left — editorial intro */}
           <motion.div
             className="lg:col-span-2"
             initial={{ opacity: 0, y: 20 }}
@@ -64,18 +137,28 @@ export function BotSection() {
               </p>
             </div>
 
+            {/* Join link with typing indicator */}
             <a
               href="https://discord.gg/shiroani"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-foreground"
+              className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-foreground"
             >
-              Dołącz do serwera
-              <span className="text-muted-foreground">→</span>
+              <span>Dołącz do serwera</span>
+              <span className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5">
+                →
+              </span>
+              <span className="hidden items-center gap-1 text-xs font-normal text-muted-foreground group-hover:inline-flex">
+                <span>3 osoby piszą</span>
+                <TypingIndicator />
+              </span>
             </a>
+
+            {/* XP progress bar demo */}
+            <XpProgressBar />
           </motion.div>
 
-          {/* Right — feature list, 3 cols */}
+          {/* Right — feature list */}
           <div className="space-y-1 lg:col-span-3">
             {botFeatures.map((f, i) => (
               <motion.div
@@ -86,9 +169,13 @@ export function BotSection() {
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease }}
               >
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8 transition-colors duration-200 group-hover:bg-primary/15">
+                <motion.div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8 transition-colors duration-200 group-hover:bg-primary/15"
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                >
                   <f.icon className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
-                </div>
+                </motion.div>
                 <div>
                   <h3 className="font-display text-base font-bold">{f.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
