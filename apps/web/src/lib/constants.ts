@@ -3,6 +3,9 @@ import type { AnimeStatus } from '@shiroani/shared';
 /** Path to the app mascot logo (chibi SVG) */
 export const APP_LOGO_URL = `${import.meta.env.BASE_URL}shiro-chibi.svg`;
 
+/** Path to the thinking mascot pose (used on splash screen) */
+export const MASCOT_THINK_URL = `${import.meta.env.BASE_URL}chibi_think.png`;
+
 export const STATUS_CONFIG: Record<
   AnimeStatus,
   { label: string; color: string; cssColor: string; cssBgColor: string }

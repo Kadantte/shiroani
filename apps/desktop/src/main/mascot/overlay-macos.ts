@@ -256,6 +256,12 @@ export function saveDarwinPosition(): void {
   }
 }
 
+export function setDarwinSprite(spriteSrc: string): void {
+  if (mascotWindow && !mascotWindow.isDestroyed()) {
+    mascotWindow.webContents.send('mascot:set-sprite', spriteSrc);
+  }
+}
+
 export function hasDarwinWindow(): boolean {
   return mascotWindow !== null && !mascotWindow.isDestroyed();
 }

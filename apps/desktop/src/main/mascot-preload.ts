@@ -8,6 +8,7 @@ export interface MascotConfig {
 export interface MascotAPI {
   onConfig: (callback: (config: MascotConfig) => void) => void;
   onPositionLocked: (callback: (locked: boolean) => void) => void;
+  onSetSprite: (callback: (src: string) => void) => void;
   startDrag: (screenX: number, screenY: number) => void;
   drag: (dx: number, dy: number) => void;
   endDrag: () => void;
@@ -23,6 +24,11 @@ const mascotAPI: MascotAPI = {
   onPositionLocked: (callback: (locked: boolean) => void) => {
     ipcRenderer.on('mascot:position-locked', (_event: IpcRendererEvent, locked: boolean) => {
       callback(locked);
+    });
+  },
+  onSetSprite: (callback: (src: string) => void) => {
+    ipcRenderer.on('mascot:set-sprite', (_event: IpcRendererEvent, src: string) => {
+      callback(src);
     });
   },
   startDrag: (screenX: number, screenY: number) => {
