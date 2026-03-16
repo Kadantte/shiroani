@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Extract version and channel from tag
         id: version
@@ -46,7 +46,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -92,7 +92,7 @@ jobs:
           name: windows-builds
           path: |
             apps/desktop/release/*.exe
-            apps/desktop/release/*.yml
+            apps/desktop/release/latest.yml
           if-no-files-found: error
           retention-days: 30
 
