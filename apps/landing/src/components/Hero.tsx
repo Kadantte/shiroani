@@ -257,26 +257,18 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5, ease }}
         >
-          <motion.a
-            href="#pobierz"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20"
-            whileHover={{ y: -2, boxShadow: '0 12px 30px -8px oklch(0.72 0.15 350 / 0.35)' }}
-            whileTap={{ y: 1, scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          <span
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60"
+            title="Wkrótce dostępne"
           >
-            Pobierz za darmo
-          </motion.a>
-          <motion.a
-            href="https://discord.gg/shiroani"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl border border-border px-7 py-3.5 text-sm font-semibold text-foreground/80"
-            whileHover={{ y: -2, borderColor: 'oklch(0.72 0.15 350 / 0.4)' }}
-            whileTap={{ y: 1, scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            Pobierz za darmo — W krótce
+          </span>
+          <span
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40"
+            title="Wkrótce dostępne"
           >
-            Dołącz do Discord
-          </motion.a>
+            Dołącz do Discord — W krótce
+          </span>
         </motion.div>
       </div>
 

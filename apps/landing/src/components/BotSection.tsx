@@ -79,32 +79,6 @@ function XpProgressBar() {
   );
 }
 
-/** Discord-style typing indicator */
-function TypingIndicator() {
-  return (
-    <motion.span
-      className="ml-1 inline-flex items-center gap-0.5"
-      initial={{ opacity: 0, width: 0 }}
-      whileHover={{ opacity: 1, width: 'auto' }}
-      transition={{ duration: 0.2 }}
-    >
-      {[0, 1, 2].map(i => (
-        <motion.span
-          key={i}
-          className="inline-block h-1 w-1 rounded-full bg-muted-foreground"
-          animate={{ y: [0, -3, 0] }}
-          transition={{
-            duration: 0.6,
-            repeat: Infinity,
-            delay: i * 0.15,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-    </motion.span>
-  );
-}
-
 export function BotSection() {
   return (
     <section id="spolecznosc" className="relative px-6 py-28 lg:py-36">
@@ -138,21 +112,12 @@ export function BotSection() {
             </div>
 
             {/* Join link with typing indicator */}
-            <a
-              href="https://discord.gg/shiroani"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-foreground"
+            <span
+              className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-primary/40"
+              title="Wkrótce dostępne"
             >
-              <span>Dołącz do serwera</span>
-              <span className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5">
-                →
-              </span>
-              <span className="hidden items-center gap-1 text-xs font-normal text-muted-foreground group-hover:inline-flex">
-                <span>3 osoby piszą</span>
-                <TypingIndicator />
-              </span>
-            </a>
+              <span>Dołącz do serwera — W krótce</span>
+            </span>
 
             {/* XP progress bar demo */}
             <XpProgressBar />

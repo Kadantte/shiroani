@@ -5,6 +5,7 @@ const links = [
   { label: 'Funkcje', href: '#funkcje' },
   { label: 'Podgląd', href: '#podglad' },
   { label: 'Społeczność', href: '#spolecznosc' },
+  { label: 'Changelog', href: '/changelog' },
   { label: 'Pobierz', href: '#pobierz' },
 ];
 
@@ -43,14 +44,12 @@ export function Navbar() {
           ))}
         </div>
 
-        <a
-          href="https://github.com/Shironex/shiroani/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:brightness-110"
+        <span
+          className="cursor-not-allowed rounded-lg bg-primary/40 px-4 py-2 text-sm font-semibold text-primary-foreground/60"
+          title="Wkrótce dostępne"
         >
-          Pobierz
-        </a>
+          W krótce
+        </span>
       </nav>
     </motion.header>
   );

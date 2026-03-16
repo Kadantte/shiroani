@@ -1,0 +1,203 @@
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Sparkles,
+  Monitor,
+  Globe,
+  MessageCircle,
+  Shield,
+  Zap,
+  Palette,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ease } from '@/lib/animations';
+import { Footer } from '@/components/Footer';
+
+interface ChangeEntry {
+  icon: typeof Sparkles;
+  text: string;
+}
+
+interface Release {
+  version: string;
+  date: string;
+  title: string;
+  description: string;
+  categories: {
+    label: string;
+    icon: typeof Sparkles;
+    color: string;
+    entries: ChangeEntry[];
+  }[];
+}
+
+const releases: Release[] = [
+  {
+    version: '0.1.0',
+    date: '17 marca 2026',
+    title: 'Pierwsze wydanie',
+    description:
+      'Wszystko zaczęło się od prostego pytania: "a co, gdyby śledzenie anime było wygodne?" Oto wynik — pierwszy publiczny build ShiroAni.',
+    categories: [
+      {
+        label: 'Aplikacja desktopowa',
+        icon: Monitor,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Globe,
+            text: 'Wbudowana przeglądarka z adblockiem (EasyList + EasyPrivacy) i obsługą kart',
+          },
+          {
+            icon: Sparkles,
+            text: 'Discord Rich Presence — automatyczne wykrywanie anime z ogladajanime.pl, shinden.pl i YouTube',
+          },
+          { icon: Palette, text: 'Biblioteka anime z ręcznym dodawaniem, statusami i ocenami' },
+          { icon: Zap, text: 'Harmonogram anime z odliczaniem do nowych odcinków' },
+          { icon: Palette, text: 'Dziennik — osobiste notatki o oglądanych seriach' },
+          {
+            icon: Sparkles,
+            text: 'Maskotka Shiro-chan z trzema pozami (powitanie, myślenie, sen)',
+          },
+          { icon: Monitor, text: 'Wizard pierwszego uruchomienia — konfiguracja krok po kroku' },
+          { icon: Zap, text: 'Tray icon, autostart, splash screen z animacjami' },
+        ],
+      },
+      {
+        label: 'Bot Discord',
+        icon: MessageCircle,
+        color: 'text-gold',
+        entries: [
+          {
+            icon: Shield,
+            text: 'Moderacja: /ban, /unban, /mute, /unmute, /clear z pełnym audytem',
+          },
+          { icon: Sparkles, text: 'System XP i poziomów: /rank, /leaderboard, role za poziomy' },
+          { icon: Zap, text: 'Role reakcji: /rr-create, /rr-add, /rr-remove, /rr-list' },
+          { icon: Shield, text: 'System weryfikacji: przycisk z auto-rolą' },
+          {
+            icon: MessageCircle,
+            text: 'Wiadomości powitalne/pożegnalne z konfigurowalnym kanałem',
+          },
+          {
+            icon: Sparkles,
+            text: '/post — builder embedów z modalem (tytuł, opis, kolor, obraz, stopka)',
+          },
+          { icon: Zap, text: 'Audit trail — automatyczne logi usunięć i edycji wiadomości' },
+        ],
+      },
+    ],
+  },
+];
+
+function ReleaseCard({ release, index }: { release: Release; index: number }) {
+  return (
+    <motion.article
+      className="relative"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: index * 0.1, ease }}
+    >
+      {/* Version header */}
+      <div className="mb-8">
+        <div className="mb-3 flex items-center gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1">
+            <motion.span
+              className="h-1.5 w-1.5 rounded-full bg-primary"
+              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <span className="text-xs font-semibold text-primary">v{release.version}</span>
+          </span>
+          <span className="text-sm text-muted-foreground">{release.date}</span>
+        </div>
+        <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          {release.title}
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          {release.description}
+        </p>
+      </div>
+
+      {/* Categories */}
+      <div className="space-y-8">
+        {release.categories.map(cat => (
+          <div key={cat.label}>
+            <div className="mb-4 flex items-center gap-2">
+              <cat.icon className={`h-4 w-4 ${cat.color}`} strokeWidth={1.5} />
+              <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                {cat.label}
+              </h3>
+            </div>
+            <ul className="space-y-2">
+              {cat.entries.map((entry, i) => (
+                <motion.li
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-card"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 + i * 0.03, ease }}
+                >
+                  <entry.icon
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50"
+                    strokeWidth={1.5}
+                  />
+                  <span className="text-sm text-foreground/80">{entry.text}</span>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </motion.article>
+  );
+}
+
+export function ChangelogPage() {
+  return (
+    <div className="grain relative min-h-screen">
+      {/* Header */}
+      <header className="border-b border-border px-6 py-4">
+        <nav className="mx-auto flex max-w-3xl items-center justify-between">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Strona główna
+          </Link>
+          <span className="font-display text-sm font-bold">
+            Shiro<span className="text-primary">Ani</span>
+          </span>
+        </nav>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        {/* Page title */}
+        <motion.div
+          className="mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
+        >
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
+            Changelog
+          </p>
+          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Co nowego?</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Historia zmian i nowych funkcji w ShiroAni.
+          </p>
+        </motion.div>
+
+        {/* Releases */}
+        <div className="space-y-20">
+          {releases.map((release, i) => (
+            <ReleaseCard key={release.version} release={release} index={i} />
+          ))}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

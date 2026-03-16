@@ -32,23 +32,14 @@ export function Download() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           {platforms.map(({ icon: Icon, label }) => (
-            <motion.a
+            <span
               key={label}
-              href="https://github.com/Shironex/shiroani/releases/latest"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-3 rounded-xl border border-border bg-card px-8 py-4 font-semibold"
-              whileHover={{
-                y: -3,
-                boxShadow: '0 8px 24px -6px oklch(0.72 0.15 350 / 0.2)',
-                borderColor: 'oklch(0.72 0.15 350 / 0.3)',
-              }}
-              whileTap={{ y: 1, scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40"
+              title="Wkrótce dostępne"
             >
-              <Icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
-              {label}
-            </motion.a>
+              <Icon className="h-5 w-5 text-muted-foreground/40" />
+              {label} — W krótce
+            </span>
           ))}
         </div>
 
