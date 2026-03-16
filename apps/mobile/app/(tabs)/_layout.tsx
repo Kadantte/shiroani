@@ -1,5 +1,8 @@
 import { Tabs } from 'expo-router';
-import { Calendar, Globe, Settings } from 'lucide-react-native';
+import { Calendar, Settings } from 'lucide-react-native';
+import { Image } from 'react-native';
+
+const mascotIcon = require('@/assets/images/mascot-wave.png');
 
 export default function TabsLayout() {
   return (
@@ -28,7 +31,9 @@ export default function TabsLayout() {
         name="browser"
         options={{
           title: 'Przeglądarka',
-          tabBarIcon: ({ color, size }) => <Globe color={color} size={size} />,
+          tabBarIcon: ({ size }) => (
+            <Image source={mascotIcon} style={{ width: size, height: size }} resizeMode="contain" />
+          ),
         }}
       />
       <Tabs.Screen
