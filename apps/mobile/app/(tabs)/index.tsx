@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import type { AiringAnime } from '@shiroani/shared';
@@ -8,6 +8,7 @@ import { DayTabBar } from '@/components/schedule/DayTabBar';
 import { AiringEntryCard } from '@/components/schedule/AiringEntryCard';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useNotificationSubscriptions } from '@/hooks/useNotificationSubscriptions';
+import { ScheduleSkeleton } from '@/components/schedule/ScheduleSkeleton';
 import { formatDateRange } from '@/lib/schedule-utils';
 import { colors } from '@/lib/theme';
 
@@ -86,9 +87,7 @@ export default function ScheduleScreen() {
 
       {/* Content */}
       {loading ? (
-        <View style={s.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <ScheduleSkeleton />
       ) : error ? (
         <View style={s.centered}>
           <Text style={s.errorText}>{error}</Text>

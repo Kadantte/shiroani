@@ -1,37 +1,63 @@
-import { cn } from '@/lib/utils';
-import * as SwitchPrimitives from '@rn-primitives/switch';
-import { Platform } from 'react-native';
+import { useCallback } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { colors } from '@/lib/theme';
 
-function Switch({
-  className,
-  ...props
-}: SwitchPrimitives.RootProps & React.RefAttributes<SwitchPrimitives.RootRef>) {
+interface SwitchProps {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  accessibilityLabel?: string;
+}
+
+function Switch({ checked, onCheckedChange, disabled, accessibilityLabel }: SwitchProps) {
+  const handlePress = useCallback(() => {
+    if (!disabled) {
+      onCheckedChange(!checked);
+    }
+  }, [checked, disabled, onCheckedChange]);
+
   return (
-    <SwitchPrimitives.Root
-      className={cn(
-        'flex h-[1.15rem] w-8 shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5',
-        Platform.select({
-          web: 'peer inline-flex outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed',
-        }),
-        props.checked ? 'bg-primary' : 'bg-input dark:bg-input/80',
-        props.disabled && 'opacity-50',
-        className
-      )}
-      {...props}
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="switch"
+      accessibilityState={{ checked, disabled }}
+      accessibilityLabel={accessibilityLabel}
+      style={[s.track, checked ? s.trackChecked : s.trackUnchecked, disabled && s.disabled]}
     >
-      <SwitchPrimitives.Thumb
-        className={cn(
-          'size-4 rounded-full bg-background transition-transform',
-          Platform.select({
-            web: 'pointer-events-none block ring-0',
-          }),
-          props.checked
-            ? 'translate-x-3.5 dark:bg-primary-foreground'
-            : 'translate-x-0 dark:bg-foreground'
-        )}
-      />
-    </SwitchPrimitives.Root>
+      <View style={[s.thumb, checked ? s.thumbChecked : s.thumbUnchecked]} />
+    </Pressable>
   );
 }
 
 export { Switch };
+
+const s = StyleSheet.create({
+  track: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  trackChecked: {
+    backgroundColor: colors.primary,
+  },
+  trackUnchecked: {
+    backgroundColor: colors.muted,
+  },
+  thumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  thumbChecked: {
+    alignSelf: 'flex-end',
+  },
+  thumbUnchecked: {
+    alignSelf: 'flex-start',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+});

@@ -59,9 +59,11 @@ const styles = StyleSheet.create({
   tab: {
     minWidth: 48,
     alignItems: 'center',
-    borderRadius: 8,
+    justifyContent: 'center',
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   tabActive: {
     backgroundColor: colors.primary,

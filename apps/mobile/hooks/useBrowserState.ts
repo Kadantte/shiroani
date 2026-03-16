@@ -75,6 +75,18 @@ export function useBrowserState() {
     setState(prev => ({ ...prev, loading: false, progress: 1 }));
   }, []);
 
+  const goHome = useCallback(() => {
+    setState({
+      url: NEW_TAB_URL,
+      title: '',
+      canGoBack: false,
+      canGoForward: false,
+      loading: false,
+      progress: 0,
+      isNewTab: true,
+    });
+  }, []);
+
   return {
     webViewRef,
     state,
@@ -85,5 +97,6 @@ export function useBrowserState() {
     goForward,
     reload,
     stopLoading,
+    goHome,
   };
 }

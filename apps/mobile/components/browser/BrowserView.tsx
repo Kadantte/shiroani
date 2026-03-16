@@ -28,6 +28,7 @@ export function BrowserView() {
     goForward,
     reload,
     stopLoading,
+    goHome,
   } = useBrowserState();
 
   const { bookmarks, addBookmark, deleteBookmark } = useBookmarks();
@@ -63,10 +64,6 @@ export function BrowserView() {
       });
     }
   }, [currentBookmark, state.url, state.title, state.isNewTab, addBookmark, deleteBookmark]);
-
-  const goHome = useCallback(() => {
-    navigateTo('https://ogladajanime.pl');
-  }, [navigateTo]);
 
   return (
     <View style={s.container}>
@@ -112,19 +109,15 @@ export function BrowserView() {
           style={s.urlInput}
         />
 
-        {state.isNewTab ? (
-          <Pressable onPress={goHome} accessibilityLabel="Strona główna" style={s.iconButton}>
-            <Home size={ICON_SIZE} color={colors.foreground} />
-          </Pressable>
-        ) : state.loading ? (
+        {state.loading ? (
           <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" style={s.iconButton}>
             <X size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
-        ) : (
+        ) : !state.isNewTab ? (
           <Pressable onPress={reload} accessibilityLabel="Odśwież" style={s.iconButton}>
             <RotateCw size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
-        )}
+        ) : null}
 
         {!state.isNewTab && (
           <Pressable
@@ -137,6 +130,12 @@ export function BrowserView() {
             ) : (
               <Bookmark size={ICON_SIZE} color={colors.foreground} />
             )}
+          </Pressable>
+        )}
+
+        {!state.isNewTab && (
+          <Pressable onPress={goHome} accessibilityLabel="Szybki dostęp" style={s.iconButton}>
+            <Home size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         )}
       </View>
