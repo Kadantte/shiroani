@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Apple, Monitor, Terminal, Download, ExternalLink, FileText } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { formatDate, GITHUB_RELEASES_API_URL, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { ease } from '@/lib/animations';
 
 interface ReleaseAsset {
@@ -54,8 +55,6 @@ const PLATFORMS: PlatformInfo[] = [
   },
 ];
 
-const GITHUB_RELEASE_URL = 'https://api.github.com/repos/Shironex/shiroani/releases/latest';
-
 function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'win';
   const ua = navigator.userAgent.toLowerCase();
@@ -67,14 +66,6 @@ function detectPlatform(): Platform {
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 }
 
 /** Tiny confetti burst — fires particles from a point */
@@ -289,7 +280,7 @@ export function DownloadPage() {
   const { fire, layer } = useConfetti();
 
   useEffect(() => {
-    fetch(GITHUB_RELEASE_URL)
+    fetch(GITHUB_RELEASES_API_URL)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
@@ -441,7 +432,7 @@ export function DownloadPage() {
                 Nie udało się pobrać informacji o wydaniu.
               </p>
               <a
-                href="https://github.com/Shironex/shiroani/releases/latest"
+                href={`${GITHUB_RELEASES_URL}/latest`}
                 className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"

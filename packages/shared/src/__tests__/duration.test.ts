@@ -1,4 +1,5 @@
-import { parseDuration, formatDuration } from './duration';
+import { describe, it, expect } from 'vitest';
+import { parseDuration, formatDuration } from '../duration';
 
 describe('parseDuration', () => {
   it('should parse seconds', () => {

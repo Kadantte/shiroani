@@ -11,6 +11,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     resolve: {
       alias: {
+        '@shiroani/shared': new URL('../../packages/shared/src/index.ts', import.meta.url).pathname,
         '@': new URL('./src', import.meta.url).pathname,
       },
     },

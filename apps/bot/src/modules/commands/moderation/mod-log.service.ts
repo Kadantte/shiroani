@@ -3,7 +3,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Client, TextChannel } from 'discord.js';
 import { ModerationAction } from '@/generated/prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { moderationEmbed, formatDuration } from '@/common/utils';
+import { formatDuration } from '@shiroani/shared';
+import { moderationEmbed } from '@/common/utils';
 
 export interface ModLogEntry {
   guildId: string;
