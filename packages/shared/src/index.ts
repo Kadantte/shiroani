@@ -19,6 +19,9 @@ export * from './types/system';
 // Utilities
 export * from './utils';
 
+// Duration
+export * from './duration';
+
 // Formatters
 export * from './formatters';
 

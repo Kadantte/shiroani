@@ -27,13 +27,16 @@ export const VITE_DEV_PORT = 15174;
 // =============================================================================
 
 /** GitHub repo owner */
-const GITHUB_REPO_OWNER = 'Shironex';
+export const GITHUB_REPO_OWNER = 'Shironex';
 
 /** GitHub repo name */
-const GITHUB_REPO_NAME = 'shiroani';
+export const GITHUB_REPO_NAME = 'shiroani';
 
 /** GitHub releases page URL */
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases`;
+
+/** GitHub releases API URL (for fetching latest release data) */
+export const GITHUB_RELEASES_API_URL = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`;
 
 /** Custom protocol URL for the new tab page */
 export const NEW_TAB_URL = 'shiroani://newtab';

@@ -13,7 +13,8 @@ import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
 import { DEFAULT_REASON } from '@/common/constants';
-import { successEmbed, errorEmbed, parseDuration, validateModerationTarget } from '@/common/utils';
+import { parseDuration } from '@shiroani/shared';
+import { successEmbed, errorEmbed, validateModerationTarget } from '@/common/utils';
 
 class MuteOptions {
   @UserOption({

@@ -1,4 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Colors } from 'discord.js';
+import { truncate } from '@shiroani/shared';
 
 export function successEmbed(description: string): EmbedBuilder {
   return new EmbedBuilder().setColor(Colors.Green).setDescription(`✅ ${description}`);
@@ -83,11 +84,6 @@ export function goodbyeEmbed(options: { username: string; avatarUrl: string }): 
 
 const FIELD_MAX_LENGTH = 1024;
 const UNCACHED_CONTENT = 'Treść niedostępna (wiadomość nie była w cache)';
-
-function truncate(text: string, max: number): string {
-  if (text.length <= max) return text;
-  return text.slice(0, max - 3) + '...';
-}
 
 export function messageDeleteEmbed(options: {
   authorTag: string;

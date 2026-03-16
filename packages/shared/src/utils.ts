@@ -42,3 +42,15 @@ export function getWeekStart(date?: Date): Date {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+/**
+ * Truncate a string to a maximum length, appending an ellipsis if truncated.
+ *
+ * @param text - The string to truncate
+ * @param max - Maximum allowed length (including ellipsis)
+ * @param ellipsis - The ellipsis string to append (default: '...')
+ */
+export function truncate(text: string, max: number, ellipsis = '...'): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max - ellipsis.length) + ellipsis;
+}
