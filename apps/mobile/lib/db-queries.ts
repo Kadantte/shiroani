@@ -333,3 +333,24 @@ export async function toggleNotificationSubscription(
     anilistId
   );
 }
+
+export async function addNotificationSubscription(
+  db: SQLiteDatabase,
+  data: { anilistId: number; title: string; titleRomaji?: string; coverImage?: string }
+): Promise<void> {
+  await db.runAsync(
+    `INSERT OR IGNORE INTO notification_subscriptions (anilist_id, title, title_romaji, cover_image, source)
+     VALUES (?, ?, ?, ?, 'schedule')`,
+    data.anilistId,
+    data.title,
+    data.titleRomaji ?? null,
+    data.coverImage ?? null
+  );
+}
+
+export async function removeNotificationSubscription(
+  db: SQLiteDatabase,
+  anilistId: number
+): Promise<void> {
+  await db.runAsync(`DELETE FROM notification_subscriptions WHERE anilist_id = ?`, anilistId);
+}
