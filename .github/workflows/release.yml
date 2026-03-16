@@ -70,6 +70,7 @@ jobs:
 
       - name: Package (Windows)
         if: matrix.platform == 'win'
+        shell: bash
         working-directory: apps/desktop
         run: pnpm exec electron-builder --win --publish never -c.publish.channel=${{ steps.version.outputs.channel }}
 
