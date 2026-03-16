@@ -1,21 +1,11 @@
-name: Release
+name: Release Build
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g. v0.2.0)'
-        required: true
+  release:
+    types: [published]
 
 permissions:
   contents: write
-
-concurrency:
-  group: release-${{ github.ref_name }}
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -32,6 +22,27 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Extract version and channel from tag
+        id: version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          if echo "${VERSION}" | grep -qE '\-beta(\.|$)'; then
+            echo "channel=beta" >> "$GITHUB_OUTPUT"
+          elif echo "${VERSION}" | grep -qE '\-alpha(\.|$)'; then
+            echo "channel=alpha" >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update package.json versions
+        shell: bash
+        run: ./scripts/bump-version.sh "${{ steps.version.outputs.version }}"
 
       - uses: pnpm/action-setup@v4
 
@@ -50,39 +61,65 @@ jobs:
       - name: Build desktop app
         run: pnpm --filter @shiroani/desktop build
 
-      - name: Package and publish
-        run: pnpm --filter @shiroani/desktop exec electron-builder --${{ matrix.platform }} --publish always
+      - name: Package (macOS)
+        if: matrix.platform == 'mac'
+        working-directory: apps/desktop
+        run: pnpm exec electron-builder --mac --publish never -c.publish.channel=${{ steps.version.outputs.channel }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Disable code signing auto-discovery — only sign when secrets are configured
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-  publish:
+      - name: Package (Windows)
+        if: matrix.platform == 'win'
+        working-directory: apps/desktop
+        run: pnpm exec electron-builder --win --publish never -c.publish.channel=${{ steps.version.outputs.channel }}
+
+      - name: Upload macOS artifacts
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*-mac.yml
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Windows artifacts
+        if: matrix.platform == 'win'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.yml
+          if-no-files-found: error
+          retention-days: 30
+
+  upload:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-builds
+          path: artifacts/macos-builds
 
-      - name: Determine tag
-        id: tag
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-builds
+          path: artifacts/windows-builds
 
-      - name: Check if prerelease
-        id: prerelease
-        run: |
-          if echo "${{ steps.tag.outputs.tag }}" | grep -qE '(alpha|beta|rc)'; then
-            echo "flag=--prerelease" >> "$GITHUB_OUTPUT"
-          else
-            echo "flag=" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish release
-        run: gh release edit ${{ steps.tag.outputs.tag }} --draft=false ${{ steps.prerelease.outputs.flag }}
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/macos-builds/*.dmg
+            artifacts/macos-builds/*-mac.yml
+            artifacts/windows-builds/*.exe
+            artifacts/windows-builds/*.yml
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
