@@ -1,27 +1,31 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useState } from 'react';
 import { ease } from '@/lib/animations';
 
 const screenshots = [
   {
-    src: '/screenshots/library.jpeg',
+    src: '/screenshots/library.webp',
     label: 'Biblioteka anime',
     caption: 'Twoja osobista kolekcja — wszystko w jednym miejscu',
+    alt: 'Zrzut ekranu biblioteki anime z okładkami i filtrami statusu',
   },
   {
-    src: '/screenshots/schedule.jpeg',
+    src: '/screenshots/schedule.webp',
     label: 'Harmonogram',
     caption: 'Nigdy nie przegap nowego odcinka',
+    alt: 'Zrzut ekranu harmonogramu z listą nadchodzących odcinków i odliczaniem',
   },
   {
-    src: '/screenshots/newtab.jpeg',
+    src: '/screenshots/newtab.webp',
     label: 'Nowa karta',
     caption: 'Szybki dostęp do ulubionych stron',
+    alt: 'Zrzut ekranu strony nowej karty z kafelkami ulubionych stron',
   },
   {
-    src: '/screenshots/settings.jpeg',
+    src: '/screenshots/settings.webp',
     label: 'Ustawienia',
     caption: 'Motywy, tła i personalizacja',
+    alt: 'Zrzut ekranu ustawień aplikacji z opcjami motywów i tła',
   },
 ];
 
@@ -59,29 +63,33 @@ export function Preview() {
         </motion.div>
 
         {/* Screenshot tabs with animated indicator */}
-        <div className="mb-6 flex flex-wrap justify-center gap-1">
-          {screenshots.map((s, i) => (
-            <motion.button
-              key={s.label}
-              onClick={() => navigate(i)}
-              className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                i === active
-                  ? 'text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              whileTap={{ scale: 0.95 }}
-            >
-              {i === active && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 rounded-lg bg-primary"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">{s.label}</span>
-            </motion.button>
-          ))}
-        </div>
+        <LayoutGroup id="preview-tabs">
+          <div className="mb-6 flex flex-wrap justify-center gap-1" role="tablist">
+            {screenshots.map((s, i) => (
+              <motion.button
+                key={s.label}
+                role="tab"
+                aria-selected={i === active}
+                onClick={() => navigate(i)}
+                className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+                  i === active
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                whileTap={{ scale: 0.95 }}
+              >
+                {i === active && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-lg bg-primary"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{s.label}</span>
+              </motion.button>
+            ))}
+          </div>
+        </LayoutGroup>
 
         {/* Screenshot display with slide transition */}
         <motion.div
@@ -100,13 +108,18 @@ export function Preview() {
             }}
           />
 
-          <div className="screenshot-frame bg-card overflow-hidden">
+          <div
+            className="screenshot-frame bg-card overflow-hidden"
+            role="tabpanel"
+            aria-label={screenshots[active].label}
+          >
             <AnimatePresence mode="wait" custom={direction}>
               <motion.img
                 key={active}
                 src={screenshots[active].src}
-                alt={screenshots[active].label}
+                alt={screenshots[active].alt}
                 className="w-full"
+                loading="lazy"
                 custom={direction}
                 initial="enter"
                 animate="center"

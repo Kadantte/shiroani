@@ -1,17 +1,6 @@
 import { motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  Sparkles,
-  Monitor,
-  Globe,
-  MessageCircle,
-  Shield,
-  Zap,
-  Palette,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Sparkles, Monitor, Globe, MessageCircle, Shield, Zap, Palette } from 'lucide-react';
 import { ease } from '@/lib/animations';
-import { Footer } from '@/components/Footer';
 
 interface ChangeEntry {
   icon: typeof Sparkles;
@@ -98,7 +87,6 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.1, ease }}
     >
-      {/* Version header */}
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1">
@@ -119,7 +107,6 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
         </p>
       </div>
 
-      {/* Categories */}
       <div className="space-y-8">
         {release.categories.map(cat => (
           <div key={cat.label}>
@@ -153,51 +140,29 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
   );
 }
 
-export function ChangelogPage() {
+export function ChangelogContent() {
   return (
-    <div className="grain relative min-h-screen">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4">
-        <nav className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Strona główna
-          </Link>
-          <span className="font-display text-sm font-bold">
-            Shiro<span className="text-primary">Ani</span>
-          </span>
-        </nav>
-      </header>
+    <>
+      <motion.div
+        className="mb-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease }}
+      >
+        <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
+          Changelog
+        </p>
+        <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Co nowego?</h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Historia zmian i nowych funkcji w ShiroAni.
+        </p>
+      </motion.div>
 
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        {/* Page title */}
-        <motion.div
-          className="mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease }}
-        >
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
-            Changelog
-          </p>
-          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Co nowego?</h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Historia zmian i nowych funkcji w ShiroAni.
-          </p>
-        </motion.div>
-
-        {/* Releases */}
-        <div className="space-y-20">
-          {releases.map((release, i) => (
-            <ReleaseCard key={release.version} release={release} index={i} />
-          ))}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+      <div className="space-y-20">
+        {releases.map((release, i) => (
+          <ReleaseCard key={release.version} release={release} index={i} />
+        ))}
+      </div>
+    </>
   );
 }

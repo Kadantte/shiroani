@@ -24,6 +24,10 @@ function useCursorSparkles() {
   const isRunning = useRef(false);
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hasHover = window.matchMedia('(hover: hover)').matches;
+    if (prefersReducedMotion || !hasHover) return;
+
     const canvas = canvasRef.current;
     const section = sectionRef.current;
     if (!canvas || !section) return;
@@ -158,7 +162,7 @@ function InteractiveMascot() {
       {/* Soft glow */}
       <div
         className="absolute inset-0 -z-10 m-auto h-24 w-24 rounded-full blur-2xl"
-        style={{ background: 'oklch(0.72 0.15 350 / 0.2)' }}
+        style={{ background: 'var(--color-primary-glow)' }}
       />
     </motion.div>
   );
@@ -170,53 +174,60 @@ export function Hero() {
   // Console easter egg
   useEffect(() => {
     console.log(
-      '%c🌸 ShiroAni %c— Zaglądasz pod maskę? Szanuję. %chttps://github.com/Shironex/shiroani',
+      '%c🌸 ShiroAni %c— Zaglądasz pod maskę? Szanuję. %cCiekawi Cię kod? Zostań z nami 🌸',
       'font-size: 16px; font-weight: bold; color: #f472b6;',
       'font-size: 13px; color: #a1a1aa;',
-      'font-size: 13px; color: #60a5fa; text-decoration: underline;'
+      'font-size: 13px; color: #60a5fa;'
     );
   }, []);
 
   return (
     <section
       ref={sectionRef}
+      aria-label="Sekcja powitalna"
       className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6"
     >
       {/* Cursor sparkles layer */}
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-20" />
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none absolute inset-0 z-20"
+        aria-hidden="true"
+      />
 
       {/* Background orbs */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full opacity-20 blur-3xl"
           style={{
-            background: 'radial-gradient(circle, oklch(0.65 0.17 348 / 0.5), transparent 70%)',
+            background: 'radial-gradient(circle, var(--color-brand-glow), transparent 70%)',
             animation: 'drift-slow 30s ease-in-out infinite',
           }}
         />
         <div
           className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full opacity-10 blur-3xl"
           style={{
-            background: 'radial-gradient(circle, oklch(0.7 0.1 85 / 0.5), transparent 70%)',
+            background: 'radial-gradient(circle, var(--color-gold-glow), transparent 70%)',
             animation: 'drift-slow 25s ease-in-out infinite reverse',
           }}
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-16 text-center sm:pt-0">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease }}
-          className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5"
+          className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5"
         >
           <motion.span
             className="h-1.5 w-1.5 rounded-full bg-primary"
             animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
-          <span className="text-xs font-medium text-primary">v0.1.0 — Pierwsze wydanie</span>
+          <span className="text-[10px] font-medium text-primary sm:text-xs">
+            v0.1.0 — Pierwsze wydanie
+          </span>
         </motion.div>
 
         {/* Interactive mascot */}
@@ -257,18 +268,22 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5, ease }}
         >
-          <span
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60"
+          <button
+            aria-disabled="true"
+            onClick={e => e.preventDefault()}
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title="Wkrótce dostępne"
           >
-            Pobierz za darmo — W krótce
-          </span>
-          <span
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40"
+            Pobierz za darmo — Wkrótce
+          </button>
+          <button
+            aria-disabled="true"
+            onClick={e => e.preventDefault()}
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title="Wkrótce dostępne"
           >
-            Dołącz do Discord — W krótce
-          </span>
+            Dołącz do Discord — Wkrótce
+          </button>
         </motion.div>
       </div>
 
@@ -276,7 +291,7 @@ export function Hero() {
       <motion.a
         href="#funkcje"
         aria-label="Przewiń do funkcji"
-        className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary"
+        className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
