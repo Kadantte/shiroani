@@ -7,7 +7,7 @@ const links = [
   { label: 'Podgląd', href: '#podglad' },
   { label: 'Społeczność', href: '#spolecznosc' },
   { label: 'Changelog', href: '/changelog' },
-  { label: 'Pobierz', href: '#pobierz' },
+  { label: 'Pobierz', href: '/download' },
 ];
 
 const focusRing = 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none';
@@ -49,14 +49,12 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            aria-disabled="true"
-            onClick={e => e.preventDefault()}
-            className={`cursor-not-allowed rounded-lg bg-primary/40 px-2.5 py-1.5 text-xs font-semibold text-primary-foreground/60 sm:px-4 sm:py-2 sm:text-sm ${focusRing}`}
-            title="Wkrótce dostępne"
+          <a
+            href="/download"
+            className={`rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 sm:px-4 sm:py-2 sm:text-sm ${focusRing}`}
           >
-            Wkrótce
-          </button>
+            Pobierz
+          </a>
 
           <button
             className={`rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground md:hidden ${focusRing}`}
