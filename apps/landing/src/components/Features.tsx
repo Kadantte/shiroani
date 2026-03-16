@@ -105,6 +105,8 @@ function Cell({ cell, index }: { cell: BentoCell; index: number }) {
               alt={cell.title}
               loading="lazy"
               draggable={false}
+              width={cell.imageMode === 'contain' ? 400 : 800}
+              height={cell.imageMode === 'contain' ? 400 : 450}
               className={`select-none transition-transform duration-700 group-hover:scale-[1.02] ${
                 cell.imageMode === 'contain'
                   ? 'max-h-full max-w-full rounded-lg object-contain'

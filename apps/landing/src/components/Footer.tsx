@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 
+const YEAR = new Date().getFullYear();
+
 export function Footer() {
   return (
     <footer className="border-t border-border px-6 py-10">
@@ -21,7 +23,7 @@ export function Footer() {
             <p className="text-xs text-muted-foreground">
               Stworzone z{' '}
               <motion.span
-                className="inline-block text-primary"
+                className="inline-block text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
                 whileHover={{ scale: 1.3 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 10 }}
               >
@@ -38,7 +40,7 @@ export function Footer() {
             href="https://discord.gg/shiroani"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
             aria-label="Discord"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.9 }}
@@ -49,7 +51,7 @@ export function Footer() {
       </div>
 
       <p className="mt-6 text-center text-xs text-muted-foreground/60">
-        © {new Date().getFullYear()} ShiroAni · Source-available
+        © {YEAR} ShiroAni · Source-available
       </p>
     </footer>
   );

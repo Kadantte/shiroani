@@ -42,7 +42,7 @@
   }
 
   ::selection {
-    background: oklch(0.72 0.15 350 / 0.35);
+    background: oklch(from var(--color-primary) l c h / 0.35);
     color: white;
   }
 
@@ -53,7 +53,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.25 0.01 350);
+    background: var(--color-border);
     border-radius: 3px;
   }
 }
@@ -75,7 +75,7 @@
 
   .grain::after {
     content: '';
-    position: fixed;
+    position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 50;

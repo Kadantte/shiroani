@@ -11,8 +11,8 @@ import { Footer } from '../components/Footer';
 
 <BaseLayout title="ShiroAni — Anime Browser & Tracker">
   <Navbar client:load />
-  <main>
-    <Hero client:load />
+  <main id="main">
+    <Hero client:idle />
     <Features client:visible />
     <Preview client:visible />
     <BotSection client:visible />

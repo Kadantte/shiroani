@@ -170,10 +170,10 @@ export function Hero() {
   // Console easter egg
   useEffect(() => {
     console.log(
-      '%c🌸 ShiroAni %c— Zaglądasz pod maskę? Szanuję. %chttps://github.com/Shironex/shiroani',
+      '%c🌸 ShiroAni %c— Zaglądasz pod maskę? Szanuję. %cCiekawi Cię kod? Zostań z nami 🌸',
       'font-size: 16px; font-weight: bold; color: #f472b6;',
       'font-size: 13px; color: #a1a1aa;',
-      'font-size: 13px; color: #60a5fa; text-decoration: underline;'
+      'font-size: 13px; color: #60a5fa;'
     );
   }, []);
 
@@ -257,18 +257,22 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5, ease }}
         >
-          <span
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60"
+          <button
+            disabled
+            aria-disabled="true"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title="Wkrótce dostępne"
           >
-            Pobierz za darmo — W krótce
-          </span>
-          <span
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40"
+            Pobierz za darmo — Wkrótce
+          </button>
+          <button
+            disabled
+            aria-disabled="true"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title="Wkrótce dostępne"
           >
-            Dołącz do Discord — W krótce
-          </span>
+            Dołącz do Discord — Wkrótce
+          </button>
         </motion.div>
       </div>
 
@@ -276,7 +280,7 @@ export function Hero() {
       <motion.a
         href="#funkcje"
         aria-label="Przewiń do funkcji"
-        className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary"
+        className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}

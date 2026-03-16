@@ -33,19 +33,21 @@ export function Download() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           {platforms.map(({ icon: Icon, label, future }) => (
-            <span
+            <button
               key={label}
-              className="relative inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40"
+              disabled
+              aria-disabled="true"
+              className="relative inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               title="Wkrótce dostępne"
             >
               <Icon className="h-5 w-5 text-muted-foreground/40" />
-              {label} — W krótce
+              {label} — Wkrótce
               {future && (
                 <span className="absolute -right-2 -top-2 rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-bold text-gold">
                   Planowane
                 </span>
               )}
-            </span>
+            </button>
           ))}
         </div>
 

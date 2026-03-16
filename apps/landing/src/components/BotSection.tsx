@@ -112,12 +112,14 @@ export function BotSection() {
             </div>
 
             {/* Join link with typing indicator */}
-            <span
-              className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-primary/40"
+            <button
+              disabled
+              aria-disabled="true"
+              className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-primary/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               title="Wkrótce dostępne"
             >
-              <span>Dołącz do serwera — W krótce</span>
-            </span>
+              <span>Dołącz do serwera — Wkrótce</span>
+            </button>
 
             {/* XP progress bar demo */}
             <XpProgressBar />

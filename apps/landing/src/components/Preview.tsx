@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useState } from 'react';
 import { ease } from '@/lib/animations';
 
@@ -59,29 +59,31 @@ export function Preview() {
         </motion.div>
 
         {/* Screenshot tabs with animated indicator */}
-        <div className="mb-6 flex flex-wrap justify-center gap-1">
-          {screenshots.map((s, i) => (
-            <motion.button
-              key={s.label}
-              onClick={() => navigate(i)}
-              className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                i === active
-                  ? 'text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              whileTap={{ scale: 0.95 }}
-            >
-              {i === active && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 rounded-lg bg-primary"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">{s.label}</span>
-            </motion.button>
-          ))}
-        </div>
+        <LayoutGroup id="preview-tabs">
+          <div className="mb-6 flex flex-wrap justify-center gap-1">
+            {screenshots.map((s, i) => (
+              <motion.button
+                key={s.label}
+                onClick={() => navigate(i)}
+                className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+                  i === active
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                whileTap={{ scale: 0.95 }}
+              >
+                {i === active && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-lg bg-primary"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{s.label}</span>
+              </motion.button>
+            ))}
+          </div>
+        </LayoutGroup>
 
         {/* Screenshot display with slide transition */}
         <motion.div
@@ -107,6 +109,7 @@ export function Preview() {
                 src={screenshots[active].src}
                 alt={screenshots[active].label}
                 className="w-full"
+                loading="lazy"
                 custom={direction}
                 initial="enter"
                 animate="center"
