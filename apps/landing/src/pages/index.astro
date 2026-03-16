@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Navbar } from '../components/Navbar';
+import { Hero } from '../components/Hero';
+import { Features } from '../components/Features';
+import { Preview } from '../components/Preview';
+import { BotSection } from '../components/BotSection';
+import { Download } from '../components/Download';
+import { Footer } from '../components/Footer';
+---
+
+<BaseLayout title="ShiroAni — Anime Browser & Tracker">
+  <Navbar client:load />
+  <main>
+    <Hero client:load />
+    <Features client:visible />
+    <Preview client:visible />
+    <BotSection client:visible />
+    <Download client:visible />
+  </main>
+  <Footer client:visible />
+</BaseLayout>

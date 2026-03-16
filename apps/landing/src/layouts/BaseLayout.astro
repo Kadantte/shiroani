@@ -1,0 +1,22 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
+  <body>
+    <div class="grain relative min-h-screen">
+      <slot />
+    </div>
+  </body>
+</html>

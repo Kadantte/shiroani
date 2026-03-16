@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ChangelogContent } from '../components/ChangelogContent';
+import { Footer } from '../components/Footer';
+---
+
+<BaseLayout title="Changelog — ShiroAni">
+  <header class="border-b border-border px-6 py-4">
+    <nav class="mx-auto flex max-w-3xl items-center justify-between">
+      <a
+        href="/"
+        class="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        &larr; Strona główna
+      </a>
+      <span class="font-display text-sm font-bold">
+        Shiro<span class="text-primary">Ani</span>
+      </span>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-3xl px-6 py-16">
+    <ChangelogContent client:load />
+  </main>
+
+  <Footer client:visible />
+</BaseLayout>
