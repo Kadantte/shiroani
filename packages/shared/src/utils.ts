@@ -51,6 +51,8 @@ export function getWeekStart(date?: Date): Date {
  * @param ellipsis - The ellipsis string to append (default: '...')
  */
 export function truncate(text: string, max: number, ellipsis = '...'): string {
+  if (max <= 0) return '';
   if (text.length <= max) return text;
+  if (max <= ellipsis.length) return ellipsis.slice(0, max);
   return text.slice(0, max - ellipsis.length) + ellipsis;
 }
