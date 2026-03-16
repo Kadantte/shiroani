@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
-import { Apple, Monitor, Github } from 'lucide-react';
+import { Apple, Monitor, Terminal } from 'lucide-react';
 import { ease } from '@/lib/animations';
 
 const platforms = [
   { icon: Apple, label: 'macOS' },
   { icon: Monitor, label: 'Windows' },
+  { icon: Terminal, label: 'Linux', future: true },
 ];
 
 export function Download() {
@@ -31,27 +32,24 @@ export function Download() {
         <p className="mt-4 text-lg text-muted-foreground">Darmowe i open source. Na zawsze.</p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          {platforms.map(({ icon: Icon, label }) => (
+          {platforms.map(({ icon: Icon, label, future }) => (
             <span
               key={label}
-              className="inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40"
+              className="relative inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40"
               title="Wkrótce dostępne"
             >
               <Icon className="h-5 w-5 text-muted-foreground/40" />
               {label} — W krótce
+              {future && (
+                <span className="absolute -right-2 -top-2 rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-bold text-gold">
+                  Planowane
+                </span>
+              )}
             </span>
           ))}
         </div>
 
-        <a
-          href="https://github.com/Shironex/shiroani"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <Github className="h-4 w-4" />
-          Kod źródłowy na GitHub
-        </a>
+        {/* GitHub source link — hidden until repo is public */}
       </motion.div>
     </section>
   );
