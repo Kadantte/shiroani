@@ -1,11 +1,10 @@
-import { View } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BrowserView } from '@/components/browser/BrowserView';
 
 export default function BrowserScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text variant="h3">Przeglądarka</Text>
-      <Text className="mt-2 text-muted-foreground">Wkrótce dostępna</Text>
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'hsl(300, 10%, 5%)' }} edges={['top']}>
+      <BrowserView />
+    </SafeAreaView>
   );
 }

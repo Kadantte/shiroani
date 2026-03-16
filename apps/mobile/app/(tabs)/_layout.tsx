@@ -31,6 +31,7 @@ export default function TabsLayout() {
         name="browser"
         options={{
           title: 'Przeglądarka',
+          headerShown: false,
           tabBarIcon: ({ size }) => (
             <Image source={mascotIcon} style={{ width: size, height: size }} resizeMode="contain" />
           ),
