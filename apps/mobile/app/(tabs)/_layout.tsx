@@ -24,6 +24,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Harmonogram',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
         }}
       />

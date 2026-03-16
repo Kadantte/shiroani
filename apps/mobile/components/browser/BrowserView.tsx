@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
   Bookmark,
@@ -11,14 +11,9 @@ import {
 } from 'lucide-react-native';
 import { useBrowserState } from '@/hooks/useBrowserState';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { colors } from '@/lib/theme';
 
 const ICON_SIZE = 20;
-const ICON_COLOR_ACTIVE = 'hsl(350, 20%, 92%)';
-const ICON_COLOR_DISABLED = 'hsl(350, 10%, 30%)';
-const PRIMARY_COLOR = 'hsl(345, 60%, 55%)';
-const CARD_BG = 'hsl(350, 8%, 11%)';
-const BACKGROUND = 'hsl(300, 10%, 5%)';
-const BORDER_COLOR = 'hsl(350, 7%, 18%)';
 
 export function BrowserView() {
   const {
@@ -68,21 +63,18 @@ export function BrowserView() {
   }, [currentBookmark, state.url, state.title, addBookmark, deleteBookmark]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: BACKGROUND }}>
+    <View style={styles.container}>
       {/* URL Bar */}
-      <View
-        className="flex-row items-center gap-1 px-2 py-2"
-        style={{ backgroundColor: CARD_BG, borderBottomWidth: 1, borderBottomColor: BORDER_COLOR }}
-      >
+      <View style={styles.urlBar}>
         <Pressable
           onPress={goBack}
           disabled={!state.canGoBack}
           accessibilityLabel="Wstecz"
-          className="p-2"
+          style={styles.iconButton}
         >
           <ChevronLeft
             size={ICON_SIZE}
-            color={state.canGoBack ? ICON_COLOR_ACTIVE : ICON_COLOR_DISABLED}
+            color={state.canGoBack ? colors.foreground : colors.border}
           />
         </Pressable>
 
@@ -90,11 +82,11 @@ export function BrowserView() {
           onPress={goForward}
           disabled={!state.canGoForward}
           accessibilityLabel="Dalej"
-          className="p-2"
+          style={styles.iconButton}
         >
           <ChevronRight
             size={ICON_SIZE}
-            color={state.canGoForward ? ICON_COLOR_ACTIVE : ICON_COLOR_DISABLED}
+            color={state.canGoForward ? colors.foreground : colors.border}
           />
         </Pressable>
 
@@ -110,43 +102,37 @@ export function BrowserView() {
           keyboardType="url"
           selectTextOnFocus
           placeholder="Wpisz adres URL"
-          placeholderTextColor="hsl(350, 10%, 40%)"
-          className="mx-1 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+          placeholderTextColor={colors.mutedForeground}
+          style={styles.urlInput}
         />
 
         {state.loading ? (
-          <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" className="p-2">
-            <X size={ICON_SIZE} color={ICON_COLOR_ACTIVE} />
+          <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" style={styles.iconButton}>
+            <X size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         ) : (
-          <Pressable onPress={reload} accessibilityLabel="Odśwież" className="p-2">
-            <RotateCw size={ICON_SIZE} color={ICON_COLOR_ACTIVE} />
+          <Pressable onPress={reload} accessibilityLabel="Odśwież" style={styles.iconButton}>
+            <RotateCw size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         )}
 
         <Pressable
           onPress={toggleBookmark}
           accessibilityLabel={isBookmarked ? 'Usuń zakładkę' : 'Dodaj zakładkę'}
-          className="p-2"
+          style={styles.iconButton}
         >
           {isBookmarked ? (
-            <BookmarkCheck size={ICON_SIZE} color={PRIMARY_COLOR} />
+            <BookmarkCheck size={ICON_SIZE} color={colors.primary} />
           ) : (
-            <Bookmark size={ICON_SIZE} color={ICON_COLOR_ACTIVE} />
+            <Bookmark size={ICON_SIZE} color={colors.foreground} />
           )}
         </Pressable>
       </View>
 
       {/* Progress Bar */}
       {state.loading && (
-        <View style={{ height: 2, backgroundColor: BORDER_COLOR }}>
-          <View
-            style={{
-              height: 2,
-              width: `${Math.round(state.progress * 100)}%`,
-              backgroundColor: PRIMARY_COLOR,
-            }}
-          />
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressBar, { width: `${Math.round(state.progress * 100)}%` }]} />
         </View>
       )}
 
@@ -164,9 +150,52 @@ export function BrowserView() {
         thirdPartyCookiesEnabled={true}
         mediaPlaybackRequiresUserAction={false}
         allowsInlineMediaPlayback={true}
-        injectedJavaScriptBeforeContentLoaded={undefined}
-        style={{ flex: 1, backgroundColor: BACKGROUND }}
+        style={styles.webview}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  urlBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  iconButton: {
+    padding: 8,
+  },
+  urlInput: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    fontSize: 13,
+    color: colors.foreground,
+  },
+  progressTrack: {
+    height: 2,
+    backgroundColor: colors.border,
+  },
+  progressBar: {
+    height: 2,
+    backgroundColor: colors.primary,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+});

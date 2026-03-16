@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { DAY_NAMES_SHORT, isToday } from '@/lib/schedule-utils';
+import { colors } from '@/lib/theme';
 
 interface DayTabBarProps {
   days: string[];
@@ -14,7 +15,7 @@ function DayTabBarInner({ days, selectedDay, onSelect }: DayTabBarProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerClassName="flex-row gap-1.5 px-4 py-2"
+      contentContainerStyle={styles.container}
     >
       {days.map((dateStr, index) => {
         const dayNumber = dateStr.split('-')[2];
@@ -28,30 +29,16 @@ function DayTabBarInner({ days, selectedDay, onSelect }: DayTabBarProps) {
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={`${DAY_NAMES_SHORT[index]} ${dayNumber}`}
-            className={`min-w-[48px] items-center rounded-lg px-3 py-2 ${
-              isActive ? 'bg-primary' : 'bg-card'
-            }`}
+            style={[styles.tab, isActive ? styles.tabActive : styles.tabInactive]}
           >
-            <Text
-              className={`text-xs font-medium ${
-                isActive ? 'text-primary-foreground' : 'text-muted-foreground'
-              }`}
-            >
+            <Text style={[styles.dayName, isActive ? styles.textActive : styles.textMuted]}>
               {DAY_NAMES_SHORT[index]}
             </Text>
-            <Text
-              className={`text-sm font-bold ${
-                isActive ? 'text-primary-foreground' : 'text-foreground'
-              }`}
-            >
+            <Text style={[styles.dayNumber, isActive ? styles.textActive : styles.textForeground]}>
               {dayNumber}
             </Text>
             {isTodayDate && (
-              <View
-                className={`mt-0.5 h-1 w-1 rounded-full ${
-                  isActive ? 'bg-primary-foreground' : 'bg-primary'
-                }`}
-              />
+              <View style={[styles.todayDot, isActive ? styles.dotActive : styles.dotPrimary]} />
             )}
           </Pressable>
         );
@@ -61,3 +48,54 @@ function DayTabBarInner({ days, selectedDay, onSelect }: DayTabBarProps) {
 }
 
 export const DayTabBar = memo(DayTabBarInner);
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  tab: {
+    minWidth: 48,
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  tabActive: {
+    backgroundColor: colors.primary,
+  },
+  tabInactive: {
+    backgroundColor: colors.card,
+  },
+  dayName: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  dayNumber: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  textActive: {
+    color: '#fff',
+  },
+  textMuted: {
+    color: colors.mutedForeground,
+  },
+  textForeground: {
+    color: colors.foreground,
+  },
+  todayDot: {
+    marginTop: 2,
+    height: 4,
+    width: 4,
+    borderRadius: 2,
+  },
+  dotActive: {
+    backgroundColor: '#fff',
+  },
+  dotPrimary: {
+    backgroundColor: colors.primary,
+  },
+});

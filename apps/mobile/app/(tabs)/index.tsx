@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import type { AiringAnime } from '@shiroani/shared';
@@ -39,27 +39,28 @@ export default function ScheduleScreen() {
   const keyExtractor = useCallback((item: AiringAnime) => String(item.id), []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pb-1 pt-2">
+      <View style={styles.header}>
         <Pressable
           onPress={() => navigateWeek(-1)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Poprzedni tydzień"
+          style={styles.navButton}
         >
           <ChevronLeft size={24} color={colors.foreground} />
         </Pressable>
 
-        <View className="flex-row items-center gap-3">
+        <View style={styles.headerCenter}>
           <Text variant="h4">Harmonogram</Text>
           <Pressable
             onPress={goToToday}
             accessibilityRole="button"
             accessibilityLabel="Przejdź do dzisiaj"
-            className="rounded-md bg-primary px-2.5 py-1"
+            style={styles.todayButton}
           >
-            <Text className="text-xs font-semibold text-primary-foreground">Dziś</Text>
+            <Text style={styles.todayText}>Dziś</Text>
           </Pressable>
         </View>
 
@@ -68,6 +69,7 @@ export default function ScheduleScreen() {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Następny tydzień"
+          style={styles.navButton}
         >
           <ChevronRight size={24} color={colors.foreground} />
         </Pressable>
@@ -78,18 +80,14 @@ export default function ScheduleScreen() {
 
       {/* Content */}
       {loading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="mb-4 text-center text-muted-foreground">{error}</Text>
-          <Pressable
-            onPress={refresh}
-            accessibilityRole="button"
-            className="rounded-lg bg-primary px-4 py-2"
-          >
-            <Text className="font-semibold text-primary-foreground">Spróbuj ponownie</Text>
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable onPress={refresh} accessibilityRole="button" style={styles.retryButton}>
+            <Text style={styles.retryText}>Spróbuj ponownie</Text>
           </Pressable>
         </View>
       ) : (
@@ -97,10 +95,10 @@ export default function ScheduleScreen() {
           data={currentEntries}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          contentContainerClassName="pt-2 pb-4"
+          contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View className="flex-1 items-center justify-center py-20">
-              <Text className="text-muted-foreground">Brak anime na ten dzień</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Brak anime na ten dzień</Text>
             </View>
           }
         />
@@ -108,3 +106,70 @@ export default function ScheduleScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  navButton: {
+    padding: 4,
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  todayButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  todayText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    color: colors.mutedForeground,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  listContent: {
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+  },
+  emptyText: {
+    color: colors.mutedForeground,
+  },
+});
