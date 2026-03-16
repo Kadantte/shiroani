@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Apple, Monitor, Terminal, Download, ExternalLink, FileText } from 'lucide-react';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ease } from '@/lib/animations';
 
 interface ReleaseAsset {
@@ -82,6 +82,13 @@ function useConfetti() {
   const [particles, setParticles] = useState<
     { id: number; x: number; y: number; color: string; angle: number; speed: number }[]
   >([]);
+  const timeoutRef = useRef<number>();
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const fire = useCallback((e: React.MouseEvent) => {
     if (
@@ -108,7 +115,8 @@ function useConfetti() {
       speed: 60 + Math.random() * 40,
     }));
     setParticles(batch);
-    setTimeout(() => setParticles([]), 800);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => setParticles([]), 800);
   }, []);
 
   const layer = (
@@ -363,7 +371,9 @@ export function DownloadPage() {
         >
           <motion.img
             src={downloaded ? '/mascot-think.png' : '/mascot-wave.png'}
-            alt="Shiro-chan"
+            alt={
+              downloaded ? 'Maskotka Shiro-chan myśli' : 'Maskotka Shiro-chan macha na powitanie'
+            }
             className="mb-6 h-24 w-24 select-none"
             draggable={false}
             key={downloaded ? 'think' : 'wave'}
