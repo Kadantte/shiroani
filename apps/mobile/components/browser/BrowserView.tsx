@@ -6,11 +6,13 @@ import {
   BookmarkCheck,
   ChevronLeft,
   ChevronRight,
+  Home,
   RotateCw,
   X,
 } from 'lucide-react-native';
 import { useBrowserState } from '@/hooks/useBrowserState';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { QuickAccessPage } from './QuickAccessPage';
 import { colors } from '@/lib/theme';
 
 const ICON_SIZE = 20;
@@ -44,8 +46,8 @@ export function BrowserView() {
 
   const handleFocus = useCallback(() => {
     setIsEditing(true);
-    setInputUrl(state.url);
-  }, [state.url]);
+    setInputUrl(state.isNewTab ? '' : state.url);
+  }, [state.url, state.isNewTab]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
@@ -54,23 +56,27 @@ export function BrowserView() {
   const toggleBookmark = useCallback(async () => {
     if (currentBookmark) {
       await deleteBookmark(currentBookmark.id);
-    } else {
+    } else if (!state.isNewTab) {
       await addBookmark({
         url: state.url,
         title: state.title || state.url,
       });
     }
-  }, [currentBookmark, state.url, state.title, addBookmark, deleteBookmark]);
+  }, [currentBookmark, state.url, state.title, state.isNewTab, addBookmark, deleteBookmark]);
+
+  const goHome = useCallback(() => {
+    navigateTo('https://ogladajanime.pl');
+  }, [navigateTo]);
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       {/* URL Bar */}
-      <View style={styles.urlBar}>
+      <View style={s.urlBar}>
         <Pressable
           onPress={goBack}
           disabled={!state.canGoBack}
           accessibilityLabel="Wstecz"
-          style={styles.iconButton}
+          style={s.iconButton}
         >
           <ChevronLeft
             size={ICON_SIZE}
@@ -82,7 +88,7 @@ export function BrowserView() {
           onPress={goForward}
           disabled={!state.canGoForward}
           accessibilityLabel="Dalej"
-          style={styles.iconButton}
+          style={s.iconButton}
         >
           <ChevronRight
             size={ICON_SIZE}
@@ -91,7 +97,7 @@ export function BrowserView() {
         </Pressable>
 
         <TextInput
-          value={isEditing ? inputUrl : state.url}
+          value={isEditing ? inputUrl : state.isNewTab ? '' : state.url}
           onChangeText={setInputUrl}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -101,62 +107,72 @@ export function BrowserView() {
           autoCorrect={false}
           keyboardType="url"
           selectTextOnFocus
-          placeholder="Wpisz adres URL"
+          placeholder="Wpisz adres URL lub wyszukaj..."
           placeholderTextColor={colors.mutedForeground}
-          style={styles.urlInput}
+          style={s.urlInput}
         />
 
-        {state.loading ? (
-          <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" style={styles.iconButton}>
+        {state.isNewTab ? (
+          <Pressable onPress={goHome} accessibilityLabel="Strona główna" style={s.iconButton}>
+            <Home size={ICON_SIZE} color={colors.foreground} />
+          </Pressable>
+        ) : state.loading ? (
+          <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" style={s.iconButton}>
             <X size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         ) : (
-          <Pressable onPress={reload} accessibilityLabel="Odśwież" style={styles.iconButton}>
+          <Pressable onPress={reload} accessibilityLabel="Odśwież" style={s.iconButton}>
             <RotateCw size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         )}
 
-        <Pressable
-          onPress={toggleBookmark}
-          accessibilityLabel={isBookmarked ? 'Usuń zakładkę' : 'Dodaj zakładkę'}
-          style={styles.iconButton}
-        >
-          {isBookmarked ? (
-            <BookmarkCheck size={ICON_SIZE} color={colors.primary} />
-          ) : (
-            <Bookmark size={ICON_SIZE} color={colors.foreground} />
-          )}
-        </Pressable>
+        {!state.isNewTab && (
+          <Pressable
+            onPress={toggleBookmark}
+            accessibilityLabel={isBookmarked ? 'Usuń zakładkę' : 'Dodaj zakładkę'}
+            style={s.iconButton}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck size={ICON_SIZE} color={colors.primary} />
+            ) : (
+              <Bookmark size={ICON_SIZE} color={colors.foreground} />
+            )}
+          </Pressable>
+        )}
       </View>
 
       {/* Progress Bar */}
       {state.loading && (
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressBar, { width: `${Math.round(state.progress * 100)}%` }]} />
+        <View style={s.progressTrack}>
+          <View style={[s.progressBar, { width: `${Math.round(state.progress * 100)}%` }]} />
         </View>
       )}
 
-      {/* WebView */}
-      <WebView
-        ref={webViewRef}
-        source={{ uri: state.url }}
-        onNavigationStateChange={handleNavigationStateChange}
-        onLoadProgress={handleLoadProgress}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        startInLoadingState={false}
-        allowsBackForwardNavigationGestures={true}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback={true}
-        style={styles.webview}
-      />
+      {/* Content */}
+      {state.isNewTab ? (
+        <QuickAccessPage onNavigate={navigateTo} />
+      ) : (
+        <WebView
+          ref={webViewRef}
+          source={{ uri: state.url }}
+          onNavigationStateChange={handleNavigationStateChange}
+          onLoadProgress={handleLoadProgress}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={false}
+          allowsBackForwardNavigationGestures={true}
+          sharedCookiesEnabled={true}
+          thirdPartyCookiesEnabled={true}
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback={true}
+          style={s.webview}
+        />
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

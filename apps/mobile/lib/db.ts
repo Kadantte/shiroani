@@ -55,6 +55,12 @@ const MIGRATIONS: Record<number, string[]> = {
     )`,
     `CREATE INDEX IF NOT EXISTS idx_notif_subs_anilist_id ON notification_subscriptions(anilist_id)`,
   ],
+  5: [
+    `CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )`,
+  ],
 };
 
 const LATEST_VERSION = Math.max(...Object.keys(MIGRATIONS).map(Number));

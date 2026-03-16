@@ -8,6 +8,7 @@ import { DayTabBar } from '@/components/schedule/DayTabBar';
 import { AiringEntryCard } from '@/components/schedule/AiringEntryCard';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useNotificationSubscriptions } from '@/hooks/useNotificationSubscriptions';
+import { formatDateRange } from '@/lib/schedule-utils';
 import { colors } from '@/lib/theme';
 
 export default function ScheduleScreen() {
@@ -38,40 +39,45 @@ export default function ScheduleScreen() {
 
   const keyExtractor = useCallback((item: AiringAnime) => String(item.id), []);
 
+  const dateRange = weekDays.length === 7 ? formatDateRange(weekDays[0], weekDays[6]) : '';
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={s.container} edges={['top']}>
+      {/* Title */}
+      <View style={s.titleRow}>
+        <Text style={s.title}>Harmonogram</Text>
+        <Pressable
+          onPress={goToToday}
+          accessibilityRole="button"
+          accessibilityLabel="Przejdź do dzisiaj"
+          style={s.todayButton}
+        >
+          <Text style={s.todayText}>Dziś</Text>
+        </Pressable>
+      </View>
+
+      {/* Week Navigation */}
+      <View style={s.weekNav}>
         <Pressable
           onPress={() => navigateWeek(-1)}
-          hitSlop={8}
+          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel="Poprzedni tydzień"
-          style={styles.navButton}
+          style={s.navButton}
         >
-          <ChevronLeft size={24} color={colors.foreground} />
+          <ChevronLeft size={20} color={colors.mutedForeground} />
         </Pressable>
 
-        <View style={styles.headerCenter}>
-          <Text variant="h4">Harmonogram</Text>
-          <Pressable
-            onPress={goToToday}
-            accessibilityRole="button"
-            accessibilityLabel="Przejdź do dzisiaj"
-            style={styles.todayButton}
-          >
-            <Text style={styles.todayText}>Dziś</Text>
-          </Pressable>
-        </View>
+        <Text style={s.weekRange}>{dateRange}</Text>
 
         <Pressable
           onPress={() => navigateWeek(1)}
-          hitSlop={8}
+          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel="Następny tydzień"
-          style={styles.navButton}
+          style={s.navButton}
         >
-          <ChevronRight size={24} color={colors.foreground} />
+          <ChevronRight size={20} color={colors.mutedForeground} />
         </Pressable>
       </View>
 
@@ -80,14 +86,14 @@ export default function ScheduleScreen() {
 
       {/* Content */}
       {loading ? (
-        <View style={styles.centered}>
+        <View style={s.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={refresh} accessibilityRole="button" style={styles.retryButton}>
-            <Text style={styles.retryText}>Spróbuj ponownie</Text>
+        <View style={s.centered}>
+          <Text style={s.errorText}>{error}</Text>
+          <Pressable onPress={refresh} accessibilityRole="button" style={s.retryButton}>
+            <Text style={s.retryText}>Spróbuj ponownie</Text>
           </Pressable>
         </View>
       ) : (
@@ -95,10 +101,10 @@ export default function ScheduleScreen() {
           data={currentEntries}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={s.listContent}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Brak anime na ten dzień</Text>
+            <View style={s.emptyContainer}>
+              <Text style={s.emptyText}>Brak anime na ten dzień</Text>
             </View>
           }
         />
@@ -107,37 +113,52 @@ export default function ScheduleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  navButton: {
-    padding: 4,
-  },
-  headerCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
+    paddingHorizontal: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.foreground,
   },
   todayButton: {
     backgroundColor: colors.primary,
     borderRadius: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   todayText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    paddingVertical: 4,
+  },
+  navButton: {
+    padding: 4,
+  },
+  weekRange: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.mutedForeground,
+    minWidth: 100,
+    textAlign: 'center',
   },
   centered: {
     flex: 1,

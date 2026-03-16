@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type WebView from 'react-native-webview';
 import type { WebViewNavigation } from 'react-native-webview';
 
-const DEFAULT_URL = 'https://ogladajanime.pl';
+export const NEW_TAB_URL = 'about:blank';
 
 interface BrowserState {
   url: string;
@@ -11,18 +11,20 @@ interface BrowserState {
   canGoForward: boolean;
   loading: boolean;
   progress: number;
+  isNewTab: boolean;
 }
 
 export function useBrowserState() {
   const webViewRef = useRef<WebView>(null);
 
   const [state, setState] = useState<BrowserState>({
-    url: DEFAULT_URL,
+    url: NEW_TAB_URL,
     title: '',
     canGoBack: false,
     canGoForward: false,
     loading: false,
     progress: 0,
+    isNewTab: true,
   });
 
   const handleNavigationStateChange = useCallback((navState: WebViewNavigation) => {
@@ -33,6 +35,7 @@ export function useBrowserState() {
       canGoBack: navState.canGoBack,
       canGoForward: navState.canGoForward,
       loading: navState.loading ?? prev.loading,
+      isNewTab: false,
     }));
   }, []);
 
@@ -51,9 +54,8 @@ export function useBrowserState() {
     const trimmed = rawUrl.trim();
     if (!trimmed) return;
 
-    // Add protocol if missing
     const url = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-    setState(prev => ({ ...prev, url }));
+    setState(prev => ({ ...prev, url, isNewTab: false }));
   }, []);
 
   const goBack = useCallback(() => {

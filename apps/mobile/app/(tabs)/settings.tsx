@@ -1,14 +1,15 @@
-import { useCallback, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback } from 'react';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { ExternalLink, Github } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Switch } from '@/components/ui/switch';
+import { useSettings, type TitleLanguage } from '@/hooks/useSettings';
 import { colors } from '@/lib/theme';
 import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
 
-type TitleLanguage = 'romaji' | 'english' | 'native';
+const mascotIcon = require('@/assets/images/mascot-wave.png');
 
 const TITLE_LANGUAGES: { value: TitleLanguage; label: string }[] = [
   { value: 'romaji', label: 'Romaji' },
@@ -46,10 +47,7 @@ function SettingsRow({
 }
 
 export default function SettingsScreen() {
-  const [showLabels, setShowLabels] = useState(true);
-  const [titleLanguage, setTitleLanguage] = useState<TitleLanguage>('romaji');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
+  const { settings, update } = useSettings();
   const appVersion = Constants.expoConfig?.version ?? '0.1.0';
 
   const handleGithub = useCallback(() => {
@@ -59,6 +57,16 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={s.container} edges={['top']}>
       <ScrollView contentContainerStyle={s.scrollContent}>
+        {/* Hero Card */}
+        <View style={s.heroCard}>
+          <Image source={mascotIcon} style={s.heroMascot} resizeMode="contain" />
+          <View style={s.heroInfo}>
+            <Text style={s.heroTitle}>{APP_NAME}</Text>
+            <Text style={s.heroVersion}>v{appVersion}</Text>
+            <Text style={s.heroTagline}>Twój mobilny tracker anime</Text>
+          </View>
+        </View>
+
         {/* Appearance */}
         <SettingsCard title="Wygląd">
           <SettingsRow
@@ -66,8 +74,8 @@ export default function SettingsScreen() {
             description="Nazwy pod ikonami w pasku nawigacji"
             right={
               <Switch
-                checked={showLabels}
-                onCheckedChange={setShowLabels}
+                checked={settings.showLabels}
+                onCheckedChange={val => update('showLabels', val)}
                 accessibilityLabel="Pokaż etykiety"
               />
             }
@@ -81,15 +89,18 @@ export default function SettingsScreen() {
             {TITLE_LANGUAGES.map(lang => (
               <Pressable
                 key={lang.value}
-                onPress={() => setTitleLanguage(lang.value)}
-                style={[s.languageChip, titleLanguage === lang.value && s.languageChipActive]}
+                onPress={() => update('titleLanguage', lang.value)}
+                style={[
+                  s.languageChip,
+                  settings.titleLanguage === lang.value && s.languageChipActive,
+                ]}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: titleLanguage === lang.value }}
+                accessibilityState={{ selected: settings.titleLanguage === lang.value }}
               >
                 <Text
                   style={[
                     s.languageChipText,
-                    titleLanguage === lang.value && s.languageChipTextActive,
+                    settings.titleLanguage === lang.value && s.languageChipTextActive,
                   ]}
                 >
                   {lang.label}
@@ -106,8 +117,8 @@ export default function SettingsScreen() {
             description="Przypomnienia o nowych odcinkach"
             right={
               <Switch
-                checked={notificationsEnabled}
-                onCheckedChange={setNotificationsEnabled}
+                checked={settings.notificationsEnabled}
+                onCheckedChange={val => update('notificationsEnabled', val)}
                 accessibilityLabel="Włącz powiadomienia"
               />
             }
@@ -116,18 +127,12 @@ export default function SettingsScreen() {
 
         {/* About */}
         <SettingsCard title="Informacje">
-          <SettingsRow label="Wersja" description={`${APP_NAME} v${appVersion}`} right={null} />
-
           <Pressable onPress={handleGithub} style={s.linkRow}>
             <Github size={18} color={colors.mutedForeground} />
             <Text style={s.linkText}>GitHub</Text>
             <ExternalLink size={14} color={colors.mutedForeground} />
           </Pressable>
         </SettingsCard>
-
-        <View style={s.footer}>
-          <Text style={s.footerText}>{APP_NAME} — Twój tracker anime</Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -143,6 +148,39 @@ const s = StyleSheet.create({
     paddingBottom: 32,
     gap: 16,
   },
+  heroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+    gap: 16,
+  },
+  heroMascot: {
+    width: 72,
+    height: 72,
+  },
+  heroInfo: {
+    flex: 1,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.foreground,
+  },
+  heroVersion: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    marginTop: 2,
+  },
+  heroTagline: {
+    fontSize: 12,
+    color: colors.mutedForeground,
+    marginTop: 4,
+  },
   card: {
     backgroundColor: colors.card,
     borderRadius: 12,
@@ -152,10 +190,11 @@ const s = StyleSheet.create({
     gap: 12,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.foreground,
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.mutedForeground,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   row: {
     flexDirection: 'row',
@@ -167,7 +206,7 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   rowLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: colors.foreground,
   },
@@ -186,8 +225,8 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   languageChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
     backgroundColor: colors.muted,
   },
@@ -206,19 +245,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   linkText: {
     flex: 1,
     fontSize: 14,
     color: colors.foreground,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingTop: 8,
-  },
-  footerText: {
-    fontSize: 12,
-    color: colors.mutedForeground,
   },
 });

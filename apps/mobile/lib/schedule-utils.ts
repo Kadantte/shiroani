@@ -37,6 +37,35 @@ export function getCoverUrl(media: AiringAnime['media']): string | undefined {
   return media.coverImage.medium ?? media.coverImage.large;
 }
 
+/** Format a date range for display, e.g. "16 - 22 mar". */
+export function formatDateRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  const months = [
+    'sty',
+    'lut',
+    'mar',
+    'kwi',
+    'maj',
+    'cze',
+    'lip',
+    'sie',
+    'wrz',
+    'paź',
+    'lis',
+    'gru',
+  ];
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const startMonth = months[start.getMonth()];
+  const endMonth = months[end.getMonth()];
+
+  if (startMonth === endMonth) {
+    return `${startDay} - ${endDay} ${endMonth}`;
+  }
+  return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+}
+
 /** Format episode progress, e.g. "Odc. 5/12" or "Odc. 5". */
 export function formatEpisodeProgress(current: number, total?: number): string {
   return total ? `Odc. ${current}/${total}` : `Odc. ${current}`;
