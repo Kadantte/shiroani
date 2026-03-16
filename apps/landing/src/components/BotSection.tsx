@@ -113,8 +113,8 @@ export function BotSection() {
 
             {/* Join link with typing indicator */}
             <button
-              disabled
               aria-disabled="true"
+              onClick={e => e.preventDefault()}
               className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-primary/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               title="Wkrótce dostępne"
             >

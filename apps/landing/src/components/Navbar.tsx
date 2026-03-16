@@ -50,8 +50,9 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <button
-            disabled
-            className={`cursor-not-allowed rounded-lg bg-primary/40 px-4 py-2 text-sm font-semibold text-primary-foreground/60 ${focusRing}`}
+            aria-disabled="true"
+            onClick={e => e.preventDefault()}
+            className={`cursor-not-allowed rounded-lg bg-primary/40 px-2.5 py-1.5 text-xs font-semibold text-primary-foreground/60 sm:px-4 sm:py-2 sm:text-sm ${focusRing}`}
             title="Wkrótce dostępne"
           >
             Wkrótce
@@ -75,6 +76,11 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden border-t border-white/10 bg-background/95 backdrop-blur-lg md:hidden"
+            role="navigation"
+            aria-label="Menu mobilne"
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Escape') setMobileOpen(false);
+            }}
           >
             <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-4">
               {links.map(({ label, href }) => (

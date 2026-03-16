@@ -23,7 +23,7 @@ export function Footer() {
             <p className="text-xs text-muted-foreground">
               Stworzone z{' '}
               <motion.span
-                className="inline-block text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
+                className="inline-block text-primary"
                 whileHover={{ scale: 1.3 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 10 }}
               >
@@ -36,17 +36,13 @@ export function Footer() {
 
         <div className="flex items-center gap-5">
           {/* GitHub link — hidden until repo is public */}
-          <motion.a
-            href="https://discord.gg/shiroani"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
-            aria-label="Discord"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.9 }}
+          <span
+            className="text-muted-foreground/40 cursor-not-allowed"
+            aria-label="Discord — wkrótce"
+            title="Wkrótce dostępne"
           >
             <MessageCircle className="h-4.5 w-4.5" />
-          </motion.a>
+          </span>
         </div>
       </div>
 

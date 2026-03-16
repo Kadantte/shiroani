@@ -35,8 +35,8 @@ export function Download() {
           {platforms.map(({ icon: Icon, label, future }) => (
             <button
               key={label}
-              disabled
               aria-disabled="true"
+              onClick={e => e.preventDefault()}
               className="relative inline-flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-card/50 px-8 py-4 font-semibold text-foreground/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               title="Wkrótce dostępne"
             >
