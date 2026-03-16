@@ -33,7 +33,7 @@
   "mac": {
     "category": "public.app-category.entertainment",
     "icon": "resources/icon.png",
-    "target": ["dmg", "zip"]
+    "target": ["dmg"]
   },
   "win": {
     "icon": "resources/icon.ico",
