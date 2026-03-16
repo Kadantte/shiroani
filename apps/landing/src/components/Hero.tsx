@@ -268,14 +268,12 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5, ease }}
         >
-          <button
-            aria-disabled="true"
-            onClick={e => e.preventDefault()}
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-primary/40 px-7 py-3.5 text-sm font-semibold text-primary-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-            title="Wkrótce dostępne"
+          <a
+            href="/download"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
-            Pobierz za darmo — Wkrótce
-          </button>
+            Pobierz ShiroAni
+          </a>
           <button
             aria-disabled="true"
             onClick={e => e.preventDefault()}
