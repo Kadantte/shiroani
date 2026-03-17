@@ -89,6 +89,9 @@ interface ElectronAPI {
     toggleSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
     isSubscribed: (anilistId: number) => Promise<boolean>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
+    debugStatus: () => Promise<unknown>;
+    debugCheck: () => Promise<unknown>;
+    debugTest: () => Promise<unknown>;
   };
   discordRpc?: {
     getSettings: () => Promise<DiscordRpcSettings>;

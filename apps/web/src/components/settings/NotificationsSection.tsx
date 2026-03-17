@@ -1,6 +1,5 @@
-import { useEffect, useCallback } from 'react';
-import { Bell, Check, X, BellRing } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useCallback } from 'react';
+import { Bell, X, BellRing } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -13,7 +12,6 @@ import {
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useNotificationStore } from '@/stores/useNotificationStore';
-import { useElectronSettings } from '@/hooks/useElectronSettings';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
@@ -42,35 +40,53 @@ const defaultNotifData: NotifFormData = {
   useSystemSound: true,
 };
 
+/** Save a partial update to the main process immediately */
+function saveToMain(data: NotifFormData, overrides: Partial<NotifFormData> = {}) {
+  const merged = { ...data, ...overrides };
+  const settings: Partial<NotificationSettings> = {
+    enabled: merged.enabled,
+    leadTimeMinutes: Number(merged.leadTime),
+    quietHours: {
+      enabled: merged.quietHoursEnabled,
+      start: merged.quietHoursStart,
+      end: merged.quietHoursEnd,
+    },
+    useSystemSound: merged.useSystemSound,
+  };
+  window.electronAPI?.notifications?.updateSettings(settings);
+}
+
 export function NotificationsSection() {
-  const { data, update, loaded, saved, save } = useElectronSettings<NotifFormData>({
-    defaultValue: defaultNotifData,
-    load: useCallback(async () => {
-      const settings = await window.electronAPI?.notifications?.getSettings();
-      if (!settings) return undefined;
-      return {
+  const [data, setData] = useState<NotifFormData>(defaultNotifData);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load settings from main process on mount
+  useEffect(() => {
+    let mounted = true;
+    window.electronAPI?.notifications?.getSettings().then(settings => {
+      if (!mounted || !settings) return;
+      setData({
         enabled: settings.enabled,
         leadTime: String(settings.leadTimeMinutes),
         quietHoursEnabled: settings.quietHours?.enabled ?? false,
         quietHoursStart: settings.quietHours?.start ?? '23:00',
         quietHoursEnd: settings.quietHours?.end ?? '07:00',
         useSystemSound: settings.useSystemSound ?? true,
-      };
-    }, []),
-    save: useCallback(async (d: NotifFormData) => {
-      const settings: Partial<NotificationSettings> = {
-        enabled: d.enabled,
-        leadTimeMinutes: Number(d.leadTime),
-        quietHours: {
-          enabled: d.quietHoursEnabled,
-          start: d.quietHoursStart,
-          end: d.quietHoursEnd,
-        },
-        useSystemSound: d.useSystemSound,
-      };
-      await window.electronAPI?.notifications?.updateSettings(settings);
-    }, []),
-  });
+      });
+      setLoaded(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const updateAndSave = useCallback((partial: Partial<NotifFormData>) => {
+    setData(prev => {
+      const next = { ...prev, ...partial };
+      saveToMain(next);
+      return next;
+    });
+  }, []);
 
   const subscriptions = useNotificationStore(state => state.subscriptions);
   const loadSubscriptions = useNotificationStore(state => state.loadSubscriptions);
@@ -104,7 +120,7 @@ export function NotificationsSection() {
           </div>
           <Switch
             checked={data.enabled}
-            onCheckedChange={v => update({ enabled: v })}
+            onCheckedChange={v => updateAndSave({ enabled: v })}
             aria-labelledby="notif-enabled-label"
           />
         </div>
@@ -119,7 +135,7 @@ export function NotificationsSection() {
           </p>
           <Select
             value={data.leadTime}
-            onValueChange={v => update({ leadTime: v })}
+            onValueChange={v => updateAndSave({ leadTime: v })}
             disabled={!data.enabled}
           >
             <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
@@ -150,7 +166,7 @@ export function NotificationsSection() {
             </div>
             <Switch
               checked={data.quietHoursEnabled}
-              onCheckedChange={v => update({ quietHoursEnabled: v })}
+              onCheckedChange={v => updateAndSave({ quietHoursEnabled: v })}
               disabled={!data.enabled}
               aria-labelledby="notif-quiet-label"
             />
@@ -165,7 +181,7 @@ export function NotificationsSection() {
                   id="quiet-start"
                   type="time"
                   value={data.quietHoursStart}
-                  onChange={e => update({ quietHoursStart: e.target.value })}
+                  onChange={e => updateAndSave({ quietHoursStart: e.target.value })}
                   className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
                 />
               </div>
@@ -177,7 +193,7 @@ export function NotificationsSection() {
                   id="quiet-end"
                   type="time"
                   value={data.quietHoursEnd}
-                  onChange={e => update({ quietHoursEnd: e.target.value })}
+                  onChange={e => updateAndSave({ quietHoursEnd: e.target.value })}
                   className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
                 />
               </div>
@@ -199,17 +215,10 @@ export function NotificationsSection() {
           </div>
           <Switch
             checked={data.useSystemSound}
-            onCheckedChange={v => update({ useSystemSound: v })}
+            onCheckedChange={v => updateAndSave({ useSystemSound: v })}
             disabled={!data.enabled}
             aria-labelledby="notif-sound-label"
           />
-        </div>
-
-        <div className="pt-2 border-t border-border/30">
-          <Button size="sm" onClick={save}>
-            {saved ? <Check className="w-4 h-4" /> : null}
-            {saved ? 'Zapisano' : 'Zapisz'}
-          </Button>
         </div>
       </SettingsCard>
 
