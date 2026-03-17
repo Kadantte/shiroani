@@ -1,12 +1,12 @@
 import { Injectable, UseGuards } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext, StringOption } from 'necord';
 import { MessageFlags, PermissionsBitField } from 'discord.js';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
 import { DEFAULT_REASON } from '@/common/constants';
 import { successEmbed, errorEmbed } from '@/common/utils';
+import { BaseCommand } from '../base';
 
 class UnbanOptions {
   @StringOption({
@@ -26,11 +26,10 @@ class UnbanOptions {
 
 @Injectable()
 @UseGuards(CommandGuard, CooldownGuard)
-export class UnbanCommand {
-  constructor(
-    private readonly modLog: ModLogService,
-    @InjectPinoLogger(UnbanCommand.name) private readonly logger: PinoLogger
-  ) {}
+export class UnbanCommand extends BaseCommand {
+  constructor(private readonly modLog: ModLogService) {
+    super();
+  }
 
   @SlashCommand({
     name: 'unban',
@@ -55,11 +54,8 @@ export class UnbanCommand {
     try {
       await interaction.guild!.members.unban(userId, effectiveReason);
     } catch (error) {
-      this.logger.error({ error, userId }, 'Failed to unban user');
-      return interaction.reply({
-        embeds: [errorEmbed('Nie udało się odbanować użytkownika. Sprawdź, czy jest zbanowany.')],
-        flags: MessageFlags.Ephemeral,
-      });
+      await this.handleError(error, interaction, 'unban');
+      return;
     }
 
     await this.modLog.log({

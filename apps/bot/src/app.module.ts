@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NecordModule } from 'necord';
 import { LoggerModule } from 'nestjs-pino';
 import { IntentsBitField, Partials } from 'discord.js';
+import { ForbiddenExceptionFilter } from './common/filters';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { GuildModule } from './modules/guild/guild.module';
 import { RedisModule } from './modules/redis/redis.module';
@@ -50,6 +52,12 @@ import { ReactionRoleCacheModule } from './modules/reaction-role-cache/reaction-
     ReactionRoleCacheModule,
     CommandsModule,
     EventsModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: ForbiddenExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

@@ -1,0 +1,37 @@
+model Guild {
+  id        String   @id @default(cuid())
+  discordId String   @unique @map("discord_id")
+  name      String
+
+  // Channels
+  welcomeChannelId  String? @map("welcome_channel_id")
+  goodbyeChannelId  String? @map("goodbye_channel_id")
+  modLogChannelId   String? @map("mod_log_channel_id")
+  activityChannelId String? @map("activity_channel_id")
+
+  // Settings
+  welcomeMessage String? @map("welcome_message")
+  goodbyeMessage String? @map("goodbye_message")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Verification
+  verifyChannelId String? @map("verify_channel_id")
+  verifyRoleId    String? @map("verify_role_id")
+  verifyMessageId String? @map("verify_message_id")
+
+  // XP/Leveling settings
+  xpEnabled        Boolean  @default(false) @map("xp_enabled")
+  xpCooldown       Int      @default(60) @map("xp_cooldown") // seconds between XP awards
+  xpMinAmount      Int      @default(15) @map("xp_min_amount")
+  xpMaxAmount      Int      @default(25) @map("xp_max_amount")
+  levelUpChannelId String?  @map("level_up_channel_id")
+
+  moderationLogs ModerationLog[]
+  reactionRoles  ReactionRole[]
+  members        Member[]
+  levelRoles     LevelRole[]
+
+  @@map("guilds")
+}

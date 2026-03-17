@@ -1,17 +1,15 @@
 import { MessageFlags } from 'discord.js';
 import { UnbanCommand } from './unban.command';
 import { ModLogService } from './mod-log.service';
-import { createMockInteraction, createMockLogger } from '@/test/mocks';
+import { createMockInteraction } from '@/test/mocks';
 
 describe('UnbanCommand', () => {
   let command: UnbanCommand;
   let modLog: jest.Mocked<Pick<ModLogService, 'log'>>;
-  let logger: ReturnType<typeof createMockLogger>;
 
   beforeEach(() => {
     modLog = { log: jest.fn().mockResolvedValue(undefined) };
-    logger = createMockLogger();
-    command = new UnbanCommand(modLog as unknown as ModLogService, logger as any);
+    command = new UnbanCommand(modLog as unknown as ModLogService);
   });
 
   it('should successfully unban a user by ID', async () => {

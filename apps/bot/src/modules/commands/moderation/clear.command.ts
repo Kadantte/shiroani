@@ -1,11 +1,11 @@
 import { Injectable, UseGuards } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext, IntegerOption } from 'necord';
 import { MessageFlags, PermissionsBitField, TextChannel } from 'discord.js';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
 import { successEmbed, errorEmbed } from '@/common/utils';
+import { BaseCommand } from '../base';
 
 class ClearOptions {
   @IntegerOption({
@@ -20,11 +20,10 @@ class ClearOptions {
 
 @Injectable()
 @UseGuards(CommandGuard, CooldownGuard)
-export class ClearCommand {
-  constructor(
-    private readonly modLog: ModLogService,
-    @InjectPinoLogger(ClearCommand.name) private readonly logger: PinoLogger
-  ) {}
+export class ClearCommand extends BaseCommand {
+  constructor(private readonly modLog: ModLogService) {
+    super();
+  }
 
   @SlashCommand({
     name: 'clear',
@@ -49,11 +48,8 @@ export class ClearCommand {
     try {
       deleted = await channel.bulkDelete(amount, true);
     } catch (error) {
-      this.logger.error({ error, channelId: channel.id }, 'Failed to bulk delete messages');
-      return interaction.reply({
-        embeds: [errorEmbed('Nie udało się usunąć wiadomości.')],
-        flags: MessageFlags.Ephemeral,
-      });
+      await this.handleError(error, interaction, 'clear');
+      return;
     }
 
     await this.modLog.log({

@@ -1,0 +1,28 @@
+enum ModerationAction {
+  BAN
+  UNBAN
+  MUTE
+  UNMUTE
+  CLEAR_MESSAGES
+}
+
+model ModerationLog {
+  id      String           @id @default(cuid())
+  guildId String           @map("guild_id")
+  action  ModerationAction
+
+  targetUserId    String?  @map("target_user_id")
+  moderatorId     String  @map("moderator_id")
+  reason          String?
+  duration        Int? // Duration in seconds (for mutes)
+  messagesCleared Int?    @map("messages_cleared") // For clear action
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@index([targetUserId])
+  @@index([moderatorId])
+  @@map("moderation_logs")
+}

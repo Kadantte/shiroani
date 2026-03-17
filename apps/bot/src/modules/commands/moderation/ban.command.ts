@@ -8,12 +8,12 @@ import {
   StringOption,
 } from 'necord';
 import { GuildMember, MessageFlags, PermissionsBitField, User } from 'discord.js';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
 import { DEFAULT_REASON } from '@/common/constants';
 import { successEmbed, errorEmbed, validateModerationTarget } from '@/common/utils';
+import { BaseCommand } from '../base';
 
 class BanOptions {
   @UserOption({
@@ -33,11 +33,10 @@ class BanOptions {
 
 @Injectable()
 @UseGuards(CommandGuard, CooldownGuard)
-export class BanCommand {
-  constructor(
-    private readonly modLog: ModLogService,
-    @InjectPinoLogger(BanCommand.name) private readonly logger: PinoLogger
-  ) {}
+export class BanCommand extends BaseCommand {
+  constructor(private readonly modLog: ModLogService) {
+    super();
+  }
 
   @SlashCommand({
     name: 'ban',
@@ -76,11 +75,8 @@ export class BanCommand {
         reason: effectiveReason,
       });
     } catch (error) {
-      this.logger.error({ error, userId: user.id }, 'Failed to ban user');
-      return interaction.reply({
-        embeds: [errorEmbed('Nie udało się zbanować użytkownika.')],
-        flags: MessageFlags.Ephemeral,
-      });
+      await this.handleError(error, interaction, 'ban');
+      return;
     }
 
     await this.modLog.log({

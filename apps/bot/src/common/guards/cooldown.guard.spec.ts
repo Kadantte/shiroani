@@ -16,6 +16,7 @@ jest.mock('necord', () => ({
 const createMockRedis = () => ({
   ttl: jest.fn().mockResolvedValue(-2),
   set: jest.fn().mockResolvedValue('OK'),
+  isReady: true,
 });
 
 describe('CooldownGuard', () => {

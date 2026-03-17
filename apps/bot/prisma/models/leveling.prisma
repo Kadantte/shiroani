@@ -1,0 +1,33 @@
+model Member {
+  id       String @id @default(cuid())
+  guildId  String @map("guild_id")
+  userId   String @map("user_id")
+  xp       Int    @default(0)
+  level    Int    @default(0)
+  messages Int    @default(0)
+  lastXpAt DateTime? @map("last_xp_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([guildId, xp(sort: Desc)])
+  @@map("members")
+}
+
+model LevelRole {
+  id      String @id @default(cuid())
+  guildId String @map("guild_id")
+  level   Int
+  roleId  String @map("role_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, level])
+  @@index([guildId])
+  @@map("level_roles")
+}

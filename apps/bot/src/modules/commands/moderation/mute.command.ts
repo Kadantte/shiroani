@@ -8,13 +8,13 @@ import {
   StringOption,
 } from 'necord';
 import { GuildMember, MessageFlags, PermissionsBitField, User } from 'discord.js';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ModLogService } from './mod-log.service';
 import { CommandGuard, CooldownGuard } from '@/common/guards';
 import { RequirePermissions, RequireBotPermissions, Cooldown } from '@/common/decorators';
 import { DEFAULT_REASON } from '@/common/constants';
 import { parseDuration } from '@shiroani/shared';
 import { successEmbed, errorEmbed, validateModerationTarget } from '@/common/utils';
+import { BaseCommand } from '../base';
 
 class MuteOptions {
   @UserOption({
@@ -50,11 +50,10 @@ class UnmuteOptions {
 
 @Injectable()
 @UseGuards(CommandGuard, CooldownGuard)
-export class MuteCommand {
-  constructor(
-    private readonly modLog: ModLogService,
-    @InjectPinoLogger(MuteCommand.name) private readonly logger: PinoLogger
-  ) {}
+export class MuteCommand extends BaseCommand {
+  constructor(private readonly modLog: ModLogService) {
+    super();
+  }
 
   @SlashCommand({
     name: 'mute',
@@ -106,11 +105,8 @@ export class MuteCommand {
     try {
       await member.timeout(seconds * 1000, effectiveReason);
     } catch (error) {
-      this.logger.error({ error, userId: user.id }, 'Failed to timeout user');
-      return interaction.reply({
-        embeds: [errorEmbed('Nie udało się wyciszyć użytkownika.')],
-        flags: MessageFlags.Ephemeral,
-      });
+      await this.handleError(error, interaction, 'mute');
+      return;
     }
 
     await this.modLog.log({
@@ -161,11 +157,8 @@ export class MuteCommand {
     try {
       await member.timeout(null);
     } catch (error) {
-      this.logger.error({ error, userId: user.id }, 'Failed to remove timeout from user');
-      return interaction.reply({
-        embeds: [errorEmbed('Nie udało się odciszyć użytkownika.')],
-        flags: MessageFlags.Ephemeral,
-      });
+      await this.handleError(error, interaction, 'unmute');
+      return;
     }
 
     await this.modLog.log({
