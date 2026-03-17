@@ -150,26 +150,35 @@ export function BrowserView() {
         </View>
       )}
 
-      {/* Content: QuickAccess overlays WebView, WebView stays mounted */}
+      {/* Content: both layers are absolute-positioned, z-index toggles visibility */}
       <View style={s.content}>
         {state.hasNavigated && (
-          <WebView
-            ref={webViewRef}
-            source={{ uri: state.url }}
-            onNavigationStateChange={handleNavigationStateChange}
-            onLoadProgress={handleLoadProgress}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={false}
-            allowsBackForwardNavigationGestures={true}
-            sharedCookiesEnabled={true}
-            thirdPartyCookiesEnabled={true}
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback={true}
-            style={[s.webview, state.showQuickAccess && s.hidden]}
-          />
+          <View
+            style={[s.layer, { zIndex: state.showQuickAccess ? 0 : 1 }]}
+            pointerEvents={state.showQuickAccess ? 'none' : 'auto'}
+          >
+            <WebView
+              ref={webViewRef}
+              source={{ uri: state.url }}
+              onNavigationStateChange={handleNavigationStateChange}
+              onLoadProgress={handleLoadProgress}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={false}
+              allowsBackForwardNavigationGestures={true}
+              sharedCookiesEnabled={true}
+              thirdPartyCookiesEnabled={true}
+              mediaPlaybackRequiresUserAction={false}
+              allowsInlineMediaPlayback={true}
+              style={s.webview}
+            />
+          </View>
         )}
-        {state.showQuickAccess && <QuickAccessPage onNavigate={navigateTo} />}
+        {state.showQuickAccess && (
+          <View style={[s.layer, { zIndex: 2 }]}>
+            <QuickAccessPage onNavigate={navigateTo} />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -215,15 +224,13 @@ const s = StyleSheet.create({
   },
   content: {
     flex: 1,
+    position: 'relative',
+  },
+  layer: {
+    ...StyleSheet.absoluteFillObject,
   },
   webview: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  hidden: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    opacity: 0,
   },
 });

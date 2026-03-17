@@ -17,6 +17,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: 'hsl(350 8% 11%)',
           borderTopColor: 'hsl(350 7% 18%)',
+          height: settings.showLabels ? undefined : 56,
+          paddingBottom: settings.showLabels ? undefined : 8,
         },
         headerStyle: {
           backgroundColor: 'hsl(300 10% 5%)',
