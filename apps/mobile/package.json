@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start -c",
     "android": "expo start -c --android",
+    "android:release": "expo run:android --variant release",
     "ios": "expo start -c --ios",
     "typecheck": "tsc --noEmit"
   },
@@ -21,6 +22,7 @@
     "clsx": "^2.1.1",
     "expo": "~54.0.29",
     "expo-constants": "~18.0.12",
+    "expo-haptics": "~15.0.8",
     "expo-linking": "~8.0.10",
     "expo-notifications": "~0.32.16",
     "expo-router": "~6.0.19",
