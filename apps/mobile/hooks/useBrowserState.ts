@@ -74,9 +74,14 @@ export function useBrowserState() {
     setState(prev => ({ ...prev, loading: false, progress: 1 }));
   }, []);
 
-  // Toggle quick access overlay — WebView stays mounted underneath
+  // Show quick access overlay — WebView stays mounted underneath
   const goHome = useCallback(() => {
     setState(prev => ({ ...prev, showQuickAccess: true }));
+  }, []);
+
+  // Dismiss quick access to reveal WebView at its current state
+  const dismissQuickAccess = useCallback(() => {
+    setState(prev => ({ ...prev, showQuickAccess: false }));
   }, []);
 
   return {
@@ -90,5 +95,6 @@ export function useBrowserState() {
     reload,
     stopLoading,
     goHome,
+    dismissQuickAccess,
   };
 }

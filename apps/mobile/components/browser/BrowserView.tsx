@@ -29,6 +29,7 @@ export function BrowserView() {
     reload,
     stopLoading,
     goHome,
+    dismissQuickAccess,
   } = useBrowserState();
 
   const { bookmarks, addBookmark, deleteBookmark } = useBookmarks();
@@ -54,6 +55,17 @@ export function BrowserView() {
     setIsEditing(false);
   }, []);
 
+  // Back: if QuickAccess is showing over a page, dismiss it first
+  const handleBack = useCallback(() => {
+    if (state.showQuickAccess && state.hasNavigated) {
+      dismissQuickAccess();
+    } else {
+      goBack();
+    }
+  }, [state.showQuickAccess, state.hasNavigated, dismissQuickAccess, goBack]);
+
+  const canGoBack = state.canGoBack || (state.showQuickAccess && state.hasNavigated);
+
   const toggleBookmark = useCallback(async () => {
     if (currentBookmark) {
       await deleteBookmark(currentBookmark.id);
@@ -70,15 +82,12 @@ export function BrowserView() {
       {/* URL Bar */}
       <View style={s.urlBar}>
         <Pressable
-          onPress={goBack}
-          disabled={!state.canGoBack}
+          onPress={handleBack}
+          disabled={!canGoBack}
           accessibilityLabel="Wstecz"
           style={s.iconButton}
         >
-          <ChevronLeft
-            size={ICON_SIZE}
-            color={state.canGoBack ? colors.foreground : colors.border}
-          />
+          <ChevronLeft size={ICON_SIZE} color={canGoBack ? colors.foreground : colors.border} />
         </Pressable>
 
         <Pressable
@@ -134,7 +143,11 @@ export function BrowserView() {
         )}
 
         {state.hasNavigated && (
-          <Pressable onPress={goHome} accessibilityLabel="Szybki dostęp" style={s.iconButton}>
+          <Pressable
+            onPress={state.showQuickAccess ? dismissQuickAccess : goHome}
+            accessibilityLabel={state.showQuickAccess ? 'Wróć do strony' : 'Szybki dostęp'}
+            style={s.iconButton}
+          >
             <Home
               size={ICON_SIZE}
               color={state.showQuickAccess ? colors.primary : colors.foreground}
@@ -150,7 +163,7 @@ export function BrowserView() {
         </View>
       )}
 
-      {/* Content: both layers are absolute-positioned, z-index toggles visibility */}
+      {/* Content */}
       <View style={s.content}>
         {state.hasNavigated && (
           <View
@@ -166,6 +179,7 @@ export function BrowserView() {
               domStorageEnabled={true}
               startInLoadingState={false}
               allowsBackForwardNavigationGestures={true}
+              allowsFullscreenVideo={true}
               sharedCookiesEnabled={true}
               thirdPartyCookiesEnabled={true}
               mediaPlaybackRequiresUserAction={false}
