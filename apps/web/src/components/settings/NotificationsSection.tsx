@@ -41,19 +41,18 @@ const defaultNotifData: NotifFormData = {
 };
 
 /** Save a partial update to the main process immediately */
-function saveToMain(data: NotifFormData, overrides: Partial<NotifFormData> = {}) {
-  const merged = { ...data, ...overrides };
+function saveToMain(data: NotifFormData) {
   const settings: Partial<NotificationSettings> = {
-    enabled: merged.enabled,
-    leadTimeMinutes: Number(merged.leadTime),
+    enabled: data.enabled,
+    leadTimeMinutes: Number(data.leadTime),
     quietHours: {
-      enabled: merged.quietHoursEnabled,
-      start: merged.quietHoursStart,
-      end: merged.quietHoursEnd,
+      enabled: data.quietHoursEnabled,
+      start: data.quietHoursStart,
+      end: data.quietHoursEnd,
     },
-    useSystemSound: merged.useSystemSound,
+    useSystemSound: data.useSystemSound,
   };
-  window.electronAPI?.notifications?.updateSettings(settings);
+  window.electronAPI?.notifications?.updateSettings(settings).catch(() => {});
 }
 
 export function NotificationsSection() {
@@ -83,7 +82,8 @@ export function NotificationsSection() {
   const updateAndSave = useCallback((partial: Partial<NotifFormData>) => {
     setData(prev => {
       const next = { ...prev, ...partial };
-      saveToMain(next);
+      // Schedule save outside the updater to avoid side effects in React Strict Mode
+      queueMicrotask(() => saveToMain(next));
       return next;
     });
   }, []);

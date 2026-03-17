@@ -9,9 +9,6 @@ import {
   removeSubscription,
   toggleSubscription,
   isSubscribed,
-  getDebugStatus,
-  debugCheckNotifications,
-  debugTriggerTestNotification,
 } from '../notification-service';
 
 const logger = createLogger('IPC:Notifications');
@@ -73,29 +70,6 @@ export function registerNotificationHandlers(): void {
   ipcMain.handle('notifications:is-subscribed', (_event, anilistId: number) => {
     return isSubscribed(anilistId);
   });
-
-  // Debug handlers
-  ipcMain.handle('notifications:debug-status', () => {
-    return getDebugStatus();
-  });
-
-  ipcMain.handle('notifications:debug-check', async () => {
-    try {
-      return await debugCheckNotifications();
-    } catch (error) {
-      logger.error('Debug check failed:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('notifications:debug-test', async () => {
-    try {
-      return await debugTriggerTestNotification();
-    } catch (error) {
-      logger.error('Debug test notification failed:', error);
-      throw error;
-    }
-  });
 }
 
 /**
@@ -109,7 +83,4 @@ export function cleanupNotificationHandlers(): void {
   ipcMain.removeHandler('notifications:remove-subscription');
   ipcMain.removeHandler('notifications:toggle-subscription');
   ipcMain.removeHandler('notifications:is-subscribed');
-  ipcMain.removeHandler('notifications:debug-status');
-  ipcMain.removeHandler('notifications:debug-check');
-  ipcMain.removeHandler('notifications:debug-test');
 }

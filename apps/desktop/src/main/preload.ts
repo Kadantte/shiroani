@@ -64,9 +64,6 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'notifications:remove-subscription',
   'notifications:toggle-subscription',
   'notifications:is-subscribed',
-  'notifications:debug-status',
-  'notifications:debug-check',
-  'notifications:debug-test',
   'discord-rpc:get-settings',
   'discord-rpc:update-settings',
   'discord-rpc:update-presence',
@@ -226,9 +223,6 @@ export interface ElectronAPI {
     toggleSubscription: (anilistId: number) => Promise<NotificationSubscription[]>;
     isSubscribed: (anilistId: number) => Promise<boolean>;
     onClicked: (callback: (data: { mediaId: number; episode: number }) => void) => () => void;
-    debugStatus: () => Promise<unknown>;
-    debugCheck: () => Promise<unknown>;
-    debugTest: () => Promise<unknown>;
   };
   discordRpc: {
     getSettings: () => Promise<DiscordRpcSettings>;
@@ -355,9 +349,6 @@ const electronAPI: ElectronAPI = {
     isSubscribed: (anilistId: number) =>
       ipcRenderer.invoke('notifications:is-subscribed', anilistId) as Promise<boolean>,
     onClicked: createIpcListener<{ mediaId: number; episode: number }>('notifications:clicked'),
-    debugStatus: () => ipcRenderer.invoke('notifications:debug-status'),
-    debugCheck: () => ipcRenderer.invoke('notifications:debug-check'),
-    debugTest: () => ipcRenderer.invoke('notifications:debug-test'),
   },
   discordRpc: {
     getSettings: () =>
