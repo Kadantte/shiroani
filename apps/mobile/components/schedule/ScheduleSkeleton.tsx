@@ -1,33 +1,44 @@
-import { memo, useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { memo, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { colors } from '@/lib/theme';
 
 function SkeletonBox({
   width,
   height,
+  radius = 6,
   style,
 }: {
-  width: number | string;
+  width: number;
   height: number;
+  radius?: number;
   style?: object;
 }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  const opacity = useSharedValue(0.4);
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
-      ])
+    opacity.value = withRepeat(
+      withTiming(0.8, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
     );
-    animation.start();
-    return () => animation.stop();
   }, [opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   return (
     <Animated.View
       style={[
-        { width: width as number, height, borderRadius: 6, backgroundColor: colors.card, opacity },
+        { width, height, borderRadius: radius, backgroundColor: colors.border },
+        animatedStyle,
         style,
       ]}
     />
@@ -37,16 +48,16 @@ function SkeletonBox({
 function SkeletonCard({ titleWidth }: { titleWidth: number }) {
   return (
     <View style={s.card}>
-      <SkeletonBox width={48} height={68} style={{ borderRadius: 6 }} />
+      <SkeletonBox width={48} height={68} radius={6} />
       <View style={s.info}>
-        <SkeletonBox width={titleWidth} height={16} />
-        <SkeletonBox width={80} height={12} style={{ marginTop: 6 }} />
+        <SkeletonBox width={titleWidth} height={14} />
+        <SkeletonBox width={80} height={10} style={{ marginTop: 6 }} />
         <View style={s.metaRow}>
-          <SkeletonBox width={40} height={12} />
-          <SkeletonBox width={28} height={16} style={{ borderRadius: 4 }} />
+          <SkeletonBox width={40} height={10} />
+          <SkeletonBox width={28} height={14} radius={4} />
         </View>
       </View>
-      <SkeletonBox width={20} height={20} style={{ borderRadius: 10 }} />
+      <SkeletonBox width={20} height={20} radius={10} />
     </View>
   );
 }

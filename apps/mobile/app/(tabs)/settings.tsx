@@ -5,7 +5,8 @@ import Constants from 'expo-constants';
 import { ExternalLink, Github } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Switch } from '@/components/ui/switch';
-import { useSettings, type TitleLanguage } from '@/hooks/useSettings';
+import { useSettingsContext } from '@/context/SettingsContext';
+import type { TitleLanguage } from '@/hooks/useSettings';
 import { colors } from '@/lib/theme';
 import { APP_NAME, GITHUB_RELEASES_URL } from '@shiroani/shared';
 
@@ -47,7 +48,7 @@ function SettingsRow({
 }
 
 export default function SettingsScreen() {
-  const { settings, update } = useSettings();
+  const { settings, update } = useSettingsContext();
   const appVersion = Constants.expoConfig?.version ?? '0.1.0';
 
   const handleGithub = useCallback(() => {

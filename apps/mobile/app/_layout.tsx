@@ -9,6 +9,7 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { migrateDbIfNeeded } from '@/lib/db';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -24,13 +25,15 @@ export default function RootLayout() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <SQLiteProvider databaseName="shiroani.db" onInit={migrateDbIfNeeded} useSuspense>
-        <ThemeProvider value={NAV_THEME}>
-          <StatusBar style="light" />
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          <PortalHost />
-        </ThemeProvider>
+        <SettingsProvider>
+          <ThemeProvider value={NAV_THEME}>
+            <StatusBar style="light" />
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+            <PortalHost />
+          </ThemeProvider>
+        </SettingsProvider>
       </SQLiteProvider>
     </Suspense>
   );

@@ -2,8 +2,6 @@ import { useCallback, useRef, useState } from 'react';
 import type WebView from 'react-native-webview';
 import type { WebViewNavigation } from 'react-native-webview';
 
-export const NEW_TAB_URL = 'about:blank';
-
 interface BrowserState {
   url: string;
   title: string;
@@ -11,20 +9,22 @@ interface BrowserState {
   canGoForward: boolean;
   loading: boolean;
   progress: number;
-  isNewTab: boolean;
+  showQuickAccess: boolean;
+  hasNavigated: boolean; // true once user has visited at least one page
 }
 
 export function useBrowserState() {
   const webViewRef = useRef<WebView>(null);
 
   const [state, setState] = useState<BrowserState>({
-    url: NEW_TAB_URL,
+    url: '',
     title: '',
     canGoBack: false,
     canGoForward: false,
     loading: false,
     progress: 0,
-    isNewTab: true,
+    showQuickAccess: true,
+    hasNavigated: false,
   });
 
   const handleNavigationStateChange = useCallback((navState: WebViewNavigation) => {
@@ -35,7 +35,6 @@ export function useBrowserState() {
       canGoBack: navState.canGoBack,
       canGoForward: navState.canGoForward,
       loading: navState.loading ?? prev.loading,
-      isNewTab: false,
     }));
   }, []);
 
@@ -55,7 +54,7 @@ export function useBrowserState() {
     if (!trimmed) return;
 
     const url = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-    setState(prev => ({ ...prev, url, isNewTab: false }));
+    setState(prev => ({ ...prev, url, showQuickAccess: false, hasNavigated: true }));
   }, []);
 
   const goBack = useCallback(() => {
@@ -75,16 +74,9 @@ export function useBrowserState() {
     setState(prev => ({ ...prev, loading: false, progress: 1 }));
   }, []);
 
+  // Toggle quick access overlay — WebView stays mounted underneath
   const goHome = useCallback(() => {
-    setState({
-      url: NEW_TAB_URL,
-      title: '',
-      canGoBack: false,
-      canGoForward: false,
-      loading: false,
-      progress: 0,
-      isNewTab: true,
-    });
+    setState(prev => ({ ...prev, showQuickAccess: true }));
   }, []);
 
   return {

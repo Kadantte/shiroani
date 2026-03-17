@@ -15,6 +15,7 @@ function DayTabBarInner({ days, selectedDay, onSelect }: DayTabBarProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scrollView}
       contentContainerStyle={styles.container}
     >
       {days.map((dateStr, index) => {
@@ -50,6 +51,9 @@ function DayTabBarInner({ days, selectedDay, onSelect }: DayTabBarProps) {
 export const DayTabBar = memo(DayTabBarInner);
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+  },
   container: {
     flexDirection: 'row',
     gap: 6,

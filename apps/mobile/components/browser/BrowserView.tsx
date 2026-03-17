@@ -47,8 +47,8 @@ export function BrowserView() {
 
   const handleFocus = useCallback(() => {
     setIsEditing(true);
-    setInputUrl(state.isNewTab ? '' : state.url);
-  }, [state.url, state.isNewTab]);
+    setInputUrl(state.showQuickAccess ? '' : state.url);
+  }, [state.url, state.showQuickAccess]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
@@ -57,13 +57,13 @@ export function BrowserView() {
   const toggleBookmark = useCallback(async () => {
     if (currentBookmark) {
       await deleteBookmark(currentBookmark.id);
-    } else if (!state.isNewTab) {
+    } else if (!state.showQuickAccess && state.url) {
       await addBookmark({
         url: state.url,
         title: state.title || state.url,
       });
     }
-  }, [currentBookmark, state.url, state.title, state.isNewTab, addBookmark, deleteBookmark]);
+  }, [currentBookmark, state.url, state.title, state.showQuickAccess, addBookmark, deleteBookmark]);
 
   return (
     <View style={s.container}>
@@ -94,7 +94,7 @@ export function BrowserView() {
         </Pressable>
 
         <TextInput
-          value={isEditing ? inputUrl : state.isNewTab ? '' : state.url}
+          value={isEditing ? inputUrl : state.showQuickAccess ? '' : state.url}
           onChangeText={setInputUrl}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -113,13 +113,13 @@ export function BrowserView() {
           <Pressable onPress={stopLoading} accessibilityLabel="Zatrzymaj" style={s.iconButton}>
             <X size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
-        ) : !state.isNewTab ? (
+        ) : state.hasNavigated && !state.showQuickAccess ? (
           <Pressable onPress={reload} accessibilityLabel="Odśwież" style={s.iconButton}>
             <RotateCw size={ICON_SIZE} color={colors.foreground} />
           </Pressable>
         ) : null}
 
-        {!state.isNewTab && (
+        {state.hasNavigated && !state.showQuickAccess && (
           <Pressable
             onPress={toggleBookmark}
             accessibilityLabel={isBookmarked ? 'Usuń zakładkę' : 'Dodaj zakładkę'}
@@ -133,9 +133,12 @@ export function BrowserView() {
           </Pressable>
         )}
 
-        {!state.isNewTab && (
+        {state.hasNavigated && (
           <Pressable onPress={goHome} accessibilityLabel="Szybki dostęp" style={s.iconButton}>
-            <Home size={ICON_SIZE} color={colors.foreground} />
+            <Home
+              size={ICON_SIZE}
+              color={state.showQuickAccess ? colors.primary : colors.foreground}
+            />
           </Pressable>
         )}
       </View>
@@ -147,26 +150,27 @@ export function BrowserView() {
         </View>
       )}
 
-      {/* Content */}
-      {state.isNewTab ? (
-        <QuickAccessPage onNavigate={navigateTo} />
-      ) : (
-        <WebView
-          ref={webViewRef}
-          source={{ uri: state.url }}
-          onNavigationStateChange={handleNavigationStateChange}
-          onLoadProgress={handleLoadProgress}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={false}
-          allowsBackForwardNavigationGestures={true}
-          sharedCookiesEnabled={true}
-          thirdPartyCookiesEnabled={true}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          style={s.webview}
-        />
-      )}
+      {/* Content: QuickAccess overlays WebView, WebView stays mounted */}
+      <View style={s.content}>
+        {state.hasNavigated && (
+          <WebView
+            ref={webViewRef}
+            source={{ uri: state.url }}
+            onNavigationStateChange={handleNavigationStateChange}
+            onLoadProgress={handleLoadProgress}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={false}
+            allowsBackForwardNavigationGestures={true}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            style={[s.webview, state.showQuickAccess && s.hidden]}
+          />
+        )}
+        {state.showQuickAccess && <QuickAccessPage onNavigate={navigateTo} />}
+      </View>
     </View>
   );
 }
@@ -209,8 +213,17 @@ const s = StyleSheet.create({
     height: 2,
     backgroundColor: colors.primary,
   },
+  content: {
+    flex: 1,
+  },
   webview: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  hidden: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    opacity: 0,
   },
 });

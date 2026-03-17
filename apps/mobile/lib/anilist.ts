@@ -29,6 +29,26 @@ const AIRING_SCHEDULE_QUERY = `
 
 const MAX_PAGES = 5;
 const PER_PAGE = 50;
+const MAX_RETRIES = 3;
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 28; // leave 2 req margin from AniList's 30/min
+
+// Simple sliding window rate limiter
+const requestTimestamps: number[] = [];
+
+async function waitForRateLimit(): Promise<void> {
+  const now = Date.now();
+  // Remove timestamps older than the window
+  while (requestTimestamps.length > 0 && requestTimestamps[0] < now - RATE_LIMIT_WINDOW_MS) {
+    requestTimestamps.shift();
+  }
+  // If at limit, wait until the oldest request expires
+  if (requestTimestamps.length >= RATE_LIMIT_MAX) {
+    const waitMs = requestTimestamps[0] + RATE_LIMIT_WINDOW_MS - now + 100;
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+  }
+  requestTimestamps.push(Date.now());
+}
 
 interface AiringScheduleResponse {
   data: {
@@ -39,9 +59,31 @@ interface AiringScheduleResponse {
   };
 }
 
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  const response = await fetch(url, options);
+
+  if (response.status === 429 && retries > 0) {
+    // Respect Retry-After header, or default to exponential backoff
+    const retryAfter = response.headers.get('Retry-After');
+    const waitMs = retryAfter
+      ? parseInt(retryAfter, 10) * 1000
+      : (MAX_RETRIES - retries + 1) * 2000;
+
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+    return fetchWithRetry(url, options, retries - 1);
+  }
+
+  return response;
+}
+
 /**
  * Fetch a full week of airing schedules starting from a Monday date.
  * Groups results by local date string (YYYY-MM-DD).
+ * Handles 429 rate limits with automatic retry + backoff.
  */
 export async function fetchWeeklySchedule(weekStart: Date): Promise<Record<string, AiringAnime[]>> {
   const startTimestamp = Math.floor(weekStart.getTime() / 1000);
@@ -61,22 +103,28 @@ export async function fetchWeeklySchedule(weekStart: Date): Promise<Record<strin
   let hasNextPage = true;
 
   while (hasNextPage && page <= MAX_PAGES) {
-    const response = await fetch(ANILIST_URL, {
+    const body = JSON.stringify({
+      query: AIRING_SCHEDULE_QUERY,
+      variables: {
+        airingAt_greater: startTimestamp,
+        airingAt_lesser: endTimestamp,
+        page,
+        perPage: PER_PAGE,
+      },
+    });
+
+    await waitForRateLimit();
+    const response = await fetchWithRetry(ANILIST_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: AIRING_SCHEDULE_QUERY,
-        variables: {
-          airingAt_greater: startTimestamp,
-          airingAt_lesser: endTimestamp,
-          page,
-          perPage: PER_PAGE,
-        },
-      }),
+      body,
     });
 
     if (!response.ok) {
-      throw new Error(`AniList API error: ${response.status}`);
+      if (response.status === 429) {
+        throw new Error('Zbyt wiele zapytań do AniList. Spróbuj za chwilę.');
+      }
+      throw new Error(`Błąd AniList API: ${response.status}`);
     }
 
     const json: AiringScheduleResponse = await response.json();
