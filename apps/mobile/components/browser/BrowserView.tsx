@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useBrowserState } from '@/hooks/useBrowserState';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useQuickAccess } from '@/hooks/useQuickAccess';
 import { QuickAccessPage } from './QuickAccessPage';
 import { colors } from '@/lib/theme';
 
@@ -33,6 +34,7 @@ export function BrowserView() {
   } = useBrowserState();
 
   const { bookmarks, addBookmark, deleteBookmark } = useBookmarks();
+  const { recordVisit } = useQuickAccess();
   const [inputUrl, setInputUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -65,6 +67,15 @@ export function BrowserView() {
   }, [state.showQuickAccess, state.hasNavigated, dismissQuickAccess, goBack]);
 
   const canGoBack = state.canGoBack || (state.showQuickAccess && state.hasNavigated);
+
+  // Track visits — record when a page finishes loading
+  const lastRecordedUrl = useRef('');
+  const handleLoadEnd = useCallback(() => {
+    if (state.url && state.url !== lastRecordedUrl.current) {
+      lastRecordedUrl.current = state.url;
+      recordVisit(state.url, state.title || state.url);
+    }
+  }, [state.url, state.title, recordVisit]);
 
   const toggleBookmark = useCallback(async () => {
     if (currentBookmark) {
@@ -142,18 +153,25 @@ export function BrowserView() {
           </Pressable>
         )}
 
-        {state.hasNavigated && (
-          <Pressable
-            onPress={state.showQuickAccess ? dismissQuickAccess : goHome}
-            accessibilityLabel={state.showQuickAccess ? 'Wróć do strony' : 'Szybki dostęp'}
-            style={s.iconButton}
-          >
-            <Home
-              size={ICON_SIZE}
-              color={state.showQuickAccess ? colors.primary : colors.foreground}
-            />
-          </Pressable>
-        )}
+        <Pressable
+          onPress={
+            state.showQuickAccess ? (state.hasNavigated ? dismissQuickAccess : undefined) : goHome
+          }
+          disabled={state.showQuickAccess && !state.hasNavigated}
+          accessibilityLabel={state.showQuickAccess ? 'Wróć do strony' : 'Szybki dostęp'}
+          style={s.iconButton}
+        >
+          <Home
+            size={ICON_SIZE}
+            color={
+              state.showQuickAccess && !state.hasNavigated
+                ? colors.border
+                : state.showQuickAccess
+                  ? colors.primary
+                  : colors.foreground
+            }
+          />
+        </Pressable>
       </View>
 
       {/* Progress Bar */}
@@ -175,6 +193,7 @@ export function BrowserView() {
               source={{ uri: state.url }}
               onNavigationStateChange={handleNavigationStateChange}
               onLoadProgress={handleLoadProgress}
+              onLoadEnd={handleLoadEnd}
               javaScriptEnabled={true}
               domStorageEnabled={true}
               startInLoadingState={false}
