@@ -52,7 +52,8 @@ function saveToMain(data: NotifFormData) {
     },
     useSystemSound: data.useSystemSound,
   };
-  window.electronAPI?.notifications?.updateSettings(settings).catch(() => {});
+  const req = window.electronAPI?.notifications?.updateSettings(settings);
+  void req?.catch(() => {});
 }
 
 export function NotificationsSection() {
@@ -62,18 +63,29 @@ export function NotificationsSection() {
   // Load settings from main process on mount
   useEffect(() => {
     let mounted = true;
-    window.electronAPI?.notifications?.getSettings().then(settings => {
-      if (!mounted || !settings) return;
-      setData({
-        enabled: settings.enabled,
-        leadTime: String(settings.leadTimeMinutes),
-        quietHoursEnabled: settings.quietHours?.enabled ?? false,
-        quietHoursStart: settings.quietHours?.start ?? '23:00',
-        quietHoursEnd: settings.quietHours?.end ?? '07:00',
-        useSystemSound: settings.useSystemSound ?? true,
-      });
+    const req = window.electronAPI?.notifications?.getSettings();
+    if (!req) {
       setLoaded(true);
-    });
+      return () => {
+        mounted = false;
+      };
+    }
+    req
+      .then(settings => {
+        if (!mounted || !settings) return;
+        setData({
+          enabled: settings.enabled,
+          leadTime: String(settings.leadTimeMinutes),
+          quietHoursEnabled: settings.quietHours?.enabled ?? false,
+          quietHoursStart: settings.quietHours?.start ?? '23:00',
+          quietHoursEnd: settings.quietHours?.end ?? '07:00',
+          useSystemSound: settings.useSystemSound ?? true,
+        });
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setLoaded(true);
+      });
     return () => {
       mounted = false;
     };

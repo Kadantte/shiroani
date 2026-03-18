@@ -33,8 +33,11 @@ let targetWindow: BrowserWindow | null = null;
 let sentNotifications = new Set<string>();
 
 function loadSentNotifications(): void {
-  const stored = store.get(SENT_STORE_KEY) as string[] | undefined;
-  sentNotifications = new Set(stored ?? []);
+  const stored = store.get(SENT_STORE_KEY);
+  const valid = Array.isArray(stored)
+    ? stored.filter((v): v is string => typeof v === 'string')
+    : [];
+  sentNotifications = new Set(valid);
 }
 
 function saveSentNotifications(): void {
@@ -171,7 +174,8 @@ async function checkAndNotify(): Promise<void> {
     await showNotification(airing, settings);
   }
 
-  // Batch-save after all notifications in this cycle
+  // Prune and batch-save after all notifications in this cycle
+  sentNotifications = pruneSentSet(sentNotifications);
   saveSentNotifications();
 }
 

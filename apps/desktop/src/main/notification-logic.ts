@@ -5,6 +5,8 @@ export const SCHEDULE_CACHE_TTL_MS = 30 * 60 * 1000; // Re-fetch schedule every 
 export const MISSED_WINDOW_MS = 30 * 60 * 1000; // Catch episodes missed within last 30 minutes
 export const PRUNE_THRESHOLD = 500;
 export const PRUNE_KEEP = 400;
+const MISSED_WINDOW_SECONDS = MISSED_WINDOW_MS / 1000;
+const CHECK_WINDOW_SECONDS = CHECK_INTERVAL_MS / 1000;
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
@@ -43,13 +45,10 @@ export function getTitle(media: AiringAnime['media']): string {
 
 /** Determine if an airing should trigger a notification based on timing */
 export function shouldNotifyForAiring(timeUntilAiring: number, leadTimeSeconds: number): boolean {
-  const missedWindowSeconds = MISSED_WINDOW_MS / 1000;
-  const checkWindowSeconds = CHECK_INTERVAL_MS / 1000;
-
   if (leadTimeSeconds === 0) {
-    return timeUntilAiring >= -missedWindowSeconds && timeUntilAiring <= checkWindowSeconds;
+    return timeUntilAiring >= -MISSED_WINDOW_SECONDS && timeUntilAiring <= CHECK_WINDOW_SECONDS;
   } else {
-    return timeUntilAiring >= -missedWindowSeconds && timeUntilAiring <= leadTimeSeconds;
+    return timeUntilAiring >= -MISSED_WINDOW_SECONDS && timeUntilAiring <= leadTimeSeconds;
   }
 }
 
@@ -77,7 +76,13 @@ export function buildNotificationBody(episode: number, minutesLeft: number): str
 export function mergeSettings(
   stored: Partial<NotificationSettings> | undefined
 ): NotificationSettings {
-  if (!stored) return { ...DEFAULT_SETTINGS };
+  if (!stored) {
+    return {
+      ...DEFAULT_SETTINGS,
+      quietHours: { ...DEFAULT_SETTINGS.quietHours },
+      subscriptions: [...DEFAULT_SETTINGS.subscriptions],
+    };
+  }
 
   return {
     ...DEFAULT_SETTINGS,
@@ -86,7 +91,9 @@ export function mergeSettings(
       ...DEFAULT_SETTINGS.quietHours,
       ...(stored.quietHours ?? {}),
     },
-    subscriptions: stored.subscriptions ?? DEFAULT_SETTINGS.subscriptions,
+    subscriptions: stored.subscriptions
+      ? [...stored.subscriptions]
+      : [...DEFAULT_SETTINGS.subscriptions],
   };
 }
 
@@ -95,7 +102,7 @@ export function sanitizeSettingsUpdate(
   current: NotificationSettings,
   updates: Partial<NotificationSettings>
 ): NotificationSettings {
-  const timeFormatRegex = /^\d{2}:\d{2}$/;
+  const timeFormatRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   const sanitized: Partial<NotificationSettings> = {};
 
   if (updates.enabled !== undefined) {
