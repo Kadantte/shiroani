@@ -3,6 +3,7 @@ import { createLogger } from '@shiroani/shared';
 import { initializeSocket, connectSocket } from '@/lib/socket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useFeedStore } from '@/stores/useFeedStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
@@ -21,6 +22,8 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
   const cleanupScheduleListeners = useScheduleStore(s => s.cleanupListeners);
   const initLibraryListeners = useLibraryStore(s => s.initListeners);
   const cleanupLibraryListeners = useLibraryStore(s => s.cleanupListeners);
+  const initFeedListeners = useFeedStore(s => s.initListeners);
+  const cleanupFeedListeners = useFeedStore(s => s.cleanupListeners);
   const initConnectionListeners = useConnectionStore(s => s.initListeners);
   const cleanupConnectionListeners = useConnectionStore(s => s.cleanupListeners);
   const initUpdateListeners = useUpdateStore(s => s.initListeners);
@@ -29,13 +32,20 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     initConnectionListeners();
     initScheduleListeners();
     initLibraryListeners();
-  }, [initConnectionListeners, initScheduleListeners, initLibraryListeners]);
+    initFeedListeners();
+  }, [initConnectionListeners, initScheduleListeners, initLibraryListeners, initFeedListeners]);
 
   const cleanupAllListeners = useCallback(() => {
     cleanupConnectionListeners();
     cleanupScheduleListeners();
     cleanupLibraryListeners();
-  }, [cleanupConnectionListeners, cleanupScheduleListeners, cleanupLibraryListeners]);
+    cleanupFeedListeners();
+  }, [
+    cleanupConnectionListeners,
+    cleanupScheduleListeners,
+    cleanupLibraryListeners,
+    cleanupFeedListeners,
+  ]);
 
   useEffect(() => {
     let mounted = true;

@@ -85,6 +85,50 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_diary_pinned ON diary_entries(is_pinned);
     `,
   },
+  {
+    version: 5,
+    description: 'Create feed_sources and feed_items tables',
+    up: `
+      CREATE TABLE IF NOT EXISTS feed_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL UNIQUE,
+        site_url TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'news',
+        language TEXT NOT NULL DEFAULT 'en',
+        color TEXT NOT NULL DEFAULT '#666666',
+        icon TEXT,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        poll_interval_minutes INTEGER NOT NULL DEFAULT 60,
+        last_fetched_at TEXT,
+        last_etag TEXT,
+        consecutive_failures INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_feed_sources_enabled ON feed_sources(enabled);
+      CREATE INDEX IF NOT EXISTS idx_feed_sources_category ON feed_sources(category);
+
+      CREATE TABLE IF NOT EXISTS feed_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feed_source_id INTEGER NOT NULL REFERENCES feed_sources(id) ON DELETE CASCADE,
+        guid TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        url TEXT NOT NULL,
+        author TEXT,
+        image_url TEXT,
+        published_at TEXT,
+        categories TEXT,
+        content_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(feed_source_id, guid)
+      );
+      CREATE INDEX IF NOT EXISTS idx_feed_items_source ON feed_items(feed_source_id);
+      CREATE INDEX IF NOT EXISTS idx_feed_items_published ON feed_items(published_at);
+      CREATE INDEX IF NOT EXISTS idx_feed_items_hash ON feed_items(content_hash);
+    `,
+  },
 ];
 
 /**

@@ -10,6 +10,7 @@ import { LibraryView } from '@/components/library/LibraryView';
 import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DiaryView } from '@/components/diary/DiaryView';
+import { FeedView } from '@/components/feed/FeedView';
 import { SplashScreen } from '@/components/splash';
 import { OnboardingWizard } from '@/components/onboarding';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
@@ -60,7 +61,8 @@ function App() {
         view === 'library' ||
         view === 'settings' ||
         view === 'browser' ||
-        view === 'diary'
+        view === 'diary' ||
+        view === 'feed'
       ) {
         navigateTo(view);
       }
@@ -118,6 +120,7 @@ function App() {
               {activeView === 'library' && <LibraryView />}
               {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}
+              {activeView === 'feed' && <FeedView />}
               {activeView === 'settings' && <SettingsView />}
             </ErrorBoundary>
           </main>

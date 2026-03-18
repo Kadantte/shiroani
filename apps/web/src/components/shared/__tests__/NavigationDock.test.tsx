@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { id: 'library', label: 'Biblioteka' },
   { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Harmonogram' },
+  { id: 'feed', label: 'Aktualności' },
   { id: 'settings', label: 'Ustawienia' },
 ] as const;
 

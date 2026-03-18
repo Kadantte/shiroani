@@ -13,6 +13,9 @@ export * from './types/import-export';
 // Updater types
 export * from './types/updater';
 
+// Feed types
+export * from './types/feed';
+
 // System types
 export * from './types/system';
 

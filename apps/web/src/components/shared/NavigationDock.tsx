@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BookOpen, Calendar, NotebookPen, Settings } from 'lucide-react';
+import { BookOpen, Calendar, NotebookPen, Rss, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
@@ -16,6 +16,7 @@ const ALL_ITEMS: NavItem[] = [
   { id: 'library', label: 'Biblioteka' },
   { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Harmonogram' },
+  { id: 'feed', label: 'Aktualności' },
   { id: 'settings', label: 'Ustawienia' },
 ];
 
@@ -80,6 +81,16 @@ function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
     case 'schedule':
       return (
         <Calendar
+          className={cn(
+            base,
+            'group-hover:scale-110 group-hover:-translate-y-0.5',
+            isActive && 'animate-[dock-pulse_2s_ease-in-out_infinite] motion-reduce:animate-none'
+          )}
+        />
+      );
+    case 'feed':
+      return (
+        <Rss
           className={cn(
             base,
             'group-hover:scale-110 group-hover:-translate-y-0.5',

@@ -127,13 +127,21 @@ export function createContextMenuWindow(): void {
 async function extractThemeColors(): Promise<ThemeColors | undefined> {
   if (!mainWindowRef || mainWindowRef.isDestroyed()) return undefined;
 
+  const wc = mainWindowRef.webContents;
+  if (wc.isDestroyed() || wc.isLoading()) return undefined;
+
   try {
     const js = THEME_VARS.map(
       ([cssVar]) =>
         `getComputedStyle(document.documentElement).getPropertyValue('${cssVar}').trim()`
     ).join(',');
 
-    const results = await mainWindowRef.webContents.executeJavaScript(`[${js}]`);
+    // Chain .catch() directly on the promise to guard against rejections
+    // from Electron's IPC layer when the renderer is in a transitional
+    // state (navigating, being destroyed between guard and execution).
+    const results = await wc.executeJavaScript(`[${js}]`).catch(() => undefined);
+
+    if (!results) return undefined;
 
     const theme: ThemeColors = {};
     THEME_VARS.forEach(([, key], i) => {
