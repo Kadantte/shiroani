@@ -68,26 +68,14 @@ const releases: Release[] = [
         ],
       },
       {
-        label: 'Powiadomienia o odcinkach',
-        icon: Bell,
-        color: 'text-gold',
-        entries: [
-          {
-            icon: Bell,
-            text: 'Natywne powiadomienia systemowe przed emisją subskrybowanych anime',
-          },
-          { icon: Zap, text: 'Auto-subskrypcja anime ze statusem "Oglądam" w bibliotece' },
-          {
-            icon: Sparkles,
-            text: 'Konfigurowalny czas wyprzedzenia, godziny ciszy i dźwięk systemowy',
-          },
-        ],
-      },
-      {
         label: 'Poprawki i ulepszenia',
         icon: Wrench,
         color: 'text-muted-foreground',
         entries: [
+          {
+            icon: Bell,
+            text: 'Naprawiono powiadomienia o odcinkach — auto-zapis ustawień i łapanie pominiętych odcinków',
+          },
           {
             icon: Shield,
             text: 'Naprawiono ostrzeżenie MaxListenersExceeded w adapterze Socket.IO',
