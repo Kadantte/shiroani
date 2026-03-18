@@ -6,24 +6,22 @@ import { ScheduleService } from '../modules/schedule/schedule.service';
 import { LibraryService } from '../modules/library/library.service';
 import { store } from './store';
 import https from 'https';
+import {
+  CHECK_INTERVAL_MS,
+  SCHEDULE_CACHE_TTL_MS,
+  isInQuietHours,
+  getTitle,
+  shouldNotifyForAiring,
+  pruneSentSet,
+  buildNotificationBody,
+  mergeSettings,
+  sanitizeSettingsUpdate,
+} from './notification-logic';
 
 const logger = createLogger('NotificationService');
 
 const STORE_KEY = 'notification-settings';
-const CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
-const SCHEDULE_CACHE_TTL_MS = 30 * 60 * 1000; // Re-fetch schedule every 30 minutes
-
-const DEFAULT_SETTINGS: NotificationSettings = {
-  enabled: false,
-  leadTimeMinutes: 15,
-  quietHours: {
-    enabled: false,
-    start: '23:00',
-    end: '07:00',
-  },
-  useSystemSound: true,
-  subscriptions: [],
-};
+const SENT_STORE_KEY = 'notification-sent';
 
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 let initialTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -31,8 +29,25 @@ let scheduleService: ScheduleService | null = null;
 let libraryService: LibraryService | null = null;
 let targetWindow: BrowserWindow | null = null;
 
-// Deduplication: track which notifications we've already sent this session
-const sentNotifications = new Set<string>();
+// Deduplication: track which notifications we've already sent (persisted across restarts)
+let sentNotifications = new Set<string>();
+
+function loadSentNotifications(): void {
+  const stored = store.get(SENT_STORE_KEY);
+  const valid = Array.isArray(stored)
+    ? stored.filter((v): v is string => typeof v === 'string')
+    : [];
+  sentNotifications = new Set(valid);
+}
+
+function saveSentNotifications(): void {
+  store.set(SENT_STORE_KEY, [...sentNotifications]);
+}
+
+function pruneSentNotifications(): void {
+  sentNotifications = pruneSentSet(sentNotifications);
+  saveSentNotifications();
+}
 
 // Schedule cache
 let cachedSchedule: AiringAnime[] | null = null;
@@ -40,42 +55,11 @@ let cacheTimestamp = 0;
 
 function getSettings(): NotificationSettings {
   const stored = store.get(STORE_KEY) as Partial<NotificationSettings> | undefined;
-  if (!stored) return { ...DEFAULT_SETTINGS };
-
-  return {
-    ...DEFAULT_SETTINGS,
-    ...stored,
-    quietHours: {
-      ...DEFAULT_SETTINGS.quietHours,
-      ...(stored.quietHours ?? {}),
-    },
-    subscriptions: stored.subscriptions ?? DEFAULT_SETTINGS.subscriptions,
-  };
+  return mergeSettings(stored);
 }
 
 function saveSettings(settings: NotificationSettings): void {
   store.set(STORE_KEY, settings);
-}
-
-/** Check if current time falls within quiet hours */
-function isInQuietHours(settings: NotificationSettings): boolean {
-  if (!settings.quietHours.enabled) return false;
-
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const [startH, startM] = settings.quietHours.start.split(':').map(Number);
-  const [endH, endM] = settings.quietHours.end.split(':').map(Number);
-  const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-
-  if (startMinutes <= endMinutes) {
-    // Same-day range (e.g. 09:00 - 17:00)
-    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
-  } else {
-    // Overnight wrap (e.g. 23:00 - 07:00)
-    return currentMinutes >= startMinutes || currentMinutes < endMinutes;
-  }
 }
 
 /** Fetch and cache the weekly schedule */
@@ -148,18 +132,15 @@ function downloadImage(url: string): Promise<Electron.NativeImage | null> {
   });
 }
 
-/** Get a display title for an anime */
-function getTitle(media: AiringAnime['media']): string {
-  return media.title.english || media.title.romaji || media.title.native || 'Nieznane anime';
-}
-
 /** Main check: cross-reference library + subscriptions with schedule and fire notifications */
 async function checkAndNotify(): Promise<void> {
   const settings = getSettings();
   if (!settings.enabled || !libraryService || !scheduleService) return;
 
   // Check quiet hours
-  if (isInQuietHours(settings)) return;
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  if (isInQuietHours(settings, currentMinutes)) return;
 
   // Build a set of AniList IDs to notify: library watching + enabled subscriptions
   const notifyIds = new Set<number>();
@@ -178,20 +159,13 @@ async function checkAndNotify(): Promise<void> {
   const airingData = await getScheduleData();
   const nowUnix = Math.floor(Date.now() / 1000);
   const leadTimeSeconds = settings.leadTimeMinutes * 60;
-  const checkWindowSeconds = CHECK_INTERVAL_MS / 1000; // 5 minutes
 
   for (const airing of airingData) {
     if (!notifyIds.has(airing.media.id)) continue;
 
     const timeUntilAiring = airing.airingAt - nowUnix;
 
-    if (leadTimeSeconds === 0) {
-      // Lead time 0: notify for anime airing within the check interval window
-      if (timeUntilAiring < -checkWindowSeconds || timeUntilAiring > checkWindowSeconds) continue;
-    } else {
-      // Only notify if within the lead time window and not already aired
-      if (timeUntilAiring <= 0 || timeUntilAiring > leadTimeSeconds) continue;
-    }
+    if (!shouldNotifyForAiring(timeUntilAiring, leadTimeSeconds)) continue;
 
     const dedupeKey = `${airing.media.id}:${airing.episode}`;
     if (sentNotifications.has(dedupeKey)) continue;
@@ -199,6 +173,10 @@ async function checkAndNotify(): Promise<void> {
     sentNotifications.add(dedupeKey);
     await showNotification(airing, settings);
   }
+
+  // Prune and batch-save after all notifications in this cycle
+  sentNotifications = pruneSentSet(sentNotifications);
+  saveSentNotifications();
 }
 
 /** Show a native notification for an airing anime */
@@ -208,10 +186,7 @@ async function showNotification(
 ): Promise<void> {
   const title = getTitle(airing.media);
   const minutesLeft = Math.round((airing.airingAt - Date.now() / 1000) / 60);
-  const body =
-    minutesLeft <= 1
-      ? `Odcinek ${airing.episode} nadawany teraz!`
-      : `Odcinek ${airing.episode} za ${minutesLeft} min`;
+  const body = buildNotificationBody(airing.episode, minutesLeft);
 
   // Try to download cover image for the notification icon
   let icon: Electron.NativeImage | undefined;
@@ -340,6 +315,10 @@ export function initializeNotificationService(
     return;
   }
 
+  // Load persisted sent notifications and prune stale entries
+  loadSentNotifications();
+  pruneSentNotifications();
+
   const settings = getSettings();
   logger.info(
     `NotificationService initialized (enabled: ${settings.enabled}, leadTime: ${settings.leadTimeMinutes}min)`
@@ -358,67 +337,8 @@ export function updateNotificationSettings(
   updates: Partial<NotificationSettings>
 ): NotificationSettings {
   const current = getSettings();
-  const timeFormatRegex = /^\d{2}:\d{2}$/;
-
-  // Validate and sanitize inputs before applying
-  const sanitized: Partial<NotificationSettings> = {};
-
-  if (updates.enabled !== undefined) {
-    if (typeof updates.enabled === 'boolean') sanitized.enabled = updates.enabled;
-  }
-  if (updates.leadTimeMinutes !== undefined) {
-    if (
-      typeof updates.leadTimeMinutes === 'number' &&
-      Number.isFinite(updates.leadTimeMinutes) &&
-      updates.leadTimeMinutes >= 0 &&
-      updates.leadTimeMinutes <= 1440
-    ) {
-      sanitized.leadTimeMinutes = updates.leadTimeMinutes;
-    }
-  }
-  if (updates.useSystemSound !== undefined) {
-    if (typeof updates.useSystemSound === 'boolean')
-      sanitized.useSystemSound = updates.useSystemSound;
-  }
-  if (updates.subscriptions !== undefined) {
-    sanitized.subscriptions = updates.subscriptions;
-  }
-
-  // Validate quiet hours
-  let quietHoursUpdate: Partial<NotificationSettings['quietHours']> | undefined;
-  if (updates.quietHours) {
-    quietHoursUpdate = {};
-    if (typeof updates.quietHours.enabled === 'boolean') {
-      quietHoursUpdate.enabled = updates.quietHours.enabled;
-    }
-    if (
-      typeof updates.quietHours.start === 'string' &&
-      timeFormatRegex.test(updates.quietHours.start)
-    ) {
-      quietHoursUpdate.start = updates.quietHours.start;
-    }
-    if (
-      typeof updates.quietHours.end === 'string' &&
-      timeFormatRegex.test(updates.quietHours.end)
-    ) {
-      quietHoursUpdate.end = updates.quietHours.end;
-    }
-  }
-
-  const next: NotificationSettings = {
-    ...current,
-    ...sanitized,
-    quietHours: {
-      ...current.quietHours,
-      ...(quietHoursUpdate ?? {}),
-    },
-    subscriptions: sanitized.subscriptions ?? current.subscriptions,
-  };
+  const next = sanitizeSettingsUpdate(current, updates);
   saveSettings(next);
-
-  // Invalidate schedule cache when settings change so a fresh fetch happens
-  cachedSchedule = null;
-  cacheTimestamp = 0;
 
   if (next.enabled) {
     startChecking();
@@ -434,10 +354,10 @@ export function updateNotificationSettings(
 
 export function cleanupNotificationService(): void {
   stopChecking();
+  saveSentNotifications();
   targetWindow = null;
   scheduleService = null;
   libraryService = null;
-  sentNotifications.clear();
   cachedSchedule = null;
   logger.info('NotificationService cleaned up');
 }
