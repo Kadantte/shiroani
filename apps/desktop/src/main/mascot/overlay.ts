@@ -370,6 +370,31 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
   }
 }
 
+/**
+ * Persist the visibility mode AND immediately apply it based on the current
+ * window state. Unlike bare setMascotVisibilityMode() (which only persists
+ * to the store), this function ensures the mascot is shown/hidden right away.
+ */
+export function applyMascotVisibilityMode(mode: 'always' | 'tray-only'): void {
+  setMascotVisibilityMode(mode);
+
+  if (process.platform === 'win32' && !hasWin32Addon()) return;
+  if (process.platform === 'darwin' && !hasDarwinWindow()) return;
+  if (!isMascotEnabled()) return;
+
+  if (mode === 'always') {
+    setMascotVisible(true);
+  } else {
+    // tray-only: show mascot only when main window is hidden/minimized
+    const windowVisible =
+      mainWindow !== null &&
+      !mainWindow.isDestroyed() &&
+      mainWindow.isVisible() &&
+      !mainWindow.isMinimized();
+    setMascotVisible(!windowVisible);
+  }
+}
+
 // Re-export from overlay-state
 export { isMascotEnabled, getMascotSize, getMascotVisibilityMode, setMascotVisibilityMode };
 

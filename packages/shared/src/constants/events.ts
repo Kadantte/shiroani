@@ -85,6 +85,22 @@ export const ImportExportEvents = {
 // ============================================
 // System Events
 // ============================================
+// ============================================
+// Feed Events
+// ============================================
+export const FeedEvents = {
+  // Client -> Server (requests)
+  GET_ITEMS: 'feed:get-items',
+  GET_SOURCES: 'feed:get-sources',
+  TOGGLE_SOURCE: 'feed:toggle-source',
+  REFRESH: 'feed:refresh',
+
+  // Server -> Client (broadcasts)
+  ITEMS_RESULT: 'feed:items-result',
+  SOURCES_RESULT: 'feed:sources-result',
+  NEW_ITEMS: 'feed:new-items',
+} as const;
+
 export const SystemEvents = {
   CONNECTED: 'system:connected',
   ERROR: 'system:error',

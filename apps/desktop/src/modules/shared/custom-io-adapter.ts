@@ -1,5 +1,5 @@
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import type { ServerOptions } from 'socket.io';
+import type { ServerOptions, Server } from 'socket.io';
 
 /**
  * Custom Socket.io adapter with Connection State Recovery (CSR) enabled.
@@ -13,12 +13,22 @@ import type { ServerOptions } from 'socket.io';
  */
 export class CustomIoAdapter extends IoAdapter {
   createIOServer(port: number, options?: Partial<ServerOptions>) {
-    return super.createIOServer(port, {
+    const server: Server = super.createIOServer(port, {
       ...options,
       connectionStateRecovery: {
         maxDisconnectionDuration: 30_000,
         skipMiddlewares: true,
       },
     });
+
+    // Multiple NestJS WebSocket gateways share one Socket.IO server. Each
+    // gateway adds ~2 "disconnect" listeners per client socket (from
+    // bindClientDisconnect + RxJS fromEvent), exceeding Node's default
+    // limit of 10. Raise it to avoid MaxListenersExceeded warnings.
+    server.on('connection', socket => {
+      socket.setMaxListeners(20);
+    });
+
+    return server;
   }
 }

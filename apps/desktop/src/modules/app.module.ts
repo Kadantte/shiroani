@@ -6,6 +6,7 @@ import { LibraryModule } from './library';
 import { ScheduleModule } from './schedule';
 import { DiaryModule } from './diary';
 import { ImportExportModule } from './import-export';
+import { FeedModule } from './feed';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ImportExportModule } from './import-export';
     ScheduleModule,
     DiaryModule,
     ImportExportModule,
+    FeedModule,
   ],
   controllers: [],
   providers: [],

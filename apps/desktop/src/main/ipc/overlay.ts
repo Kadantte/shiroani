@@ -10,7 +10,7 @@ import {
   getMascotSize,
   setMascotSize,
   getMascotVisibilityMode,
-  setMascotVisibilityMode,
+  applyMascotVisibilityMode,
   isMascotPositionLocked,
   setMascotPositionLocked,
   resetMascotPosition,
@@ -115,7 +115,7 @@ export function registerOverlayHandlers(): void {
       if (mode !== 'always' && mode !== 'tray-only') {
         return { success: false, error: 'Invalid visibility mode' };
       }
-      setMascotVisibilityMode(mode);
+      applyMascotVisibilityMode(mode);
       return { success: true, mode };
     } catch (error) {
       logger.error('Failed to set visibility mode:', error);
