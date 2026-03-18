@@ -226,7 +226,7 @@ export function Hero() {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
           <span className="text-[10px] font-medium text-primary sm:text-xs">
-            v0.1.0 — Pierwsze wydanie
+            v0.2.0 — Anime News Feed
           </span>
         </motion.div>
 

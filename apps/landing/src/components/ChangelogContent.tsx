@@ -1,5 +1,16 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Monitor, Globe, MessageCircle, Shield, Zap, Palette } from 'lucide-react';
+import {
+  Sparkles,
+  Monitor,
+  Globe,
+  MessageCircle,
+  Shield,
+  Zap,
+  Palette,
+  Rss,
+  Bell,
+  Wrench,
+} from 'lucide-react';
 import { ease } from '@/lib/animations';
 
 interface ChangeEntry {
@@ -21,6 +32,78 @@ interface Release {
 }
 
 const releases: Release[] = [
+  {
+    version: '0.2.0',
+    date: '19 marca 2026',
+    title: 'Anime News Feed',
+    description:
+      'ShiroAni teraz agreguje wiadomości ze świata anime z 11 źródeł RSS — po angielsku i po polsku. Nowy widok "Aktualności" pozwala być na bieżąco z newsami, premierami odcinków i recenzjami.',
+    categories: [
+      {
+        label: 'Nowy widok — Aktualności',
+        icon: Rss,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Rss,
+            text: 'Agregacja RSS z 11 źródeł: ANN, MAL, Crunchyroll, Anime Corner, LiveChart, AnimeSchedule, Animeholik, Anime.com.pl, Rascal.pl, Monime.pl i ANN Reviews',
+          },
+          {
+            icon: Globe,
+            text: 'Filtrowanie po kategorii (Wiadomości, Odcinki, Recenzje) i języku (EN/PL)',
+          },
+          {
+            icon: Sparkles,
+            text: 'Animowana scena ładowania z sygnałem RSS, unoszącymi się kartami i efektami sparkle',
+          },
+          {
+            icon: Zap,
+            text: 'Automatyczne odpytywanie źródeł w tle z konfigurowalnymi interwałami',
+          },
+          {
+            icon: Palette,
+            text: "Karty z obrazkami, badge'ami źródeł w kolorach marki i tagami kategorii",
+          },
+          { icon: Monitor, text: 'Kliknięcie otwiera artykuł w wbudowanej przeglądarce' },
+        ],
+      },
+      {
+        label: 'Powiadomienia o odcinkach',
+        icon: Bell,
+        color: 'text-gold',
+        entries: [
+          {
+            icon: Bell,
+            text: 'Natywne powiadomienia systemowe przed emisją subskrybowanych anime',
+          },
+          { icon: Zap, text: 'Auto-subskrypcja anime ze statusem "Oglądam" w bibliotece' },
+          {
+            icon: Sparkles,
+            text: 'Konfigurowalny czas wyprzedzenia, godziny ciszy i dźwięk systemowy',
+          },
+        ],
+      },
+      {
+        label: 'Poprawki i ulepszenia',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Shield,
+            text: 'Naprawiono ostrzeżenie MaxListenersExceeded w adapterze Socket.IO',
+          },
+          {
+            icon: Wrench,
+            text: 'Naprawiono nieobsłużone odrzucenie promise w menu kontekstowym maskotki',
+          },
+          {
+            icon: Zap,
+            text: 'Zmiana trybu widoczności maskotki teraz natychmiast pokazuje/ukrywa overlay',
+          },
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.0',
     date: '17 marca 2026',
