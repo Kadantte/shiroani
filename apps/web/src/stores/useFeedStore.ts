@@ -107,12 +107,14 @@ export const useFeedStore = create<FeedStore>()(
 
         // Actions
         fetchItems: (loadMore?: boolean) => {
-          const { categoryFilter, languageFilter, sourceFilter, items } = get();
+          const { categoryFilter, languageFilter, sourceFilter, items, isLoading } = get();
+
+          // Prevent duplicate requests
+          if (isLoading) return;
+
           const offset = loadMore ? items.length : 0;
 
-          if (!loadMore) {
-            set({ isLoading: true }, undefined, 'feed/fetching');
-          }
+          set({ isLoading: true }, undefined, loadMore ? 'feed/loadingMore' : 'feed/fetching');
 
           const payload: FeedGetItemsPayload = {
             category: categoryFilter,
@@ -129,13 +131,18 @@ export const useFeedStore = create<FeedStore>()(
             .then(data => {
               if (loadMore) {
                 set(
-                  state => ({
-                    items: [...state.items, ...data.items],
-                    total: data.total,
-                    hasMore: data.hasMore,
-                    isLoading: false,
-                    error: null,
-                  }),
+                  state => {
+                    // Deduplicate: only append items not already in the list
+                    const existingIds = new Set(state.items.map(i => i.id));
+                    const newItems = data.items.filter(i => !existingIds.has(i.id));
+                    return {
+                      items: [...state.items, ...newItems],
+                      total: data.total,
+                      hasMore: data.hasMore,
+                      isLoading: false,
+                      error: null,
+                    };
+                  },
                   undefined,
                   'feed/loadedMore'
                 );

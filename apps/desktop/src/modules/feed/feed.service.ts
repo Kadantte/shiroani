@@ -132,6 +132,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   });
 
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
+  private initialPollTimer: ReturnType<typeof setTimeout> | null = null;
+  private isPolling = false;
 
   constructor(private readonly databaseService: DatabaseService) {
     logger.info('FeedService initialized');
@@ -143,11 +145,16 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy(): void {
+    if (this.initialPollTimer) {
+      clearTimeout(this.initialPollTimer);
+      this.initialPollTimer = null;
+    }
     if (this.pollingTimer) {
       clearInterval(this.pollingTimer);
       this.pollingTimer = null;
-      logger.info('Polling timer cleared');
     }
+    this.isPolling = false;
+    logger.info('Feed polling fully torn down');
   }
 
   // ============================================
@@ -209,8 +216,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   /** Get feed items with filtering and pagination. */
   getItems(payload: FeedGetItemsPayload): FeedGetItemsResult {
     const db = this.databaseService.db;
-    const limit = payload.limit ?? 50;
-    const offset = payload.offset ?? 0;
+    const limit = Math.min(Math.max(Math.trunc(payload.limit ?? 50), 1), 100);
+    const offset = Math.max(Math.trunc(payload.offset ?? 0), 0);
 
     const conditions: string[] = [];
     const params: (string | number)[] = [];
@@ -274,16 +281,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
 
     logger.info(`Refreshing ${sources.length} enabled feed sources`);
 
-    let totalNew = 0;
-
-    for (const source of sources) {
-      try {
-        const newCount = await this.fetchFeed(source);
-        totalNew += newCount;
-      } catch (error) {
-        logger.error(`Failed to refresh feed "${source.name}":`, error);
-      }
-    }
+    const results = await Promise.all(sources.map(source => this.fetchFeed(source)));
+    const totalNew = results.reduce((sum, count) => sum + count, 0);
 
     logger.info(`Feed refresh complete: ${totalNew} new items`);
     return totalNew;
@@ -318,7 +317,11 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
           );
           const author = item.creator ?? item.author ?? null;
           const imageUrl = this.extractImageUrl(item as CustomItem, item.content ?? item.summary);
-          const publishedAt = item.isoDate ?? item.pubDate ?? null;
+          const publishedAt =
+            item.isoDate ??
+            (item.pubDate && !Number.isNaN(Date.parse(item.pubDate))
+              ? new Date(item.pubDate).toISOString()
+              : null);
           const categories = item.categories ? JSON.stringify(item.categories) : null;
           const contentHash = this.generateContentHash(title, url);
 
@@ -364,7 +367,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
 
       db.prepare(
         `UPDATE feed_sources
-         SET consecutive_failures = consecutive_failures + 1,
+         SET last_fetched_at = datetime('now'),
+             consecutive_failures = consecutive_failures + 1,
              last_error = ?
          WHERE id = ?`
       ).run(errorMessage, source.id);
@@ -437,7 +441,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .replace(/&nbsp;/g, ' ')
-      .replace(/&#\d+;/g, '')
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+      .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
       // Collapse whitespace
       .replace(/\s+/g, ' ')
       .trim();
@@ -451,20 +456,28 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
 
   /** Start the background polling timer. Checks every 60 seconds. */
   private startPolling(): void {
-    // Do an initial fetch shortly after startup (5 seconds delay)
-    setTimeout(() => {
-      this.pollDueFeeds().catch(error => {
-        logger.error('Error during initial feed poll:', error);
-      });
+    this.initialPollTimer = setTimeout(() => {
+      void this.runPollCycle('initial feed poll');
     }, 5000);
 
     this.pollingTimer = setInterval(() => {
-      this.pollDueFeeds().catch(error => {
-        logger.error('Error during feed poll:', error);
-      });
+      void this.runPollCycle('feed poll');
     }, 60_000);
 
     logger.info('Feed polling started (60s interval)');
+  }
+
+  /** Run a single poll cycle, skipping if one is already in flight. */
+  private async runPollCycle(context: string): Promise<void> {
+    if (this.isPolling) return;
+    this.isPolling = true;
+    try {
+      await this.pollDueFeeds();
+    } catch (error) {
+      logger.error(`Error during ${context}:`, error);
+    } finally {
+      this.isPolling = false;
+    }
   }
 
   /** Find sources that are due for a refresh and fetch them. */

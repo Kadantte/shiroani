@@ -363,6 +363,20 @@
       transform: scale(1);
     }
   }
+
+  /* Feed loading animation — bouncing dots */
+  @keyframes feed-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.2;
+      transform: scale(0.8);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
 }
 
 :root {
@@ -575,7 +589,8 @@
   animation: var(--animate-blob-drift-3);
 }
 @utility animate-onb-mascot {
-  animation: splash-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+  animation:
+    splash-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
     splash-float 3s ease-in-out 0.6s infinite;
 }
 @utility viewport-noise {

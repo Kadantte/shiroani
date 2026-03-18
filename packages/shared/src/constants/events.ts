@@ -83,9 +83,6 @@ export const ImportExportEvents = {
 } as const;
 
 // ============================================
-// System Events
-// ============================================
-// ============================================
 // Feed Events
 // ============================================
 export const FeedEvents = {
@@ -101,6 +98,9 @@ export const FeedEvents = {
   NEW_ITEMS: 'feed:new-items',
 } as const;
 
+// ============================================
+// System Events
+// ============================================
 export const SystemEvents = {
   CONNECTED: 'system:connected',
   ERROR: 'system:error',

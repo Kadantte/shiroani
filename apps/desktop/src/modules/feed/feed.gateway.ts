@@ -82,6 +82,7 @@ export class FeedGateway {
       })
       .catch(err => {
         logger.error('Background feed refresh failed:', err);
+        this.server.emit(FeedEvents.NEW_ITEMS, { newItemsCount: 0 });
       });
 
     return { started: true };
