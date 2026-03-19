@@ -33,6 +33,61 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.2.1',
+    date: '19 marca 2026',
+    title: 'Stabilizacja i poprawki',
+    description:
+      'Patch release skupiony na dopracowaniu nowego widoku Aktualności i usunięciu najbardziej uciążliwych problemów na macOS — od stanów ładowania RSS po zachowanie maskotki, Docka i okna aplikacji.',
+    categories: [
+      {
+        label: 'Feed i RSS',
+        icon: Rss,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Sparkles,
+            text: 'Loader Aktualności poprawnie pokazuje się przy pustym cache i pierwszym otwarciu widoku',
+          },
+          {
+            icon: Wrench,
+            text: 'Dodano ustawienie odświeżania RSS przy starcie aplikacji — domyślnie wyłączone',
+          },
+          {
+            icon: Zap,
+            text: 'Wygładzono renderowanie kart feedu i wzmocniono czytelność animacji ładowania',
+          },
+          {
+            icon: Globe,
+            text: 'Pierwsze pobieranie feedu jest teraz bardziej przewidywalne i łatwiejsze do testowania',
+          },
+        ],
+      },
+      {
+        label: 'macOS i maskotka',
+        icon: Monitor,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Monitor,
+            text: 'Naprawiono problem z maskotką w fullscreen, Spaces i przy przełączaniu aplikacji przez Cmd+Tab',
+          },
+          {
+            icon: Sparkles,
+            text: 'Tryb „Tylko przy zminimalizowanej aplikacji” działa teraz zgodnie z opisem',
+          },
+          {
+            icon: Wrench,
+            text: 'Menu kontekstowe maskotki znów poprawnie otwiera ShiroAni',
+          },
+          {
+            icon: Zap,
+            text: 'Kliknięcie ikony w Docku po zamknięciu czerwonym przyciskiem ponownie pokazuje okno aplikacji',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '19 marca 2026',
     title: 'Anime News Feed',
