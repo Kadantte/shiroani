@@ -25,14 +25,14 @@ import { store } from './store';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
-  setMainWindow,
+  setMainWindow as setMascotMainWindow,
   updateMascotVisibilityForWindowState,
   type MascotWindowState,
 } from './mascot/overlay';
 import {
   createContextMenuWindow,
   destroyContextMenu,
-  setMainWindowRef,
+  setMainWindowRef as setContextMenuMainWindow,
 } from './mascot/context-menu';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
@@ -137,7 +137,7 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   }
 
   // Set up mascot overlay with main window reference
-  setMainWindow(win);
+  setMascotMainWindow(win);
 
   // On macOS the red traffic-light button should hide the app instead of
   // destroying the main window. This keeps tray/mascot integrations stable.
@@ -179,7 +179,7 @@ async function bootstrap(): Promise<void> {
   await bootstrapNestApp();
   browserManager.init();
   mainWindow = await createMainWindow(browserManager);
-  setMainWindow(mainWindow);
+  setMascotMainWindow(mainWindow);
 
   // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
   initializeDiscordRpc();
@@ -207,7 +207,7 @@ async function bootstrap(): Promise<void> {
 
   // Create the pre-hidden context menu window for the mascot overlay
   try {
-    setMainWindowRef(mainWindow);
+    setContextMenuMainWindow(mainWindow);
     createContextMenuWindow();
   } catch (error) {
     logger.warn('Failed to create context menu window:', error);
@@ -274,7 +274,7 @@ app.on('activate', async () => {
   // Recreate the main window even if auxiliary mascot/menu windows still exist.
   cleanupIpcHandlers();
   mainWindow = await createMainWindow(browserManager);
-  setMainWindowRef(mainWindow);
+  setContextMenuMainWindow(mainWindow);
   setupWindowDependentServices(mainWindow);
   showMainWindow(mainWindow);
 });
