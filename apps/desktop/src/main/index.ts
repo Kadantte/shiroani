@@ -21,6 +21,7 @@ import {
   onWindowBlur,
   onWindowFocus,
 } from './discord-rpc-service';
+import { initializeAuthService, cleanupAuthService } from './auth-service';
 import { store } from './store';
 import {
   createMascotOverlay,
@@ -184,6 +185,9 @@ async function bootstrap(): Promise<void> {
   // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
   initializeDiscordRpc();
 
+  // Initialize Discord OAuth auth service
+  initializeAuthService(mainWindow);
+
   // Initialize adblocker after window creation, then enable on browser session
   // only if user hasn't explicitly disabled it
   try {
@@ -297,6 +301,7 @@ app.on('before-quit', event => {
     await safeCleanup('system tray', () => destroyTray(), logger);
     await safeCleanup('context menu', () => destroyContextMenu(), logger);
     await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
+    await safeCleanup('auth service', () => cleanupAuthService(), logger);
     await safeCleanup('discord rpc', () => cleanupDiscordRpc(), logger);
     await safeCleanup('notification service', () => cleanupNotificationService(), logger);
     await safeCleanup('log flush', () => flushLogs(), logger);

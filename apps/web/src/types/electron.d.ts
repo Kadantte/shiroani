@@ -6,6 +6,8 @@ import type {
   NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
+  DiscordUser,
+  AuthState,
 } from '@shiroani/shared';
 
 /**
@@ -95,6 +97,14 @@ interface ElectronAPI {
     updateSettings: (updates: Partial<DiscordRpcSettings>) => Promise<DiscordRpcSettings>;
     updatePresence: (activity: DiscordPresenceActivity) => Promise<void>;
     clearPresence: () => Promise<void>;
+  };
+  auth?: {
+    getState: () => Promise<AuthState>;
+    loginDiscord: () => Promise<void>;
+    logout: () => Promise<void>;
+    refreshToken: () => Promise<AuthState>;
+    onLoginSuccess: (callback: (user: DiscordUser) => void) => () => void;
+    onLoginError: (callback: (message: string) => void) => () => void;
   };
   overlay?: {
     show: () => Promise<{ success: boolean }>;

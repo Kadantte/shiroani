@@ -7,6 +7,8 @@ import type {
   NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
+  DiscordUser,
+  AuthState,
 } from '@shiroani/shared';
 
 /**
@@ -68,6 +70,10 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'discord-rpc:update-settings',
   'discord-rpc:update-presence',
   'discord-rpc:clear-presence',
+  'auth:get-state',
+  'auth:login-discord',
+  'auth:logout',
+  'auth:refresh-token',
   'overlay:show',
   'overlay:hide',
   'overlay:toggle',
@@ -230,6 +236,14 @@ export interface ElectronAPI {
     updatePresence: (activity: DiscordPresenceActivity) => Promise<void>;
     clearPresence: () => Promise<void>;
   };
+  auth: {
+    getState: () => Promise<AuthState>;
+    loginDiscord: () => Promise<void>;
+    logout: () => Promise<void>;
+    refreshToken: () => Promise<AuthState>;
+    onLoginSuccess: (callback: (user: DiscordUser) => void) => () => void;
+    onLoginError: (callback: (message: string) => void) => () => void;
+  };
   overlay: {
     show: () => Promise<{ success: boolean }>;
     hide: () => Promise<{ success: boolean }>;
@@ -358,6 +372,14 @@ const electronAPI: ElectronAPI = {
     updatePresence: (activity: DiscordPresenceActivity) =>
       ipcRenderer.invoke('discord-rpc:update-presence', activity) as Promise<void>,
     clearPresence: () => ipcRenderer.invoke('discord-rpc:clear-presence') as Promise<void>,
+  },
+  auth: {
+    getState: () => ipcRenderer.invoke('auth:get-state') as Promise<AuthState>,
+    loginDiscord: () => ipcRenderer.invoke('auth:login-discord') as Promise<void>,
+    logout: () => ipcRenderer.invoke('auth:logout') as Promise<void>,
+    refreshToken: () => ipcRenderer.invoke('auth:refresh-token') as Promise<AuthState>,
+    onLoginSuccess: createIpcListener<DiscordUser>('auth:login-success'),
+    onLoginError: createIpcListener<string>('auth:login-error'),
   },
   overlay: {
     show: () => ipcRenderer.invoke('overlay:show'),

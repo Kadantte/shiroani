@@ -41,6 +41,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.mascotPosition',
   // Discord RPC settings
   'discord-rpc-settings',
+  // Discord auth (encrypted tokens)
+  'discord-auth',
   // Browser tab persistence (renderer saves/loads tabs directly)
   'browser-tabs',
   // Quick access sites and frequent visits
