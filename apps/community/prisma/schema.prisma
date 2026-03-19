@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────
+
+enum ChatRoomType {
+  PUBLIC
+  PRIVATE
+  WATCH_PARTY
+}
+
+enum ChatRoomRole {
+  MEMBER
+  MODERATOR
+  OWNER
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  IMAGE
+}
+
+enum WatchPartyStatus {
+  WAITING
+  WATCHING
+  PAUSED
+  ENDED
+}
+
+// ─── Phase 1: Foundation + Auth ──────────────────────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  discordId   String   @unique @map("discord_id")
+  username    String
+  globalName  String?  @map("global_name")
+  avatar      String?
+  banner      String?
+  accentColor Int?     @map("accent_color")
+  locale      String?
+  premiumType Int?     @map("premium_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  discordToken  DiscordToken?
+  ownedRooms    ChatRoom[]       @relation("RoomCreator")
+  memberships   ChatRoomMember[]
+  messages      ChatMessage[]
+  hostedParties WatchPartyRoom[]
+
+  @@map("users")
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  expiresAt        DateTime  @map("expires_at")
+  userAgent        String?   @map("user_agent")
+  ipAddress        String?   @map("ip_address")
+  lastActiveAt     DateTime  @default(now()) @map("last_active_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  revokedAt        DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model DiscordToken {
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
+  accessTokenEncrypted  String   @map("access_token_encrypted")
+  refreshTokenEncrypted String   @map("refresh_token_encrypted")
+  expiresAt             DateTime @map("expires_at")
+  scopes                String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("discord_tokens")
+}
+
+// ─── Phase 2: Watch Party + Chat ─────────────────────────────────────
+
+model ChatRoom {
+  id         String       @id @default(cuid())
+  name       String
+  type       ChatRoomType @default(PUBLIC)
+  maxMembers Int?         @map("max_members")
+  createdBy  String       @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  creator    User             @relation("RoomCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members    ChatRoomMember[]
+  messages   ChatMessage[]
+  watchParty WatchPartyRoom?
+
+  @@index([type])
+  @@index([createdBy])
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  id     String       @id @default(cuid())
+  roomId String       @map("room_id")
+  userId String       @map("user_id")
+  role   ChatRoomRole @default(MEMBER)
+
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("chat_room_members")
+}
+
+model ChatMessage {
+  id       String      @id @default(cuid())
+  roomId   String      @map("room_id")
+  senderId String      @map("sender_id")
+  content  String
+  type     MessageType @default(TEXT)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  editedAt  DateTime? @map("edited_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt, id])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+model WatchPartyRoom {
+  id       String           @id @default(cuid())
+  roomId   String           @unique @map("room_id")
+  hostId   String           @map("host_id")
+  roomCode String           @unique @map("room_code")
+  videoUrl String?          @map("video_url")
+  status   WatchPartyStatus @default(WAITING)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  endedAt   DateTime? @map("ended_at")
+
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  host User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([hostId])
+  @@index([status])
+  @@map("watch_party_rooms")
+}
