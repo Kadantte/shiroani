@@ -389,6 +389,10 @@ export const useWatchPartyStore = create<WatchPartyStore>()(
             set({ connectionStatus: 'reconnecting' }, undefined, 'watchParty/reconnecting');
           });
 
+          socket.io.on('reconnect_failed', () => {
+            set({ connectionStatus: 'disconnected' }, undefined, 'watchParty/reconnectFailed');
+          });
+
           socket.on(
             WatchPartyEvents.ROOM_STATE,
             (payload: { room: WatchPartyRoom; members: WatchPartyMember[] }) => {

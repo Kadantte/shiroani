@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, LogIn, Users, Crown, Loader2 } from 'lucide-react';
+import { Plus, LogIn, Users, Crown, Loader2, WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useWatchPartyStore } from '@/stores/useWatchPartyStore';
@@ -68,6 +68,7 @@ export function WatchPartyLobby() {
   const { isAuthenticated } = useAuthStore();
   const publicRooms = useWatchPartyStore(s => s.publicRooms);
   const error = useWatchPartyStore(s => s.error);
+  const connectionStatus = useWatchPartyStore(s => s.connectionStatus);
   const fetchPublicRooms = useWatchPartyStore(s => s.fetchPublicRooms);
   const joinRoom = useWatchPartyStore(s => s.joinRoom);
 
@@ -107,12 +108,35 @@ export function WatchPartyLobby() {
     );
   }
 
+  const isDisconnected = connectionStatus !== 'connected';
+
   return (
     <div className="flex flex-col h-full">
+      {/* Connection status banner */}
+      {isDisconnected && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border-b border-destructive/20 shrink-0">
+          {connectionStatus === 'reconnecting' ? (
+            <RefreshCw className="w-3.5 h-3.5 text-yellow-500 animate-spin shrink-0" />
+          ) : (
+            <WifiOff className="w-3.5 h-3.5 text-destructive shrink-0" />
+          )}
+          <p className="text-xs text-muted-foreground">
+            {connectionStatus === 'reconnecting'
+              ? 'Łączenie z serwerem...'
+              : 'Serwer społeczności niedostępny'}
+          </p>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="p-3 space-y-2.5 border-b border-border/40 shrink-0">
         {/* Create room */}
-        <Button className="w-full" size="sm" onClick={() => setIsCreateOpen(true)}>
+        <Button
+          className="w-full"
+          size="sm"
+          onClick={() => setIsCreateOpen(true)}
+          disabled={isDisconnected}
+        >
           <Plus className="w-4 h-4" />
           Utwórz pokój
         </Button>
@@ -133,7 +157,7 @@ export function WatchPartyLobby() {
             size="sm"
             className="h-8 shrink-0"
             onClick={handleJoinByCode}
-            disabled={!joinCode.trim() || isJoining}
+            disabled={!joinCode.trim() || isJoining || isDisconnected}
           >
             {isJoining ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Dołącz'}
           </Button>

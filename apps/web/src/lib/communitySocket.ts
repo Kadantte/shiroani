@@ -25,11 +25,11 @@ export function initializeCommunitySocket(): Socket {
   _socket = io(COMMUNITY_URL, {
     autoConnect: false,
     reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 10000,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
+    reconnectionDelayMax: 15000,
     randomizationFactor: 0.5,
-    timeout: 20000,
+    timeout: 10000,
     transports: ['websocket', 'polling'],
   });
 
