@@ -31,8 +31,8 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       "font-src 'self' data:",
       // Allow connections to localhost (WebSocket and API) and AniList GraphQL
       isDev
-        ? `connect-src 'self' http://localhost:${VITE_DEV_PORT} ws://localhost:${VITE_DEV_PORT} http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co`
-        : `connect-src 'self' http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co`,
+        ? `connect-src 'self' http://localhost:${VITE_DEV_PORT} ws://localhost:${VITE_DEV_PORT} http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co ws://localhost:3000 http://localhost:3000`
+        : `connect-src 'self' http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co wss://api.shiroani.app https://api.shiroani.app`,
       // Restrict object/embed sources
       "object-src 'none'",
       // Allow frames from same origin only (webview tags use their own session)
