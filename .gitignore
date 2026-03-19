@@ -4,6 +4,7 @@ node_modules/
 
 # Build outputs
 dist/
+**/src/generated/
 dist-electron/
 release/
 out/
