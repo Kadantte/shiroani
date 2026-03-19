@@ -67,6 +67,8 @@ export class WatchPartyGateway implements OnGatewayDisconnect {
         client.join(`party:${room.roomCode}`);
         client.data.roomCode = room.roomCode;
         client.data.userId = payload.user.id;
+        client.data.username = payload.user.username;
+        client.data.avatar = payload.user.avatar ?? null;
 
         return { room, members };
       },
@@ -88,6 +90,8 @@ export class WatchPartyGateway implements OnGatewayDisconnect {
         client.join(`party:${payload.roomCode}`);
         client.data.roomCode = payload.roomCode;
         client.data.userId = payload.user.id;
+        client.data.username = payload.user.username;
+        client.data.avatar = payload.user.avatar ?? null;
 
         // Broadcast to other members in the room
         const newMember = members.find(m => m.userId === payload.user.id);

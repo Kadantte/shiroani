@@ -169,13 +169,13 @@ export function WatchPartyRoomView() {
         <div className="flex-1" />
 
         {/* Reaction buttons */}
-        <div className="flex gap-0.5">
+        <div className="flex gap-0.5 shrink-0">
           {REACTIONS.map(({ emoji, label }) => (
             <button
               key={label}
               type="button"
               onClick={() => sendReaction(emoji)}
-              className="w-7 h-7 flex items-center justify-center rounded-md text-sm hover:bg-accent transition-colors"
+              className="w-6 h-7 flex items-center justify-center rounded text-sm hover:bg-accent transition-colors"
               title={label}
             >
               {emoji}
