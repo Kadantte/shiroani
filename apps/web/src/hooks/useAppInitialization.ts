@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createLogger } from '@shiroani/shared';
 import { initializeSocket, connectSocket } from '@/lib/socket';
+import { initializeCommunitySocket, connectCommunitySocket } from '@/lib/communitySocket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useFeedStore } from '@/stores/useFeedStore';
@@ -8,6 +9,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useWatchPartyStore } from '@/stores/useWatchPartyStore';
 
 const logger = createLogger('AppInit');
 
@@ -30,6 +32,8 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
   const initUpdateListeners = useUpdateStore(s => s.initListeners);
   const initAuthListeners = useAuthStore(s => s.initListeners);
   const cleanupAuthListeners = useAuthStore(s => s.cleanupListeners);
+  const initWatchPartyListeners = useWatchPartyStore(s => s.initListeners);
+  const cleanupWatchPartyListeners = useWatchPartyStore(s => s.cleanupListeners);
 
   const initAllListeners = useCallback(() => {
     initConnectionListeners();
@@ -37,12 +41,14 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     initLibraryListeners();
     initFeedListeners();
     initAuthListeners();
+    initWatchPartyListeners();
   }, [
     initConnectionListeners,
     initScheduleListeners,
     initLibraryListeners,
     initFeedListeners,
     initAuthListeners,
+    initWatchPartyListeners,
   ]);
 
   const cleanupAllListeners = useCallback(() => {
@@ -51,12 +57,14 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     cleanupLibraryListeners();
     cleanupFeedListeners();
     cleanupAuthListeners();
+    cleanupWatchPartyListeners();
   }, [
     cleanupConnectionListeners,
     cleanupScheduleListeners,
     cleanupLibraryListeners,
     cleanupFeedListeners,
     cleanupAuthListeners,
+    cleanupWatchPartyListeners,
   ]);
 
   useEffect(() => {
@@ -104,6 +112,14 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
           await useAuthStore.getState().loadAuthState();
         } catch {
           // Non-critical — user can log in later
+        }
+
+        // Initialize community socket (non-blocking, for watch party)
+        try {
+          initializeCommunitySocket();
+          await connectCommunitySocket();
+        } catch {
+          // Non-critical — watch party will show disconnected state
         }
 
         setReady(true);
