@@ -76,7 +76,8 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
     show: false,
     skipTaskbar: true,
     resizable: false,
-    focusable: true,
+    focusable: false,
+    fullscreenable: false,
     alwaysOnTop: true,
     webPreferences: {
       preload: getMascotPreloadPath(),
@@ -94,7 +95,6 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
     // Keep the mascot on regular desktops only. Showing it above fullscreen
     // Spaces on macOS can hijack focus and bounce users back into the app.
     visibleOnFullScreen: SHOW_ON_FULLSCREEN_SPACES,
-    skipTransformProcessType: true,
   });
 
   // Hide from Mission Control
@@ -125,12 +125,7 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
 
       // Apply tray-only visibility mode on startup
       const mode = getMascotVisibilityMode();
-      if (
-        mode === 'tray-only' &&
-        mainWindow &&
-        mainWindow.isVisible() &&
-        !mainWindow.isMinimized()
-      ) {
+      if (mode === 'tray-only' && (!mainWindow || !mainWindow.isMinimized())) {
         mascotWindow!.hide();
         mascotWindowVisible = false;
       }

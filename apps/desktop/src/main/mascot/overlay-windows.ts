@@ -151,12 +151,7 @@ export function createWin32Overlay(
       if (locked) addon!.setPositionLocked(true);
 
       const mode = getMascotVisibilityMode();
-      if (
-        mode === 'tray-only' &&
-        mainWindow &&
-        mainWindow.isVisible() &&
-        !mainWindow.isMinimized()
-      ) {
+      if (mode === 'tray-only' && (!mainWindow || !mainWindow.isMinimized())) {
         addon!.setVisible(false);
       }
     }

@@ -27,6 +27,7 @@ import {
   destroyMascotOverlay,
   setMainWindow,
   updateMascotVisibilityForWindowState,
+  type MascotWindowState,
 } from './mascot/overlay';
 import {
   createContextMenuWindow,
@@ -111,6 +112,10 @@ async function shutdownNestApp(): Promise<void> {
 
 /** Set up services and event listeners that depend on the main window */
 function setupWindowDependentServices(win: BrowserWindow): void {
+  const syncMascotVisibility = (state: MascotWindowState): void => {
+    updateMascotVisibilityForWindowState(state);
+  };
+
   initializeAutoUpdater(win, process.env.NODE_ENV === 'development');
   if (nestApp) {
     initializeNotificationService(win, nestApp);
@@ -120,10 +125,12 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   setMainWindow(win);
 
   // Wire window state changes to mascot visibility mode
-  win.on('minimize', () => updateMascotVisibilityForWindowState(false));
-  win.on('restore', () => updateMascotVisibilityForWindowState(true));
-  win.on('show', () => updateMascotVisibilityForWindowState(true));
-  win.on('hide', () => updateMascotVisibilityForWindowState(false));
+  win.on('minimize', () => syncMascotVisibility('minimized'));
+  win.on('restore', () => syncMascotVisibility('visible'));
+  win.on('show', () => syncMascotVisibility('visible'));
+  win.on('hide', () => syncMascotVisibility('hidden'));
+  win.on('enter-full-screen', () => syncMascotVisibility('visible'));
+  win.on('leave-full-screen', () => syncMascotVisibility('visible'));
 
   // Discord RPC idle detection on window blur/focus
   win.on('blur', () => onWindowBlur());

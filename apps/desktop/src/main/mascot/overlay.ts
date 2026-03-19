@@ -43,6 +43,7 @@ import {
 // ---------------------------------------------------------------------------
 
 export type MascotPose = 'idle' | 'wave' | 'sleep';
+export type MascotWindowState = 'visible' | 'hidden' | 'minimized';
 
 const POSE_FILES: Record<MascotPose, string> = {
   idle: 'chibi_base.png',
@@ -343,12 +344,13 @@ export function setMascotAnimation(
 /**
  * Update mascot visibility based on current window state and visibility mode.
  */
-export function updateMascotVisibilityForWindowState(windowVisible: boolean): void {
+export function updateMascotVisibilityForWindowState(windowState: MascotWindowState): void {
   if (process.platform === 'win32' && !hasWin32Addon()) return;
   if (process.platform === 'darwin' && !hasDarwinWindow()) return;
   if (!isMascotEnabled()) return;
 
   const mode = getMascotVisibilityMode();
+  const windowVisible = windowState === 'visible';
 
   // When the main window becomes visible and mascot is actually shown, greet with wave
   if (windowVisible && currentPose !== 'wave' && mode === 'always') {
@@ -362,12 +364,9 @@ export function updateMascotVisibilityForWindowState(windowVisible: boolean): vo
 
   if (mode === 'always') return;
 
-  // "tray-only" mode: show mascot when window is hidden/minimized, hide when visible
-  if (windowVisible) {
-    setMascotVisible(false);
-  } else {
-    setMascotVisible(true);
-  }
+  // "tray-only" mode should match the settings copy exactly:
+  // show the mascot only when the main window is minimized.
+  setMascotVisible(windowState === 'minimized');
 }
 
 /**
@@ -385,13 +384,9 @@ export function applyMascotVisibilityMode(mode: 'always' | 'tray-only'): void {
   if (mode === 'always') {
     setMascotVisible(true);
   } else {
-    // tray-only: show mascot only when main window is hidden/minimized
-    const windowVisible =
-      mainWindow !== null &&
-      !mainWindow.isDestroyed() &&
-      mainWindow.isVisible() &&
-      !mainWindow.isMinimized();
-    setMascotVisible(!windowVisible);
+    const isMinimized =
+      mainWindow !== null && !mainWindow.isDestroyed() && mainWindow.isMinimized();
+    setMascotVisible(isMinimized);
   }
 }
 
