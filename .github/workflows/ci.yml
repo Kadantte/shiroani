@@ -22,10 +22,11 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      code: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.desktop == 'true' || steps.filter.outputs.bot == 'true' }}
+      code: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.desktop == 'true' || steps.filter.outputs.bot == 'true' || steps.filter.outputs.community == 'true' }}
       web: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' }}
       desktop: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.desktop == 'true' }}
       bot: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.bot == 'true' }}
+      community: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.community == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -53,6 +54,8 @@ jobs:
               - 'apps/desktop/**'
             bot:
               - 'apps/bot/**'
+            community:
+              - 'apps/community/**'
 
   lint:
     name: Lint
@@ -102,8 +105,10 @@ jobs:
       - name: Build shared packages
         run: pnpm build:packages
 
-      - name: Generate Prisma client
-        run: pnpm --filter @shiroani/bot run db:generate
+      - name: Generate Prisma clients
+        run: |
+          pnpm --filter @shiroani/bot run db:generate
+          pnpm --filter @shiroani/community run db:generate
 
       - name: Type check
         run: pnpm typecheck
@@ -192,10 +197,40 @@ jobs:
       - name: Run bot tests
         run: pnpm --filter @shiroani/bot test
 
+  test-community:
+    name: Test Community
+    needs: [changes]
+    if: needs.changes.outputs.community == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Generate Prisma client
+        run: pnpm --filter @shiroani/community run db:generate
+
+      - name: Run community tests
+        run: pnpm --filter @shiroani/community test
+
   ci-result:
     name: CI Result
     if: always()
-    needs: [lint, typecheck, test-web, test-desktop, test-bot]
+    needs: [lint, typecheck, test-web, test-desktop, test-bot, test-community]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI outcome
