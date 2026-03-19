@@ -112,21 +112,13 @@ async function shutdownNestApp(): Promise<void> {
 
 /** Set up services and event listeners that depend on the main window */
 function setupWindowDependentServices(win: BrowserWindow): void {
-  const logMascotWindowState = (eventName: string): void => {
-    const appHidden = process.platform === 'darwin' ? app.isHidden() : false;
-    logger.info(
-      `[MascotDebug] window:${eventName} visible=${win.isVisible()} minimized=${win.isMinimized()} focused=${win.isFocused()} fullScreen=${win.isFullScreen()} appHidden=${appHidden}`
-    );
-  };
-
   const getMascotWindowState = (): MascotWindowState => {
     if (win.isMinimized()) return 'minimized';
     if (win.isVisible()) return 'visible';
     return 'hidden';
   };
 
-  const syncMascotVisibility = (eventName: string): void => {
-    logMascotWindowState(eventName);
+  const syncMascotVisibility = (): void => {
     updateMascotVisibilityForWindowState(getMascotWindowState());
   };
 
@@ -139,22 +131,16 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   setMainWindow(win);
 
   // Wire window state changes to mascot visibility mode
-  win.on('minimize', () => syncMascotVisibility('minimize'));
-  win.on('restore', () => syncMascotVisibility('restore'));
-  win.on('show', () => syncMascotVisibility('show'));
-  win.on('hide', () => syncMascotVisibility('hide'));
-  win.on('enter-full-screen', () => syncMascotVisibility('enter-full-screen'));
-  win.on('leave-full-screen', () => syncMascotVisibility('leave-full-screen'));
+  win.on('minimize', syncMascotVisibility);
+  win.on('restore', syncMascotVisibility);
+  win.on('show', syncMascotVisibility);
+  win.on('hide', syncMascotVisibility);
+  win.on('enter-full-screen', syncMascotVisibility);
+  win.on('leave-full-screen', syncMascotVisibility);
 
   // Discord RPC idle detection on window blur/focus
-  win.on('blur', () => {
-    logMascotWindowState('blur');
-    onWindowBlur();
-  });
-  win.on('focus', () => {
-    logMascotWindowState('focus');
-    onWindowFocus();
-  });
+  win.on('blur', () => onWindowBlur());
+  win.on('focus', () => onWindowFocus());
 }
 
 async function bootstrap(): Promise<void> {
@@ -175,6 +161,7 @@ async function bootstrap(): Promise<void> {
   await bootstrapNestApp();
   browserManager.init();
   mainWindow = await createMainWindow(browserManager);
+  setMainWindow(mainWindow);
 
   // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
   initializeDiscordRpc();
