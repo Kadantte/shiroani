@@ -19,6 +19,9 @@ export * from './types/feed';
 // System types
 export * from './types/system';
 
+// Auth types
+export * from './types/auth';
+
 // Utilities
 export * from './utils';
 
