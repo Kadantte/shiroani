@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { Rss, RefreshCw, Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,36 @@ import { CATEGORY_LABELS, LANGUAGE_LABELS } from './feed-constants';
 // Extract stable action references outside the component
 const { fetchItems, refreshFeeds, setCategoryFilter, setLanguageFilter } = useFeedStore.getState();
 
+type FeedViewState = 'loading' | 'error' | 'empty' | 'content';
+
+export function getFeedViewState({
+  itemsCount,
+  isLoading,
+  isRefreshing,
+  isBootstrapping,
+  error,
+}: {
+  itemsCount: number;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  isBootstrapping: boolean;
+  error: string | null;
+}): FeedViewState {
+  if (itemsCount === 0 && (isLoading || isRefreshing || isBootstrapping)) {
+    return 'loading';
+  }
+
+  if (error && itemsCount === 0) {
+    return 'error';
+  }
+
+  if (itemsCount === 0) {
+    return 'empty';
+  }
+
+  return 'content';
+}
+
 export function FeedView() {
   const items = useFeedStore(getFilteredItems);
   const isLoading = useFeedStore(s => s.isLoading);
@@ -21,7 +51,9 @@ export function FeedView() {
   const categoryFilter = useFeedStore(s => s.categoryFilter);
   const languageFilter = useFeedStore(s => s.languageFilter);
   const isRefreshing = useFeedStore(s => s.isRefreshing);
+  const isBootstrapping = useFeedStore(s => s.isBootstrapping);
   const lastRefreshNewCount = useFeedStore(s => s.lastRefreshNewCount);
+  const hasTriggeredVisibleBootstrap = useRef(false);
 
   const navigateToBrowser = useNavigateToBrowser();
 
@@ -45,6 +77,40 @@ export function FeedView() {
       return () => clearTimeout(timer);
     }
   }, [lastRefreshNewCount]);
+
+  useEffect(() => {
+    const canBootstrapVisibleFeed =
+      items.length === 0 &&
+      !isLoading &&
+      !isRefreshing &&
+      !isBootstrapping &&
+      !error &&
+      categoryFilter === 'all' &&
+      languageFilter === 'all';
+
+    if (!canBootstrapVisibleFeed || hasTriggeredVisibleBootstrap.current) {
+      return;
+    }
+
+    hasTriggeredVisibleBootstrap.current = true;
+    fetchItems(false, { bootstrapIfEmpty: true });
+  }, [
+    items.length,
+    isLoading,
+    isRefreshing,
+    isBootstrapping,
+    error,
+    categoryFilter,
+    languageFilter,
+  ]);
+
+  const viewState = getFeedViewState({
+    itemsCount: items.length,
+    isLoading,
+    isRefreshing,
+    isBootstrapping,
+    error,
+  });
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -74,7 +140,7 @@ export function FeedView() {
             variant="ghost"
             size="icon"
             className="w-8 h-8"
-            onClick={refreshFeeds}
+            onClick={() => refreshFeeds()}
             disabled={isRefreshing}
             tooltip="Odśwież źródła"
           >
@@ -134,9 +200,9 @@ export function FeedView() {
         aria-label="Feed aktualności"
         className="flex-1 overflow-y-auto scrollbar-thin"
       >
-        {isLoading && items.length === 0 ? (
+        {viewState === 'loading' ? (
           <FeedLoadingAnimation />
-        ) : error && items.length === 0 ? (
+        ) : viewState === 'error' ? (
           <div className="flex-1 flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
             <Rss className="w-10 h-10 text-destructive/60" />
             <p className="text-sm text-center max-w-xs">{error}</p>
@@ -144,7 +210,7 @@ export function FeedView() {
               Spróbuj ponownie
             </Button>
           </div>
-        ) : items.length === 0 ? (
+        ) : viewState === 'empty' ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground">
             <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center">
               <Inbox className="w-8 h-8 text-muted-foreground/40" />
@@ -159,7 +225,7 @@ export function FeedView() {
               variant="outline"
               size="sm"
               className="border-primary/20 text-primary hover:bg-primary/10"
-              onClick={refreshFeeds}
+              onClick={() => refreshFeeds()}
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
               Odśwież

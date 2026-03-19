@@ -144,3 +144,12 @@ export const BUILT_IN_THEMES: ReadonlySet<BuiltInTheme> = new Set<BuiltInTheme>(
   ...DARK_THEMES,
   ...LIGHT_THEMES,
 ]);
+
+/**
+ * Feed startup refresh preference stored in electron-store.
+ * When enabled, the app may refresh RSS sources automatically during startup.
+ */
+export const FEED_STARTUP_REFRESH_SETTING_KEY = 'settings.feedRefreshOnStartup';
+
+/** Default RSS startup refresh behavior */
+export const DEFAULT_FEED_STARTUP_REFRESH = false;

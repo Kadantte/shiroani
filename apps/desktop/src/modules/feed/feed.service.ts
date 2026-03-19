@@ -132,8 +132,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   });
 
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
-  private initialPollTimer: ReturnType<typeof setTimeout> | null = null;
   private isPolling = false;
+  private refreshAllPromise: Promise<number> | null = null;
 
   constructor(private readonly databaseService: DatabaseService) {
     logger.info('FeedService initialized');
@@ -145,10 +145,6 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy(): void {
-    if (this.initialPollTimer) {
-      clearTimeout(this.initialPollTimer);
-      this.initialPollTimer = null;
-    }
     if (this.pollingTimer) {
       clearInterval(this.pollingTimer);
       this.pollingTimer = null;
@@ -274,6 +270,21 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
 
   /** Refresh all enabled feeds. Returns the count of newly inserted items. */
   async refreshAllFeeds(): Promise<number> {
+    if (this.refreshAllPromise) {
+      logger.debug('Feed refresh already in progress, joining existing refresh');
+      return this.refreshAllPromise;
+    }
+
+    this.refreshAllPromise = this.runRefreshAllFeeds();
+
+    try {
+      return await this.refreshAllPromise;
+    } finally {
+      this.refreshAllPromise = null;
+    }
+  }
+
+  private async runRefreshAllFeeds(): Promise<number> {
     const db = this.databaseService.db;
     const sources = db
       .prepare('SELECT * FROM feed_sources WHERE enabled = 1')
@@ -454,17 +465,13 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
     return text;
   }
 
-  /** Start the background polling timer. Checks every 60 seconds. */
+  /** Start the background polling timer for already-fetched sources. */
   private startPolling(): void {
-    this.initialPollTimer = setTimeout(() => {
-      void this.runPollCycle('initial feed poll');
-    }, 5000);
-
     this.pollingTimer = setInterval(() => {
       void this.runPollCycle('feed poll');
     }, 60_000);
 
-    logger.info('Feed polling started (60s interval)');
+    logger.info('Feed polling started (60s interval for previously fetched sources)');
   }
 
   /** Run a single poll cycle, skipping if one is already in flight. */
@@ -482,6 +489,11 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
 
   /** Find sources that are due for a refresh and fetch them. */
   private async pollDueFeeds(): Promise<void> {
+    if (this.refreshAllPromise) {
+      logger.debug('Skipping due-feed poll because a full refresh is already in progress');
+      return;
+    }
+
     const db = this.databaseService.db;
 
     const dueSources = db
@@ -489,8 +501,8 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
         `SELECT * FROM feed_sources
          WHERE enabled = 1
            AND (
-             last_fetched_at IS NULL
-             OR (julianday('now') - julianday(last_fetched_at)) * 24 * 60 >= poll_interval_minutes
+             last_fetched_at IS NOT NULL
+             AND (julianday('now') - julianday(last_fetched_at)) * 24 * 60 >= poll_interval_minutes
            )
          ORDER BY last_fetched_at ASC`
       )

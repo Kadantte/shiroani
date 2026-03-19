@@ -5,16 +5,17 @@
 export function FeedLoadingAnimation() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center py-20 gap-6 select-none">
-      <div className="relative w-48 h-48">
+      <div className="relative w-56 h-56">
+        <div className="absolute inset-6 rounded-full bg-primary/12 blur-3xl" aria-hidden="true" />
         <svg viewBox="0 0 200 200" className="w-full h-full" aria-hidden="true">
           <defs>
             <linearGradient id="feed-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.45" />
             </linearGradient>
             <linearGradient id="card-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05" />
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.08" />
             </linearGradient>
           </defs>
 
@@ -27,7 +28,7 @@ export function FeedLoadingAnimation() {
               r="20"
               fill="none"
               stroke="hsl(var(--primary))"
-              strokeWidth="1.5"
+              strokeWidth="2"
               opacity="0"
             >
               <animate
@@ -40,7 +41,7 @@ export function FeedLoadingAnimation() {
               />
               <animate
                 attributeName="opacity"
-                values="0.5;0.2;0"
+                values="0.75;0.32;0"
                 dur="2.4s"
                 begin={`${i * 0.8}s`}
                 repeatCount="indefinite"
@@ -49,8 +50,8 @@ export function FeedLoadingAnimation() {
           ))}
 
           {/* RSS Icon - dot */}
-          <circle cx="82" cy="128" r="6" fill="url(#feed-grad)">
-            <animate attributeName="r" values="6;7;6" dur="2s" repeatCount="indefinite" />
+          <circle cx="82" cy="128" r="7" fill="url(#feed-grad)">
+            <animate attributeName="r" values="7;8.2;7" dur="2s" repeatCount="indefinite" />
           </circle>
 
           {/* RSS Icon - inner arc */}
@@ -58,12 +59,12 @@ export function FeedLoadingAnimation() {
             d="M 78 108 A 26 26 0 0 1 104 134"
             fill="none"
             stroke="url(#feed-grad)"
-            strokeWidth="5"
+            strokeWidth="5.5"
             strokeLinecap="round"
           >
             <animate
               attributeName="stroke-opacity"
-              values="0.4;0.9;0.4"
+              values="0.55;1;0.55"
               dur="2s"
               begin="0.3s"
               repeatCount="indefinite"
@@ -75,12 +76,12 @@ export function FeedLoadingAnimation() {
             d="M 78 90 A 44 44 0 0 1 122 134"
             fill="none"
             stroke="url(#feed-grad)"
-            strokeWidth="5"
+            strokeWidth="5.5"
             strokeLinecap="round"
           >
             <animate
               attributeName="stroke-opacity"
-              values="0.3;0.8;0.3"
+              values="0.45;0.92;0.45"
               dur="2s"
               begin="0.6s"
               repeatCount="indefinite"
@@ -104,8 +105,8 @@ export function FeedLoadingAnimation() {
               rx="4"
               fill="url(#card-grad)"
               stroke="hsl(var(--primary))"
-              strokeWidth="0.5"
-              strokeOpacity="0.2"
+              strokeWidth="0.75"
+              strokeOpacity="0.35"
             />
             <rect
               x="142"
@@ -114,7 +115,7 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.15"
+              fillOpacity="0.22"
             />
             <rect
               x="142"
@@ -123,7 +124,7 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.1"
+              fillOpacity="0.18"
             />
             <rect
               x="142"
@@ -132,11 +133,11 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.08"
+              fillOpacity="0.14"
             />
             <animate
               attributeName="opacity"
-              values="0;0.8;0.8;0"
+              values="0;0.92;0.92;0"
               dur="4s"
               repeatCount="indefinite"
             />
@@ -160,8 +161,8 @@ export function FeedLoadingAnimation() {
               rx="4"
               fill="url(#card-grad)"
               stroke="hsl(var(--primary))"
-              strokeWidth="0.5"
-              strokeOpacity="0.2"
+              strokeWidth="0.75"
+              strokeOpacity="0.35"
             />
             <rect
               x="26"
@@ -170,7 +171,7 @@ export function FeedLoadingAnimation() {
               height="8"
               rx="2"
               fill="hsl(var(--primary))"
-              fillOpacity="0.12"
+              fillOpacity="0.2"
             />
             <rect
               x="26"
@@ -179,7 +180,7 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.1"
+              fillOpacity="0.18"
             />
             <rect
               x="26"
@@ -188,11 +189,11 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.08"
+              fillOpacity="0.14"
             />
             <animate
               attributeName="opacity"
-              values="0;0.7;0.7;0"
+              values="0;0.84;0.84;0"
               dur="5s"
               begin="1.2s"
               repeatCount="indefinite"
@@ -217,8 +218,8 @@ export function FeedLoadingAnimation() {
               rx="4"
               fill="url(#card-grad)"
               stroke="hsl(var(--primary))"
-              strokeWidth="0.5"
-              strokeOpacity="0.2"
+              strokeWidth="0.75"
+              strokeOpacity="0.35"
             />
             <rect
               x="152"
@@ -227,7 +228,7 @@ export function FeedLoadingAnimation() {
               height="6"
               rx="1.5"
               fill="hsl(var(--primary))"
-              fillOpacity="0.12"
+              fillOpacity="0.2"
             />
             <rect
               x="152"
@@ -236,7 +237,7 @@ export function FeedLoadingAnimation() {
               height="2"
               rx="1"
               fill="hsl(var(--primary))"
-              fillOpacity="0.1"
+              fillOpacity="0.18"
             />
             <rect
               x="152"
@@ -245,11 +246,11 @@ export function FeedLoadingAnimation() {
               height="1.5"
               rx="0.75"
               fill="hsl(var(--primary))"
-              fillOpacity="0.08"
+              fillOpacity="0.14"
             />
             <animate
               attributeName="opacity"
-              values="0;0.6;0.6;0"
+              values="0;0.8;0.8;0"
               dur="4.5s"
               begin="0.6s"
               repeatCount="indefinite"
@@ -263,17 +264,17 @@ export function FeedLoadingAnimation() {
             { cx: 165, cy: 85, delay: '0.8s' },
             { cx: 60, cy: 35, delay: '2.1s' },
           ].map((s, i) => (
-            <circle key={`sparkle-${i}`} cx={s.cx} cy={s.cy} r="1.5" fill="hsl(var(--primary))">
+            <circle key={`sparkle-${i}`} cx={s.cx} cy={s.cy} r="1.8" fill="hsl(var(--primary))">
               <animate
                 attributeName="opacity"
-                values="0;0.8;0"
+                values="0;1;0"
                 dur="2s"
                 begin={s.delay}
                 repeatCount="indefinite"
               />
               <animate
                 attributeName="r"
-                values="0.5;2;0.5"
+                values="0.8;2.4;0.8"
                 dur="2s"
                 begin={s.delay}
                 repeatCount="indefinite"
@@ -284,13 +285,13 @@ export function FeedLoadingAnimation() {
       </div>
 
       {/* Loading text with animated dots */}
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground/60">
-        <span>Pobieranie aktualności</span>
+      <div className="flex items-center gap-1.5 text-sm text-foreground/75">
+        <span className="font-medium tracking-tight">Pobieranie aktualności</span>
         <span className="inline-flex w-6">
           {[0, 1, 2].map(i => (
             <span
               key={i}
-              className="inline-block w-1 h-1 rounded-full bg-primary/50"
+              className="inline-block w-1.5 h-1.5 rounded-full bg-primary/70"
               style={{
                 animation: 'feed-dot 1.4s infinite',
                 animationDelay: `${i * 0.2}s`,
