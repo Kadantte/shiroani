@@ -377,6 +377,11 @@ export const useWatchPartyStore = create<WatchPartyStore>()(
         try {
           const socket = getCommunitySocket();
 
+          // Sync current connection state in case socket connected before listeners
+          if (socket.connected) {
+            set({ connectionStatus: 'connected' }, undefined, 'watchParty/alreadyConnected');
+          }
+
           socket.on('connect', () => {
             set({ connectionStatus: 'connected' }, undefined, 'watchParty/connected');
           });
