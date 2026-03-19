@@ -22,8 +22,12 @@ function getAvatarUrl(userId: string, avatarHash: string | null, size = 32): str
   if (avatarHash) {
     return `${DISCORD_CDN}/avatars/${userId}/${avatarHash}.png?size=${size}`;
   }
-  const index = Number(BigInt(userId) >> 22n) % 6;
-  return `${DISCORD_CDN}/embed/avatars/${index}.png?size=${size}`;
+  try {
+    const index = Number(BigInt(userId) >> 22n) % 6;
+    return `${DISCORD_CDN}/embed/avatars/${index}.png?size=${size}`;
+  } catch {
+    return `${DISCORD_CDN}/embed/avatars/0.png?size=${size}`;
+  }
 }
 
 function MemberAvatar({ member }: { member: WatchPartyMember }) {
