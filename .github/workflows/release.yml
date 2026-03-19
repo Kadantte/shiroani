@@ -40,9 +40,9 @@ jobs:
             echo "channel=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Update package.json versions
+      - name: Sync package.json versions for tag
         shell: bash
-        run: ./scripts/bump-version.sh "${{ steps.version.outputs.version }}"
+        run: ./scripts/set-version-ci.sh "${{ steps.version.outputs.version }}"
 
       - uses: pnpm/action-setup@v4
 
