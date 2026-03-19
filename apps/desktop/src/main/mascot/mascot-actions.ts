@@ -19,8 +19,20 @@ export function registerVisibilitySetter(fn: SetVisibleFn): void {
  * Shared helper for overlay actions that need to bring the app forward.
  */
 function focusMainWindow(mainWindow: BrowserWindow | null): void {
-  mainWindow?.show();
-  mainWindow?.focus();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  if (process.platform === 'darwin') {
+    if (app.isHidden()) {
+      app.show();
+    }
+    app.focus({ steal: true });
+  }
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.moveTop();
+  mainWindow.focus();
 }
 
 /**

@@ -36,6 +36,17 @@ let mainWindowRef: BrowserWindow | null = null;
 let onMenuSelect: MenuSelectHandler | null = null;
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
+function hideContextMenuImmediately(): void {
+  if (!menuWindow || menuWindow.isDestroyed()) return;
+
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+
+  menuWindow.hide();
+}
+
 export function isContextMenuVisible(): boolean {
   return menuWindow !== null && !menuWindow.isDestroyed() && menuWindow.isVisible();
 }
@@ -96,9 +107,10 @@ export function createContextMenuWindow(): void {
 
   ipcMain.removeAllListeners('menu:select');
   ipcMain.on('menu:select', (_event, action: string) => {
-    hideContextMenu();
-    if (onMenuSelect) {
-      onMenuSelect(action);
+    hideContextMenuImmediately();
+    const handler = onMenuSelect;
+    if (handler) {
+      setTimeout(() => handler(action), 0);
     }
   });
 

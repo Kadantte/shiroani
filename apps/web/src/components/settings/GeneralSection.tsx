@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Settings, Power } from 'lucide-react';
+import { Settings, Power, Rss } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SettingsCard } from '@/components/settings/SettingsCard';
+import { DEFAULT_FEED_STARTUP_REFRESH, FEED_STARTUP_REFRESH_SETTING_KEY } from '@shiroani/shared';
 
 export function GeneralSection() {
   const [autoLaunch, setAutoLaunch] = useState(false);
+  const [feedRefreshOnStartup, setFeedRefreshOnStartup] = useState(DEFAULT_FEED_STARTUP_REFRESH);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    window.electronAPI?.app?.getAutoLaunch().then(enabled => {
+    Promise.all([
+      window.electronAPI?.app?.getAutoLaunch(),
+      window.electronAPI?.store?.get<boolean>(FEED_STARTUP_REFRESH_SETTING_KEY),
+    ]).then(([enabled, startupRefresh]) => {
       if (!mounted) return;
-      setAutoLaunch(enabled);
+      setAutoLaunch(enabled ?? false);
+      setFeedRefreshOnStartup(startupRefresh ?? DEFAULT_FEED_STARTUP_REFRESH);
       setLoaded(true);
     });
     return () => {
@@ -25,6 +31,11 @@ export function GeneralSection() {
     if (actual !== undefined) {
       setAutoLaunch(actual);
     }
+  };
+
+  const handleFeedRefreshOnStartupChange = async (enabled: boolean) => {
+    setFeedRefreshOnStartup(enabled);
+    await window.electronAPI?.store?.set(FEED_STARTUP_REFRESH_SETTING_KEY, enabled);
   };
 
   if (!loaded) return null;
@@ -48,6 +59,29 @@ export function GeneralSection() {
             checked={autoLaunch}
             onCheckedChange={handleAutoLaunchChange}
             aria-labelledby="auto-launch-label"
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-start gap-2.5">
+            <Rss className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm text-foreground" id="feed-startup-refresh-label">
+                Odświeżaj RSS przy starcie aplikacji
+              </p>
+              <p className="text-2xs text-muted-foreground/70">
+                Gdy wyłączone, pierwszy fetch aktualności nastąpi dopiero po wejściu do widoku
+                Aktualności lub ręcznym odświeżeniu
+              </p>
+              <p className="text-2xs text-muted-foreground/55 mt-1">
+                Zmiana zacznie działać od następnego uruchomienia aplikacji
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={feedRefreshOnStartup}
+            onCheckedChange={handleFeedRefreshOnStartupChange}
+            aria-labelledby="feed-startup-refresh-label"
           />
         </div>
       </SettingsCard>

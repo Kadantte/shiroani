@@ -16,6 +16,7 @@ import {
   type FeedGetItemsResult,
   type FeedGetSourcesResult,
   FeedEvents,
+  FEED_STARTUP_REFRESH_SETTING_KEY,
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { createLogger } from '@shiroani/shared';
@@ -23,6 +24,17 @@ import { createLogger } from '@shiroani/shared';
 const logger = createLogger('FeedStore');
 
 const PAGE_SIZE = 30;
+const REFRESH_FALLBACK_MS = 35_000;
+
+async function isStartupRefreshEnabled(): Promise<boolean> {
+  try {
+    const value = await window.electronAPI?.store?.get<boolean>(FEED_STARTUP_REFRESH_SETTING_KEY);
+    return value === true;
+  } catch (error) {
+    logger.warn('Failed to read feed startup refresh setting:', error);
+    return false;
+  }
+}
 
 /**
  * Feed store state
@@ -36,6 +48,7 @@ interface FeedState extends SocketStoreSlice {
   languageFilter: FeedLanguage | 'all';
   sourceFilter: number | null;
   isRefreshing: boolean;
+  isBootstrapping: boolean;
   lastRefreshNewCount: number | null;
 }
 
@@ -43,9 +56,9 @@ interface FeedState extends SocketStoreSlice {
  * Feed store actions
  */
 interface FeedActions {
-  fetchItems: (loadMore?: boolean) => void;
+  fetchItems: (loadMore?: boolean, options?: { bootstrapIfEmpty?: boolean }) => void;
   fetchSources: () => void;
-  refreshFeeds: () => void;
+  refreshFeeds: (options?: { isBootstrap?: boolean }) => void;
   setCategoryFilter: (category: FeedCategory | 'all') => void;
   setLanguageFilter: (language: FeedLanguage | 'all') => void;
   setSourceFilter: (sourceId: number | null) => void;
@@ -60,20 +73,41 @@ export const useFeedStore = create<FeedStore>()(
   devtools(
     (set, get) => {
       const socketActions = createSocketActions<FeedStore>(set, 'feed');
+      let refreshFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-      const { initListeners, cleanupListeners } = createSocketListeners<FeedStore>(
-        get,
-        set,
-        'feed',
-        {
+      const clearRefreshFallback = () => {
+        if (refreshFallbackTimer) {
+          clearTimeout(refreshFallbackTimer);
+          refreshFallbackTimer = null;
+        }
+      };
+
+      const scheduleRefreshFallback = () => {
+        clearRefreshFallback();
+        refreshFallbackTimer = setTimeout(() => {
+          if (!get().isRefreshing) return;
+
+          logger.warn('Feed refresh completion event missing, falling back to a direct fetch');
+          set({ isRefreshing: false, isBootstrapping: false }, undefined, 'feed/refreshFallback');
+          get().fetchItems();
+        }, REFRESH_FALLBACK_MS);
+      };
+
+      const { initListeners, cleanupListeners: cleanupSocketListeners } =
+        createSocketListeners<FeedStore>(get, set, 'feed', {
           listeners: [
             {
               event: FeedEvents.NEW_ITEMS,
               handler: data => {
                 const { newItemsCount } = data as { newItemsCount: number };
+                clearRefreshFallback();
                 logger.info(`${newItemsCount} new feed items available`);
                 set(
-                  { isRefreshing: false, lastRefreshNewCount: newItemsCount },
+                  {
+                    isRefreshing: false,
+                    isBootstrapping: false,
+                    lastRefreshNewCount: newItemsCount,
+                  },
                   undefined,
                   'feed/refreshComplete'
                 );
@@ -83,11 +117,17 @@ export const useFeedStore = create<FeedStore>()(
             },
           ],
           onConnect: () => {
-            get().fetchItems();
             get().fetchSources();
+            void isStartupRefreshEnabled().then(enabled => {
+              get().fetchItems(false, { bootstrapIfEmpty: enabled });
+            });
           },
-        }
-      );
+        });
+
+      const cleanupListeners = () => {
+        clearRefreshFallback();
+        cleanupSocketListeners();
+      };
 
       return {
         // State
@@ -100,13 +140,14 @@ export const useFeedStore = create<FeedStore>()(
         languageFilter: 'all',
         sourceFilter: null,
         isRefreshing: false,
+        isBootstrapping: false,
         lastRefreshNewCount: null,
 
         // Socket actions
         ...socketActions,
 
         // Actions
-        fetchItems: (loadMore?: boolean) => {
+        fetchItems: (loadMore?: boolean, options?: { bootstrapIfEmpty?: boolean }) => {
           const { categoryFilter, languageFilter, sourceFilter, items, isLoading } = get();
 
           // Prevent duplicate requests
@@ -147,22 +188,38 @@ export const useFeedStore = create<FeedStore>()(
                   'feed/loadedMore'
                 );
               } else {
+                const shouldBootstrap =
+                  options?.bootstrapIfEmpty === true &&
+                  data.items.length === 0 &&
+                  categoryFilter === 'all' &&
+                  languageFilter === 'all' &&
+                  sourceFilter === null;
+
                 set(
                   {
                     items: data.items,
                     total: data.total,
                     hasMore: data.hasMore,
                     isLoading: false,
+                    isBootstrapping: shouldBootstrap,
                     error: null,
                   },
                   undefined,
                   'feed/result'
                 );
+
+                if (shouldBootstrap) {
+                  get().refreshFeeds({ isBootstrap: true });
+                }
               }
             })
             .catch((err: Error) => {
               logger.error('Failed to fetch feed items:', err.message);
-              set({ isLoading: false, error: err.message }, undefined, 'feed/fetchError');
+              set(
+                { isLoading: false, isBootstrapping: false, error: err.message },
+                undefined,
+                'feed/fetchError'
+              );
             });
         },
 
@@ -179,17 +236,37 @@ export const useFeedStore = create<FeedStore>()(
             });
         },
 
-        refreshFeeds: () => {
-          set({ isRefreshing: true, lastRefreshNewCount: null }, undefined, 'feed/refreshing');
+        refreshFeeds: (options?: { isBootstrap?: boolean }) => {
+          clearRefreshFallback();
+          set(
+            {
+              isRefreshing: true,
+              isBootstrapping: options?.isBootstrap ?? false,
+              lastRefreshNewCount: null,
+              error: null,
+            },
+            undefined,
+            'feed/refreshing'
+          );
           // The backend returns immediately (fire-and-forget) and broadcasts
           // FeedEvents.NEW_ITEMS when done, which the listener above handles.
-          emitWithErrorHandling<Record<string, never>, { started: boolean }>(
-            FeedEvents.REFRESH,
-            {}
-          ).catch((err: Error) => {
-            logger.error('Failed to start feed refresh:', err.message);
-            set({ isRefreshing: false }, undefined, 'feed/refreshError');
-          });
+          emitWithErrorHandling<Record<string, never>, { started: boolean }>(FeedEvents.REFRESH, {})
+            .then(() => {
+              scheduleRefreshFallback();
+            })
+            .catch((err: Error) => {
+              clearRefreshFallback();
+              logger.error('Failed to start feed refresh:', err.message);
+              set(
+                {
+                  isRefreshing: false,
+                  isBootstrapping: false,
+                  error: err.message,
+                },
+                undefined,
+                'feed/refreshError'
+              );
+            });
         },
 
         setCategoryFilter: (category: FeedCategory | 'all') => {

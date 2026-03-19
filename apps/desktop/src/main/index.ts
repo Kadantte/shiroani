@@ -25,13 +25,14 @@ import { store } from './store';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
-  setMainWindow,
+  setMainWindow as setMascotMainWindow,
   updateMascotVisibilityForWindowState,
+  type MascotWindowState,
 } from './mascot/overlay';
 import {
   createContextMenuWindow,
   destroyContextMenu,
-  setMainWindowRef,
+  setMainWindowRef as setContextMenuMainWindow,
 } from './mascot/context-menu';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
@@ -63,6 +64,15 @@ let nestApp: INestApplication | null = null;
 let isShuttingDown = false;
 let cleanupDone = false;
 const browserManager = new BrowserManager();
+
+function showMainWindow(win: BrowserWindow): void {
+  if (win.isDestroyed()) return;
+  if (win.isMinimized()) {
+    win.restore();
+  }
+  win.show();
+  win.focus();
+}
 
 async function bootstrapNestApp(): Promise<void> {
   try {
@@ -111,19 +121,40 @@ async function shutdownNestApp(): Promise<void> {
 
 /** Set up services and event listeners that depend on the main window */
 function setupWindowDependentServices(win: BrowserWindow): void {
+  const getMascotWindowState = (): MascotWindowState => {
+    if (win.isMinimized()) return 'minimized';
+    if (win.isVisible()) return 'visible';
+    return 'hidden';
+  };
+
+  const syncMascotVisibility = (): void => {
+    updateMascotVisibilityForWindowState(getMascotWindowState());
+  };
+
   initializeAutoUpdater(win, process.env.NODE_ENV === 'development');
   if (nestApp) {
     initializeNotificationService(win, nestApp);
   }
 
   // Set up mascot overlay with main window reference
-  setMainWindow(win);
+  setMascotMainWindow(win);
+
+  // On macOS the red traffic-light button should hide the app instead of
+  // destroying the main window. This keeps tray/mascot integrations stable.
+  win.on('close', event => {
+    if (process.platform === 'darwin' && !isShuttingDown) {
+      event.preventDefault();
+      win.hide();
+    }
+  });
 
   // Wire window state changes to mascot visibility mode
-  win.on('minimize', () => updateMascotVisibilityForWindowState(false));
-  win.on('restore', () => updateMascotVisibilityForWindowState(true));
-  win.on('show', () => updateMascotVisibilityForWindowState(true));
-  win.on('hide', () => updateMascotVisibilityForWindowState(false));
+  win.on('minimize', syncMascotVisibility);
+  win.on('restore', syncMascotVisibility);
+  win.on('show', syncMascotVisibility);
+  win.on('hide', syncMascotVisibility);
+  win.on('enter-full-screen', syncMascotVisibility);
+  win.on('leave-full-screen', syncMascotVisibility);
 
   // Discord RPC idle detection on window blur/focus
   win.on('blur', () => onWindowBlur());
@@ -148,6 +179,7 @@ async function bootstrap(): Promise<void> {
   await bootstrapNestApp();
   browserManager.init();
   mainWindow = await createMainWindow(browserManager);
+  setMascotMainWindow(mainWindow);
 
   // Initialize Discord Rich Presence (non-blocking, handles Discord not running)
   initializeDiscordRpc();
@@ -175,7 +207,7 @@ async function bootstrap(): Promise<void> {
 
   // Create the pre-hidden context menu window for the mascot overlay
   try {
-    setMainWindowRef(mainWindow);
+    setContextMenuMainWindow(mainWindow);
     createContextMenuWindow();
   } catch (error) {
     logger.warn('Failed to create context menu window:', error);
@@ -235,13 +267,16 @@ app.on('window-all-closed', () => {
 app.on('activate', async () => {
   logger.info('App activated');
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.show();
-  } else if (BrowserWindow.getAllWindows().length === 0) {
-    // NestJS is already running, clean up old IPC handlers and recreate the window
-    cleanupIpcHandlers();
-    mainWindow = await createMainWindow(browserManager);
-    setupWindowDependentServices(mainWindow);
+    showMainWindow(mainWindow);
+    return;
   }
+
+  // Recreate the main window even if auxiliary mascot/menu windows still exist.
+  cleanupIpcHandlers();
+  mainWindow = await createMainWindow(browserManager);
+  setContextMenuMainWindow(mainWindow);
+  setupWindowDependentServices(mainWindow);
+  showMainWindow(mainWindow);
 });
 
 app.on('before-quit', event => {

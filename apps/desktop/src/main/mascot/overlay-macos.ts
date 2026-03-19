@@ -15,6 +15,7 @@ import { registerMacIpcHandlers, cleanupMacIpcHandlers } from './overlay-ipc';
 
 let mascotWindow: BrowserWindow | null = null;
 let mascotWindowVisible = true;
+const SHOW_ON_FULLSCREEN_SPACES = false;
 
 function getMascotHtmlPath(): string {
   if (!app.isPackaged) {
@@ -31,6 +32,18 @@ function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
     : path.join(__dirname, '../../../resources/mascot');
+}
+
+function showMascotWindowInactive(): void {
+  if (!mascotWindow || mascotWindow.isDestroyed()) return;
+
+  if (typeof mascotWindow.showInactive === 'function') {
+    mascotWindow.showInactive();
+    return;
+  }
+
+  mascotWindow.show();
+  mascotWindow.blur();
 }
 
 export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
@@ -63,7 +76,8 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
     show: false,
     skipTaskbar: true,
     resizable: false,
-    focusable: true,
+    focusable: false,
+    fullscreenable: false,
     alwaysOnTop: true,
     webPreferences: {
       preload: getMascotPreloadPath(),
@@ -78,8 +92,9 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
 
   mascotWindow.setAlwaysOnTop(true, 'floating');
   mascotWindow.setVisibleOnAllWorkspaces(true, {
-    visibleOnFullScreen: true,
-    skipTransformProcessType: true,
+    // Keep the mascot on regular desktops only. Showing it above fullscreen
+    // Spaces on macOS can hijack focus and bounce users back into the app.
+    visibleOnFullScreen: SHOW_ON_FULLSCREEN_SPACES,
   });
 
   // Hide from Mission Control
@@ -104,18 +119,13 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
         positionLocked: isMascotPositionLocked(),
       });
 
-      // Use showInactive() to avoid stealing focus from the main window
-      mascotWindow!.showInactive();
+      // Show the mascot without activating the overlay window.
+      showMascotWindowInactive();
       mascotWindowVisible = true;
 
       // Apply tray-only visibility mode on startup
       const mode = getMascotVisibilityMode();
-      if (
-        mode === 'tray-only' &&
-        mainWindow &&
-        mainWindow.isVisible() &&
-        !mainWindow.isMinimized()
-      ) {
+      if (mode === 'tray-only' && (!mainWindow || !mainWindow.isMinimized())) {
         mascotWindow!.hide();
         mascotWindowVisible = false;
       }
@@ -131,8 +141,8 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
     () => mainWindow
   );
 
-  // Prevent the mascot from stealing focus from the main window.
-  // When the mascot is clicked, immediately return focus to the previously active window.
+  // Never force-focus the main window from the mascot.
+  // On macOS this can yank users back into ShiroAni or a fullscreen Space.
   mascotWindow.on('focus', () => {
     if (mascotWindow && !mascotWindow.isDestroyed()) {
       // Dismiss context menu if it's open when mascot gets focus
@@ -141,10 +151,6 @@ export function createMacOverlay(mainWindow: BrowserWindow | null): boolean {
         return;
       }
       mascotWindow.blur();
-      // If the main window was visible, refocus it
-      if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-        mainWindow.focus();
-      }
     }
   });
 
@@ -219,7 +225,7 @@ export function isDarwinVisible(): boolean {
 export function setDarwinVisible(visible: boolean): void {
   if (mascotWindow && !mascotWindow.isDestroyed()) {
     if (visible) {
-      mascotWindow.show();
+      showMascotWindowInactive();
     } else {
       mascotWindow.hide();
     }

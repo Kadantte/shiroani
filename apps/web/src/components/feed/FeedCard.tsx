@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { Rss, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@shiroani/shared';
@@ -18,12 +18,10 @@ function FeedImage({ src, alt }: { src: string; alt: string }) {
         src={src}
         alt={alt}
         loading="lazy"
+        decoding="async"
+        draggable={false}
         onError={handleError}
-        className={cn(
-          'relative w-full h-full object-cover',
-          'transition-transform duration-500 ease-out',
-          'group-hover:scale-105'
-        )}
+        className="relative w-full h-full object-cover"
       />
     </div>
   );
@@ -34,16 +32,15 @@ interface FeedCardProps {
   onOpenUrl: (url: string) => void;
 }
 
-export function FeedCard({ item, onOpenUrl }: FeedCardProps) {
+export const FeedCard = memo(function FeedCard({ item, onOpenUrl }: FeedCardProps) {
   const publishedTime = item.publishedAt ? timeAgo(item.publishedAt) : timeAgo(item.createdAt);
 
   return (
     <article
       className={cn(
-        'group rounded-xl border border-white/[0.06] bg-card/50 backdrop-blur-sm',
-        'overflow-hidden transition-all duration-300 ease-out',
-        'hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20',
-        'hover:-translate-y-0.5'
+        'group rounded-xl border border-white/[0.06] bg-card/50',
+        'overflow-hidden transition-colors duration-200',
+        'hover:border-white/[0.12] hover:bg-card/65 hover:shadow-md hover:shadow-black/10'
       )}
     >
       {/* Image */}
@@ -130,7 +127,7 @@ export function FeedCard({ item, onOpenUrl }: FeedCardProps) {
             className={cn(
               'p-1 rounded-md text-muted-foreground/40',
               'hover:text-primary hover:bg-primary/10',
-              'transition-colors duration-200',
+              'transition-all duration-150',
               'opacity-0 group-hover:opacity-100',
               'focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary'
             )}
@@ -142,4 +139,4 @@ export function FeedCard({ item, onOpenUrl }: FeedCardProps) {
       </div>
     </article>
   );
-}
+});
