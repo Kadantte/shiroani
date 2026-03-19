@@ -205,6 +205,7 @@ export const useSettingsStore = create<SettingsStore>()(
             return settingsInitPromise;
           }
 
+          const initialScale = get().uiFontScale;
           settingsInitPromise = (async () => {
             await useBackgroundStore.getState().restoreBackground();
 
@@ -215,6 +216,9 @@ export const useSettingsStore = create<SettingsStore>()(
               }
 
               const next = clampUIFontScale(persistedScale);
+              if (get().uiFontScale !== initialScale) {
+                return;
+              }
               set({ uiFontScale: next }, undefined, 'settings/initUIFontScale');
               applyUIFontScaleToDOM(next);
               persistUIFontScaleLocally(next);
