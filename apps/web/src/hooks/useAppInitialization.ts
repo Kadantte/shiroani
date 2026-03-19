@@ -118,6 +118,8 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
         try {
           initializeCommunitySocket();
           await connectCommunitySocket();
+          // Re-init watch party listeners now that community socket is available
+          useWatchPartyStore.getState().initListeners();
         } catch {
           // Non-critical — watch party will show disconnected state
         }
