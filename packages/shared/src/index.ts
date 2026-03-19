@@ -22,6 +22,9 @@ export * from './types/system';
 // Auth types
 export * from './types/auth';
 
+// Watch Party types
+export * from './types/watch-party';
+
 // Utilities
 export * from './utils';
 

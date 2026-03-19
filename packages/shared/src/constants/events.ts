@@ -99,6 +99,33 @@ export const FeedEvents = {
 } as const;
 
 // ============================================
+// Watch Party Events
+// ============================================
+export const WatchPartyEvents = {
+  // Client -> Server (requests)
+  CREATE: 'watch-party:create',
+  JOIN: 'watch-party:join',
+  LEAVE: 'watch-party:leave',
+  LIST_PUBLIC: 'watch-party:list-public',
+  SEND_MESSAGE: 'watch-party:send-message',
+  COUNTDOWN_START: 'watch-party:countdown-start',
+  READY_TOGGLE: 'watch-party:ready-toggle',
+  SIGNAL: 'watch-party:signal',
+
+  // Server -> Client (broadcasts)
+  ROOM_STATE: 'watch-party:room-state',
+  MEMBER_JOINED: 'watch-party:member-joined',
+  MEMBER_LEFT: 'watch-party:member-left',
+  MESSAGE: 'watch-party:message',
+  COUNTDOWN_TICK: 'watch-party:countdown-tick',
+  COUNTDOWN_DONE: 'watch-party:countdown-done',
+  MEMBER_READY: 'watch-party:member-ready',
+  REACTION: 'watch-party:reaction',
+  ROOM_CLOSED: 'watch-party:room-closed',
+  ERROR: 'watch-party:error',
+} as const;
+
+// ============================================
 // System Events
 // ============================================
 export const SystemEvents = {
