@@ -46,7 +46,7 @@ export function ThemeSwatch({
       </div>
       <span
         className={cn(
-          'text-2xs truncate max-w-[70px] transition-colors',
+          'text-xs truncate max-w-[70px] transition-colors',
           isActive ? 'text-primary font-medium' : 'text-muted-foreground'
         )}
       >

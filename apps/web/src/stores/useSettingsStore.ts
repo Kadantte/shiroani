@@ -1,10 +1,22 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Theme } from '@shiroani/shared';
-import { createLogger, isBuiltInTheme } from '@shiroani/shared';
+import {
+  createLogger,
+  DEFAULT_UI_FONT_SCALE,
+  isBuiltInTheme,
+  UI_FONT_SCALE_SETTING_KEY,
+} from '@shiroani/shared';
 import { themeOptions } from '@/lib/theme';
 import { persistTheme, getPersistedTheme } from '@/lib/theme-persistence';
 import { injectCustomThemeCSS, removeCustomThemeCSS } from '@/lib/custom-theme-css';
+import { electronStoreGet, electronStoreSet } from '@/lib/electron-store';
+import {
+  applyUIFontScaleToDOM,
+  clampUIFontScale,
+  getPersistedUIFontScale,
+  persistUIFontScaleLocally,
+} from '@/lib/ui-font-scale';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
 
@@ -18,6 +30,8 @@ interface SettingsState {
   theme: Theme;
   /** Preview theme (for hover preview) */
   previewTheme: Theme | null;
+  /** Readability scale applied to UI typography/layout tokens */
+  uiFontScale: number;
   /** Preferred language for anime titles/subtitles */
   preferredLanguage: 'japanese' | 'english' | 'romaji';
 }
@@ -30,10 +44,12 @@ interface SettingsActions {
   setTheme: (theme: Theme) => void;
   /** Set preview theme (for hover) */
   setPreviewTheme: (theme: Theme | null) => void;
+  /** Set UI font scale */
+  setUIFontScale: (scale: number) => void;
   /** Set preferred language */
   setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => void;
-  /** Initialize settings (theme + background restore) */
-  initSettings: () => void;
+  /** Initialize persisted visual settings */
+  initSettings: () => Promise<void>;
 }
 
 /**
@@ -51,6 +67,7 @@ let currentThemeClass: string | null = null;
  * store its ID here so we can apply it once the custom theme store loads.
  */
 let pendingCustomTheme: string | null = null;
+let settingsInitPromise: Promise<void> | null = null;
 
 /**
  * Apply theme class to document element.
@@ -132,10 +149,18 @@ export const useSettingsStore = create<SettingsStore>()(
         applyThemeToDOM(initialTheme);
       }
 
+      const initialFontScale =
+        typeof document !== 'undefined' ? getPersistedUIFontScale() : DEFAULT_UI_FONT_SCALE;
+
+      if (typeof document !== 'undefined') {
+        applyUIFontScaleToDOM(initialFontScale);
+      }
+
       return {
         // Initial state
         theme: initialTheme,
         previewTheme: null,
+        uiFontScale: initialFontScale,
         preferredLanguage: 'romaji',
 
         // Actions
@@ -158,14 +183,50 @@ export const useSettingsStore = create<SettingsStore>()(
           }
         },
 
+        setUIFontScale: (scale: number) => {
+          const next = clampUIFontScale(scale);
+          logger.debug('setUIFontScale', next);
+          set({ uiFontScale: next }, undefined, 'settings/setUIFontScale');
+          applyUIFontScaleToDOM(next);
+          persistUIFontScaleLocally(next);
+          void electronStoreSet(UI_FONT_SCALE_SETTING_KEY, next).catch(error => {
+            logger.warn('Failed to persist UI font scale:', error);
+          });
+        },
+
         setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => {
           logger.debug('setPreferredLanguage', lang);
           set({ preferredLanguage: lang }, undefined, 'settings/setPreferredLanguage');
         },
 
-        initSettings: () => {
+        initSettings: async () => {
           logger.debug('initSettings');
-          useBackgroundStore.getState().restoreBackground();
+          if (settingsInitPromise) {
+            return settingsInitPromise;
+          }
+
+          settingsInitPromise = (async () => {
+            await useBackgroundStore.getState().restoreBackground();
+
+            try {
+              const persistedScale = await electronStoreGet<number>(UI_FONT_SCALE_SETTING_KEY);
+              if (typeof persistedScale !== 'number') {
+                return;
+              }
+
+              const next = clampUIFontScale(persistedScale);
+              set({ uiFontScale: next }, undefined, 'settings/initUIFontScale');
+              applyUIFontScaleToDOM(next);
+              persistUIFontScaleLocally(next);
+            } catch (error) {
+              logger.warn('Failed to restore UI font scale:', error);
+            }
+          })().catch(error => {
+            settingsInitPromise = null;
+            throw error;
+          });
+
+          return settingsInitPromise;
         },
       };
     },

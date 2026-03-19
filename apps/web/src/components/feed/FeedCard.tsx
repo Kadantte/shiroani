@@ -70,7 +70,7 @@ export const FeedCard = memo(function FeedCard({ item, onOpenUrl }: FeedCardProp
         {/* Badges */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <span
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold leading-tight text-white/90 shrink-0"
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold leading-tight text-white/90 shrink-0"
             style={{ backgroundColor: item.sourceColor }}
           >
             {item.sourceName}
@@ -78,14 +78,14 @@ export const FeedCard = memo(function FeedCard({ item, onOpenUrl }: FeedCardProp
 
           <span
             className={cn(
-              'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight',
+              'inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium leading-tight',
               CATEGORY_COLORS[item.sourceCategory]
             )}
           >
             {CATEGORY_LABELS[item.sourceCategory]}
           </span>
 
-          <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">
+          <span className="text-2xs text-muted-foreground/60 font-medium uppercase tracking-wider">
             {item.sourceLanguage === 'pl' ? 'PL' : 'EN'}
           </span>
         </div>
@@ -112,7 +112,7 @@ export const FeedCard = memo(function FeedCard({ item, onOpenUrl }: FeedCardProp
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground/50">
             <time dateTime={item.publishedAt ?? item.createdAt}>{publishedTime}</time>
             {item.author && (
               <>

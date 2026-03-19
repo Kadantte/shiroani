@@ -6,6 +6,7 @@ import {
   Pencil,
   Plus,
   Sparkles,
+  Type,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -29,11 +30,12 @@ import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { BackgroundSettings } from '@/components/settings/BackgroundSettings';
 import { ThemeGrid } from '@/components/settings/ThemeGrid';
+import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
-import type { Theme } from '@shiroani/shared';
+import { UI_FONT_SCALE_PRESETS, type Theme } from '@shiroani/shared';
 
 export function AppearanceSection() {
-  const { theme, setTheme, setPreviewTheme } = useSettingsStore();
+  const { theme, setTheme, setPreviewTheme, uiFontScale, setUIFontScale } = useSettingsStore();
   const customThemes = useCustomThemeStore(s => s.customThemes);
   const deleteTheme = useCustomThemeStore(s => s.deleteTheme);
   const exportTheme = useCustomThemeStore(s => s.exportTheme);
@@ -90,6 +92,53 @@ export function AppearanceSection() {
 
   return (
     <div className="space-y-4">
+      <SettingsCard
+        icon={Type}
+        title="Czytelność"
+        subtitle="Dopasuj rozmiar tekstu i skalę interfejsu do swojego ekranu"
+      >
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {UI_FONT_SCALE_PRESETS.map(scale => {
+              const isActive = uiFontScale === scale;
+              return (
+                <button
+                  key={scale}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setUIFontScale(scale)}
+                  className={cn(
+                    'min-w-[64px] rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                    isActive
+                      ? 'border-primary/40 bg-primary/15 text-primary'
+                      : 'border-border-glass bg-background/30 text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+                  )}
+                >
+                  {Math.round(scale * 100)}%
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-xl border border-border-glass bg-background/30 p-3 space-y-1.5">
+            <p className="text-sm font-medium text-foreground">Podgląd czytelności interfejsu</p>
+            <p className="text-xs text-muted-foreground">
+              Pomocnicze opisy, etykiety i metadane będą łatwiejsze do przeczytania.
+            </p>
+            <p className="text-xs text-muted-foreground/75">
+              Aktualna skala: {Math.round(uiFontScale * 100)}%
+            </p>
+          </div>
+
+          {IS_MAC && (
+            <p className="text-xs text-muted-foreground/80">
+              Na macOS często najlepiej sprawdza się zakres 105-110%, zwłaszcza na ekranach Retina.
+            </p>
+          )}
+        </div>
+      </SettingsCard>
+
       {/* Dock settings */}
       <SettingsCard
         icon={GripHorizontal}
@@ -101,7 +150,7 @@ export function AppearanceSection() {
             <p className="text-sm text-foreground" id="dock-autohide-label">
               Automatyczne ukrywanie
             </p>
-            <p className="text-2xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground/70">
               Dock zwija się do ikony i rozwija po najechaniu
             </p>
           </div>
@@ -116,7 +165,7 @@ export function AppearanceSection() {
             <p className="text-sm text-foreground" id="dock-labels-label">
               Pokaż etykiety
             </p>
-            <p className="text-2xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground/70">
               Wyświetlaj nazwy pod ikonami nawigacji
             </p>
           </div>
@@ -131,7 +180,7 @@ export function AppearanceSection() {
             <p className="text-sm text-foreground" id="dock-draggable-label">
               Przeciąganie
             </p>
-            <p className="text-2xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground/70">
               Pozwól na zmianę pozycji docka przeciąganiem
             </p>
           </div>
@@ -144,7 +193,7 @@ export function AppearanceSection() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-foreground">Pozycja docka</p>
-            <p className="text-2xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground/70">
               Przywróć domyślną pozycję na dole ekranu
             </p>
           </div>
@@ -169,7 +218,7 @@ export function AppearanceSection() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-2xs text-muted-foreground hover:text-foreground"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
               onClick={() => importTheme()}
             >
               <Upload className="w-3 h-3" />
@@ -206,7 +255,7 @@ export function AppearanceSection() {
               <div className="w-10 h-10 rounded-full border-2 border-border-glass flex items-center justify-center">
                 <Plus className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className="text-2xs text-muted-foreground">Nowy motyw</span>
+              <span className="text-xs text-muted-foreground">Nowy motyw</span>
             </button>
           </div>
         </div>

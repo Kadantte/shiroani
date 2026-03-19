@@ -153,3 +153,21 @@ export const FEED_STARTUP_REFRESH_SETTING_KEY = 'settings.feedRefreshOnStartup';
 
 /** Default RSS startup refresh behavior */
 export const DEFAULT_FEED_STARTUP_REFRESH = false;
+
+/**
+ * UI font scale preference stored in electron-store.
+ * Used by the desktop renderer to improve readability on dense displays.
+ */
+export const UI_FONT_SCALE_SETTING_KEY = 'settings.uiFontScale';
+
+/** Default UI font scale */
+export const DEFAULT_UI_FONT_SCALE = 1;
+
+/** Minimum UI font scale */
+export const MIN_UI_FONT_SCALE = 0.95;
+
+/** Maximum UI font scale */
+export const MAX_UI_FONT_SCALE = 1.15;
+
+/** Recommended preset values for UI font scaling */
+export const UI_FONT_SCALE_PRESETS = [0.95, 1, 1.05, 1.1, 1.15] as const;

@@ -24,7 +24,7 @@ export function ThemeGrid({
 }: ThemeGridProps) {
   return (
     <div className="mb-3">
-      <p className="text-2xs text-muted-foreground mb-2 ml-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground mb-2 ml-0.5">{label}</p>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
         {themes.map(opt => (
           <div key={opt.value} className="relative group">

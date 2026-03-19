@@ -19,6 +19,7 @@ import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useDockStore } from '@/stores/useDockStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 import { ConnectionBanner } from '@/components/shared/ConnectionBanner';
 
@@ -27,9 +28,9 @@ function App() {
   const navigateTo = useAppStore(s => s.navigateTo);
   const { ready, error } = useAppInitialization();
   const [splashDone, setSplashDone] = useState(false);
-  const restoreBackground = useBackgroundStore(s => s.restoreBackground);
   const customBackground = useBackgroundStore(s => s.customBackground);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
+  const initSettings = useSettingsStore(s => s.initSettings);
 
   const onboardingCompleted = useOnboardingStore(s => s.completed);
   // Track locally so resetting from settings immediately shows onboarding
@@ -45,13 +46,13 @@ function App() {
 
   const initDock = useDockStore(s => s.initDock);
 
-  // Restore custom background and dock settings on startup
+  // Restore persisted visual settings and dock settings on startup
   useEffect(() => {
     if (ready) {
-      restoreBackground();
-      initDock();
+      void initSettings();
+      void initDock();
     }
-  }, [ready, restoreBackground, initDock]);
+  }, [ready, initSettings, initDock]);
 
   // Listen for navigation events from the main process (e.g. mascot overlay context menu)
   useEffect(() => {
