@@ -50,7 +50,7 @@ export function ViewHeader<T extends string = string>({
           <div>
             <h1 className="text-base font-semibold text-foreground leading-tight">{title}</h1>
             {subtitle && (
-              <p className="text-2xs text-muted-foreground/70 leading-tight">{subtitle}</p>
+              <p className="text-xs text-muted-foreground/70 leading-tight">{subtitle}</p>
             )}
           </div>
         </div>
@@ -109,7 +109,10 @@ export function ViewHeader<T extends string = string>({
       </div>
 
       {/* Filter tabs */}
-      <div role="tablist" className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+      <div
+        role="tablist"
+        className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
+      >
         {filters.map(tab => {
           const isActive = activeFilter === tab.value;
           return (

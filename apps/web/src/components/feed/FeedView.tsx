@@ -127,7 +127,7 @@ export function FeedView() {
               <span
                 className={cn(
                   'inline-flex items-center px-2 py-0.5 rounded-full',
-                  'text-[10px] font-semibold text-primary bg-primary/15',
+                  'text-2xs font-semibold text-primary bg-primary/15',
                   'animate-fade-in'
                 )}
               >

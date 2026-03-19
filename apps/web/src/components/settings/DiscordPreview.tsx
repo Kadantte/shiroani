@@ -22,7 +22,7 @@ export function DiscordPreview({
 
   return (
     <div className="bg-[#2b2d31] rounded-lg p-3 text-white/90 font-sans">
-      <p className="text-[10px] font-semibold text-white/60 uppercase mb-2">Gra w grę</p>
+      <p className="text-2xs font-semibold text-white/60 uppercase mb-2">Gra w grę</p>
       <div className="flex gap-3">
         {/* Large image */}
         {showLargeImage && (
@@ -33,7 +33,7 @@ export function DiscordPreview({
               </div>
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#5865f2]/20 to-[#5865f2]/5 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white/40">SA</span>
+                <span className="text-2xs font-bold text-white/40">SA</span>
               </div>
             )}
           </div>
@@ -42,16 +42,16 @@ export function DiscordPreview({
         {/* Text content */}
         <div className="min-w-0 flex flex-col justify-center gap-0.5">
           <p className="text-xs font-semibold text-white truncate">ShiroAni</p>
-          {details && <p className="text-[11px] text-white/70 truncate">{details}</p>}
-          {state && <p className="text-[11px] text-white/70 truncate">{state}</p>}
-          {showTimestamp && <p className="text-[11px] text-white/50">00:42:15 upłynęło</p>}
+          {details && <p className="text-xs text-white/70 truncate">{details}</p>}
+          {state && <p className="text-xs text-white/70 truncate">{state}</p>}
+          {showTimestamp && <p className="text-xs text-white/50">00:42:15 upłynęło</p>}
         </div>
       </div>
 
       {/* AniList button */}
       {showButton && isWatching && (
         <div className="mt-2">
-          <div className="w-full py-1.5 rounded bg-[#4e505899] text-center text-[11px] font-medium text-white/80">
+          <div className="w-full py-1.5 rounded bg-[#4e505899] text-center text-xs font-medium text-white/80">
             Pokaż na AniList
           </div>
         </div>

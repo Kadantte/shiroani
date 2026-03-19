@@ -20,14 +20,37 @@ const ALL_ITEMS: NavItem[] = [
   { id: 'settings', label: 'Ustawienia' },
 ];
 
-// Layout constants (px) — keep in sync with classNames below
-const ITEM_W = 72; // w-18 — wide enough for "Harmonogram" and "Ustawienia"
-const ITEM_W_COMPACT = 40; // w-10 (icon-only)
-const ITEM_H = 48; // h-12
-const ITEM_H_COMPACT = 40; // h-10 (icon-only)
-const GAP = 4; // gap-1
-const PAD_X = 8; // px-2
-const PAD_Y = 6; // py-1.5
+// Layout constants (rem) — keep in sync with classNames below so root font scaling
+// changes the pill geometry together with the dock items.
+const GAP_REM = 0.25; // gap-1
+const H_PAD_X_REM = 0.5; // px-2
+const H_PAD_Y_REM = 0.375; // py-1.5
+const V_PAD_X_REM = 0.375; // px-1.5
+const V_PAD_Y_REM = 0.5; // py-2
+
+function toRem(value: number): string {
+  return `${value}rem`;
+}
+
+function getDockMetrics(isVertical: boolean, showLabels: boolean) {
+  if (isVertical) {
+    return {
+      itemWidthRem: showLabels ? 3 : 2.5, // w-12 / w-10
+      itemHeightRem: showLabels ? 3.5 : 2.5, // h-14 / h-10
+      padXRem: V_PAD_X_REM,
+      padYRem: V_PAD_Y_REM,
+      gapRem: GAP_REM,
+    };
+  }
+
+  return {
+    itemWidthRem: showLabels ? 4.5 : 2.5, // w-[4.5rem] / w-10
+    itemHeightRem: showLabels ? 3 : 2.5, // h-12 / h-10
+    padXRem: H_PAD_X_REM,
+    padYRem: H_PAD_Y_REM,
+    gapRem: GAP_REM,
+  };
+}
 
 const COLLAPSE_DELAY = 400; // ms before starting collapse after mouse leave
 const EDGE_MARGIN = 12; // px from viewport edge
@@ -149,7 +172,7 @@ function DockItem({
         showLabel
           ? isVertical
             ? 'w-12 h-14'
-            : 'w-[72px] h-12'
+            : 'w-[4.5rem] h-12'
           : isVertical
             ? 'w-10 h-10'
             : 'w-10 h-10',
@@ -171,7 +194,7 @@ function DockItem({
       {showLabel && (
         <span
           className={cn(
-            'text-[10px] leading-none font-medium truncate max-w-full',
+            'text-xs leading-none font-medium truncate max-w-full',
             isActive ? 'text-primary-foreground/90' : 'text-sidebar-foreground/40'
           )}
         >
@@ -245,20 +268,24 @@ function getPillStyle(
   isVertical: boolean,
   showLabels: boolean
 ): React.CSSProperties {
-  const itemW = showLabels ? ITEM_W : ITEM_W_COMPACT;
-  const itemH = showLabels ? ITEM_H : ITEM_H_COMPACT;
+  const { itemWidthRem, itemHeightRem, padXRem, padYRem, gapRem } = getDockMetrics(
+    isVertical,
+    showLabels
+  );
 
   if (isVertical) {
     return {
-      height: `${itemH}px`,
-      top: `${PAD_Y + activeIndex * (itemH + GAP)}px`,
-      width: `calc(100% - ${PAD_X * 2}px)`,
-      left: `${PAD_X}px`,
+      height: toRem(itemHeightRem),
+      top: toRem(padYRem + activeIndex * (itemHeightRem + gapRem)),
+      width: `calc(100% - ${toRem(padXRem * 2)})`,
+      left: toRem(padXRem),
     };
   }
   return {
-    width: `${itemW}px`,
-    left: `${PAD_X + activeIndex * (itemW + GAP)}px`,
+    width: toRem(itemWidthRem),
+    height: `calc(100% - ${toRem(padYRem * 2)})`,
+    top: toRem(padYRem),
+    left: toRem(padXRem + activeIndex * (itemWidthRem + gapRem)),
   };
 }
 
@@ -462,8 +489,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             'bg-primary/90',
             'animate-[dock-pill-glow_3s_ease-in-out_infinite] motion-reduce:animate-none',
             'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-            'motion-reduce:transition-none',
-            vertical ? 'left-1.5 w-[calc(100%-12px)]' : 'top-1.5 h-[calc(100%-12px)]'
+            'motion-reduce:transition-none'
           )}
           style={pillStyle}
         />

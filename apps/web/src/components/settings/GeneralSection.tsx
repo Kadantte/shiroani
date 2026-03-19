@@ -50,7 +50,7 @@ export function GeneralSection() {
               <p className="text-sm text-foreground" id="auto-launch-label">
                 Uruchamiaj przy starcie systemu
               </p>
-              <p className="text-2xs text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground/70">
                 Automatycznie otwieraj ShiroAni po zalogowaniu do systemu
               </p>
             </div>
@@ -69,11 +69,11 @@ export function GeneralSection() {
               <p className="text-sm text-foreground" id="feed-startup-refresh-label">
                 Odświeżaj RSS przy starcie aplikacji
               </p>
-              <p className="text-2xs text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground/70">
                 Gdy wyłączone, pierwszy fetch aktualności nastąpi dopiero po wejściu do widoku
                 Aktualności lub ręcznym odświeżeniu
               </p>
-              <p className="text-2xs text-muted-foreground/55 mt-1">
+              <p className="text-xs text-muted-foreground/55 mt-1">
                 Zmiana zacznie działać od następnego uruchomienia aplikacji
               </p>
             </div>

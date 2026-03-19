@@ -381,6 +381,7 @@
 
 :root {
   --radius: 0.625rem;
+  --app-font-scale: 1;
 
   /* Light mode defaults */
   --background: oklch(1 0 0);
@@ -493,6 +494,7 @@
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    font-size: calc(16px * var(--app-font-scale));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

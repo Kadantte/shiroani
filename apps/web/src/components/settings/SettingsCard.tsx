@@ -34,7 +34,7 @@ export function SettingsCard({
           </div>
           <div>
             <h3 className="text-sm font-medium text-foreground leading-tight">{title}</h3>
-            {subtitle && <p className="text-2xs text-muted-foreground/70">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-muted-foreground/70">{subtitle}</p>}
           </div>
         </div>
       )}

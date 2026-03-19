@@ -17,6 +17,7 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.language',
   'settings.autoUpdate',
   'settings.adblockEnabled',
+  'settings.uiFontScale',
   // Library bookmarks
   'library-bookmarks',
   // Update channel
