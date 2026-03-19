@@ -35,8 +35,16 @@ function ChatMessage({ message }: { message: WatchPartyMessage }) {
 
   if (message.type === 'reaction') {
     return (
-      <div className="flex justify-center py-0.5">
-        <span className="text-lg">{message.content}</span>
+      <div className="flex gap-1.5 py-0.5">
+        <img
+          src={getAvatarUrl(message.userId, message.avatar)}
+          alt={message.username}
+          className="w-5 h-5 rounded-full shrink-0 mt-0.5"
+        />
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-foreground">{message.username}</span>
+          <span className="text-base">{message.content}</span>
+        </div>
       </div>
     );
   }
