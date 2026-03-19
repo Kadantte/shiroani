@@ -112,8 +112,14 @@ async function shutdownNestApp(): Promise<void> {
 
 /** Set up services and event listeners that depend on the main window */
 function setupWindowDependentServices(win: BrowserWindow): void {
-  const syncMascotVisibility = (state: MascotWindowState): void => {
-    updateMascotVisibilityForWindowState(state);
+  const getMascotWindowState = (): MascotWindowState => {
+    if (win.isMinimized()) return 'minimized';
+    if (win.isVisible()) return 'visible';
+    return 'hidden';
+  };
+
+  const syncMascotVisibility = (): void => {
+    updateMascotVisibilityForWindowState(getMascotWindowState());
   };
 
   initializeAutoUpdater(win, process.env.NODE_ENV === 'development');
@@ -125,12 +131,12 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   setMainWindow(win);
 
   // Wire window state changes to mascot visibility mode
-  win.on('minimize', () => syncMascotVisibility('minimized'));
-  win.on('restore', () => syncMascotVisibility('visible'));
-  win.on('show', () => syncMascotVisibility('visible'));
-  win.on('hide', () => syncMascotVisibility('hidden'));
-  win.on('enter-full-screen', () => syncMascotVisibility('visible'));
-  win.on('leave-full-screen', () => syncMascotVisibility('visible'));
+  win.on('minimize', syncMascotVisibility);
+  win.on('restore', syncMascotVisibility);
+  win.on('show', syncMascotVisibility);
+  win.on('hide', syncMascotVisibility);
+  win.on('enter-full-screen', syncMascotVisibility);
+  win.on('leave-full-screen', syncMascotVisibility);
 
   // Discord RPC idle detection on window blur/focus
   win.on('blur', () => onWindowBlur());
