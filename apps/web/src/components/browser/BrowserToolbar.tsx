@@ -8,11 +8,13 @@ import {
   Home,
   Loader2,
   BookmarkPlus,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useWatchPartyStore } from '@/stores/useWatchPartyStore';
 
 interface BrowserToolbarProps {
   urlInput: string;
@@ -29,6 +31,24 @@ interface BrowserToolbarProps {
   onToggleAdblock: () => void;
   onGoHome: () => void;
   onAddToLibrary: () => void;
+}
+
+function WatchPartyToolbarButton() {
+  const togglePanel = useWatchPartyStore(s => s.togglePanel);
+  const currentRoom = useWatchPartyStore(s => s.currentRoom);
+
+  return (
+    <TooltipButton
+      variant="ghost"
+      size="icon"
+      className={cn('w-8 h-8', currentRoom && 'text-primary')}
+      onClick={togglePanel}
+      tooltip="Watch Party"
+      tooltipSide="bottom"
+    >
+      <Users className="w-4 h-4" />
+    </TooltipButton>
+  );
 }
 
 export function BrowserToolbar({
@@ -145,6 +165,8 @@ export function BrowserToolbar({
       >
         {adblockEnabled ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
       </TooltipButton>
+
+      <WatchPartyToolbarButton />
 
       <TooltipButton
         variant="ghost"

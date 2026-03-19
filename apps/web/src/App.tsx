@@ -22,6 +22,7 @@ import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 import { ConnectionBanner } from '@/components/shared/ConnectionBanner';
+import { WatchPartySidebar } from '@/components/watch-party/WatchPartySidebar';
 
 function App() {
   const activeView = useAppStore(s => s.activeView);
@@ -128,6 +129,9 @@ function App() {
 
           {/* Floating dock navigation — hidden in fullscreen */}
           {!isFullScreen && <NavigationDock hasBg={hasBg} />}
+
+          {/* Watch Party sidebar — hidden in fullscreen */}
+          <WatchPartySidebar />
         </div>
       )}
     </>
