@@ -9,6 +9,7 @@ import {
   Database,
   MessageCircle,
   Settings,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_WINDOWS, IS_MAC } from '@/lib/platform';
@@ -21,9 +22,11 @@ import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
 import { DiscordSection } from '@/components/settings/DiscordSection';
 import { GeneralSection } from '@/components/settings/GeneralSection';
+import { AccountSection } from '@/components/settings/AccountSection';
 import { IS_ELECTRON } from '@/lib/platform';
 
 type SettingsSection =
+  | 'account'
   | 'general'
   | 'appearance'
   | 'browser'
@@ -35,6 +38,7 @@ type SettingsSection =
   | 'about';
 
 const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
+  { id: 'account', label: 'Konto', Icon: User },
   { id: 'general', label: 'Ogólne', Icon: Settings },
   { id: 'appearance', label: 'Wygląd', Icon: Palette },
   { id: 'browser', label: 'Przeglądarka', Icon: Globe },
@@ -47,9 +51,7 @@ const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }
 ];
 
 export function SettingsView() {
-  const [activeSection, setActiveSection] = useState<SettingsSection>(
-    IS_ELECTRON ? 'general' : 'appearance'
-  );
+  const [activeSection, setActiveSection] = useState<SettingsSection>('account');
   const [version, setVersion] = useState('');
 
   // Filter platform-specific sections
@@ -111,6 +113,7 @@ export function SettingsView() {
         aria-label={SECTIONS.find(s => s.id === activeSection)?.label}
       >
         <div className="max-w-xl">
+          {activeSection === 'account' && <AccountSection />}
           {activeSection === 'general' && <GeneralSection />}
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'browser' && <BrowserSection />}

@@ -7,6 +7,7 @@ import { useFeedStore } from '@/stores/useFeedStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 const logger = createLogger('AppInit');
 
@@ -27,24 +28,35 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
   const initConnectionListeners = useConnectionStore(s => s.initListeners);
   const cleanupConnectionListeners = useConnectionStore(s => s.cleanupListeners);
   const initUpdateListeners = useUpdateStore(s => s.initListeners);
+  const initAuthListeners = useAuthStore(s => s.initListeners);
+  const cleanupAuthListeners = useAuthStore(s => s.cleanupListeners);
 
   const initAllListeners = useCallback(() => {
     initConnectionListeners();
     initScheduleListeners();
     initLibraryListeners();
     initFeedListeners();
-  }, [initConnectionListeners, initScheduleListeners, initLibraryListeners, initFeedListeners]);
+    initAuthListeners();
+  }, [
+    initConnectionListeners,
+    initScheduleListeners,
+    initLibraryListeners,
+    initFeedListeners,
+    initAuthListeners,
+  ]);
 
   const cleanupAllListeners = useCallback(() => {
     cleanupConnectionListeners();
     cleanupScheduleListeners();
     cleanupLibraryListeners();
     cleanupFeedListeners();
+    cleanupAuthListeners();
   }, [
     cleanupConnectionListeners,
     cleanupScheduleListeners,
     cleanupLibraryListeners,
     cleanupFeedListeners,
+    cleanupAuthListeners,
   ]);
 
   useEffect(() => {
@@ -85,6 +97,13 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
           await useQuickAccessStore.getState().loadSites();
         } catch {
           // Non-critical — quick access will use defaults
+        }
+
+        // Load auth state
+        try {
+          await useAuthStore.getState().loadAuthState();
+        } catch {
+          // Non-critical — user can log in later
         }
 
         setReady(true);
