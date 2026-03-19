@@ -488,13 +488,18 @@ export const useWatchPartyStore = create<WatchPartyStore>()(
 
           socket.on(
             WatchPartyEvents.REACTION,
-            (payload: { userId: string; username: string; emoji: string }) => {
+            (payload: {
+              userId: string;
+              username: string;
+              avatar: string | null;
+              emoji: string;
+            }) => {
               const { messages } = get();
               const reactionMessage: WatchPartyMessage = {
                 id: `reaction-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                 userId: payload.userId,
                 username: payload.username,
-                avatar: null,
+                avatar: payload.avatar,
                 content: payload.emoji,
                 type: 'reaction',
                 timestamp: Date.now(),

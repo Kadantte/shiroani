@@ -11,11 +11,11 @@ import type { WatchPartyMember } from '@shiroani/shared';
 const DISCORD_CDN = 'https://cdn.discordapp.com';
 
 const REACTIONS = [
-  { emoji: '\u{1F525}', label: 'fire' },
-  { emoji: '\u{1F602}', label: 'laugh' },
-  { emoji: '\u2764\uFE0F', label: 'heart' },
-  { emoji: '\u{1F440}', label: 'eyes' },
-  { emoji: '\u{1F389}', label: 'party' },
+  { emoji: '🔥', label: 'fire' },
+  { emoji: '😂', label: 'laugh' },
+  { emoji: '❤️', label: 'heart' },
+  { emoji: '👀', label: 'eyes' },
+  { emoji: '🎉', label: 'party' },
 ] as const;
 
 function getAvatarUrl(userId: string, avatarHash: string | null, size = 32): string {

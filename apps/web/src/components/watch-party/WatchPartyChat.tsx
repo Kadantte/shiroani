@@ -90,7 +90,7 @@ export function WatchPartyChat() {
   return (
     <div className="flex flex-col h-full">
       {/* Messages area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-2xs text-muted-foreground/50">Brak wiadomości</p>

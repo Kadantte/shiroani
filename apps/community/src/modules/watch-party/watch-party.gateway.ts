@@ -254,6 +254,31 @@ export class WatchPartyGateway implements OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage(WatchPartyEvents.REACTION)
+  async handleReaction(
+    @MessageBody() payload: { roomCode: string; emoji: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    return handleGatewayRequest({
+      logger: this.gatewayLogger,
+      action: `watch-party:reaction — room="${payload.roomCode}"`,
+      defaultResult: { success: false },
+      handler: async () => {
+        const userId = client.data.userId as string;
+        const username = client.data.username as string;
+        const avatar = (client.data.avatar as string | null) ?? null;
+
+        this.server.to(`party:${payload.roomCode}`).emit(WatchPartyEvents.REACTION, {
+          userId,
+          username,
+          avatar,
+          emoji: payload.emoji,
+        });
+        return { success: true };
+      },
+    });
+  }
+
   @SubscribeMessage(WatchPartyEvents.SIGNAL)
   async handleSignal(@MessageBody() payload: SignalPayload) {
     return handleGatewayRequest({
