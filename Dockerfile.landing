@@ -6,13 +6,15 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/landing/package.json apps/landing/
-RUN pnpm install --frozen-lockfile --filter @shiroani/landing
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile --filter @shiroani/landing...
 
 # Build
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/landing/node_modules ./apps/landing/node_modules
 COPY apps/landing/ apps/landing/
+COPY packages/shared/ packages/shared/
 COPY tsconfig.base.json ./
 RUN pnpm --filter @shiroani/landing build
 
