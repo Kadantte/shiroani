@@ -182,41 +182,215 @@ function generateState(): string {
 // ========================================
 
 const SUCCESS_HTML = `<!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
   <meta charset="utf-8">
-  <title>ShiroAni - Login Successful</title>
+  <title>ShiroAni - Zalogowano</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
-    .container { text-align: center; }
-    h1 { color: #a78bfa; }
-    p { color: #9ca3af; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #0f0e12; color: #eee;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; opacity: 0.4;
+    }
+    .orb-1 {
+      width: 300px; height: 300px; top: -80px; right: -60px;
+      background: radial-gradient(circle, rgba(180,120,200,0.3), transparent 70%);
+      animation: drift 25s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 250px; height: 250px; bottom: -60px; left: -40px;
+      background: radial-gradient(circle, rgba(200,160,100,0.2), transparent 70%);
+      animation: drift 30s ease-in-out infinite reverse;
+    }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(20px, -30px) scale(1.05); }
+      66% { transform: translate(-15px, 15px) scale(0.97); }
+    }
+    .container {
+      position: relative; text-align: center; z-index: 1;
+      animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .check-ring {
+      width: 80px; height: 80px; margin: 0 auto 24px;
+      border-radius: 50%; position: relative;
+      background: rgba(180,140,220,0.08);
+      box-shadow: 0 0 40px rgba(180,140,220,0.15), 0 0 80px rgba(180,140,220,0.05);
+      animation: bounce-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .check-ring::after {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      width: 28px; height: 16px;
+      border-left: 3px solid #c8a0e8; border-bottom: 3px solid #c8a0e8;
+      transform: translate(-50%, -60%) rotate(-45deg);
+      animation: check-draw 0.4s ease-out 0.5s both;
+    }
+    @keyframes check-draw {
+      0% { clip-path: inset(0 100% 0 0); opacity: 0; }
+      100% { clip-path: inset(0 0 0 0); opacity: 1; }
+    }
+    @keyframes bounce-in {
+      0% { opacity: 0; transform: scale(0) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes fade-up {
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 0.8; transform: scale(1); }
+    }
+    .sparkle {
+      position: absolute; border-radius: 50%;
+      background: rgba(200,160,230,0.7);
+      pointer-events: none;
+    }
+    h1 {
+      font-family: 'Sora', system-ui, sans-serif;
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;
+      background: linear-gradient(135deg, #d4a0f0, #a070c8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    p { color: #7a7588; font-size: 0.875rem; line-height: 1.5; }
+    .brand {
+      margin-top: 32px; opacity: 0;
+      animation: fade-up 0.6s ease-out 0.6s both;
+    }
+    .brand-jp { font-size: 1.125rem; font-weight: 700; color: #e8e0f0; }
+    .brand-en {
+      font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.25em;
+      color: rgba(200,180,220,0.35); font-weight: 500;
+    }
+    .float { animation: float 3s ease-in-out infinite; }
   </style>
 </head>
 <body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
   <div class="container">
-    <h1>Login Successful</h1>
-    <p>You can close this tab and return to ShiroAni.</p>
+    <div class="float">
+      <div class="check-ring" id="checkRing"></div>
+    </div>
+    <h1>Zalogowano pomyślnie!</h1>
+    <p>Możesz zamknąć tę kartę i wrócić do ShiroAni.</p>
+    <div class="brand">
+      <div class="brand-jp">白アニ</div>
+      <div class="brand-en">ShiroAni</div>
+    </div>
   </div>
+  <script>
+    // Sparkles around the check ring
+    const ring = document.getElementById('checkRing');
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      const angle = (i / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+      const r = 50 + Math.random() * 30;
+      const size = 2 + Math.random() * 3;
+      Object.assign(s.style, {
+        width: size + 'px', height: size + 'px',
+        left: 'calc(50% + ' + (Math.cos(angle) * r) + 'px)',
+        top: 'calc(50% + ' + (Math.sin(angle) * r) + 'px)',
+        animation: 'twinkle ' + (1.5 + Math.random() * 1.5) + 's ease-in-out ' + (Math.random() * 2) + 's infinite',
+      });
+      ring.appendChild(s);
+    }
+  </script>
 </body>
 </html>`;
 
 const ERROR_HTML = `<!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
   <meta charset="utf-8">
-  <title>ShiroAni - Login Failed</title>
+  <title>ShiroAni - Błąd logowania</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
-    .container { text-align: center; }
-    h1 { color: #ef4444; }
-    p { color: #9ca3af; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #0f0e12; color: #eee;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: fixed; width: 250px; height: 250px; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; opacity: 0.3;
+      top: -60px; right: -40px;
+      background: radial-gradient(circle, rgba(220,100,100,0.25), transparent 70%);
+      animation: drift 25s ease-in-out infinite;
+    }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-20px, 20px); }
+    }
+    @keyframes fade-up {
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    .container {
+      position: relative; text-align: center; z-index: 1;
+      animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .error-ring {
+      width: 80px; height: 80px; margin: 0 auto 24px;
+      border-radius: 50%; position: relative;
+      background: rgba(220,100,100,0.08);
+      box-shadow: 0 0 40px rgba(220,100,100,0.1);
+      animation: shake 0.5s ease-out 0.3s both;
+    }
+    .error-ring::before, .error-ring::after {
+      content: ''; position: absolute;
+      top: 50%; left: 50%; width: 3px; height: 24px;
+      background: #e07070; border-radius: 2px;
+    }
+    .error-ring::before { transform: translate(-50%, -50%) rotate(45deg); }
+    .error-ring::after { transform: translate(-50%, -50%) rotate(-45deg); }
+    h1 {
+      font-family: 'Sora', system-ui, sans-serif;
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;
+      color: #e07070;
+    }
+    p { color: #7a7588; font-size: 0.875rem; line-height: 1.5; }
+    .brand {
+      margin-top: 32px; opacity: 0;
+      animation: fade-up 0.6s ease-out 0.6s both;
+    }
+    .brand-jp { font-size: 1.125rem; font-weight: 700; color: #e8e0f0; }
+    .brand-en {
+      font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.25em;
+      color: rgba(200,180,220,0.35); font-weight: 500;
+    }
   </style>
 </head>
 <body>
+  <div class="bg-orb"></div>
   <div class="container">
-    <h1>Login Failed</h1>
-    <p>Something went wrong. Please try again from ShiroAni.</p>
+    <div class="error-ring"></div>
+    <h1>Coś poszło nie tak</h1>
+    <p>Spróbuj ponownie z poziomu ShiroAni.</p>
+    <div class="brand">
+      <div class="brand-jp">白アニ</div>
+      <div class="brand-en">ShiroAni</div>
+    </div>
   </div>
 </body>
 </html>`;
