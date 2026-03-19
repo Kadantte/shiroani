@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { SessionModule } from './modules/session/session.module';
+import { WatchPartyModule } from './modules/watch-party/watch-party.module';
 
 @Module({
   imports: [
@@ -34,10 +35,10 @@ import { SessionModule } from './modules/session/session.module';
     AuthModule,
     UserModule,
     SessionModule,
+    WatchPartyModule,
 
     // TODO: Phase 2 modules
     // ChatModule,
-    // WatchPartyModule,
     // PresenceModule,
   ],
 })

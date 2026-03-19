@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { RedisService } from '@/modules/redis/redis.service';
 
 @Injectable()
 export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
     @InjectPinoLogger(SessionService.name) private readonly logger: PinoLogger
   ) {}
 

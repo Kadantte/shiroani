@@ -44,7 +44,7 @@ export class AuthService {
    * Exchange an authorization code for Discord OAuth tokens.
    */
   async exchangeCode(code: string) {
-    const tokens = await this.discord.validateAuthorizationCode(code);
+    const tokens = await this.discord.validateAuthorizationCode(code, null);
     return {
       accessToken: tokens.accessToken(),
       refreshToken: tokens.refreshToken(),
