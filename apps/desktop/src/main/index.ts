@@ -65,6 +65,15 @@ let isShuttingDown = false;
 let cleanupDone = false;
 const browserManager = new BrowserManager();
 
+function showMainWindow(win: BrowserWindow): void {
+  if (win.isDestroyed()) return;
+  if (win.isMinimized()) {
+    win.restore();
+  }
+  win.show();
+  win.focus();
+}
+
 async function bootstrapNestApp(): Promise<void> {
   try {
     logger.info('Creating NestJS application...');
@@ -129,6 +138,15 @@ function setupWindowDependentServices(win: BrowserWindow): void {
 
   // Set up mascot overlay with main window reference
   setMainWindow(win);
+
+  // On macOS the red traffic-light button should hide the app instead of
+  // destroying the main window. This keeps tray/mascot integrations stable.
+  win.on('close', event => {
+    if (process.platform === 'darwin' && !isShuttingDown) {
+      event.preventDefault();
+      win.hide();
+    }
+  });
 
   // Wire window state changes to mascot visibility mode
   win.on('minimize', syncMascotVisibility);
@@ -249,13 +267,16 @@ app.on('window-all-closed', () => {
 app.on('activate', async () => {
   logger.info('App activated');
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.show();
-  } else if (BrowserWindow.getAllWindows().length === 0) {
-    // NestJS is already running, clean up old IPC handlers and recreate the window
-    cleanupIpcHandlers();
-    mainWindow = await createMainWindow(browserManager);
-    setupWindowDependentServices(mainWindow);
+    showMainWindow(mainWindow);
+    return;
   }
+
+  // Recreate the main window even if auxiliary mascot/menu windows still exist.
+  cleanupIpcHandlers();
+  mainWindow = await createMainWindow(browserManager);
+  setMainWindowRef(mainWindow);
+  setupWindowDependentServices(mainWindow);
+  showMainWindow(mainWindow);
 });
 
 app.on('before-quit', event => {
