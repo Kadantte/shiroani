@@ -174,10 +174,10 @@ export function Hero() {
   // Console easter egg
   useEffect(() => {
     console.log(
-      '%c🌸 ShiroAni %c— Zaglądasz pod maskę? Szanuję. %cCiekawi Cię kod? Zostań z nami 🌸',
+      '%c🌸 ShiroAni %c— Open source & free forever. %chttps://github.com/Shironex/shiroani',
       'font-size: 16px; font-weight: bold; color: #f472b6;',
       'font-size: 13px; color: #a1a1aa;',
-      'font-size: 13px; color: #60a5fa;'
+      'font-size: 13px; color: #60a5fa; text-decoration: underline;'
     );
   }, []);
 

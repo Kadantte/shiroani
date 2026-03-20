@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MessageCircle } from 'lucide-react';
+import { Github, MessageCircle } from 'lucide-react';
 
 const YEAR = new Date().getFullYear();
 
@@ -35,7 +35,17 @@ export function Footer() {
         </div>
 
         <div className="flex items-center gap-5">
-          {/* GitHub link — hidden until repo is public */}
+          <motion.a
+            href="https://github.com/Shironex/shiroani"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="GitHub"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Github className="h-4.5 w-4.5" />
+          </motion.a>
           <span
             className="text-muted-foreground/40 cursor-not-allowed"
             aria-label="Discord — wkrótce"
