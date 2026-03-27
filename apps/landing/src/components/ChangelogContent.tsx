@@ -33,6 +33,45 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.3.0',
+    date: '27 marca 2026',
+    title: 'Czytelność i szczegóły anime',
+    description:
+      'Nowe narzędzia do personalizacji interfejsu i szybszego dostępu do informacji o anime — skalowanie czcionek, dialog szczegółów anime w harmonogramie i przywrócone linki do repozytorium.',
+    categories: [
+      {
+        label: 'Nowe funkcje',
+        icon: Sparkles,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Zap,
+            text: 'Skalowanie czytelności — zmiana rozmiaru czcionek w ustawieniach aplikacji',
+          },
+          {
+            icon: Monitor,
+            text: 'Kliknięcie karty w harmonogramie otwiera dialog ze szczegółami anime',
+          },
+        ],
+      },
+      {
+        label: 'Poprawki',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Wrench,
+            text: 'Naprawiono hydration mismatch przy inicjalizacji skali czcionek',
+          },
+          {
+            icon: Globe,
+            text: 'Przywrócono linki do GitHuba w stopce i konsoli strony głównej',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.2.1',
     date: '19 marca 2026',
     title: 'Stabilizacja i poprawki',
