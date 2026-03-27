@@ -8,10 +8,11 @@ import type { AiringAnime } from '@shiroani/shared';
 
 export interface AiringEntryProps {
   anime: AiringAnime;
+  onClick?: (anime: AiringAnime) => void;
 }
 
 /** A single airing entry row used in the daily view */
-const AiringEntry = memo(function AiringEntry({ anime }: AiringEntryProps) {
+const AiringEntry = memo(function AiringEntry({ anime, onClick }: AiringEntryProps) {
   const title = getAnimeTitle(anime.media);
   const coverUrl = getCoverUrl(anime.media);
 
@@ -21,8 +22,22 @@ const AiringEntry = memo(function AiringEntry({ anime }: AiringEntryProps) {
         'flex items-center gap-3 p-2.5 rounded-lg',
         'bg-background/40 backdrop-blur-sm border border-border-glass',
         'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200',
-        'group'
+        'group',
+        onClick && 'cursor-pointer'
       )}
+      onClick={() => onClick?.(anime)}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(anime);
+              }
+            }
+          : undefined
+      }
     >
       {/* Time */}
       <div className="shrink-0 w-12 text-center">
@@ -60,7 +75,8 @@ const AiringEntry = memo(function AiringEntry({ anime }: AiringEntryProps) {
           <div className="flex flex-wrap gap-1 mt-1">
             {anime.media.genres.slice(0, 3).map((genre, i, arr) => (
               <span key={genre} className="text-2xs text-muted-foreground/70">
-                {genre}{i < arr.length - 1 && ' · '}
+                {genre}
+                {i < arr.length - 1 && ' · '}
               </span>
             ))}
           </div>

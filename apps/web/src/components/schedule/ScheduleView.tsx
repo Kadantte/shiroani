@@ -1,5 +1,12 @@
-import { useMemo, useCallback, useEffect } from 'react';
-import { AlertCircle, ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  CalendarDays,
+} from 'lucide-react';
 import { toLocalDate } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,10 +18,21 @@ import { addDays, formatDate, isToday } from './schedule-utils';
 import { DailyView } from './DailyView';
 import { WeeklyView } from './WeeklyView';
 import { TimetableView } from './TimetableView';
+import { AnimeInfoDialog } from './AnimeInfoDialog';
+import type { AiringAnime } from '@shiroani/shared';
 
-const { selectDay, setViewMode, getEntriesForDay, getWeekDays, fetchDaily, fetchWeekly } = useScheduleStore.getState();
+const { selectDay, setViewMode, getEntriesForDay, getWeekDays, fetchDaily, fetchWeekly } =
+  useScheduleStore.getState();
 
 export function ScheduleView() {
+  const [selectedAnime, setSelectedAnime] = useState<AiringAnime | null>(null);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+
+  const handleAnimeClick = useCallback((anime: AiringAnime) => {
+    setSelectedAnime(anime);
+    setInfoDialogOpen(true);
+  }, []);
+
   const selectedDay = useScheduleStore(s => s.selectedDay);
   const viewMode = useScheduleStore(s => s.viewMode);
   const isLoading = useScheduleStore(s => s.isLoading);
@@ -122,7 +140,10 @@ export function ScheduleView() {
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[180px] text-center tabular-nums" aria-live="polite">
+            <span
+              className="text-sm font-medium min-w-[180px] text-center tabular-nums"
+              aria-live="polite"
+            >
               {viewMode === 'daily'
                 ? formatDate(selectedDay)
                 : `${formatDate(weekDays[0])} - ${formatDate(weekDays[6])}`}
@@ -151,7 +172,11 @@ export function ScheduleView() {
       </div>
 
       {/* Content */}
-      <div role="region" aria-label="Harmonogram anime" className="flex-1 flex flex-col overflow-hidden">
+      <div
+        role="region"
+        aria-label="Harmonogram anime"
+        className="flex-1 flex flex-col overflow-hidden"
+      >
         {isLoading ? (
           viewMode === 'daily' ? (
             <DailyViewSkeleton />
@@ -169,17 +194,29 @@ export function ScheduleView() {
             </Button>
           </div>
         ) : viewMode === 'daily' ? (
-          <DailyView entries={todayEntries} />
+          <DailyView entries={todayEntries} onAnimeClick={handleAnimeClick} />
         ) : viewMode === 'weekly' ? (
-          <WeeklyView weekDays={weekDays} getEntriesForDay={getEntriesForDay} schedule={schedule} />
+          <WeeklyView
+            weekDays={weekDays}
+            getEntriesForDay={getEntriesForDay}
+            schedule={schedule}
+            onAnimeClick={handleAnimeClick}
+          />
         ) : (
           <TimetableView
             weekDays={weekDays}
             getEntriesForDay={getEntriesForDay}
             schedule={schedule}
+            onAnimeClick={handleAnimeClick}
           />
         )}
       </div>
+
+      <AnimeInfoDialog
+        anime={selectedAnime}
+        open={infoDialogOpen}
+        onOpenChange={setInfoDialogOpen}
+      />
     </div>
   );
 }

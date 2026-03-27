@@ -56,6 +56,64 @@ export const STATUS_FILTER_OPTIONS = [
   ...STATUS_OPTIONS,
 ];
 
+// ============================================
+// AniList Label Maps (Polish translations)
+// ============================================
+
+export const ANILIST_FORMAT_LABELS: Record<string, string> = {
+  TV: 'TV',
+  TV_SHORT: 'TV Short',
+  MOVIE: 'Film',
+  SPECIAL: 'Special',
+  OVA: 'OVA',
+  ONA: 'ONA',
+  MUSIC: 'Teledysk',
+};
+
+export const ANILIST_STATUS_LABELS: Record<string, string> = {
+  FINISHED: 'Zakończone',
+  RELEASING: 'Emitowane',
+  NOT_YET_RELEASED: 'Nadchodzące',
+  CANCELLED: 'Anulowane',
+  HIATUS: 'Przerwa',
+};
+
+export const ANILIST_SOURCE_LABELS: Record<string, string> = {
+  ORIGINAL: 'Oryginał',
+  MANGA: 'Manga',
+  LIGHT_NOVEL: 'Light Novel',
+  VISUAL_NOVEL: 'Visual Novel',
+  VIDEO_GAME: 'Gra wideo',
+  NOVEL: 'Powieść',
+  OTHER: 'Inne',
+  ANIME: 'Anime',
+  WEB_NOVEL: 'Web Novel',
+  COMIC: 'Komiks',
+};
+
+export const ANILIST_SEASON_LABELS: Record<string, string> = {
+  WINTER: 'Zima',
+  SPRING: 'Wiosna',
+  SUMMER: 'Lato',
+  FALL: 'Jesień',
+};
+
+export const ANILIST_RELATION_LABELS: Record<string, string> = {
+  ADAPTATION: 'Adaptacja',
+  PREQUEL: 'Prequel',
+  SEQUEL: 'Sequel',
+  PARENT: 'Główne',
+  SIDE_STORY: 'Historia poboczna',
+  CHARACTER: 'Postaci',
+  SUMMARY: 'Streszczenie',
+  ALTERNATIVE: 'Alternatywne',
+  SPIN_OFF: 'Spin-off',
+  OTHER: 'Inne',
+  SOURCE: 'Źródło',
+  COMPILATION: 'Kompilacja',
+  CONTAINS: 'Zawiera',
+};
+
 export const DAY_NAMES_SHORT = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 export const DAY_NAMES_FULL = [
   'Poniedziałek',

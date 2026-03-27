@@ -38,6 +38,142 @@ export interface AiringAnime {
   };
 }
 
+// ============================================
+// Anime Detail Types (from AniList API)
+// ============================================
+
+export interface AnimeDetailFuzzyDate {
+  year?: number;
+  month?: number;
+  day?: number;
+}
+
+export interface AnimeDetailTrailer {
+  id?: string;
+  site?: string;
+  thumbnail?: string;
+}
+
+export interface AnimeDetailTag {
+  id: number;
+  name: string;
+  rank?: number;
+  isGeneralSpoiler?: boolean;
+  isMediaSpoiler?: boolean;
+}
+
+export interface AnimeDetailCharacter {
+  role: string;
+  node: {
+    id: number;
+    name: { full?: string; userPreferred?: string };
+    image: { medium?: string };
+  };
+}
+
+export interface AnimeDetailStaff {
+  role: string;
+  node: {
+    id: number;
+    name: { full?: string; userPreferred?: string };
+    image: { medium?: string };
+  };
+}
+
+export interface AnimeDetailStudio {
+  isMain: boolean;
+  node: { id?: number; name: string; isAnimationStudio?: boolean };
+}
+
+export interface AnimeDetailRelation {
+  relationType: string;
+  node: {
+    id: number;
+    title: { romaji?: string; english?: string };
+    format?: string;
+    type?: string;
+    status?: string;
+    coverImage: { medium?: string };
+    averageScore?: number;
+  };
+}
+
+export interface AnimeDetailRecommendation {
+  mediaRecommendation: {
+    id: number;
+    title: { romaji?: string };
+    coverImage: { medium?: string };
+    format?: string;
+    averageScore?: number;
+  };
+}
+
+export interface AnimeDetailExternalLink {
+  url: string;
+  site: string;
+  type?: string;
+  icon?: string;
+  color?: string;
+}
+
+export interface AnimeDetailStreamingEpisode {
+  title: string;
+  thumbnail: string;
+  url: string;
+  site: string;
+}
+
+export interface AnimeDetailRanking {
+  id: number;
+  rank: number;
+  type: string;
+  format?: string;
+  year?: number;
+  season?: string;
+  allTime?: boolean;
+  context: string;
+}
+
+export interface AnimeDetail {
+  id: number;
+  idMal?: number;
+  title: { romaji?: string; english?: string; native?: string };
+  coverImage: { large?: string; extraLarge?: string; color?: string };
+  bannerImage?: string;
+  episodes?: number;
+  duration?: number;
+  status: string;
+  season?: string;
+  seasonYear?: number;
+  format?: string;
+  source?: string;
+  genres: string[];
+  averageScore?: number;
+  meanScore?: number;
+  popularity?: number;
+  favourites?: number;
+  isAdult?: boolean;
+  siteUrl?: string;
+  description?: string;
+  startDate?: AnimeDetailFuzzyDate;
+  endDate?: AnimeDetailFuzzyDate;
+  trailer?: AnimeDetailTrailer;
+  tags?: AnimeDetailTag[];
+  nextAiringEpisode?: { airingAt: number; episode: number; timeUntilAiring?: number };
+  studios?: { edges?: AnimeDetailStudio[] };
+  staff?: { edges: AnimeDetailStaff[] };
+  characters?: { edges: AnimeDetailCharacter[] };
+  relations?: { edges: AnimeDetailRelation[] };
+  recommendations?: { nodes: AnimeDetailRecommendation[] };
+  externalLinks?: AnimeDetailExternalLink[];
+  streamingEpisodes?: AnimeDetailStreamingEpisode[];
+  rankings?: AnimeDetailRanking[];
+  stats?: {
+    scoreDistribution?: { score: number; amount: number }[];
+    statusDistribution?: { status: string; amount: number }[];
+  };
+}
+
 export interface BrowserTab {
   id: string;
   url: string;

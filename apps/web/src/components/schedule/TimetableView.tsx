@@ -13,9 +13,15 @@ export interface TimetableViewProps {
   getEntriesForDay: (day: string) => AiringAnime[];
   /** Pass the raw schedule object so useMemo can detect changes */
   schedule: Record<string, AiringAnime[]>;
+  onAnimeClick?: (anime: AiringAnime) => void;
 }
 
-export function TimetableView({ weekDays, getEntriesForDay, schedule }: TimetableViewProps) {
+export function TimetableView({
+  weekDays,
+  getEntriesForDay,
+  schedule,
+  onAnimeClick,
+}: TimetableViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
 
   return (
@@ -49,13 +55,26 @@ export function TimetableView({ weekDays, getEntriesForDay, schedule }: Timetabl
                   return (
                     <div
                       key={`${anime.id}-${anime.episode}`}
-                      role="article"
+                      role={onAnimeClick ? 'button' : 'article'}
                       aria-label={title}
+                      tabIndex={onAnimeClick ? 0 : undefined}
+                      onClick={() => onAnimeClick?.(anime)}
+                      onKeyDown={
+                        onAnimeClick
+                          ? e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onAnimeClick(anime);
+                              }
+                            }
+                          : undefined
+                      }
                       className={cn(
                         'rounded-lg overflow-hidden',
                         'border border-border-glass',
                         'hover:border-border-glass/80 hover:shadow-md transition-all duration-200',
-                        'group relative'
+                        'group relative',
+                        onAnimeClick && 'cursor-pointer'
                       )}
                     >
                       {/* Info strip -- episode & time */}

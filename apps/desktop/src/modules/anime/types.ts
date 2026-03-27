@@ -19,6 +19,80 @@ export interface AniListCoverImage {
   large?: string;
   medium?: string;
   extraLarge?: string;
+  color?: string;
+}
+
+export interface AniListFuzzyDate {
+  year?: number;
+  month?: number;
+  day?: number;
+}
+
+export interface AniListTrailer {
+  id?: string;
+  site?: string;
+  thumbnail?: string;
+}
+
+export interface AniListTag {
+  id: number;
+  name: string;
+  rank?: number;
+  isGeneralSpoiler?: boolean;
+  isMediaSpoiler?: boolean;
+}
+
+export interface AniListCharacter {
+  id: number;
+  name: { full?: string; userPreferred?: string };
+  image: { medium?: string };
+}
+
+export interface AniListCharacterEdge {
+  role: string;
+  node: AniListCharacter;
+}
+
+export interface AniListStaffMember {
+  id: number;
+  name: { full?: string; userPreferred?: string };
+  image: { medium?: string };
+}
+
+export interface AniListStaffEdge {
+  role: string;
+  node: AniListStaffMember;
+}
+
+export interface AniListStudioEdge {
+  isMain: boolean;
+  node: AniListStudio;
+}
+
+export interface AniListRanking {
+  id: number;
+  rank: number;
+  type: string;
+  format?: string;
+  year?: number;
+  season?: string;
+  allTime?: boolean;
+  context: string;
+}
+
+export interface AniListScoreDistribution {
+  score: number;
+  amount: number;
+}
+
+export interface AniListStatusDistribution {
+  status: string;
+  amount: number;
+}
+
+export interface AniListMediaStats {
+  scoreDistribution?: AniListScoreDistribution[];
+  statusDistribution?: AniListStatusDistribution[];
 }
 
 export interface AniListNextAiringEpisode {
@@ -28,12 +102,17 @@ export interface AniListNextAiringEpisode {
 }
 
 export interface AniListStudio {
+  id?: number;
   name: string;
+  isAnimationStudio?: boolean;
 }
 
 export interface AniListExternalLink {
   url: string;
   site: string;
+  type?: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface AniListStreamingEpisode {
@@ -50,6 +129,7 @@ export interface AniListMediaBasic {
   coverImage: AniListCoverImage;
   format?: string;
   type?: string;
+  status?: string;
   averageScore?: number;
 }
 
@@ -65,24 +145,39 @@ export interface AniListRecommendationNode {
 /** Full media object returned by AniList */
 export interface AniListMedia {
   id: number;
+  idMal?: number;
   title: AniListMediaTitle;
   coverImage: AniListCoverImage;
   bannerImage?: string;
   episodes?: number;
+  duration?: number;
   status: string;
   season?: string;
   seasonYear?: number;
   format?: string;
+  source?: string;
   genres: string[];
   averageScore?: number;
+  meanScore?: number;
   popularity?: number;
+  favourites?: number;
+  isAdult?: boolean;
+  siteUrl?: string;
   description?: string;
+  startDate?: AniListFuzzyDate;
+  endDate?: AniListFuzzyDate;
+  trailer?: AniListTrailer;
+  tags?: AniListTag[];
   nextAiringEpisode?: AniListNextAiringEpisode;
-  studios?: { nodes: AniListStudio[] };
+  studios?: { edges?: AniListStudioEdge[]; nodes?: AniListStudio[] };
+  staff?: { edges: AniListStaffEdge[] };
+  characters?: { edges: AniListCharacterEdge[] };
   relations?: { edges: AniListRelationEdge[] };
   recommendations?: { nodes: AniListRecommendationNode[] };
   externalLinks?: AniListExternalLink[];
   streamingEpisodes?: AniListStreamingEpisode[];
+  rankings?: AniListRanking[];
+  stats?: AniListMediaStats;
 }
 
 // ============================================

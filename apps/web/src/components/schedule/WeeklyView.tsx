@@ -13,9 +13,15 @@ export interface WeeklyViewProps {
   getEntriesForDay: (day: string) => AiringAnime[];
   /** Pass the raw schedule object so useMemo can detect changes */
   schedule: Record<string, AiringAnime[]>;
+  onAnimeClick?: (anime: AiringAnime) => void;
 }
 
-export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewProps) {
+export function WeeklyView({
+  weekDays,
+  getEntriesForDay,
+  schedule,
+  onAnimeClick,
+}: WeeklyViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
 
   return (
@@ -51,8 +57,22 @@ export function WeeklyView({ weekDays, getEntriesForDay, schedule }: WeeklyViewP
                       className={cn(
                         'group relative p-2 rounded-lg text-xs',
                         'bg-background/40 border border-border-glass',
-                        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200'
+                        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200',
+                        onAnimeClick && 'cursor-pointer'
                       )}
+                      onClick={() => onAnimeClick?.(anime)}
+                      role={onAnimeClick ? 'button' : undefined}
+                      tabIndex={onAnimeClick ? 0 : undefined}
+                      onKeyDown={
+                        onAnimeClick
+                          ? e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onAnimeClick(anime);
+                              }
+                            }
+                          : undefined
+                      }
                     >
                       <div className="flex items-start gap-2">
                         {coverUrl && (

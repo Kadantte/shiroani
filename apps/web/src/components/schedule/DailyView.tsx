@@ -4,9 +4,10 @@ import type { AiringAnime } from '@shiroani/shared';
 
 export interface DailyViewProps {
   entries: AiringAnime[];
+  onAnimeClick?: (anime: AiringAnime) => void;
 }
 
-export function DailyView({ entries }: DailyViewProps) {
+export function DailyView({ entries, onAnimeClick }: DailyViewProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-2">
       {entries.length === 0 ? (
@@ -22,7 +23,9 @@ export function DailyView({ entries }: DailyViewProps) {
           </div>
         </div>
       ) : (
-        entries.map(anime => <AiringEntry key={`${anime.id}-${anime.episode}`} anime={anime} />)
+        entries.map(anime => (
+          <AiringEntry key={`${anime.id}-${anime.episode}`} anime={anime} onClick={onAnimeClick} />
+        ))
       )}
     </div>
   );

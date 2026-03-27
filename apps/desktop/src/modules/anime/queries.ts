@@ -39,33 +39,66 @@ export const ANIME_DETAILS_QUERY = `
 query AnimeDetails($id: Int!) {
   Media(id: $id, type: ANIME) {
     id
+    idMal
     title { romaji english native }
-    coverImage { large extraLarge }
+    coverImage { large extraLarge color }
     bannerImage
     episodes
+    duration
     status
     season
     seasonYear
     format
+    source
     genres
     averageScore
+    meanScore
     popularity
+    favourites
+    isAdult
+    siteUrl
     description(asHtml: false)
-    studios(isMain: true) { nodes { name } }
+    startDate { year month day }
+    endDate { year month day }
+    trailer { id site thumbnail }
+    tags { id name rank isGeneralSpoiler isMediaSpoiler }
+    studios { edges { isMain node { id name isAnimationStudio } } }
+    staff(perPage: 8, sort: RELEVANCE) {
+      edges {
+        role
+        node {
+          id
+          name { full userPreferred }
+          image { medium }
+        }
+      }
+    }
+    characters(perPage: 8, sort: [ROLE, RELEVANCE]) {
+      edges {
+        role
+        node {
+          id
+          name { full userPreferred }
+          image { medium }
+        }
+      }
+    }
     nextAiringEpisode { airingAt episode timeUntilAiring }
     relations {
       edges {
         relationType
         node {
           id
-          title { romaji }
+          title { romaji english }
           format
           type
+          status
           coverImage { medium }
+          averageScore
         }
       }
     }
-    recommendations(sort: RATING_DESC, perPage: 5) {
+    recommendations(sort: RATING_DESC, perPage: 6) {
       nodes {
         mediaRecommendation {
           id
@@ -76,8 +109,13 @@ query AnimeDetails($id: Int!) {
         }
       }
     }
-    externalLinks { url site }
+    externalLinks { url site type icon color }
     streamingEpisodes { title thumbnail url site }
+    rankings { id rank type format year season allTime context }
+    stats {
+      scoreDistribution { score amount }
+      statusDistribution { status amount }
+    }
   }
 }
 `;
