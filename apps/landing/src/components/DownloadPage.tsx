@@ -462,13 +462,13 @@ export function DownloadPage() {
         {/* macOS unsigned notice */}
         {detectedPlatform === 'mac' && (
           <motion.p
-            className="mt-4 text-center text-xs text-muted-foreground/60"
+            className="mt-4 text-center text-xs text-muted-foreground/80"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
             Aplikacja nie jest podpisana certyfikatem Apple. Po pobraniu uruchom w terminalu:{' '}
-            <code className="rounded bg-muted/30 px-1.5 py-0.5 font-mono text-[10px] select-all">
+            <code className="rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground select-all">
               xattr -rd com.apple.quarantine /Applications/ShiroAni.app
             </code>
           </motion.p>
