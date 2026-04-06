@@ -8,17 +8,17 @@
   /* Spy×Family palette — noir with Anya pink + Loid gold */
   --color-background: oklch(0.08 0.005 0);
   --color-foreground: oklch(0.94 0.01 350);
-  --color-muted: oklch(0.17 0.008 350);
-  --color-muted-foreground: oklch(0.48 0.02 350);
+  --color-muted: oklch(0.2 0.008 350);
+  --color-muted-foreground: oklch(0.6 0.02 350);
   --color-primary: oklch(0.72 0.15 350);
   --color-primary-foreground: oklch(0.1 0.005 0);
   --color-brand: oklch(0.65 0.17 348);
   --color-gold: oklch(0.75 0.12 85);
-  --color-gold-dim: oklch(0.55 0.08 85);
+  --color-gold-dim: oklch(0.62 0.08 85);
   --color-card: oklch(0.14 0.008 350);
   --color-card-foreground: oklch(0.94 0.01 350);
   --color-surface: oklch(0.11 0.006 350);
-  --color-border: oklch(0.22 0.01 350);
+  --color-border: oklch(0.32 0.01 350);
   --color-crimson: oklch(0.55 0.25 10);
 
   --color-primary-glow: oklch(0.72 0.15 350 / 0.2);
