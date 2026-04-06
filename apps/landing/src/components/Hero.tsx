@@ -2,6 +2,7 @@ import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useEffect, useRef, useCallback } from 'react';
 import { ease } from '@/lib/animations';
+import { MotionProvider } from './MotionProvider';
 
 /** Floating sparkle particles that follow cursor in hero */
 function useCursorSparkles() {
@@ -182,125 +183,127 @@ export function Hero() {
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      aria-label="Sekcja powitalna"
-      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6"
-    >
-      {/* Cursor sparkles layer */}
-      <canvas
-        ref={canvasRef}
-        className="pointer-events-none absolute inset-0 z-20"
-        aria-hidden="true"
-      />
-
-      {/* Background orbs */}
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full opacity-20 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, var(--color-brand-glow), transparent 70%)',
-            animation: 'drift-slow 30s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full opacity-10 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, var(--color-gold-glow), transparent 70%)',
-            animation: 'drift-slow 25s ease-in-out infinite reverse',
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-16 text-center sm:pt-0">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5"
-        >
-          <motion.span
-            className="h-1.5 w-1.5 rounded-full bg-primary"
-            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <span className="text-[10px] font-medium text-primary sm:text-xs">
-            v0.3.0 — Czytelność i szczegóły anime
-          </span>
-        </motion.div>
-
-        {/* Interactive mascot */}
-        <motion.div
-          className="relative mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1, ease }}
-        >
-          <InteractiveMascot />
-        </motion.div>
-
-        <motion.h1
-          className="font-display text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease }}
-        >
-          Twój przytulny
-          <br />
-          <span className="text-gradient-pink">kącik anime</span>
-        </motion.h1>
-
-        <motion.p
-          className="mx-auto mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35, ease }}
-        >
-          Przeglądaj, śledź i odkrywaj anime — wszystko w jednej desktopowej aplikacji z wbudowaną
-          przeglądarką i&nbsp;społecznością.
-        </motion.p>
-
-        {/* CTAs with tactile press */}
-        <motion.div
-          className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5, ease }}
-        >
-          <a
-            href="/download"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
-          >
-            Pobierz ShiroAni
-          </a>
-          <button
-            aria-disabled="true"
-            onClick={e => e.preventDefault()}
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-            title="Wkrótce dostępne"
-          >
-            Dołącz do Discord — Wkrótce
-          </button>
-        </motion.div>
-      </div>
-
-      {/* Scroll hint */}
-      <motion.a
-        href="#funkcje"
-        aria-label="Przewiń do funkcji"
-        className="absolute bottom-10 text-muted-foreground/70 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
+    <MotionProvider>
+      <section
+        ref={sectionRef}
+        aria-label="Sekcja powitalna"
+        className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6"
       >
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        {/* Cursor sparkles layer */}
+        <canvas
+          ref={canvasRef}
+          className="pointer-events-none absolute inset-0 z-20"
+          aria-hidden="true"
+        />
+
+        {/* Background orbs */}
+        <div className="pointer-events-none absolute inset-0">
+          <div
+            className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full opacity-20 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, var(--color-brand-glow), transparent 70%)',
+              animation: 'drift-slow 30s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full opacity-10 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, var(--color-gold-glow), transparent 70%)',
+              animation: 'drift-slow 25s ease-in-out infinite reverse',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-16 text-center sm:pt-0">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5"
+          >
+            <motion.span
+              className="h-1.5 w-1.5 rounded-full bg-primary"
+              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <span className="text-[10px] font-medium text-primary sm:text-xs">
+              v0.3.0 — Czytelność i szczegóły anime
+            </span>
+          </motion.div>
+
+          {/* Interactive mascot */}
+          <motion.div
+            className="relative mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1, ease }}
+          >
+            <InteractiveMascot />
+          </motion.div>
+
+          <motion.h1
+            className="font-display text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ease }}
+          >
+            Twój przytulny
+            <br />
+            <span className="text-gradient-pink">kącik anime</span>
+          </motion.h1>
+
+          <motion.p
+            className="mx-auto mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35, ease }}
+          >
+            Przeglądaj, śledź i odkrywaj anime — wszystko w jednej desktopowej aplikacji z wbudowaną
+            przeglądarką i&nbsp;społecznością.
+          </motion.p>
+
+          {/* CTAs with tactile press */}
+          <motion.div
+            className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5, ease }}
+          >
+            <a
+              href="/download"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            >
+              Pobierz ShiroAni
+            </a>
+            <button
+              aria-disabled="true"
+              onClick={e => e.preventDefault()}
+              className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              title="Wkrótce dostępne"
+            >
+              Dołącz do Discord — Wkrótce
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Scroll hint */}
+        <motion.a
+          href="#funkcje"
+          aria-label="Przewiń do funkcji"
+          className="absolute bottom-10 text-muted-foreground/70 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
         >
-          <ArrowDown className="h-5 w-5" />
-        </motion.div>
-      </motion.a>
-    </section>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ArrowDown className="h-5 w-5" />
+          </motion.div>
+        </motion.a>
+      </section>
+    </MotionProvider>
   );
 }

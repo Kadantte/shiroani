@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Expand } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { ease } from '@/lib/animations';
+import { MotionProvider } from './MotionProvider';
 
 interface BentoCell {
   image?: string;
@@ -141,7 +142,7 @@ function Cell({
 
   return (
     <motion.div
-      className={`group relative overflow-hidden rounded-2xl border border-border bg-card ${hasImage ? 'cursor-pointer' : ''} ${cell.className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card ${hasImage ? 'cursor-pointer active:scale-[0.98]' : ''} transition-transform ${cell.className}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
@@ -238,41 +239,43 @@ export function Features() {
   }, []);
 
   return (
-    <section id="funkcje" className="relative px-6 py-28 lg:py-36">
-      <div className="mx-auto max-w-6xl">
-        {/* Section header */}
-        <motion.div
-          className="mb-14 max-w-xl"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease }}
-        >
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-gold-dim">
-            Funkcje
-          </p>
-          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Wszystko w jednym miejscu
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Nie opowiadamy — pokazujemy. Tak wygląda ShiroAni od środka.
-          </p>
-        </motion.div>
+    <MotionProvider>
+      <section id="funkcje" className="relative px-6 py-28 lg:py-36">
+        <div className="mx-auto max-w-6xl">
+          {/* Section header */}
+          <motion.div
+            className="mb-14 max-w-xl"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, ease }}
+          >
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-gold-dim">
+              Funkcje
+            </p>
+            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              Wszystko w jednym miejscu
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Nie opowiadamy — pokazujemy. Tak wygląda ShiroAni od środka.
+            </p>
+          </motion.div>
 
-        {/* Bento grid */}
-        <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-3 sm:auto-rows-[200px] lg:auto-rows-[240px]">
-          {cells.map((cell, i) => (
-            <Cell key={cell.title} cell={cell} index={i} onOpen={openLightbox} />
-          ))}
+          {/* Bento grid */}
+          <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-3 sm:auto-rows-[200px] lg:auto-rows-[240px]">
+            {cells.map((cell, i) => (
+              <Cell key={cell.title} cell={cell} index={i} onOpen={openLightbox} />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Lightbox overlay */}
-      <AnimatePresence>
-        {lightbox && (
-          <Lightbox image={lightbox.image} title={lightbox.title} onClose={closeLightbox} />
-        )}
-      </AnimatePresence>
-    </section>
+        {/* Lightbox overlay */}
+        <AnimatePresence>
+          {lightbox && (
+            <Lightbox image={lightbox.image} title={lightbox.title} onClose={closeLightbox} />
+          )}
+        </AnimatePresence>
+      </section>
+    </MotionProvider>
   );
 }

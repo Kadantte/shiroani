@@ -3,6 +3,7 @@ import { Apple, Monitor, Terminal, Download, ExternalLink, FileText } from 'luci
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { formatDate, GITHUB_RELEASES_API_URL, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { ease } from '@/lib/animations';
+import { MotionProvider } from './MotionProvider';
 
 interface ReleaseAsset {
   name: string;
@@ -319,7 +320,7 @@ export function DownloadPage() {
   }, [detectedPlatform]);
 
   return (
-    <>
+    <MotionProvider>
       {layer}
 
       <header className="border-b border-border px-6 py-4">
@@ -504,6 +505,6 @@ export function DownloadPage() {
           )}
         </motion.div>
       </main>
-    </>
+    </MotionProvider>
   );
 }

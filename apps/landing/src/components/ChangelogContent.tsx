@@ -12,6 +12,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { ease } from '@/lib/animations';
+import { MotionProvider } from './MotionProvider';
 
 interface ChangeEntry {
   icon: typeof Sparkles;
@@ -307,7 +308,7 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
 
 export function ChangelogContent() {
   return (
-    <>
+    <MotionProvider>
       <motion.div
         className="mb-16"
         initial={{ opacity: 0, y: 20 }}
@@ -328,6 +329,6 @@ export function ChangelogContent() {
           <ReleaseCard key={release.version} release={release} index={i} />
         ))}
       </div>
-    </>
+    </MotionProvider>
   );
 }
