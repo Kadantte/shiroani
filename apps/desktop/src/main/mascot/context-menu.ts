@@ -57,7 +57,7 @@ export function setMainWindowRef(win: BrowserWindow | null): void {
 
 function getMenuHtmlPath(): string {
   if (!app.isPackaged) {
-    return path.join(__dirname, '../../../src/renderer/context-menu.html');
+    return path.join(__dirname, '../../src/renderer/context-menu.html');
   }
   return path.join(app.getAppPath(), 'dist/renderer/context-menu.html');
 }

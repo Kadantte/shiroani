@@ -19,7 +19,7 @@ const SHOW_ON_FULLSCREEN_SPACES = false;
 
 function getMascotHtmlPath(): string {
   if (!app.isPackaged) {
-    return path.join(__dirname, '../../../src/renderer/mascot-overlay.html');
+    return path.join(__dirname, '../../src/renderer/mascot-overlay.html');
   }
   return path.join(app.getAppPath(), 'dist/renderer/mascot-overlay.html');
 }

@@ -36,9 +36,9 @@ const releases: Release[] = [
   {
     version: '0.3.2',
     date: '6 kwietnia 2026',
-    title: 'Logowanie do Google w przeglądarce',
+    title: 'Google login i poprawki maskotki',
     description:
-      'Naprawiono blokadę logowania do kont Google w wbudowanej przeglądarce — Google wykrywał Electrona jako "niebezpieczną przeglądarkę".',
+      'Naprawiono blokadę logowania do kont Google w wbudowanej przeglądarce oraz błędy ładowania nakładki maskotki w trybie deweloperskim.',
     categories: [
       {
         label: 'Poprawki',
@@ -48,6 +48,10 @@ const releases: Release[] = [
           {
             icon: Globe,
             text: 'Logowanie do kont Google działa poprawnie — przeglądarka wysyła Firefox UA dla domen autoryzacyjnych Google',
+          },
+          {
+            icon: Wrench,
+            text: 'Naprawiono ścieżki do plików HTML maskotki i menu kontekstowego (ERR_FILE_NOT_FOUND w dev)',
           },
         ],
       },
