@@ -243,10 +243,7 @@ export function updateDiscordPresence(activity: DiscordPresenceActivity): void {
   const settings = getSettings();
   if (!settings.enabled) return;
 
-  // Track if view changed — reset start timestamp
-  if (!currentActivity || currentActivity.view !== activity.view) {
-    activityStartTime = new Date();
-  }
+  // Keep activityStartTime from initial connection — represents total session time
 
   currentActivity = activity;
   throttledUpdate(activity);
@@ -273,7 +270,6 @@ export function onWindowBlur(): void {
   idleTimer = setTimeout(() => {
     idleTimer = null;
     isIdle = true;
-    activityStartTime = new Date();
     sendPresenceUpdate({ view: 'idle' }).catch(() => {});
     logger.debug('Idle presence activated');
   }, IDLE_TIMEOUT_MS);
@@ -288,7 +284,6 @@ export function onWindowFocus(): void {
   if (isIdle) {
     isIdle = false;
     if (currentActivity) {
-      activityStartTime = new Date();
       sendPresenceUpdate(currentActivity).catch(() => {});
       logger.debug('Restored presence from idle');
     }

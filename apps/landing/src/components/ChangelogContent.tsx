@@ -34,6 +34,26 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.3.1',
+    date: '6 kwietnia 2026',
+    title: 'Discord RPC — ciągły timer sesji',
+    description:
+      'Czas wyświetlany w Discord Rich Presence teraz pokazuje całkowity czas od uruchomienia aplikacji, zamiast resetować się przy zmianie widoku lub przejściu w tryb bezczynności.',
+    categories: [
+      {
+        label: 'Poprawki',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Wrench,
+            text: 'Discord RPC — timer sesji nie resetuje się już przy zmianie widoku ani przy przejściu w/z trybu bezczynności',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '27 marca 2026',
     title: 'Czytelność i szczegóły anime',
