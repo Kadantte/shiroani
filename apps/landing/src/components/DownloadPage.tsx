@@ -467,7 +467,10 @@ export function DownloadPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            Aplikacja nie jest podpisana certyfikatem Apple. Po pobraniu kliknij prawym → Otwórz.
+            Aplikacja nie jest podpisana certyfikatem Apple. Po pobraniu uruchom w terminalu:{' '}
+            <code className="rounded bg-muted/30 px-1.5 py-0.5 font-mono text-[10px] select-all">
+              xattr -rd com.apple.quarantine /Applications/ShiroAni.app
+            </code>
           </motion.p>
         )}
 
