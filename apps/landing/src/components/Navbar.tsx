@@ -23,9 +23,11 @@ export function Navbar() {
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       style={{
-        background: scrolled ? 'oklch(0.08 0.005 0 / 0.9)' : 'transparent',
+        background: scrolled ? 'oklch(from var(--color-background) l c h / 0.9)' : 'transparent',
         backdropFilter: scrolled ? 'blur(20px) saturate(1.3)' : 'none',
-        borderBottom: scrolled ? '1px solid oklch(0.22 0.01 350 / 0.5)' : '1px solid transparent',
+        borderBottom: scrolled
+          ? '1px solid oklch(from var(--color-border) l c h / 0.5)'
+          : '1px solid transparent',
       }}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">

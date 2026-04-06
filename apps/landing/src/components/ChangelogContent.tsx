@@ -291,7 +291,7 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
                   transition={{ duration: 0.3, delay: 0.3 + i * 0.03, ease }}
                 >
                   <entry.icon
-                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50"
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/70"
                     strokeWidth={1.5}
                   />
                   <span className="text-sm text-foreground/80">{entry.text}</span>

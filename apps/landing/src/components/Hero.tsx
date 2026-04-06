@@ -277,7 +277,7 @@ export function Hero() {
           <button
             aria-disabled="true"
             onClick={e => e.preventDefault()}
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-foreground/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title="Wkrótce dostępne"
           >
             Dołącz do Discord — Wkrótce
@@ -289,7 +289,7 @@ export function Hero() {
       <motion.a
         href="#funkcje"
         aria-label="Przewiń do funkcji"
-        className="absolute bottom-10 text-muted-foreground/40 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
+        className="absolute bottom-10 text-muted-foreground/70 transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:rounded-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}

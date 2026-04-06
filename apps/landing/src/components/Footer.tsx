@@ -47,7 +47,7 @@ export function Footer() {
             <Github className="h-4.5 w-4.5" />
           </motion.a>
           <span
-            className="text-muted-foreground/40 cursor-not-allowed"
+            className="text-muted-foreground/60 cursor-not-allowed"
             aria-label="Discord — wkrótce"
             title="Wkrótce dostępne"
           >
@@ -56,7 +56,7 @@ export function Footer() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground/60">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
         © {YEAR} ShiroAni · Source-available
       </p>
     </footer>

@@ -115,7 +115,7 @@ export function BotSection() {
             <button
               aria-disabled="true"
               onClick={e => e.preventDefault()}
-              className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-primary/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               title="Wkrótce dostępne"
             >
               <span>Dołącz do serwera — Wkrótce</span>
