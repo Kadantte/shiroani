@@ -53,6 +53,36 @@ export class BrowserManager {
       `Mozilla/5.0 (${osString}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`
     );
 
+    // Send Firefox UA for Google auth domains so sign-in isn't blocked.
+    // Google detects embedded Chromium browsers via Client Hints + navigator.userAgentData
+    // and rejects sign-in. Firefox doesn't support Client Hints at all, so using a
+    // Firefox UA sidesteps all Chromium-specific detection (proven by qutebrowser, nativefier).
+    // YouTube is excluded — it serves a worse player to Firefox.
+    const firefoxUA = `Mozilla/5.0 (${osString.replace('Intel Mac OS X 10_15_7', 'Intel Mac OS X 10.15; rv:137.0')}) Gecko/20100101 Firefox/137.0`;
+
+    this.browserSession.webRequest.onBeforeSendHeaders(
+      {
+        urls: [
+          '*://accounts.google.com/*',
+          '*://*.accounts.google.com/*',
+          '*://myaccount.google.com/*',
+          '*://gds.google.com/*',
+          '*://*.googleapis.com/*',
+          '*://*.gstatic.com/*',
+        ],
+      },
+      (details, callback) => {
+        const headers = { ...details.requestHeaders };
+        headers['User-Agent'] = firefoxUA;
+        // Remove Chromium-only headers — Firefox never sends these
+        delete headers['Sec-CH-UA'];
+        delete headers['Sec-CH-UA-Mobile'];
+        delete headers['Sec-CH-UA-Platform'];
+        delete headers['Sec-CH-UA-Full-Version-List'];
+        callback({ requestHeaders: headers });
+      }
+    );
+
     // Allow media and clipboard permissions for browser tabs (needed for video players)
     const allowedPermissions = new Set([
       'clipboard-read',
