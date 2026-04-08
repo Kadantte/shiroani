@@ -34,6 +34,61 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.4.0',
+    date: '8 kwietnia 2026',
+    title: 'Blokowanie reklam popupowych i skr\u00F3ty klawiszowe',
+    description:
+      'Wbudowana przeglądarka stała się znacznie przyjemniejsza w użyciu — inteligentne blokowanie popupów reklamowych z iframe video playerów, pełna obsługa skrótów klawiszowych oraz naprawiona ikona w zasobniku systemowym.',
+    categories: [
+      {
+        label: 'Nowe funkcje',
+        icon: Sparkles,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Shield,
+            text: 'Inteligentne blokowanie popupów — filtruje window.open na podstawie list filtrów i heurystyk origin (tryb smart/strict/off)',
+          },
+          {
+            icon: Zap,
+            text: 'Skróty klawiszowe przeglądarki: Ctrl+W (zamknij kartę), Ctrl+T (nowa karta), Ctrl+Tab (przełącz karty), Ctrl+L (pasek adresu), Ctrl+R (odśwież), Alt+←/→ (nawigacja)',
+          },
+          {
+            icon: Shield,
+            text: 'Pełne listy filtrów adblock — rozszerzono o filtry irytujących elementów (banery cookies, nakładki "wyłącz adblock")',
+          },
+          {
+            icon: Monitor,
+            text: 'Przycisk trybu blokowania popupów w pasku narzędzi z trzema trybami i kolorowymi ikonami',
+          },
+        ],
+      },
+      {
+        label: 'Poprawki',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Wrench,
+            text: 'Naprawiono ikonę w zasobniku systemowym — w spakowanej aplikacji brakowało pliku icon-32.png, teraz używany jest icon.ico',
+          },
+          {
+            icon: Zap,
+            text: 'Skróty klawiszowe działają nawet gdy webview ma fokus (przechwytywanie przez before-input-event w procesie głównym)',
+          },
+          {
+            icon: Globe,
+            text: 'Logowanie do kont Google działa poprawnie — Firefox UA dla domen autoryzacyjnych',
+          },
+          {
+            icon: Wrench,
+            text: 'Discord RPC — timer sesji nie resetuje się przy zmianie widoku ani trybu bezczynności',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.3.2',
     date: '6 kwietnia 2026',
     title: 'Google login i poprawki maskotki',

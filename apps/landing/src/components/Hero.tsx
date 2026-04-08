@@ -228,7 +228,7 @@ export function Hero() {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
             <span className="text-[10px] font-medium text-primary sm:text-xs">
-              v0.3.0 — Czytelność i szczegóły anime
+              v0.4.0 — Blokowanie popupów i skróty klawiszowe
             </span>
           </motion.div>
 
