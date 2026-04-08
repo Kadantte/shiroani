@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, session } from 'electron';
+import { app, BrowserWindow, Menu, shell, session } from 'electron';
 import * as path from 'path';
 import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
@@ -92,6 +92,42 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
     logger.debug(`[security] Denied permission check: ${permission}`);
     return false;
   });
+
+  // Remove Electron's default application menu to prevent its built-in
+  // Ctrl+W (close window) accelerator from intercepting our browser tab close shortcut.
+  // On macOS, keep a minimal menu so standard shortcuts (Cmd+Q, Cmd+C/V) still work.
+  if (process.platform === 'darwin') {
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([
+        {
+          label: app.name,
+          submenu: [
+            { role: 'about' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' },
+          ],
+        },
+        {
+          label: 'Edit',
+          submenu: [
+            { role: 'undo' },
+            { role: 'redo' },
+            { type: 'separator' },
+            { role: 'cut' },
+            { role: 'copy' },
+            { role: 'paste' },
+            { role: 'selectAll' },
+          ],
+        },
+      ])
+    );
+  } else {
+    Menu.setApplicationMenu(null);
+  }
 
   const mainWindow = new BrowserWindow({
     width: 1400,

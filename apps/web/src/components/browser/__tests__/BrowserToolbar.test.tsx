@@ -20,12 +20,14 @@ function getDefaultProps() {
     canGoForward: false,
     isLoading: false,
     adblockEnabled: false,
+    popupBlockMode: 'smart' as const,
     hasActiveTab: true,
     onGoBack: vi.fn(),
     onGoForward: vi.fn(),
     onReload: vi.fn(),
     onNavigate: vi.fn(),
     onToggleAdblock: vi.fn(),
+    onCyclePopupBlockMode: vi.fn(),
     onGoHome: vi.fn(),
     onAddToLibrary: vi.fn(),
   };
@@ -37,7 +39,8 @@ function getDefaultProps() {
 // 2: Reload (Odśwież)
 // 3: Add to library (Dodaj do biblioteki)
 // 4: Adblock toggle
-// 5: Home (Strona główna)
+// 5: Popup block mode toggle
+// 6: Home (Strona główna)
 
 function getButtons() {
   const buttons = screen.getAllByRole('button');
@@ -47,7 +50,8 @@ function getButtons() {
     reload: buttons[2],
     addToLibrary: buttons[3],
     adblock: buttons[4],
-    home: buttons[5],
+    popupBlock: buttons[5],
+    home: buttons[6],
   };
 }
 

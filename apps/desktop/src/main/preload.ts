@@ -52,6 +52,8 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'background:get-url',
   'browser:toggle-adblock',
   'browser:set-fullscreen',
+  'browser:get-popup-block-mode',
+  'browser:set-popup-block-mode',
   'updater:check-for-updates',
   'updater:start-download',
   'updater:install-now',
@@ -196,7 +198,12 @@ export interface ElectronAPI {
   browser: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     setFullscreen: (isFullscreen: boolean) => Promise<void>;
+    getPopupBlockMode: () => Promise<string>;
+    setPopupBlockMode: (mode: string) => Promise<void>;
     onNewWindowRequest: (callback: (url: string) => void) => () => void;
+    onShortcut: (
+      callback: (data: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => void
+    ) => () => void;
   };
   updater: {
     checkForUpdates: () => Promise<{ enabled: boolean; channel: UpdateChannel }>;
@@ -305,7 +312,13 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('browser:toggle-adblock', enabled) as Promise<void>,
     setFullscreen: (isFullscreen: boolean) =>
       ipcRenderer.invoke('browser:set-fullscreen', isFullscreen) as Promise<void>,
+    getPopupBlockMode: () => ipcRenderer.invoke('browser:get-popup-block-mode') as Promise<string>,
+    setPopupBlockMode: (mode: string) =>
+      ipcRenderer.invoke('browser:set-popup-block-mode', mode) as Promise<void>,
     onNewWindowRequest: createIpcListener<string>('browser:new-window-request'),
+    onShortcut: createIpcListener<{ key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }>(
+      'browser:shortcut'
+    ),
   },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),

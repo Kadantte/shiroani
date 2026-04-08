@@ -9,12 +9,15 @@ function getTrayIconPath(): string {
     ? process.resourcesPath
     : path.join(__dirname, '../../resources');
 
-  // On macOS, use a 16px icon for proper menu bar sizing.
-  // On other platforms, use the 32px icon for better visibility.
   if (process.platform === 'darwin') {
+    // On macOS, use a 16px PNG for proper menu bar sizing.
     return path.join(resourcesDir, 'icon-16.png');
   }
-  return path.join(resourcesDir, 'icon-32.png');
+
+  // On Windows, prefer .ico (multi-resolution, crisp at any DPI).
+  // Falls back to 32px PNG if .ico is unavailable.
+  const icoPath = path.join(resourcesDir, 'icon.ico');
+  return icoPath;
 }
 
 function showWindow(win: BrowserWindow): void {

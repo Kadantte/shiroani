@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Globe } from 'lucide-react';
 import { isNewTabUrl, NEW_TAB_URL } from '@shiroani/shared';
@@ -22,6 +22,7 @@ const {
   goForward,
   reload,
   toggleAdblock,
+  cyclePopupBlockMode,
 } = useBrowserStore.getState();
 
 /**
@@ -33,6 +34,7 @@ export function BrowserView() {
   const tabs = useBrowserStore(useShallow(s => s.tabs));
   const activeTabId = useBrowserStore(s => s.activeTabId);
   const adblockEnabled = useBrowserStore(s => s.adblockEnabled);
+  const popupBlockMode = useBrowserStore(s => s.popupBlockMode);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   const [urlInput, setUrlInput] = useState('');
@@ -42,6 +44,70 @@ export function BrowserView() {
 
   // Tab restoration on mount
   useBrowserInit();
+
+  // Ref to focus address bar via Ctrl+L shortcut
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Shared shortcut handler used by both local keydown and IPC-forwarded events.
+  // When the webview has focus, key events don't reach the renderer's window,
+  // so the main process intercepts them via before-input-event and forwards via IPC.
+  const handleShortcut = useCallback(
+    (input: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => {
+      if (input.ctrl && input.key === 'w') {
+        const { activeTabId: id } = useBrowserStore.getState();
+        if (id) closeTab(id);
+      } else if (input.ctrl && input.key === 't') {
+        openTab();
+      } else if (input.ctrl && input.key === 'Tab') {
+        const { tabs: t, activeTabId: aId } = useBrowserStore.getState();
+        if (t.length < 2) return;
+        const idx = t.findIndex(tab => tab.id === aId);
+        const next = input.shift ? (idx - 1 + t.length) % t.length : (idx + 1) % t.length;
+        switchTab(t[next].id);
+      } else if (input.ctrl && input.key === 'l') {
+        urlInputRef.current?.focus();
+      } else if (input.ctrl && input.key === 'r') {
+        reload();
+      } else if (input.alt && input.key === 'ArrowLeft') {
+        goBack();
+      } else if (input.alt && input.key === 'ArrowRight') {
+        goForward();
+      }
+    },
+    []
+  );
+
+  // Keyboard shortcuts — local keydown for when renderer has focus
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      const ctrl = e.ctrlKey || e.metaKey;
+      const alt = e.altKey;
+      const key = e.key;
+
+      const isHandled =
+        (ctrl && (key === 'w' || key === 't' || key === 'Tab' || key === 'l' || key === 'r')) ||
+        (alt && (key === 'ArrowLeft' || key === 'ArrowRight'));
+
+      if (isHandled) {
+        e.preventDefault();
+        handleShortcut({ key, ctrl, shift: e.shiftKey, alt });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleShortcut]);
+
+  // Keyboard shortcuts — IPC-forwarded from webview's before-input-event
+  useEffect(() => {
+    const cleanup = window.electronAPI?.browser?.onShortcut?.(handleShortcut);
+    return () => cleanup?.();
+  }, [handleShortcut]);
 
   // Sync URL input with active tab URL (show empty for new tab page)
   useEffect(() => {
@@ -99,14 +165,17 @@ export function BrowserView() {
           canGoForward={activeTab?.canGoForward ?? false}
           isLoading={activeTab?.isLoading ?? false}
           adblockEnabled={adblockEnabled}
+          popupBlockMode={popupBlockMode}
           hasActiveTab={!!activeTab}
           onGoBack={goBack}
           onGoForward={goForward}
           onReload={reload}
           onNavigate={navigate}
           onToggleAdblock={toggleAdblock}
+          onCyclePopupBlockMode={cyclePopupBlockMode}
           onGoHome={handleGoHome}
           onAddToLibrary={() => setIsAddToLibraryOpen(true)}
+          urlInputRef={urlInputRef}
         />
       )}
 

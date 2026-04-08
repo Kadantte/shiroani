@@ -21,7 +21,7 @@ export async function initializeAdblock(): Promise<ElectronBlocker> {
 
   logger.info('Initializing adblocker...');
 
-  blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, {
+  blocker = await ElectronBlocker.fromPrebuiltFull(fetch, {
     path: cachePath,
     read: fs.readFile,
     write: fs.writeFile,

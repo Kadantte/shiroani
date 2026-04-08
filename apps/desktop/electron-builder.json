@@ -20,6 +20,14 @@
     {
       "from": "resources/icon.ico",
       "to": "icon.ico"
+    },
+    {
+      "from": "resources/icon-16.png",
+      "to": "icon-16.png"
+    },
+    {
+      "from": "resources/icon-32.png",
+      "to": "icon-32.png"
     }
   ],
   "artifactName": "${productName}-${version}-${arch}.${ext}",

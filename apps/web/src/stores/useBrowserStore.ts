@@ -9,11 +9,14 @@ import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/e
 
 const logger = createLogger('BrowserStore');
 
+export type PopupBlockMode = 'smart' | 'strict' | 'off';
+
 interface BrowserState {
   tabs: BrowserTab[];
   activeTabId: string | null;
   isAddressBarFocused: boolean;
   adblockEnabled: boolean;
+  popupBlockMode: PopupBlockMode;
   isFullScreen: boolean;
 }
 
@@ -30,6 +33,8 @@ interface BrowserActions {
   setAddressBarFocused: (focused: boolean) => void;
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
+  setPopupBlockMode: (mode: PopupBlockMode) => void;
+  cyclePopupBlockMode: () => void;
   persistTabs: () => void;
   restoreTabs: () => Promise<void>;
 }
@@ -48,6 +53,7 @@ export const useBrowserStore = create<BrowserStore>()(
       activeTabId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
+      popupBlockMode: 'smart' as PopupBlockMode,
       isFullScreen: false,
 
       // ── Tab CRUD (all local now) ────────────────────────────────
@@ -190,6 +196,27 @@ export const useBrowserStore = create<BrowserStore>()(
         get().setAdblockEnabled(enabled);
       },
 
+      setPopupBlockMode: async (mode: PopupBlockMode) => {
+        const previous = get().popupBlockMode;
+        set({ popupBlockMode: mode }, undefined, 'browser/setPopupBlockMode');
+        try {
+          await window.electronAPI?.browser?.setPopupBlockMode(mode);
+          await electronStoreSet('browser-settings', {
+            ...((await electronStoreGet('browser-settings')) ?? {}),
+            popupBlockMode: mode,
+          });
+        } catch {
+          set({ popupBlockMode: previous }, undefined, 'browser/setPopupBlockMode:revert');
+        }
+      },
+
+      cyclePopupBlockMode: () => {
+        const modes: PopupBlockMode[] = ['smart', 'strict', 'off'];
+        const current = get().popupBlockMode;
+        const next = modes[(modes.indexOf(current) + 1) % modes.length];
+        get().setPopupBlockMode(next);
+      },
+
       // ── Persistence ─────────────────────────────────────────────
 
       persistTabs: () => {
@@ -219,11 +246,21 @@ export const useBrowserStore = create<BrowserStore>()(
         // Restore adblock setting
         const settings = await electronStoreGet<{
           adblockEnabled?: boolean;
+          popupBlockMode?: PopupBlockMode;
         }>('browser-settings');
 
         if (settings) {
           if (typeof settings.adblockEnabled === 'boolean') {
             set({ adblockEnabled: settings.adblockEnabled });
+          }
+          if (
+            settings.popupBlockMode === 'smart' ||
+            settings.popupBlockMode === 'strict' ||
+            settings.popupBlockMode === 'off'
+          ) {
+            set({ popupBlockMode: settings.popupBlockMode });
+            // Sync with main process
+            window.electronAPI?.browser?.setPopupBlockMode(settings.popupBlockMode);
           }
         }
 

@@ -54,7 +54,12 @@ interface ElectronAPI {
   browser?: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     setFullscreen: (fullscreen: boolean) => Promise<void>;
+    getPopupBlockMode: () => Promise<string>;
+    setPopupBlockMode: (mode: string) => Promise<void>;
     onNewWindowRequest: (callback: (url: string) => void) => () => void;
+    onShortcut: (
+      callback: (data: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => void
+    ) => () => void;
   };
   background?: {
     /** Open file dialog, copy image to userData/backgrounds, return fileName and protocol URL */
