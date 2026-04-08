@@ -7,14 +7,19 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/bot/package.json apps/bot/
 COPY apps/bot/prisma/ apps/bot/prisma/
-RUN pnpm install --frozen-lockfile --filter @shiroani/bot
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile --filter @shiroani/bot...
 
 # Build
 FROM base AS build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/bot/node_modules ./apps/bot/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY packages/shared/ packages/shared/
 COPY apps/bot/ apps/bot/
 COPY tsconfig.base.json ./
+RUN pnpm --filter @shiroani/shared run build
 RUN pnpm --filter @shiroani/bot run db:generate
 RUN pnpm --filter @shiroani/bot run build
 
@@ -27,9 +32,11 @@ ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/bot/package.json apps/bot/
+COPY packages/shared/package.json packages/shared/
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/apps/bot/dist ./apps/bot/dist
 COPY --from=build /app/apps/bot/prisma ./apps/bot/prisma
-RUN pnpm install --frozen-lockfile --filter @shiroani/bot --prod
+RUN pnpm install --frozen-lockfile --filter @shiroani/bot... --prod
 
 # Generate Prisma client for production
 RUN cd apps/bot && npx prisma generate

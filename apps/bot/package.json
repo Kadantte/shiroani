@@ -47,6 +47,7 @@
     "jest": "^30.3.0",
     "prisma": "^7.5.0",
     "ts-jest": "^29.4.6",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
   }
 }
