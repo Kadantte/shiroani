@@ -34,6 +34,34 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.4.1',
+    date: '9 kwietnia 2026',
+    title: 'Aktualizacja bezpieczeństwa',
+    description:
+      'Mała, ale ważna aktualizacja — odświeżyliśmy kilka bibliotek, na których opiera się aplikacja, aby zamknąć zgłoszone luki bezpieczeństwa. Nie ma nowych funkcji, ale warto zainstalować ją jak najszybciej. Aktualizacja pobierze się automatycznie.',
+    categories: [
+      {
+        label: 'Bezpieczeństwo',
+        icon: Shield,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Shield,
+            text: 'Zaktualizowany silnik Electron, na którym działa ShiroAni — zamknięte luki związane z obsługą okien, uprawnieniami procesów i wczytywaniem obrazów ze schowka',
+          },
+          {
+            icon: Shield,
+            text: 'Zaktualizowane biblioteki odpowiadające za komunikację bota Discord i wewnętrzny silnik aplikacji desktopowej',
+          },
+          {
+            icon: Wrench,
+            text: 'Odświeżone zależności narzędziowe używane podczas budowania aplikacji — bez zmian w działaniu dla użytkowników',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.0',
     date: '8 kwietnia 2026',
     title: 'Blokowanie reklam popupowych i skr\u00F3ty klawiszowe',

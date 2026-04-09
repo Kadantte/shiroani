@@ -52,3 +52,6 @@ Thumbs.db
 .planning/
 .worktrees/
 apps/landing/.astro/
+
+# Release announcement scratch (rewritten per release, never committed)
+docs/release-announcement.md
