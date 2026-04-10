@@ -12,6 +12,7 @@ import { SettingsView } from '@/components/settings/SettingsView';
 import { DiaryView } from '@/components/diary/DiaryView';
 import { FeedView } from '@/components/feed/FeedView';
 import { DiscoverView } from '@/components/discover/DiscoverView';
+import { ProfileView } from '@/components/profile/ProfileView';
 import { SplashScreen } from '@/components/splash';
 import { OnboardingWizard } from '@/components/onboarding';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
@@ -64,6 +65,7 @@ function App() {
         view === 'schedule' ||
         view === 'library' ||
         view === 'discover' ||
+        view === 'profile' ||
         view === 'settings' ||
         view === 'browser' ||
         view === 'diary' ||
@@ -127,6 +129,7 @@ function App() {
               {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}
               {activeView === 'feed' && <FeedView />}
+              {activeView === 'profile' && <ProfileView />}
               {activeView === 'settings' && <SettingsView />}
             </ErrorBoundary>
           </main>
