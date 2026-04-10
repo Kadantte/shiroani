@@ -201,9 +201,9 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
   );
 }
 
-const MAX_AIRING_ENTRIES = 10;
+const MAX_AIRING_CARDS = 12;
 
-/** Airing Today section showing anime airing on the current day */
+/** Airing Today section — horizontal scrolling poster cards */
 function AiringTodaySection() {
   const todayKey = useMemo(() => toLocalDate(new Date()), []);
 
@@ -228,138 +228,139 @@ function AiringTodaySection() {
     }
   }, [todayKey, todayEntries]);
 
-  const { userAnime, otherAnime, hasMore } = useMemo(() => {
-    if (!todayEntries) return { userAnime: [], otherAnime: [], hasMore: false };
+  const { cards, hasMore } = useMemo(() => {
+    if (!todayEntries)
+      return { cards: [] as (AiringAnime & { isUser: boolean })[], hasMore: false };
 
     const sorted = [...todayEntries].sort((a, b) => a.airingAt - b.airingAt);
 
-    const user: AiringAnime[] = [];
-    const other: AiringAnime[] = [];
+    // User's anime first, then the rest
+    const user: (AiringAnime & { isUser: boolean })[] = [];
+    const other: (AiringAnime & { isUser: boolean })[] = [];
 
     for (const entry of sorted) {
       const mediaId = entry.media.id;
-      if (libraryAnilistIds.has(mediaId) || subscribedIds.has(mediaId)) {
-        user.push(entry);
-      } else {
-        other.push(entry);
-      }
+      const isUser = libraryAnilistIds.has(mediaId) || subscribedIds.has(mediaId);
+      if (isUser) user.push({ ...entry, isUser: true });
+      else other.push({ ...entry, isUser: false });
     }
 
-    const totalAvailable = user.length + other.length;
-    const remaining = MAX_AIRING_ENTRIES - user.length;
-    const visibleOther = remaining > 0 ? other.slice(0, remaining) : [];
-
+    const all = [...user, ...other];
     return {
-      userAnime: user,
-      otherAnime: visibleOther,
-      hasMore: totalAvailable > MAX_AIRING_ENTRIES,
+      cards: all.slice(0, MAX_AIRING_CARDS),
+      hasMore: all.length > MAX_AIRING_CARDS,
     };
   }, [todayEntries, libraryAnilistIds, subscribedIds]);
 
-  // Don't render the section while loading with no data yet
+  // Loading state
   if (!todayEntries && isLoading) {
     return (
-      <div className="mb-8">
-        <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
-          <CalendarDays className="w-4 h-4" />
-          Emitowane dzisiaj
-        </h2>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground/60 py-4">
-          <div className="w-3 h-3 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground/60 animate-spin" />
-          Ładowanie...
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <CalendarDays className="w-4 h-4" />
+            Emitowane dzisiaj
+          </h2>
+        </div>
+        <div className="flex gap-3 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-[100px] shrink-0 animate-pulse">
+              <div className="aspect-[3/4] rounded-lg bg-muted/40" />
+              <div className="mt-1.5 h-3 w-[70%] rounded bg-muted/30" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // No data or empty
-  if (!todayEntries || todayEntries.length === 0) {
-    return (
-      <div className="mb-8">
-        <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+  // Empty state
+  if (!todayEntries || todayEntries.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           Emitowane dzisiaj
         </h2>
-        <p className="text-xs text-muted-foreground/50 py-2">Brak anime na dziś</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mb-8">
-      <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
-        <CalendarDays className="w-4 h-4" />
-        Emitowane dzisiaj
-      </h2>
-
-      <div className="space-y-1.5">
-        {userAnime.length > 0 && (
-          <>
-            <p className="text-xs font-medium text-muted-foreground/70 mb-2">Twoje anime</p>
-            {userAnime.map(entry => (
-              <AiringCard key={entry.id} entry={entry} isUserAnime />
-            ))}
-            {otherAnime.length > 0 && <div className="h-2" />}
-          </>
-        )}
-
-        {otherAnime.map(entry => (
-          <AiringCard key={entry.id} entry={entry} />
-        ))}
-      </div>
-
-      {hasMore && (
         <button
           onClick={() => navigateTo('schedule')}
-          className="mt-3 text-xs text-primary/70 hover:text-primary transition-colors cursor-pointer"
+          className="text-2xs text-primary/60 hover:text-primary transition-colors"
         >
-          Zobacz harmonogram &rarr;
+          Zobacz wszystkie &rarr;
         </button>
-      )}
+      </div>
+
+      {/* Horizontal scroll row */}
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+        {cards.map(entry => (
+          <AiringPosterCard key={entry.id} entry={entry} isUser={entry.isUser} />
+        ))}
+
+        {/* "More" card */}
+        {hasMore && (
+          <button
+            onClick={() => navigateTo('schedule')}
+            className="w-[100px] shrink-0 aspect-[3/4] rounded-lg border border-dashed border-border/40 hover:border-border/70 hover:bg-accent/20 transition-all flex flex-col items-center justify-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground/80"
+          >
+            <span className="text-lg">+</span>
+            <span className="text-2xs">Więcej</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-/** Compact card for a single airing anime entry */
-function AiringCard({ entry, isUserAnime }: { entry: AiringAnime; isUserAnime?: boolean }) {
+/** Small poster card for the airing today horizontal scroll */
+function AiringPosterCard({ entry, isUser }: { entry: AiringAnime; isUser?: boolean }) {
   const [imgError, setImgError] = useState(false);
   const title = getAnimeTitle(entry.media);
   const coverUrl = getCoverUrl(entry.media);
   const time = formatTime(entry.airingAt);
 
   return (
-    <div
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all ${
-        isUserAnime
-          ? 'border-primary/20 hover:border-primary/40 hover:bg-primary/5'
-          : 'border-border/30 hover:border-border/60 hover:bg-accent/30'
-      }`}
-    >
-      {/* Cover */}
-      {coverUrl && !imgError ? (
-        <img
-          src={coverUrl}
-          alt=""
-          className="w-10 h-14 rounded object-cover shrink-0"
-          onError={e => {
-            setImgError(true);
-            handleImageError(e);
-          }}
-        />
-      ) : (
-        <div className="w-10 h-14 rounded bg-muted shrink-0" />
-      )}
+    <div className="w-[100px] shrink-0 group">
+      <div
+        className={`relative aspect-[3/4] rounded-lg overflow-hidden border transition-all ${
+          isUser
+            ? 'border-primary/30 shadow-[0_0_8px_-2px] shadow-primary/20'
+            : 'border-border/20 hover:border-border/50'
+        }`}
+      >
+        {coverUrl && !imgError ? (
+          <img
+            src={coverUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={e => {
+              setImgError(true);
+              handleImageError(e);
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-muted/40" />
+        )}
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          {isUserAnime && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-          <span className="text-sm font-medium text-foreground/90 truncate">{title}</span>
+        {/* Time badge */}
+        <div className="absolute top-1.5 right-1.5">
+          <span className="text-2xs font-medium bg-background/80 text-foreground/80 px-1.5 py-0.5 rounded">
+            {time}
+          </span>
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-muted-foreground">Odc. {entry.episode}</span>
-          <span className="text-xs text-muted-foreground/50">&middot;</span>
-          <span className="text-xs text-muted-foreground">{time}</span>
+
+        {/* Episode badge */}
+        <div className="absolute top-1.5 left-1.5">
+          <span className="text-2xs font-medium bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded">
+            Odc. {entry.episode}
+          </span>
+        </div>
+
+        {/* Title overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6">
+          <p className="text-2xs font-medium text-white leading-tight line-clamp-2">{title}</p>
         </div>
       </div>
     </div>
