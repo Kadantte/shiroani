@@ -346,21 +346,15 @@ function AiringPosterCard({ entry, isUser }: { entry: AiringAnime; isUser?: bool
 
         {/* Time badge */}
         <div className="absolute top-1.5 right-1.5">
-          <span className="text-2xs font-medium bg-background/80 text-foreground/80 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-medium bg-background/80 text-foreground/80 px-1 py-px rounded">
             {time}
           </span>
         </div>
 
-        {/* Episode badge */}
-        <div className="absolute top-1.5 left-1.5">
-          <span className="text-2xs font-medium bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded">
-            Odc. {entry.episode}
-          </span>
-        </div>
-
-        {/* Title overlay at bottom */}
+        {/* Title + episode overlay at bottom */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6">
           <p className="text-2xs font-medium text-white leading-tight line-clamp-2">{title}</p>
+          <p className="text-[10px] text-white/60 mt-0.5">Odc. {entry.episode}</p>
         </div>
       </div>
     </div>

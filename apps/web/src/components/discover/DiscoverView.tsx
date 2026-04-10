@@ -111,7 +111,7 @@ export function DiscoverView() {
   const showGrid = items.length > 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="shrink-0 px-5 pt-4 pb-3 space-y-3 border-b border-border/60 bg-card/20 backdrop-blur-sm">
         {/* Title row */}
@@ -192,7 +192,7 @@ export function DiscoverView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-20">
         {/* Error state */}
         {error && !showLoading && (
           <div className="text-center py-8">
