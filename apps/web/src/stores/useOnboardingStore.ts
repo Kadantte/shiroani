@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
 
 const STORAGE_KEY = 'onboarding-completed';
 
@@ -10,6 +11,8 @@ interface OnboardingState {
   setCompleted: () => void;
   /** Reset onboarding so it shows again */
   reset: () => void;
+  /** Hydrate from electron-store (source of truth) */
+  initOnboarding: () => Promise<void>;
 }
 
 function getPersistedValue(): boolean {
@@ -22,7 +25,7 @@ function getPersistedValue(): boolean {
 
 export const useOnboardingStore = create<OnboardingState>()(
   devtools(
-    (set) => ({
+    set => ({
       completed: getPersistedValue(),
 
       setCompleted: () => {
@@ -32,6 +35,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         } catch {
           // Storage unavailable — state still in memory
         }
+        void electronStoreSet(STORAGE_KEY, true);
       },
 
       reset: () => {
@@ -41,8 +45,21 @@ export const useOnboardingStore = create<OnboardingState>()(
         } catch {
           // Storage unavailable
         }
+        void electronStoreDelete(STORAGE_KEY);
+      },
+
+      initOnboarding: async () => {
+        const persisted = await electronStoreGet<boolean>(STORAGE_KEY);
+        if (persisted === true) {
+          set({ completed: true }, undefined, 'onboarding/hydrate');
+          try {
+            localStorage.setItem(STORAGE_KEY, 'true');
+          } catch {
+            // keep localStorage in sync
+          }
+        }
       },
     }),
-    { name: 'onboarding' },
-  ),
+    { name: 'onboarding' }
+  )
 );

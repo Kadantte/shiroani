@@ -33,6 +33,7 @@ function App() {
   const initSettings = useSettingsStore(s => s.initSettings);
 
   const onboardingCompleted = useOnboardingStore(s => s.completed);
+  const initOnboarding = useOnboardingStore(s => s.initOnboarding);
   // Track locally so resetting from settings immediately shows onboarding
   const [onboardingDone, setOnboardingDone] = useState(onboardingCompleted);
 
@@ -51,8 +52,9 @@ function App() {
     if (ready) {
       void initSettings();
       void initDock();
+      void initOnboarding();
     }
-  }, [ready, initSettings, initDock]);
+  }, [ready, initSettings, initDock, initOnboarding]);
 
   // Listen for navigation events from the main process (e.g. mascot overlay context menu)
   useEffect(() => {

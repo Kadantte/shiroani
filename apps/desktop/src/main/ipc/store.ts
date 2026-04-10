@@ -48,6 +48,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'quick-access-frequent',
   // Dock position and settings
   'dock-settings',
+  // Onboarding completion
+  'onboarding-completed',
 ]);
 
 /**
