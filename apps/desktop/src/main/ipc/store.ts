@@ -50,6 +50,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'dock-settings',
   // Onboarding completion
   'onboarding-completed',
+  // AniList profile username
+  'anilist-username',
 ]);
 
 /**
