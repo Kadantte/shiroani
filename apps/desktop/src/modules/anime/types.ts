@@ -236,3 +236,55 @@ export type PopularThisSeasonResponse = PaginatedMediaResponse;
 // ============================================
 
 export type MediaSeason = 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL';
+
+// ============================================
+// User Profile Types
+// ============================================
+
+/** Generic distribution entry used across genre/format/status/studio/tag statistics */
+export interface AniListStatDistribution {
+  count: number;
+  meanScore: number;
+  minutesWatched?: number;
+}
+
+export interface AniListUserStatistics {
+  count: number;
+  meanScore: number;
+  standardDeviation: number;
+  minutesWatched: number;
+  episodesWatched: number;
+  genres: Array<AniListStatDistribution & { genre: string }>;
+  formats: Array<AniListStatDistribution & { format: string }>;
+  statuses: Array<AniListStatDistribution & { status: string }>;
+  scores: Array<{ score: number; count: number; meanScore: number }>;
+  releaseYears: Array<{ releaseYear: number; count: number; meanScore: number }>;
+  studios: Array<AniListStatDistribution & { studio: { name: string } }>;
+  tags: Array<{ tag: { name: string }; count: number; meanScore: number }>;
+}
+
+export interface AniListUserProfile {
+  id: number;
+  name: string;
+  avatar?: { large?: string; medium?: string };
+  bannerImage?: string;
+  about?: string;
+  siteUrl?: string;
+  createdAt?: number;
+  statistics?: {
+    anime?: AniListUserStatistics;
+  };
+  favourites?: {
+    anime?: {
+      nodes?: Array<{
+        id: number;
+        title: AniListMediaTitle;
+        coverImage: AniListCoverImage;
+      }>;
+    };
+  };
+}
+
+export interface UserProfileResponse {
+  User: AniListUserProfile;
+}

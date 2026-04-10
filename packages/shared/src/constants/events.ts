@@ -19,6 +19,7 @@ export const AnimeEvents = {
   GET_TRENDING: 'anime:get-trending',
   GET_POPULAR: 'anime:get-popular',
   GET_SEASONAL: 'anime:get-seasonal',
+  GET_USER_PROFILE: 'anime:get-user-profile',
 
   // Server -> Client (broadcasts)
   SEARCH_RESULT: 'anime:search-result',

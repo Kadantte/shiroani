@@ -22,7 +22,7 @@ describe('handleGatewayRequest', () => {
     });
 
     expect(result).toEqual({ items: [1, 2, 3] });
-    expect(mockLogger.debug).toHaveBeenCalledWith('test action');
+    expect(mockLogger.info).toHaveBeenCalledWith('test action');
     expect(mockLogger.error).not.toHaveBeenCalled();
   });
 
@@ -54,7 +54,7 @@ describe('handleGatewayRequest', () => {
     expect(mockLogger.error).toHaveBeenCalled();
   });
 
-  it('logs the action via debug before calling handler', async () => {
+  it('logs the action via info before calling handler', async () => {
     await handleGatewayRequest({
       logger: mockLogger,
       action: 'my action',
@@ -62,6 +62,6 @@ describe('handleGatewayRequest', () => {
       handler: async () => ({}),
     });
 
-    expect(mockLogger.debug).toHaveBeenCalledWith('my action');
+    expect(mockLogger.info).toHaveBeenCalledWith('my action');
   });
 });

@@ -165,3 +165,38 @@ query PopularThisSeason($season: MediaSeason, $seasonYear: Int, $page: Int, $per
   }
 }
 `;
+
+export const USER_PROFILE_QUERY = `
+query UserProfile($name: String!) {
+  User(name: $name) {
+    id
+    name
+    avatar { large medium }
+    bannerImage
+    about
+    siteUrl
+    createdAt
+    statistics {
+      anime {
+        count
+        meanScore
+        standardDeviation
+        minutesWatched
+        episodesWatched
+        genres(limit: 10, sort: COUNT_DESC) { genre count meanScore minutesWatched }
+        formats(sort: COUNT_DESC) { format count meanScore minutesWatched }
+        statuses(sort: COUNT_DESC) { status count meanScore minutesWatched }
+        scores(sort: COUNT_DESC) { score count meanScore }
+        releaseYears(limit: 10, sort: COUNT_DESC) { releaseYear count meanScore }
+        studios(limit: 10, sort: COUNT_DESC) { studio { name } count meanScore minutesWatched }
+        tags(limit: 15, sort: COUNT_DESC) { tag { name } count meanScore }
+      }
+    }
+    favourites {
+      anime(perPage: 10) {
+        nodes { id title { romaji english native } coverImage { large medium } }
+      }
+    }
+  }
+}
+`;

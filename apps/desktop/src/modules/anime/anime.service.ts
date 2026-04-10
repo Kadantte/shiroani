@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createLogger, extractErrorMessage } from '@shiroani/shared';
+import type { UserProfile } from '@shiroani/shared';
 import { AniListClient } from './anilist-client';
 import {
   SEARCH_ANIME_QUERY,
@@ -7,6 +8,7 @@ import {
   AIRING_SCHEDULE_QUERY,
   TRENDING_ANIME_QUERY,
   POPULAR_THIS_SEASON_QUERY,
+  USER_PROFILE_QUERY,
 } from './queries';
 import type {
   AniListMedia,
@@ -18,6 +20,7 @@ import type {
   AiringScheduleResponse,
   TrendingAnimeResponse,
   PopularThisSeasonResponse,
+  UserProfileResponse,
 } from './types';
 
 const logger = createLogger('AnimeService');
@@ -160,6 +163,103 @@ export class AnimeService {
       { season: season.toUpperCase(), seasonYear: year, page, perPage },
       `seasonal:${season.toUpperCase()}:${year}:${page}`
     );
+  }
+
+  /**
+   * Get a user's public AniList profile and statistics by username.
+   */
+  async getUserProfile(username: string): Promise<UserProfile> {
+    logger.info(`Fetching AniList profile for "${username}"`);
+
+    const PROFILE_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+    try {
+      const cacheKey = `user-profile:${username.toLowerCase()}`;
+      const data = await this.anilistClient.cachedQuery<UserProfileResponse>(
+        cacheKey,
+        USER_PROFILE_QUERY,
+        { name: username },
+        PROFILE_CACHE_TTL_MS
+      );
+
+      return this.mapUserProfile(data.User);
+    } catch (error) {
+      logger.error(`Failed to fetch profile for "${username}": ${extractErrorMessage(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Map the raw AniList user profile response to the shared UserProfile type.
+   */
+  private mapUserProfile(user: UserProfileResponse['User']): UserProfile {
+    const stats = user.statistics?.anime;
+    const favouriteNodes = user.favourites?.anime?.nodes ?? [];
+
+    return {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar?.large ?? user.avatar?.medium,
+      bannerImage: user.bannerImage ?? undefined,
+      about: user.about ?? undefined,
+      siteUrl: user.siteUrl ?? undefined,
+      createdAt: user.createdAt ?? undefined,
+      statistics: {
+        count: stats?.count ?? 0,
+        meanScore: stats?.meanScore ?? 0,
+        standardDeviation: stats?.standardDeviation ?? 0,
+        minutesWatched: stats?.minutesWatched ?? 0,
+        episodesWatched: stats?.episodesWatched ?? 0,
+        genres: (stats?.genres ?? []).map(g => ({
+          name: g.genre,
+          count: g.count,
+          meanScore: g.meanScore,
+          minutesWatched: g.minutesWatched ?? 0,
+        })),
+        formats: (stats?.formats ?? []).map(f => ({
+          name: f.format,
+          count: f.count,
+          meanScore: f.meanScore,
+          minutesWatched: f.minutesWatched ?? 0,
+        })),
+        statuses: (stats?.statuses ?? []).map(s => ({
+          name: s.status,
+          count: s.count,
+          meanScore: s.meanScore,
+          minutesWatched: s.minutesWatched ?? 0,
+        })),
+        scores: (stats?.scores ?? []).map(s => ({
+          score: s.score,
+          count: s.count,
+          meanScore: s.meanScore,
+        })),
+        releaseYears: (stats?.releaseYears ?? []).map(r => ({
+          year: r.releaseYear,
+          count: r.count,
+          meanScore: r.meanScore,
+        })),
+        studios: (stats?.studios ?? []).map(s => ({
+          name: s.studio.name,
+          count: s.count,
+          meanScore: s.meanScore,
+          minutesWatched: s.minutesWatched ?? 0,
+        })),
+        tags: (stats?.tags ?? []).map(t => ({
+          name: t.tag.name,
+          count: t.count,
+          meanScore: t.meanScore,
+        })),
+      },
+      favourites: favouriteNodes.map(f => ({
+        id: f.id,
+        title: {
+          romaji: f.title.romaji ?? undefined,
+          english: f.title.english ?? undefined,
+          native: f.title.native ?? undefined,
+        },
+        coverImage: f.coverImage.large ?? f.coverImage.medium,
+      })),
+    };
   }
 
   /**

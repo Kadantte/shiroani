@@ -303,6 +303,43 @@ export interface FrequentSite {
   lastVisited: number;
 }
 
+// ============================================
+// User Profile Types
+// ============================================
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  avatar?: string;
+  bannerImage?: string;
+  about?: string;
+  siteUrl?: string;
+  createdAt?: number;
+  statistics: {
+    count: number;
+    meanScore: number;
+    standardDeviation: number;
+    minutesWatched: number;
+    episodesWatched: number;
+    genres: Array<{ name: string; count: number; meanScore: number; minutesWatched: number }>;
+    formats: Array<{ name: string; count: number; meanScore: number; minutesWatched: number }>;
+    statuses: Array<{ name: string; count: number; meanScore: number; minutesWatched: number }>;
+    scores: Array<{ score: number; count: number; meanScore: number }>;
+    releaseYears: Array<{ year: number; count: number; meanScore: number }>;
+    studios: Array<{ name: string; count: number; meanScore: number; minutesWatched: number }>;
+    tags: Array<{ name: string; count: number; meanScore: number }>;
+  };
+  favourites: Array<{
+    id: number;
+    title: { romaji?: string; english?: string; native?: string };
+    coverImage?: string;
+  }>;
+}
+
+// ============================================
+// Discord Rich Presence Types
+// ============================================
+
 export interface DiscordPresenceActivity {
   /** Current view/activity: browser, library, diary, schedule, settings */
   view: string;

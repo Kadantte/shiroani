@@ -111,4 +111,17 @@ export class AnimeGateway {
       },
     });
   }
+
+  @SubscribeMessage(AnimeEvents.GET_USER_PROFILE)
+  async handleGetUserProfile(@MessageBody() payload: { username: string }) {
+    return handleGatewayRequest({
+      logger,
+      action: `anime:get-user-profile — username="${payload.username}"`,
+      defaultResult: { profile: null },
+      handler: async () => {
+        const profile = await this.animeService.getUserProfile(payload.username);
+        return { profile };
+      },
+    });
+  }
 }
