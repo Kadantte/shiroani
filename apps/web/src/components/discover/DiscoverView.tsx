@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Compass, Search, SearchX, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -19,11 +19,10 @@ const TABS: { value: Tab; label: string }[] = [
 
 /** Set of anilistIds present in the user's library */
 function useLibraryAnilistIds(): Set<number> {
-  return useLibraryStore(
-    useCallback(
-      state => new Set(state.entries.map(e => e.anilistId).filter(Boolean) as number[]),
-      []
-    )
+  const entries = useLibraryStore(s => s.entries);
+  return useMemo(
+    () => new Set(entries.map(e => e.anilistId).filter(Boolean) as number[]),
+    [entries]
   );
 }
 

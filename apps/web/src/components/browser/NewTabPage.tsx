@@ -1,12 +1,19 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Plus, X, Eye } from 'lucide-react';
-import { APP_NAME } from '@shiroani/shared';
-import type { QuickAccessSite, FrequentSite } from '@shiroani/shared';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Plus, X, Eye, CalendarDays } from 'lucide-react';
+import { APP_NAME, toLocalDate } from '@shiroani/shared';
+import type { QuickAccessSite, FrequentSite, AiringAnime } from '@shiroani/shared';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
+import { useScheduleStore } from '@/stores/useScheduleStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useAppStore } from '@/stores/useAppStore';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
 import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { formatTime } from '@/components/schedule/schedule-utils';
+import { getAnimeTitle, getCoverUrl } from '@/lib/anime-utils';
+import { handleImageError } from '@/lib/image-utils';
 import {
   Dialog,
   DialogContent,
@@ -60,16 +67,13 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
     setIsAddDialogOpen(false);
   }, [newSiteName, newSiteUrl, addSite]);
 
-  const handleRemoveSite = useCallback(
-    (site: QuickAccessSite) => {
-      if (site.isPredefined) {
-        hidePredefined(site.id);
-      } else {
-        removeSite(site.id);
-      }
-    },
-    []
-  );
+  const handleRemoveSite = useCallback((site: QuickAccessSite) => {
+    if (site.isPredefined) {
+      hidePredefined(site.id);
+    } else {
+      removeSite(site.id);
+    }
+  }, []);
 
   const hiddenPredefined = PREDEFINED_SITES.filter(s => hiddenPredefinedIds.includes(s.id));
 
@@ -80,6 +84,9 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-foreground/80 tracking-tight">{APP_NAME}</h1>
         </div>
+
+        {/* Airing Today Section */}
+        <AiringTodaySection />
 
         {/* Quick Access Section */}
         <div className="mb-8">
@@ -194,6 +201,171 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
   );
 }
 
+const MAX_AIRING_ENTRIES = 10;
+
+/** Airing Today section showing anime airing on the current day */
+function AiringTodaySection() {
+  const todayKey = useMemo(() => toLocalDate(new Date()), []);
+
+  const todayEntries = useScheduleStore(s => s.schedule[todayKey]);
+  const isLoading = useScheduleStore(s => s.isLoading);
+  const navigateTo = useAppStore(s => s.navigateTo);
+
+  const libraryEntries = useLibraryStore(s => s.entries);
+  const libraryAnilistIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const entry of libraryEntries) {
+      if (entry.anilistId != null) ids.add(entry.anilistId);
+    }
+    return ids;
+  }, [libraryEntries]);
+
+  const subscribedIds = useNotificationStore(s => s.subscribedIds);
+
+  useEffect(() => {
+    if (!todayEntries) {
+      useScheduleStore.getState().fetchDaily(todayKey);
+    }
+  }, [todayKey, todayEntries]);
+
+  const { userAnime, otherAnime, hasMore } = useMemo(() => {
+    if (!todayEntries) return { userAnime: [], otherAnime: [], hasMore: false };
+
+    const sorted = [...todayEntries].sort((a, b) => a.airingAt - b.airingAt);
+
+    const user: AiringAnime[] = [];
+    const other: AiringAnime[] = [];
+
+    for (const entry of sorted) {
+      const mediaId = entry.media.id;
+      if (libraryAnilistIds.has(mediaId) || subscribedIds.has(mediaId)) {
+        user.push(entry);
+      } else {
+        other.push(entry);
+      }
+    }
+
+    const totalAvailable = user.length + other.length;
+    const remaining = MAX_AIRING_ENTRIES - user.length;
+    const visibleOther = remaining > 0 ? other.slice(0, remaining) : [];
+
+    return {
+      userAnime: user,
+      otherAnime: visibleOther,
+      hasMore: totalAvailable > MAX_AIRING_ENTRIES,
+    };
+  }, [todayEntries, libraryAnilistIds, subscribedIds]);
+
+  // Don't render the section while loading with no data yet
+  if (!todayEntries && isLoading) {
+    return (
+      <div className="mb-8">
+        <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+          <CalendarDays className="w-4 h-4" />
+          Emitowane dzisiaj
+        </h2>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground/60 py-4">
+          <div className="w-3 h-3 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground/60 animate-spin" />
+          Ładowanie...
+        </div>
+      </div>
+    );
+  }
+
+  // No data or empty
+  if (!todayEntries || todayEntries.length === 0) {
+    return (
+      <div className="mb-8">
+        <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+          <CalendarDays className="w-4 h-4" />
+          Emitowane dzisiaj
+        </h2>
+        <p className="text-xs text-muted-foreground/50 py-2">Brak anime na dziś</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+        <CalendarDays className="w-4 h-4" />
+        Emitowane dzisiaj
+      </h2>
+
+      <div className="space-y-1.5">
+        {userAnime.length > 0 && (
+          <>
+            <p className="text-xs font-medium text-muted-foreground/70 mb-2">Twoje anime</p>
+            {userAnime.map(entry => (
+              <AiringCard key={entry.id} entry={entry} isUserAnime />
+            ))}
+            {otherAnime.length > 0 && <div className="h-2" />}
+          </>
+        )}
+
+        {otherAnime.map(entry => (
+          <AiringCard key={entry.id} entry={entry} />
+        ))}
+      </div>
+
+      {hasMore && (
+        <button
+          onClick={() => navigateTo('schedule')}
+          className="mt-3 text-xs text-primary/70 hover:text-primary transition-colors cursor-pointer"
+        >
+          Zobacz harmonogram &rarr;
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Compact card for a single airing anime entry */
+function AiringCard({ entry, isUserAnime }: { entry: AiringAnime; isUserAnime?: boolean }) {
+  const [imgError, setImgError] = useState(false);
+  const title = getAnimeTitle(entry.media);
+  const coverUrl = getCoverUrl(entry.media);
+  const time = formatTime(entry.airingAt);
+
+  return (
+    <div
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all ${
+        isUserAnime
+          ? 'border-primary/20 hover:border-primary/40 hover:bg-primary/5'
+          : 'border-border/30 hover:border-border/60 hover:bg-accent/30'
+      }`}
+    >
+      {/* Cover */}
+      {coverUrl && !imgError ? (
+        <img
+          src={coverUrl}
+          alt=""
+          className="w-10 h-14 rounded object-cover shrink-0"
+          onError={e => {
+            setImgError(true);
+            handleImageError(e);
+          }}
+        />
+      ) : (
+        <div className="w-10 h-14 rounded bg-muted shrink-0" />
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          {isUserAnime && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+          <span className="text-sm font-medium text-foreground/90 truncate">{title}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-muted-foreground">Odc. {entry.episode}</span>
+          <span className="text-xs text-muted-foreground/50">&middot;</span>
+          <span className="text-xs text-muted-foreground">{time}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Individual site card with hover remove button */
 function SiteCard({
   site,
@@ -241,13 +413,7 @@ function SiteCard({
 }
 
 /** Frequent site button with React-managed favicon fallback */
-function FrequentSiteButton({
-  site,
-  onClick,
-}: {
-  site: FrequentSite;
-  onClick: () => void;
-}) {
+function FrequentSiteButton({ site, onClick }: { site: FrequentSite; onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
 
   return (
