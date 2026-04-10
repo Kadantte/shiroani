@@ -34,6 +34,42 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '0.4.2',
+    date: '10 kwietnia 2026',
+    title: 'Poprawki stabilności i wygody',
+    description:
+      'Kilka drobnych poprawek zauważonych podczas korzystania z aplikacji. Aplikacja na Windowsie zamyka się teraz poprawnie, linki otwierają się wewnątrz aplikacji, a onboarding nie pojawia się ponownie bez potrzeby.',
+    categories: [
+      {
+        label: 'Poprawki',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Monitor,
+            text: 'Aplikacja na Windowsie zamyka się całkowicie zamiast pozostawać w tle w zasobniku systemowym',
+          },
+          {
+            icon: Globe,
+            text: 'Linki otwierają się teraz we wbudowanej przeglądarce zamiast w przeglądarce systemowej',
+          },
+          {
+            icon: Wrench,
+            text: 'Onboarding nie pojawia się ponownie bez potrzeby',
+          },
+          {
+            icon: Wrench,
+            text: 'Poprawione ścieżki do assetów maskotki i skryptów wewnętrznych',
+          },
+          {
+            icon: Wrench,
+            text: 'Poprawiono zapisywanie logów aplikacji do pliku',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.1',
     date: '9 kwietnia 2026',
     title: 'Aktualizacja bezpieczeństwa',
