@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
 import type { DiscordRpcSettings, DiscordPresenceActivity } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import {
   getDiscordRpcSettings,
   updateDiscordRpcSettings,
@@ -8,7 +8,7 @@ import {
   clearDiscordPresence,
 } from '../discord-rpc-service';
 
-const logger = createLogger('IPC:DiscordRpc');
+const logger = createMainLogger('IPC:DiscordRpc');
 
 /**
  * Register Discord RPC IPC handlers

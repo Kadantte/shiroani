@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ipcMain, app } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 
-const logger = createLogger('IPC:File');
+const logger = createMainLogger('IPC:File');
 
 /**
  * Allowed base directories for JSON file read/write operations.

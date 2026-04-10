@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import {
   setMascotVisible,
   isMascotVisible,
@@ -16,7 +16,7 @@ import {
   resetMascotPosition,
 } from '../mascot/overlay';
 
-const logger = createLogger('IPC:Overlay');
+const logger = createMainLogger('IPC:Overlay');
 
 /**
  * Register overlay control IPC handlers.

@@ -276,7 +276,15 @@ const loggerOptions: LoggerOptions = {
   fileTransport,
 };
 
+/**
+ * Create a logger for the main process that writes to both console and log file.
+ * Use this instead of the shared `createLogger` in all desktop main-process code.
+ */
+export function createMainLogger(context: string) {
+  return createLogger(context, loggerOptions);
+}
+
 /** Main process logger */
-export const logger = createLogger('Main', loggerOptions);
+export const logger = createMainLogger('Main');
 
 export default logger;

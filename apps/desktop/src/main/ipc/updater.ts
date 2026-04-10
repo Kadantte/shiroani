@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
 import type { UpdateChannel } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import {
   checkForUpdates,
   downloadUpdate,
@@ -9,7 +9,7 @@ import {
   setUpdateChannel,
 } from '../updater';
 
-const logger = createLogger('IPC:Updater');
+const logger = createMainLogger('IPC:Updater');
 
 /**
  * Register updater IPC handlers

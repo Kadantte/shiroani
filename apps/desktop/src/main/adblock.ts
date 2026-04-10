@@ -4,9 +4,9 @@ import fetch from 'cross-fetch';
 import { promises as fs } from 'fs';
 import { app } from 'electron';
 import { join } from 'path';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from './logger';
 
-const logger = createLogger('Adblock');
+const logger = createMainLogger('Adblock');
 
 let blocker: ElectronBlocker | null = null;
 

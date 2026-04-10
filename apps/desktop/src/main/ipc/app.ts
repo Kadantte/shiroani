@@ -2,11 +2,11 @@ import { ipcMain, app, shell, clipboard } from 'electron';
 import { existsSync } from 'fs';
 import { readdir, stat, readFile } from 'fs/promises';
 import { join } from 'path';
-import { createLogger, LOG_FILE_PREFIX, LOG_MAX_FILE_SIZE } from '@shiroani/shared';
-import { getLogsDir } from '../logger';
+import { LOG_FILE_PREFIX, LOG_MAX_FILE_SIZE } from '@shiroani/shared';
+import { getLogsDir, createMainLogger } from '../logger';
 import { getBackendPort } from '../backend-port';
 
-const logger = createLogger('IPC:App');
+const logger = createMainLogger('IPC:App');
 
 /**
  * Register app-related IPC handlers

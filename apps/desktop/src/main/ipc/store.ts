@@ -1,8 +1,8 @@
 import { ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import { store } from '../store';
 
-const logger = createLogger('IPC:Store');
+const logger = createMainLogger('IPC:Store');
 
 /**
  * Security: Whitelist of allowed store keys

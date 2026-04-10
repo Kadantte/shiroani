@@ -1,9 +1,9 @@
 import { session } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import { getBlocker, enableCosmeticFiltering, disableCosmeticFiltering } from '../adblock';
 import { fromElectronDetails } from '@ghostery/adblocker-electron';
 
-const logger = createLogger('BrowserManager');
+const logger = createMainLogger('BrowserManager');
 
 /**
  * Manages the shared browser session for <webview> tags.

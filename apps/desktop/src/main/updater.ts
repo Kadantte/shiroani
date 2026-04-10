@@ -1,17 +1,14 @@
 import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as semver from 'semver';
-import {
-  createLogger,
-  UPDATE_ERROR_RELEASE_PENDING,
-  DEFAULT_UPDATE_CHANNEL,
-} from '@shiroani/shared';
+import { UPDATE_ERROR_RELEASE_PENDING, DEFAULT_UPDATE_CHANNEL } from '@shiroani/shared';
 import type { UpdateChannel } from '@shiroani/shared';
 import type { UpdateInfo as ElectronUpdateInfo } from 'electron-updater';
 import type { ProgressInfo } from 'electron-updater';
 import { store } from './store';
+import { createMainLogger } from './logger';
 
-const logger = createLogger('AutoUpdater');
+const logger = createMainLogger('AutoUpdater');
 
 let updaterEnabled = false;
 let currentChannel: UpdateChannel = DEFAULT_UPDATE_CHANNEL;

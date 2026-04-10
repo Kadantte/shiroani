@@ -1,10 +1,11 @@
 import { Client } from '@xhayper/discord-rpc';
-import { createLogger, DEFAULT_DISCORD_TEMPLATES } from '@shiroani/shared';
+import { DEFAULT_DISCORD_TEMPLATES } from '@shiroani/shared';
 import type { DiscordRpcSettings, DiscordPresenceActivity } from '@shiroani/shared';
 import { store } from './store';
 import { buildPresence } from './discord-presence-builder';
+import { createMainLogger } from './logger';
 
-const logger = createLogger('DiscordRpcService');
+const logger = createMainLogger('DiscordRpcService');
 
 const DISCORD_CLIENT_ID = '1481042476402872361';
 const STORE_KEY = 'discord-rpc-settings';

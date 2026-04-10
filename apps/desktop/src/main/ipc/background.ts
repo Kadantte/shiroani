@@ -4,9 +4,9 @@ import { existsSync, mkdirSync } from 'fs';
 import { copyFile, unlink, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { randomUUID } from 'crypto';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 
-const logger = createLogger('IPC:Background');
+const logger = createMainLogger('IPC:Background');
 
 /** Directory inside userData where background images are stored */
 const BACKGROUNDS_DIR_NAME = 'backgrounds';

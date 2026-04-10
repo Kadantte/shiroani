@@ -1,5 +1,5 @@
 import { Notification, BrowserWindow, nativeImage } from 'electron';
-import { createLogger, getWeekStart, toLocalDate } from '@shiroani/shared';
+import { getWeekStart, toLocalDate } from '@shiroani/shared';
 import type { INestApplication } from '@nestjs/common';
 import type { AiringAnime, NotificationSettings, NotificationSubscription } from '@shiroani/shared';
 import { ScheduleService } from '../modules/schedule/schedule.service';
@@ -17,8 +17,9 @@ import {
   mergeSettings,
   sanitizeSettingsUpdate,
 } from './notification-logic';
+import { createMainLogger } from './logger';
 
-const logger = createLogger('NotificationService');
+const logger = createMainLogger('NotificationService');
 
 const STORE_KEY = 'notification-settings';
 const SENT_STORE_KEY = 'notification-sent';
@@ -69,7 +70,10 @@ async function getScheduleData(): Promise<AiringAnime[]> {
     return cachedSchedule;
   }
 
-  if (!scheduleService) return [];
+  if (!scheduleService) {
+    logger.warn('Schedule service not available, skipping fetch');
+    return [];
+  }
 
   try {
     const monday = toLocalDate(getWeekStart());
@@ -80,6 +84,7 @@ async function getScheduleData(): Promise<AiringAnime[]> {
     }
     cachedSchedule = allAiring;
     cacheTimestamp = now;
+    logger.info(`Schedule cache refreshed: ${allAiring.length} airing entries`);
     return allAiring;
   } catch (error) {
     logger.error('Failed to fetch schedule for notifications:', error);
@@ -140,7 +145,10 @@ async function checkAndNotify(): Promise<void> {
   // Check quiet hours
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  if (isInQuietHours(settings, currentMinutes)) return;
+  if (isInQuietHours(settings, currentMinutes)) {
+    logger.info('Skipping notification check: quiet hours active');
+    return;
+  }
 
   // Build a set of AniList IDs to notify: library watching + enabled subscriptions
   const notifyIds = new Set<number>();
@@ -154,12 +162,16 @@ async function checkAndNotify(): Promise<void> {
     if (sub.enabled) notifyIds.add(sub.anilistId);
   }
 
-  if (notifyIds.size === 0) return;
+  if (notifyIds.size === 0) {
+    logger.info('Skipping notification check: no anime to monitor');
+    return;
+  }
 
   const airingData = await getScheduleData();
   const nowUnix = Math.floor(Date.now() / 1000);
   const leadTimeSeconds = settings.leadTimeMinutes * 60;
 
+  let notifiedCount = 0;
   for (const airing of airingData) {
     if (!notifyIds.has(airing.media.id)) continue;
 
@@ -172,6 +184,11 @@ async function checkAndNotify(): Promise<void> {
 
     sentNotifications.add(dedupeKey);
     await showNotification(airing, settings);
+    notifiedCount++;
+  }
+
+  if (notifiedCount > 0) {
+    logger.info(`Notification check complete: ${notifiedCount} notification(s) sent`);
   }
 
   // Prune and batch-save after all notifications in this cycle
@@ -193,7 +210,11 @@ async function showNotification(
   const coverUrl = airing.media.coverImage.large || airing.media.coverImage.medium;
   if (coverUrl) {
     const img = await downloadImage(coverUrl);
-    if (img) icon = img;
+    if (img) {
+      icon = img;
+    } else {
+      logger.warn(`Failed to download notification icon for "${title}"`);
+    }
   }
 
   const notification = new Notification({
@@ -204,15 +225,17 @@ async function showNotification(
   });
 
   notification.on('click', () => {
+    logger.info(`Notification clicked: "${title}" Ep ${airing.episode}`);
     if (targetWindow && !targetWindow.isDestroyed()) {
       if (targetWindow.isMinimized()) targetWindow.restore();
       targetWindow.show();
       targetWindow.focus();
-      // Notify renderer that a notification was clicked
       targetWindow.webContents.send('notifications:clicked', {
         mediaId: airing.media.id,
         episode: airing.episode,
       });
+    } else {
+      logger.warn('Notification clicked but main window is unavailable');
     }
   });
 
@@ -268,17 +291,25 @@ export function addSubscription(
   const settings = getSettings();
   // Avoid duplicates
   if (settings.subscriptions.some(s => s.anilistId === subscription.anilistId)) {
+    logger.info(`Subscription already exists for anilistId=${subscription.anilistId}, skipping`);
     return settings.subscriptions;
   }
   settings.subscriptions.push(subscription);
   saveSettings(settings);
+  logger.info(`Subscription added: "${subscription.title}" (anilistId=${subscription.anilistId})`);
   return settings.subscriptions;
 }
 
 export function removeSubscription(anilistId: number): NotificationSubscription[] {
   const settings = getSettings();
+  const before = settings.subscriptions.length;
   settings.subscriptions = settings.subscriptions.filter(s => s.anilistId !== anilistId);
   saveSettings(settings);
+  if (settings.subscriptions.length < before) {
+    logger.info(`Subscription removed: anilistId=${anilistId}`);
+  } else {
+    logger.warn(`Subscription not found for removal: anilistId=${anilistId}`);
+  }
   return settings.subscriptions;
 }
 
@@ -288,6 +319,9 @@ export function toggleSubscription(anilistId: number): NotificationSubscription[
   if (sub) {
     sub.enabled = !sub.enabled;
     saveSettings(settings);
+    logger.info(`Subscription toggled: anilistId=${anilistId}, enabled=${sub.enabled}`);
+  } else {
+    logger.warn(`Subscription not found for toggle: anilistId=${anilistId}`);
   }
   return settings.subscriptions;
 }
@@ -317,11 +351,15 @@ export function initializeNotificationService(
 
   // Load persisted sent notifications and prune stale entries
   loadSentNotifications();
+  const loadedCount = sentNotifications.size;
   pruneSentNotifications();
+  logger.info(
+    `Loaded ${loadedCount} sent notification(s), ${sentNotifications.size} after pruning`
+  );
 
   const settings = getSettings();
   logger.info(
-    `NotificationService initialized (enabled: ${settings.enabled}, leadTime: ${settings.leadTimeMinutes}min)`
+    `NotificationService initialized (enabled: ${settings.enabled}, leadTime: ${settings.leadTimeMinutes}min, subscriptions: ${settings.subscriptions.length})`
   );
 
   if (settings.enabled) {

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
 import type { NotificationSettings, NotificationSubscription } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import {
   getNotificationSettings,
   updateNotificationSettings,
@@ -11,7 +11,7 @@ import {
   isSubscribed,
 } from '../notification-service';
 
-const logger = createLogger('IPC:Notifications');
+const logger = createMainLogger('IPC:Notifications');
 
 /**
  * Register notification IPC handlers

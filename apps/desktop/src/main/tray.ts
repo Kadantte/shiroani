@@ -21,7 +21,10 @@ function getTrayIconPath(): string {
 }
 
 function showWindow(win: BrowserWindow): void {
-  if (win.isDestroyed()) return;
+  if (win.isDestroyed()) {
+    logger.warn('Tray: attempted to show destroyed window');
+    return;
+  }
   if (win.isMinimized()) win.restore();
   win.show();
   win.focus();

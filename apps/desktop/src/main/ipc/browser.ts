@@ -1,10 +1,10 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { createLogger } from '@shiroani/shared';
+import { createMainLogger } from '../logger';
 import { Request } from '@ghostery/adblocker-electron';
 import { BrowserManager } from '../browser/browser-manager';
 import { getBlocker } from '../adblock';
 
-const logger = createLogger('IPC:Browser');
+const logger = createMainLogger('IPC:Browser');
 
 /**
  * Domains that must always be allowed as popups (OAuth, auth flows, etc.).
