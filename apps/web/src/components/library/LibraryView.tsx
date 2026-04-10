@@ -1,5 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { BookOpen, Globe, SearchX, BarChart3, Download, Upload, ArrowUpDown } from 'lucide-react';
+import {
+  BookOpen,
+  Globe,
+  SearchX,
+  BarChart3,
+  Download,
+  Upload,
+  ArrowUpDown,
+  Dices,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import {
@@ -75,6 +84,13 @@ export function LibraryView() {
   const toggleSortOrder = useCallback(() => {
     setSort(sortBy, sortOrder === 'asc' ? 'desc' : 'asc');
   }, [sortBy, sortOrder]);
+
+  const handleRandomPick = useCallback(() => {
+    const planToWatch = entries.filter(e => e.status === 'plan_to_watch');
+    if (planToWatch.length === 0) return;
+    const randomEntry = planToWatch[Math.floor(Math.random() * planToWatch.length)];
+    openDetail(randomEntry);
+  }, [entries]);
 
   // Navigate to the browser view and open the resume URL
   const handleContinue = useCallback(
@@ -156,6 +172,16 @@ export function LibraryView() {
               <Upload className="w-4 h-4" />
             </TooltipButton>
             <div className="w-px h-4 bg-border/50 mx-1" />
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              disabled={!entries.some(e => e.status === 'plan_to_watch')}
+              onClick={handleRandomPick}
+              tooltip="Losowe anime"
+            >
+              <Dices className="w-4 h-4" />
+            </TooltipButton>
             <TooltipButton
               variant={showStats ? 'secondary' : 'ghost'}
               size="icon"

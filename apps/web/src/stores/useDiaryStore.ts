@@ -19,12 +19,15 @@ import { createLogger } from '@shiroani/shared';
 const logger = createLogger('DiaryStore');
 
 export type DiaryFilter = 'all' | 'pinned' | 'with_anime';
+export type DiarySortBy = 'createdAt' | 'updatedAt' | 'title';
 
 interface DiaryState extends SocketStoreSlice {
   entries: DiaryEntry[];
   activeFilter: DiaryFilter;
   searchQuery: string;
   viewMode: 'grid' | 'list';
+  sortBy: DiarySortBy;
+  sortOrder: 'asc' | 'desc';
   selectedEntry: DiaryEntry | null;
   isEditorOpen: boolean;
 }
@@ -37,6 +40,7 @@ interface DiaryActions {
   setFilter: (filter: DiaryFilter) => void;
   setSearchQuery: (query: string) => void;
   setViewMode: (mode: 'grid' | 'list') => void;
+  setSort: (sortBy: DiarySortBy, sortOrder: 'asc' | 'desc') => void;
   openEditor: (entry?: DiaryEntry) => void;
   closeEditor: () => void;
   initListeners: () => void;
@@ -114,6 +118,8 @@ export const useDiaryStore = create<DiaryStore>()(
         activeFilter: 'all',
         searchQuery: '',
         viewMode: 'grid',
+        sortBy: 'createdAt' as DiarySortBy,
+        sortOrder: 'desc' as const,
         selectedEntry: null,
         isEditorOpen: false,
 
@@ -201,6 +207,10 @@ export const useDiaryStore = create<DiaryStore>()(
           set({ viewMode: mode }, undefined, 'diary/setViewMode');
         },
 
+        setSort: (sortBy: DiarySortBy, sortOrder: 'asc' | 'desc') => {
+          set({ sortBy, sortOrder }, undefined, 'diary/setSort');
+        },
+
         openEditor: (entry?: DiaryEntry) => {
           set({ selectedEntry: entry ?? null, isEditorOpen: true }, undefined, 'diary/openEditor');
         },
@@ -223,8 +233,10 @@ export const useDiaryStore = create<DiaryStore>()(
  * unnecessary re-renders.
  */
 export const getFilteredDiaryEntries = createMemoizedSelector(
-  (state: Pick<DiaryState, 'entries' | 'activeFilter' | 'searchQuery'>): DiaryEntry[] => {
-    const { entries, activeFilter, searchQuery } = state;
+  (
+    state: Pick<DiaryState, 'entries' | 'activeFilter' | 'searchQuery' | 'sortBy' | 'sortOrder'>
+  ): DiaryEntry[] => {
+    const { entries, activeFilter, searchQuery, sortBy, sortOrder } = state;
 
     let filtered = entries;
 
@@ -244,10 +256,23 @@ export const getFilteredDiaryEntries = createMemoizedSelector(
       );
     }
 
-    // Pinned first, then by updated_at desc
+    // Pinned first, then by chosen sort field
     return [...filtered].sort((a, b) => {
       if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+
+      let cmp = 0;
+      switch (sortBy) {
+        case 'title':
+          cmp = a.title.localeCompare(b.title);
+          break;
+        case 'updatedAt':
+          cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        case 'createdAt':
+          cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
     });
   }
 );

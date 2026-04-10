@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { NotebookPen, Plus, SearchX, Download, Upload } from 'lucide-react';
+import { NotebookPen, Plus, SearchX, Download, Upload, ArrowUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ExportDialog } from '@/components/shared/ExportDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
@@ -12,6 +20,7 @@ import { DiaryEntryGrid } from './DiaryEntryGrid';
 import { DiaryEditor } from './DiaryEditor';
 import { pluralize } from '@shiroani/shared';
 import type { DiaryEntry } from '@shiroani/shared';
+import type { DiarySortBy } from '@/stores/useDiaryStore';
 
 const DIARY_FILTER_OPTIONS = [
   { value: 'all' as const, label: 'Wszystkie' },
@@ -19,10 +28,17 @@ const DIARY_FILTER_OPTIONS = [
   { value: 'with_anime' as const, label: 'Z anime' },
 ];
 
+const DIARY_SORT_OPTIONS = [
+  { value: 'createdAt', label: 'Data utworzenia' },
+  { value: 'updatedAt', label: 'Data edycji' },
+  { value: 'title', label: 'Tytuł' },
+] as const;
+
 const {
   setFilter,
   setSearchQuery,
   setViewMode,
+  setSort,
   openEditor,
   closeEditor,
   createEntry,
@@ -38,12 +54,25 @@ export function DiaryView() {
   const activeFilter = useDiaryStore(s => s.activeFilter);
   const searchQuery = useDiaryStore(s => s.searchQuery);
   const viewMode = useDiaryStore(s => s.viewMode);
+  const sortBy = useDiaryStore(s => s.sortBy);
+  const sortOrder = useDiaryStore(s => s.sortOrder);
   const isEditorOpen = useDiaryStore(s => s.isEditorOpen);
   const selectedEntry = useDiaryStore(s => s.selectedEntry);
 
   const [entryToRemove, setEntryToRemove] = useState<DiaryEntry | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+
+  const handleSortChange = useCallback(
+    (value: string) => {
+      setSort(value as DiarySortBy, sortOrder);
+    },
+    [sortOrder]
+  );
+
+  const toggleSortOrder = useCallback(() => {
+    setSort(sortBy, sortOrder === 'asc' ? 'desc' : 'asc');
+  }, [sortBy, sortOrder]);
 
   const handleTogglePin = useCallback(
     (e: DiaryEntry) => updateEntry({ id: e.id, isPinned: !e.isPinned }),
@@ -57,8 +86,8 @@ export function DiaryView() {
   }, [initListeners, fetchEntries, cleanupListeners]);
 
   const filteredEntries = useMemo(
-    () => getFilteredDiaryEntries({ entries, activeFilter, searchQuery }),
-    [entries, activeFilter, searchQuery]
+    () => getFilteredDiaryEntries({ entries, activeFilter, searchQuery, sortBy, sortOrder }),
+    [entries, activeFilter, searchQuery, sortBy, sortOrder]
   );
 
   const subtitle =
@@ -83,6 +112,30 @@ export function DiaryView() {
         onViewModeChange={setViewMode}
         actions={
           <>
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-[170px] h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DIARY_SORT_OPTIONS.map(option => (
+                  <SelectItem key={option.value} value={option.value} className="text-xs">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={toggleSortOrder}
+              tooltip={sortOrder === 'asc' ? 'Rosnąco' : 'Malejąco'}
+            >
+              <ArrowUpDown
+                className={cn('w-4 h-4 transition-transform', sortOrder === 'asc' && 'rotate-180')}
+              />
+            </TooltipButton>
+            <div className="w-px h-4 bg-border/50 mx-1" />
             <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => openEditor()}>
               <Plus className="w-3.5 h-3.5" />
               Nowy wpis

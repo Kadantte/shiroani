@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { getFilteredDiaryEntries } from '../useDiaryStore';
 import type { DiaryEntry } from '@shiroani/shared';
+import type { DiarySortBy } from '../useDiaryStore';
+
+const defaultSort = { sortBy: 'createdAt' as DiarySortBy, sortOrder: 'desc' as const };
 
 function makeEntry(overrides: Partial<DiaryEntry> & { id: number; title: string }): DiaryEntry {
   return {
@@ -51,6 +54,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: '',
+      ...defaultSort,
     });
     expect(result).toHaveLength(4);
   });
@@ -60,6 +64,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: '',
+      ...defaultSort,
     });
     // Pinned entries should be first
     expect(result[0].isPinned).toBe(true);
@@ -71,6 +76,8 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: '',
+      sortBy: 'updatedAt',
+      sortOrder: 'desc',
     });
     // Pinned: id=1 (Mar) then id=4 (Jan 15)
     expect(result[0].id).toBe(1);
@@ -85,6 +92,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'pinned',
       searchQuery: '',
+      ...defaultSort,
     });
     expect(result).toHaveLength(2);
     expect(result.every(e => e.isPinned)).toBe(true);
@@ -95,6 +103,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'with_anime',
       searchQuery: '',
+      ...defaultSort,
     });
     expect(result).toHaveLength(2);
     expect(result.every(e => e.animeId != null)).toBe(true);
@@ -105,6 +114,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: 'great day',
+      ...defaultSort,
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(1);
@@ -115,6 +125,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: 'naruto',
+      ...defaultSort,
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(2);
@@ -125,6 +136,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: 'marathon',
+      ...defaultSort,
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(4);
@@ -135,6 +147,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: 'nonexistent',
+      ...defaultSort,
     });
     expect(result).toHaveLength(0);
   });
@@ -144,6 +157,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'all',
       searchQuery: '   ',
+      ...defaultSort,
     });
     expect(result).toHaveLength(4);
   });
@@ -153,6 +167,7 @@ describe('getFilteredDiaryEntries', () => {
       entries,
       activeFilter: 'with_anime',
       searchQuery: 'one piece',
+      ...defaultSort,
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(4);
@@ -163,6 +178,7 @@ describe('getFilteredDiaryEntries', () => {
       entries: [],
       activeFilter: 'all',
       searchQuery: '',
+      ...defaultSort,
     });
     expect(result).toHaveLength(0);
   });
@@ -172,6 +188,7 @@ describe('getFilteredDiaryEntries', () => {
       entries: [makeEntry({ id: 10, title: 'Plain Entry' })],
       activeFilter: 'all',
       searchQuery: 'plain',
+      ...defaultSort,
     });
     expect(result).toHaveLength(1);
   });
@@ -181,6 +198,7 @@ describe('getFilteredDiaryEntries', () => {
       entries: [makeEntry({ id: 10, title: 'No Tags' })],
       activeFilter: 'all',
       searchQuery: 'something',
+      ...defaultSort,
     });
     expect(result).toHaveLength(0);
   });
