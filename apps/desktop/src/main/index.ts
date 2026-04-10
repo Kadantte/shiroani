@@ -34,6 +34,7 @@ import {
   destroyContextMenu,
   setMainWindowRef as setContextMenuMainWindow,
 } from './mascot/context-menu';
+import { isMascotEnabled } from './mascot/overlay-state';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
 
@@ -139,12 +140,17 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   // Set up mascot overlay with main window reference
   setMascotMainWindow(win);
 
-  // On macOS the red traffic-light button should hide the app instead of
-  // destroying the main window. This keeps tray/mascot integrations stable.
   win.on('close', event => {
     if (process.platform === 'darwin' && !isShuttingDown) {
+      // On macOS the red traffic-light button should hide the app instead of
+      // destroying the main window. This keeps tray/mascot integrations stable.
       event.preventDefault();
       win.hide();
+    } else if (process.platform !== 'darwin') {
+      // On Windows/Linux, closing the main window should fully quit the app.
+      // Hidden auxiliary windows (e.g. mascot context menu) would otherwise
+      // prevent 'window-all-closed' from firing, so we quit explicitly.
+      app.quit();
     }
   });
 
@@ -206,9 +212,13 @@ async function bootstrap(): Promise<void> {
   }
 
   // Create the pre-hidden context menu window for the mascot overlay
+  // Only create when mascot is enabled to avoid a hidden BrowserWindow
+  // that would prevent 'window-all-closed' from firing on Windows/Linux.
   try {
     setContextMenuMainWindow(mainWindow);
-    createContextMenuWindow();
+    if (isMascotEnabled()) {
+      createContextMenuWindow();
+    }
   } catch (error) {
     logger.warn('Failed to create context menu window:', error);
   }
