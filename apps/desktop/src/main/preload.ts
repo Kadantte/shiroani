@@ -38,6 +38,7 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'app:clipboard-write',
   'app:clipboard-write-image',
   'app:save-file-binary',
+  'app:fetch-image-base64',
   'app:open-logs-folder',
   'app:list-log-files',
   'app:read-log-file',
@@ -193,6 +194,7 @@ export interface ElectronAPI {
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;
     saveFileBinary: (filePath: string, base64Data: string) => Promise<{ success: boolean }>;
+    fetchImageBase64: (url: string) => Promise<string | null>;
     openLogsFolder: () => Promise<void>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
@@ -310,6 +312,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke('app:save-file-binary', filePath, base64Data) as Promise<{
         success: boolean;
       }>,
+    fetchImageBase64: (url: string) =>
+      ipcRenderer.invoke('app:fetch-image-base64', url) as Promise<string | null>,
     openLogsFolder: () => ipcRenderer.invoke('app:open-logs-folder') as Promise<void>,
     listLogFiles: () => ipcRenderer.invoke('app:list-log-files'),
     readLogFile: (fileName: string) => ipcRenderer.invoke('app:read-log-file', fileName),

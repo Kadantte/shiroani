@@ -49,6 +49,28 @@ export function registerAppHandlers(): void {
     clipboard.writeText(text);
   });
 
+  ipcMain.handle('app:fetch-image-base64', async (_event, url: string): Promise<string | null> => {
+    if (typeof url !== 'string') return null;
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return null;
+    }
+    if (parsed.protocol !== 'https:') return null;
+
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return null;
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+      return `data:${contentType};base64,${buffer.toString('base64')}`;
+    } catch (error) {
+      logger.warn(`Failed to fetch image: ${url}`, error);
+      return null;
+    }
+  });
+
   ipcMain.handle('app:clipboard-write-image', (_event, pngBase64: string) => {
     if (typeof pngBase64 !== 'string') {
       throw new Error('clipboard-write-image expects a base64 PNG string');

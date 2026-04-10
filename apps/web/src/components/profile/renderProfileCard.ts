@@ -3,58 +3,73 @@ import type { UserProfile } from '@shiroani/shared';
 const WIDTH = 800;
 const HEIGHT = 420;
 
-// Colors
-const BG_PRIMARY = '#0f0f14';
-const BG_CARD = '#16161e';
-const BG_BAR = '#1e1e2a';
-const TEXT_PRIMARY = '#e4e4ef';
-const TEXT_SECONDARY = '#8b8ba0';
-const TEXT_MUTED = '#5c5c72';
-const ACCENT = '#7c5bf5'; // Purple accent matching oklch(0.55 0.25 265)
-const ACCENT_DIM = '#4a3596';
-const DIVIDER = '#22222e';
+// ── Palette ──────────────────────────────────────────────────────
 
-// Score bar colors: warm (low scores) → cool (high scores)
+const BG = '#0c0c12';
+const BG_BAR = '#1a1a28';
+const TEXT = '#e8e8f0';
+const TEXT_DIM = '#9494aa';
+const TEXT_FAINT = '#55556a';
+const DIVIDER = '#1e1e2e';
+const BRAND = '#e85d8a'; // Spy×Family pink — matches the mascot/app theme
+
+const BAR_PALETTE = ['#7c5bf5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'];
+
 const SCORE_COLORS: Record<number, string> = {
-  10: '#e5484d', // 1 — destructive
-  20: '#e5484d',
-  30: '#e5484d',
-  40: '#f5a623', // 4 — warning
-  50: '#f5a623',
-  60: '#f5a623',
-  70: '#7c5bf5', // 7 — primary
-  80: '#7c5bf5',
-  90: '#30a46c', // 9 — success
-  100: '#30a46c',
+  10: '#ef4444',
+  20: '#ef4444',
+  30: '#f97316',
+  40: '#f59e0b',
+  50: '#eab308',
+  60: '#84cc16',
+  70: '#22c55e',
+  80: '#10b981',
+  90: '#06b6d4',
+  100: '#3b82f6',
 };
 
-/** Load an image from URL via fetch→blob to avoid CORS canvas tainting. */
+const STATUS_PALETTE: Record<string, string> = {
+  CURRENT: '#22c55e',
+  COMPLETED: '#3b82f6',
+  PLANNING: '#06b6d4',
+  DROPPED: '#ef4444',
+  PAUSED: '#f59e0b',
+  REPEATING: '#8b5cf6',
+};
+
+// ── Helpers ──────────────────────────────────────────────────────
+
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-  return fetch(url)
-    .then(res => {
-      if (!res.ok) return null;
-      return res.blob();
-    })
-    .then(blob => {
-      if (!blob) return null;
-      const objectUrl = URL.createObjectURL(blob);
-      return new Promise<HTMLImageElement | null>(resolve => {
-        const img = new Image();
-        img.onload = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve(img);
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve(null);
-        };
-        img.src = objectUrl;
-      });
-    })
-    .catch(() => null);
+  const fetchViaIpc = window.electronAPI?.app?.fetchImageBase64;
+  const fetchFn = fetchViaIpc
+    ? (u: string) => fetchViaIpc(u)
+    : (u: string) =>
+        fetch(u)
+          .then(r => (r.ok ? r.blob() : null))
+          .then(b => (b ? URL.createObjectURL(b) : null))
+          .catch(() => null);
+
+  return fetchFn(url).then(dataUrl => {
+    if (!dataUrl) return null;
+    return new Promise<HTMLImageElement | null>(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+  });
 }
 
-/** Draw text truncated to a max pixel width. */
+/** Load a local asset (same-origin, no IPC needed). */
+function loadLocalImage(path: string): Promise<HTMLImageElement | null> {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = path;
+  });
+}
+
 function drawTruncated(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -70,7 +85,6 @@ function drawTruncated(
   ctx.fillText(t, x, y);
 }
 
-/** Draw rounded rectangle path. */
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -94,295 +108,343 @@ function roundRect(
 
 function formatDays(minutes: number): string {
   const days = minutes / 60 / 24;
-  return days >= 1 ? `${days.toFixed(1)} dni` : `${(minutes / 60).toFixed(1)}h`;
+  return days >= 1 ? `${days.toFixed(1)}` : `${(minutes / 60).toFixed(1)}`;
 }
 
-function formatScore(score: number): string {
-  return score > 0 ? score.toFixed(1) : '\u2014';
+function formatDaysUnit(minutes: number): string {
+  return minutes / 60 / 24 >= 1 ? 'dni' : 'godz';
 }
 
-/**
- * Renders the user profile card onto a canvas and returns it as a base64 PNG string (without data: prefix).
- */
+function formatNumber(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
+const FONT = '"Segoe UI", system-ui, -apple-system, sans-serif';
+
+// ── Corner accent strokes ────────────────────────────────────────
+
+function drawCornerAccents(ctx: CanvasRenderingContext2D) {
+  const len = 50;
+  const offset = 6;
+
+  // Top-left corner — pink gradient stroke
+  const tlGrad = ctx.createLinearGradient(offset, offset, offset + len, offset + len);
+  tlGrad.addColorStop(0, 'rgba(232, 93, 138, 0.7)');
+  tlGrad.addColorStop(1, 'rgba(232, 93, 138, 0)');
+
+  ctx.strokeStyle = tlGrad;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(offset, offset + len);
+  ctx.lineTo(offset, offset + 8);
+  ctx.arcTo(offset, offset, offset + 8, offset, 8);
+  ctx.lineTo(offset + len, offset);
+  ctx.stroke();
+
+  // Bottom-right corner — pink gradient stroke
+  const brGrad = ctx.createLinearGradient(
+    WIDTH - offset - len,
+    HEIGHT - offset - len,
+    WIDTH - offset,
+    HEIGHT - offset
+  );
+  brGrad.addColorStop(0, 'rgba(232, 93, 138, 0)');
+  brGrad.addColorStop(1, 'rgba(232, 93, 138, 0.7)');
+
+  ctx.strokeStyle = brGrad;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(WIDTH - offset - len, HEIGHT - offset);
+  ctx.lineTo(WIDTH - offset - 8, HEIGHT - offset);
+  ctx.arcTo(WIDTH - offset, HEIGHT - offset, WIDTH - offset, HEIGHT - offset - 8, 8);
+  ctx.lineTo(WIDTH - offset, HEIGHT - offset - len);
+  ctx.stroke();
+}
+
+// ── Main renderer ────────────────────────────────────────────────
+
 export async function renderProfileCard(profile: UserProfile): Promise<string> {
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
   const ctx = canvas.getContext('2d')!;
 
-  // ── Background ──
-  ctx.fillStyle = BG_PRIMARY;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  const { statistics: stats } = profile;
+  const L = 28;
+  const R = WIDTH - 28;
 
-  // Subtle gradient overlay from top-left
+  // ── Background ──
+  ctx.fillStyle = BG;
+  roundRect(ctx, 0, 0, WIDTH, HEIGHT, 12);
+  ctx.fill();
+
+  // Clip to card shape
+  ctx.save();
+  roundRect(ctx, 0, 0, WIDTH, HEIGHT, 12);
+  ctx.clip();
+
+  // Subtle gradient
   const bgGrad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  bgGrad.addColorStop(0, 'rgba(124, 91, 245, 0.06)');
-  bgGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-  bgGrad.addColorStop(1, 'rgba(124, 91, 245, 0.03)');
+  bgGrad.addColorStop(0, 'rgba(124, 91, 245, 0.03)');
+  bgGrad.addColorStop(1, 'rgba(6, 182, 212, 0.02)');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // ── Favourite covers as faded background collage (right side) ──
-  if (profile.favourites.length > 0) {
-    const coverSlots = profile.favourites.slice(0, 4);
-    const coverWidth = 120;
-    const coverHeight = 170;
-    const startX = WIDTH - coverSlots.length * (coverWidth - 20) - 20;
+  // ── Background anime covers mosaic ──
+  const allCovers = profile.favourites.filter(f => f.coverImage);
+  if (allCovers.length > 0) {
+    const tileW = 75;
+    const tileH = 106;
+    const cols = Math.ceil(WIDTH / tileW) + 1;
+    const rows = Math.ceil(HEIGHT / tileH) + 1;
 
-    for (let i = 0; i < coverSlots.length; i++) {
-      const fav = coverSlots[i];
-      if (!fav.coverImage) continue;
-      const img = await loadImage(fav.coverImage);
-      if (!img) continue;
-
-      const x = startX + i * (coverWidth - 20);
-      const y = 10;
-
-      ctx.save();
-      ctx.globalAlpha = 0.07;
-      roundRect(ctx, x, y, coverWidth, coverHeight, 8);
-      ctx.clip();
-      ctx.drawImage(img, x, y, coverWidth, coverHeight);
-      ctx.restore();
+    const coverImages: HTMLImageElement[] = [];
+    for (const fav of allCovers.slice(0, 10)) {
+      const img = await loadImage(fav.coverImage!);
+      if (img) coverImages.push(img);
     }
 
-    // Fade overlay over covers
-    const fadeGrad = ctx.createLinearGradient(startX - 60, 0, startX + 60, 0);
-    fadeGrad.addColorStop(0, BG_PRIMARY);
-    fadeGrad.addColorStop(1, 'rgba(15, 15, 20, 0.4)');
-    ctx.fillStyle = fadeGrad;
-    ctx.fillRect(startX - 60, 0, 120, HEIGHT);
+    if (coverImages.length > 0) {
+      ctx.globalAlpha = 0.12;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * tileW + (row % 2 === 1 ? -tileW / 3 : 0);
+          const y = row * tileH;
+          const img = coverImages[(row * cols + col) % coverImages.length];
+          ctx.drawImage(img, x, y, tileW, tileH);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Dark overlay — let covers peek through noticeably
+      ctx.fillStyle = BG;
+      ctx.globalAlpha = 0.72;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.globalAlpha = 1;
+
+      // Extra darken on left half for text readability
+      const leftShade = ctx.createLinearGradient(0, 0, WIDTH * 0.55, 0);
+      leftShade.addColorStop(0, 'rgba(12, 12, 18, 0.5)');
+      leftShade.addColorStop(1, 'rgba(12, 12, 18, 0)');
+      ctx.fillStyle = leftShade;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    }
   }
 
-  const { statistics: stats } = profile;
-
-  // ── Left side: Avatar + Username ──
-  const leftPad = 32;
-  let cursorY = 32;
-
-  // Avatar
-  const avatarSize = 64;
+  // ── Avatar ──
+  let y = 22;
+  const avatarSize = 50;
   if (profile.avatar) {
     const avatarImg = await loadImage(profile.avatar);
     if (avatarImg) {
       ctx.save();
-      roundRect(ctx, leftPad, cursorY, avatarSize, avatarSize, 14);
+      roundRect(ctx, L, y, avatarSize, avatarSize, 12);
       ctx.clip();
-      ctx.drawImage(avatarImg, leftPad, cursorY, avatarSize, avatarSize);
+      ctx.drawImage(avatarImg, L, y, avatarSize, avatarSize);
       ctx.restore();
 
-      // Avatar border
-      ctx.strokeStyle = ACCENT_DIM;
-      ctx.lineWidth = 2;
-      roundRect(ctx, leftPad, cursorY, avatarSize, avatarSize, 14);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, L, y, avatarSize, avatarSize, 12);
       ctx.stroke();
     }
-  } else {
-    // Placeholder
-    ctx.fillStyle = BG_CARD;
-    roundRect(ctx, leftPad, cursorY, avatarSize, avatarSize, 14);
-    ctx.fill();
   }
 
-  // Username
-  ctx.fillStyle = TEXT_PRIMARY;
-  ctx.font = 'bold 22px "Inter", "Segoe UI", system-ui, sans-serif';
+  // ── Username + inline stats ──
+  const nameX = L + avatarSize + 12;
+  ctx.fillStyle = TEXT;
+  ctx.font = `bold 18px ${FONT}`;
   ctx.textBaseline = 'middle';
-  drawTruncated(ctx, profile.name, leftPad + avatarSize + 16, cursorY + 22, 280);
+  drawTruncated(ctx, profile.name, nameX, y + 17, 220);
 
-  // AniList badge
-  ctx.fillStyle = TEXT_MUTED;
-  ctx.font = '12px "Inter", "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('AniList', leftPad + avatarSize + 16, cursorY + 48);
+  ctx.fillStyle = TEXT_DIM;
+  ctx.font = `11px ${FONT}`;
+  const statLine = [
+    `${stats.count} anime`,
+    `${formatNumber(stats.episodesWatched)} odc`,
+    `${formatDays(stats.minutesWatched)} ${formatDaysUnit(stats.minutesWatched)}`,
+    `\u2605 ${stats.meanScore > 0 ? stats.meanScore.toFixed(1) : '\u2014'}`,
+  ].join('  \u00B7  ');
+  drawTruncated(ctx, statLine, nameX, y + 38, R - nameX);
 
-  cursorY += avatarSize + 28;
+  y += avatarSize + 18;
 
-  // ── Key stats in a 2x2 grid ──
-  const statItems = [
-    { value: String(stats.count), label: 'Anime' },
-    { value: String(stats.episodesWatched), label: 'Odcinki' },
-    { value: formatDays(stats.minutesWatched), label: 'Czas' },
-    { value: formatScore(stats.meanScore), label: 'Srednia' },
-  ];
+  // ── Status bar ──
+  const totalStatus = stats.statuses.reduce((sum, s) => sum + s.count, 0) || 1;
+  if (stats.statuses.length > 0) {
+    const barH = 5;
+    let barX = L;
+    const barW = 300;
 
-  const statGridLeft = leftPad;
-  const statBoxW = 105;
-  const statBoxH = 58;
-  const statGap = 8;
-
-  for (let i = 0; i < 4; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = statGridLeft + col * (statBoxW + statGap);
-    const y = cursorY + row * (statBoxH + statGap);
-
-    // Stat card background
-    ctx.fillStyle = BG_CARD;
-    roundRect(ctx, x, y, statBoxW, statBoxH, 10);
+    ctx.fillStyle = BG_BAR;
+    ctx.globalAlpha = 0.6;
+    roundRect(ctx, barX, y, barW, barH, 3);
     ctx.fill();
+    ctx.globalAlpha = 1;
 
-    // Accent line on left
-    ctx.fillStyle = ACCENT;
-    roundRect(ctx, x, y, 3, statBoxH, 2);
-    ctx.fill();
+    ctx.save();
+    roundRect(ctx, barX, y, barW, barH, 3);
+    ctx.clip();
+    for (const s of stats.statuses) {
+      const segW = (s.count / totalStatus) * barW;
+      if (segW < 1) continue;
+      ctx.fillStyle = STATUS_PALETTE[s.name] ?? TEXT_FAINT;
+      ctx.fillRect(barX, y, segW, barH);
+      barX += segW;
+    }
+    ctx.restore();
 
-    // Value
-    ctx.fillStyle = TEXT_PRIMARY;
-    ctx.font = 'bold 20px "Inter", "Segoe UI", system-ui, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText(statItems[i].value, x + 14, y + 10);
-
-    // Label
-    ctx.fillStyle = TEXT_SECONDARY;
-    ctx.font = '11px "Inter", "Segoe UI", system-ui, sans-serif';
-    ctx.fillText(statItems[i].label, x + 14, y + 36);
+    y += barH + 8;
+    let legendX = L;
+    ctx.textBaseline = 'middle';
+    for (const s of stats.statuses) {
+      if (s.count === 0) continue;
+      ctx.fillStyle = STATUS_PALETTE[s.name] ?? TEXT_FAINT;
+      ctx.font = `bold 8px ${FONT}`;
+      ctx.fillText('\u25CF', legendX, y);
+      legendX += 9;
+      ctx.fillStyle = TEXT_DIM;
+      ctx.font = `9px ${FONT}`;
+      const label = String(s.count);
+      ctx.fillText(label, legendX, y);
+      legendX += ctx.measureText(label).width + 10;
+    }
+    y += 15;
   }
 
-  cursorY += 2 * statBoxH + statGap + 20;
-
-  // ── Top genres (left side, below stats) ──
-  const topGenres = stats.genres.slice(0, 3);
+  // ── Left: Genre bars ──
+  const leftColW = 330;
+  const topGenres = stats.genres.slice(0, 7);
   if (topGenres.length > 0) {
-    ctx.fillStyle = TEXT_MUTED;
-    ctx.font = '10px "Inter", "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = TEXT_FAINT;
+    ctx.font = `bold 8px ${FONT}`;
     ctx.textBaseline = 'top';
-    ctx.fillText('TOP GATUNKI', leftPad, cursorY);
-    cursorY += 16;
+    ctx.fillText('GATUNKI', L, y);
+    y += 13;
 
-    for (const genre of topGenres) {
-      ctx.fillStyle = ACCENT;
-      ctx.font = '12px "Inter", "Segoe UI", system-ui, sans-serif';
-      ctx.fillText('\u25CF', leftPad, cursorY);
-      ctx.fillStyle = TEXT_PRIMARY;
-      ctx.font = '13px "Inter", "Segoe UI", system-ui, sans-serif';
-      drawTruncated(ctx, genre.name, leftPad + 14, cursorY, 140);
-      ctx.fillStyle = TEXT_MUTED;
-      ctx.font = '11px "Inter", "Segoe UI", system-ui, sans-serif';
-      const genreNameWidth = Math.min(ctx.measureText(genre.name).width, 140);
-      ctx.fillText(`${genre.count}`, leftPad + 14 + genreNameWidth + 8, cursorY + 1);
-      cursorY += 20;
-    }
-  }
+    const maxCount = Math.max(...topGenres.map(g => g.count), 1);
+    const barH = 13;
+    const barGap = 4;
+    const labelW = 66;
+    const barArea = leftColW - labelW - 36;
 
-  // ── Right side: Genre bar chart + score chart ──
-  const rightX = 310;
-  const chartWidth = 260;
-  let rightY = 32;
-
-  const topGenresChart = stats.genres.slice(0, 5);
-  if (topGenresChart.length > 0) {
-    ctx.fillStyle = TEXT_MUTED;
-    ctx.font = '10px "Inter", "Segoe UI", system-ui, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText('GATUNKI', rightX, rightY);
-    rightY += 18;
-
-    const maxCount = Math.max(...topGenresChart.map(g => g.count), 1);
-    const barHeight = 18;
-    const barGap = 6;
-
-    for (const genre of topGenresChart) {
+    for (let i = 0; i < topGenres.length; i++) {
+      const genre = topGenres[i];
       const pct = genre.count / maxCount;
+      const color = BAR_PALETTE[i % BAR_PALETTE.length];
 
-      // Label
-      ctx.fillStyle = TEXT_SECONDARY;
-      ctx.font = '11px "Inter", "Segoe UI", system-ui, sans-serif';
+      ctx.fillStyle = TEXT_DIM;
+      ctx.font = `10px ${FONT}`;
       ctx.textBaseline = 'middle';
-      drawTruncated(ctx, genre.name, rightX, rightY + barHeight / 2, 80);
+      drawTruncated(ctx, genre.name, L, y + barH / 2, labelW);
 
-      // Bar background
-      const barX = rightX + 88;
-      const barW = chartWidth - 88;
+      const bx = L + labelW + 4;
       ctx.fillStyle = BG_BAR;
-      roundRect(ctx, barX, rightY, barW, barHeight, 4);
+      ctx.globalAlpha = 0.4;
+      roundRect(ctx, bx, y, barArea, barH, 3);
       ctx.fill();
+      ctx.globalAlpha = 1;
 
-      // Bar fill
-      const fillW = Math.max(barW * pct, 6);
-      const barGradient = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
-      barGradient.addColorStop(0, ACCENT);
-      barGradient.addColorStop(1, ACCENT_DIM);
-      ctx.fillStyle = barGradient;
-      roundRect(ctx, barX, rightY, fillW, barHeight, 4);
+      const fillW = Math.max(barArea * pct, 3);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.75;
+      roundRect(ctx, bx, y, fillW, barH, 3);
       ctx.fill();
+      ctx.globalAlpha = 1;
 
-      // Count label
-      ctx.fillStyle = TEXT_PRIMARY;
-      ctx.font = 'bold 10px "Inter", "Segoe UI", system-ui, sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(genre.count), barX + fillW + 6, rightY + barHeight / 2);
+      ctx.fillStyle = TEXT;
+      ctx.font = `bold 9px ${FONT}`;
+      ctx.fillText(String(genre.count), bx + fillW + 5, y + barH / 2);
 
-      rightY += barHeight + barGap;
+      y += barH + barGap;
     }
   }
 
-  // ── Right side: Score distribution mini chart ──
-  rightY += 12;
-  const scoreChartX = rightX;
-  const scoreChartW = chartWidth;
-  const scoreChartH = 80;
+  // ── Right: Score chart ──
+  const rightX = 395;
+  const chartW = R - rightX;
+  let ry = avatarSize + 22 + (stats.statuses.length > 0 ? 28 : 0) + 22;
 
   if (stats.scores.length > 0) {
-    ctx.fillStyle = TEXT_MUTED;
-    ctx.font = '10px "Inter", "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = TEXT_FAINT;
+    ctx.font = `bold 8px ${FONT}`;
     ctx.textBaseline = 'top';
-    ctx.fillText('ROZKLAD OCEN', scoreChartX, rightY);
-    rightY += 18;
+    ctx.fillText('ROZK\u0141AD OCEN', rightX, ry);
+    ry += 14;
 
-    // Fill in all scores 1-10
     const scoreMap = new Map(stats.scores.map(s => [s.score, s.count]));
     const filled = Array.from({ length: 10 }, (_, i) => ({
       score: (i + 1) * 10,
       count: scoreMap.get((i + 1) * 10) ?? 0,
     }));
 
-    const maxScoreCount = Math.max(...filled.map(s => s.count), 1);
-    const barW = (scoreChartW - 9 * 4) / 10; // 4px gap between bars
-    const chartBottom = rightY + scoreChartH;
+    const maxScore = Math.max(...filled.map(s => s.count), 1);
+    const scoreBarW = (chartW - 9 * 3) / 10;
+    const scoreChartH = 85;
+    const chartBottom = ry + scoreChartH;
 
     for (let i = 0; i < 10; i++) {
       const { score, count } = filled[i];
-      const pct = count / maxScoreCount;
-      const barH = Math.max(scoreChartH * pct, 3);
-      const x = scoreChartX + i * (barW + 4);
-      const y = chartBottom - barH;
+      const pct = count / maxScore;
+      const barH = Math.max(scoreChartH * pct, 2);
+      const x = rightX + i * (scoreBarW + 3);
+      const by = chartBottom - barH;
 
-      // Bar — color by score range
-      const barColor = SCORE_COLORS[score] ?? ACCENT;
-      ctx.fillStyle = barColor;
-      ctx.globalAlpha = 0.75;
-      roundRect(ctx, x, y, barW, barH, 3);
+      ctx.fillStyle = SCORE_COLORS[score] ?? BRAND;
+      ctx.globalAlpha = 0.85;
+      roundRect(ctx, x, by, scoreBarW, barH, 2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // Score label
-      ctx.fillStyle = TEXT_MUTED;
-      ctx.font = '9px "Inter", "Segoe UI", system-ui, sans-serif';
+      if (count > 0 && pct > 0.25) {
+        ctx.fillStyle = TEXT;
+        ctx.font = `bold 8px ${FONT}`;
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(count), x + scoreBarW / 2, by - 2);
+        ctx.textAlign = 'left';
+      }
+
+      ctx.fillStyle = TEXT_FAINT;
+      ctx.font = `8px ${FONT}`;
       ctx.textBaseline = 'top';
-      const label = String(score / 10);
-      const labelW = ctx.measureText(label).width;
-      ctx.fillText(label, x + (barW - labelW) / 2, chartBottom + 4);
+      ctx.textAlign = 'center';
+      ctx.fillText(String(score / 10), x + scoreBarW / 2, chartBottom + 3);
+      ctx.textAlign = 'left';
+    }
+
+    ry = chartBottom + 16;
+  }
+
+  // ── Right: Studios ──
+  const topStudios = stats.studios.slice(0, 4);
+  if (topStudios.length > 0) {
+    ctx.fillStyle = TEXT_FAINT;
+    ctx.font = `bold 8px ${FONT}`;
+    ctx.textBaseline = 'top';
+    ctx.fillText('STUDIA', rightX, ry);
+    ry += 13;
+
+    for (const studio of topStudios) {
+      ctx.fillStyle = TEXT_DIM;
+      ctx.font = `10px ${FONT}`;
+      ctx.textBaseline = 'top';
+      drawTruncated(ctx, studio.name, rightX, ry, chartW - 30);
+      ctx.fillStyle = TEXT_FAINT;
+      ctx.font = `9px ${FONT}`;
+      ctx.textAlign = 'right';
+      ctx.fillText(String(studio.count), R, ry + 1);
+      ctx.textAlign = 'left';
+      ry += 15;
     }
   }
 
-  // ── Bottom bar ──
-  const bottomBarY = HEIGHT - 44;
-
-  // Divider line
+  // ── Bottom branding ──
+  const bottomY = HEIGHT - 32;
   ctx.fillStyle = DIVIDER;
-  ctx.fillRect(0, bottomBarY, WIDTH, 1);
+  ctx.fillRect(L, bottomY, R - L, 1);
 
-  // Left: ShiroAni branding
-  ctx.fillStyle = ACCENT;
-  ctx.font = 'bold 14px "Inter", "Segoe UI", system-ui, sans-serif';
-  ctx.textBaseline = 'middle';
-  const brandY = bottomBarY + 22;
-  ctx.fillText('ShiroAni', leftPad, brandY);
-
-  const brandW = ctx.measureText('ShiroAni').width;
-  ctx.fillStyle = TEXT_MUTED;
-  ctx.font = '11px "Inter", "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('shiroani.app', leftPad + brandW + 10, brandY);
+  const brandY = bottomY + 15;
 
   // Right: username + date
   const date = new Date().toLocaleDateString('pl-PL', {
@@ -390,40 +452,44 @@ export async function renderProfileCard(profile: UserProfile): Promise<string> {
     month: 'short',
     year: 'numeric',
   });
-  ctx.fillStyle = TEXT_MUTED;
-  ctx.font = '11px "Inter", "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = TEXT_FAINT;
+  ctx.font = `9px ${FONT}`;
+  ctx.textBaseline = 'middle';
   ctx.textAlign = 'right';
-  ctx.fillText(`${profile.name} \u00B7 ${date}`, WIDTH - 32, brandY);
+  ctx.fillText(`${profile.name} \u00B7 ${date}`, R, brandY);
   ctx.textAlign = 'left';
 
-  // ── Decorative corner accent ──
-  ctx.strokeStyle = ACCENT_DIM;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, 3);
-  ctx.lineTo(0, 0);
-  ctx.lineTo(3, 0);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(WIDTH - 3, 0);
-  ctx.lineTo(WIDTH, 0);
-  ctx.lineTo(WIDTH, 3);
-  ctx.stroke();
+  // Restore card clip before drawing corner accents
+  ctx.restore();
 
-  // ── Card outer border ──
-  ctx.strokeStyle = 'rgba(124, 91, 245, 0.12)';
-  ctx.lineWidth = 1;
-  roundRect(ctx, 0.5, 0.5, WIDTH - 1, HEIGHT - 1, 12);
-  ctx.stroke();
+  // ── Corner accent strokes (outside clip) ──
+  drawCornerAccents(ctx);
 
-  // Extract base64 PNG (strip the "data:image/png;base64," prefix)
+  // ── Bottom-left: Logo + ShiroAni name ──
+  const logoSize = 20;
+  const logoX = L;
+  const logoY = HEIGHT - 28;
+
+  // Try to load the chibi logo
+  const logo = await loadLocalImage(`${window.location.origin}/shiro-chibi.svg`);
+  if (logo) {
+    ctx.drawImage(logo, logoX, logoY - 2, logoSize, logoSize);
+  }
+
+  ctx.fillStyle = BRAND;
+  ctx.font = `bold 12px ${FONT}`;
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ShiroAni', logoX + logoSize + 6, logoY + logoSize / 2);
+
+  const bw = ctx.measureText('ShiroAni').width;
+  ctx.fillStyle = TEXT_FAINT;
+  ctx.font = `9px ${FONT}`;
+  ctx.fillText('shiroani.app', logoX + logoSize + 6 + bw + 6, logoY + logoSize / 2);
+
   const dataUrl = canvas.toDataURL('image/png');
   return dataUrl.replace(/^data:image\/png;base64,/, '');
 }
 
-/**
- * Returns the profile card as a full data URL (for preview rendering in an <img> tag).
- */
 export async function renderProfileCardDataUrl(profile: UserProfile): Promise<string> {
   const base64 = await renderProfileCard(profile);
   return `data:image/png;base64,${base64}`;

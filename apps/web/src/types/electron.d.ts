@@ -47,6 +47,7 @@ interface ElectronAPI {
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;
     saveFileBinary: (filePath: string, base64Data: string) => Promise<{ success: boolean }>;
+    fetchImageBase64: (url: string) => Promise<string | null>;
     getBackendPort: () => Promise<number>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
