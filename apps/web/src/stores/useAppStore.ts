@@ -5,7 +5,14 @@ import { updateAnimePresence } from '@/lib/anime-detection';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 
-export type ActiveView = 'browser' | 'library' | 'diary' | 'schedule' | 'feed' | 'settings';
+export type ActiveView =
+  | 'browser'
+  | 'library'
+  | 'discover'
+  | 'diary'
+  | 'schedule'
+  | 'feed'
+  | 'settings';
 
 interface AppState {
   activeView: ActiveView;

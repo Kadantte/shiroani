@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BookOpen, Calendar, NotebookPen, Rss, Settings } from 'lucide-react';
+import { BookOpen, Calendar, Compass, NotebookPen, Rss, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
@@ -14,6 +14,7 @@ interface NavItem {
 const ALL_ITEMS: NavItem[] = [
   { id: 'browser', label: 'Internet' },
   { id: 'library', label: 'Biblioteka' },
+  { id: 'discover', label: 'Odkrywaj' },
   { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Harmonogram' },
   { id: 'feed', label: 'Aktualności' },
@@ -88,6 +89,16 @@ function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
             base,
             'group-hover:rotate-[-8deg] group-hover:scale-110',
             isActive && 'animate-[dock-wiggle_2.5s_ease-in-out_infinite] motion-reduce:animate-none'
+          )}
+        />
+      );
+    case 'discover':
+      return (
+        <Compass
+          className={cn(
+            base,
+            'group-hover:rotate-[30deg] group-hover:scale-110',
+            isActive && 'animate-[dock-spin_4s_linear_infinite] motion-reduce:animate-none'
           )}
         />
       );

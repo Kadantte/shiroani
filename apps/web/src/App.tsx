@@ -11,6 +11,7 @@ import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DiaryView } from '@/components/diary/DiaryView';
 import { FeedView } from '@/components/feed/FeedView';
+import { DiscoverView } from '@/components/discover/DiscoverView';
 import { SplashScreen } from '@/components/splash';
 import { OnboardingWizard } from '@/components/onboarding';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
@@ -62,6 +63,7 @@ function App() {
       if (
         view === 'schedule' ||
         view === 'library' ||
+        view === 'discover' ||
         view === 'settings' ||
         view === 'browser' ||
         view === 'diary' ||
@@ -121,6 +123,7 @@ function App() {
                 <BrowserView />
               </div>
               {activeView === 'library' && <LibraryView />}
+              {activeView === 'discover' && <DiscoverView />}
               {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}
               {activeView === 'feed' && <FeedView />}
