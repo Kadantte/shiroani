@@ -35,6 +35,7 @@ let menuWindow: BrowserWindow | null = null;
 let mainWindowRef: BrowserWindow | null = null;
 let onMenuSelect: MenuSelectHandler | null = null;
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastShowTime = 0;
 
 function hideContextMenuImmediately(): void {
   if (!menuWindow || menuWindow.isDestroyed()) return;
@@ -56,14 +57,17 @@ export function setMainWindowRef(win: BrowserWindow | null): void {
 }
 
 function getMenuHtmlPath(): string {
-  if (!app.isPackaged) {
-    return path.join(__dirname, '../../src/renderer/context-menu.html');
-  }
-  return path.join(app.getAppPath(), 'dist/renderer/context-menu.html');
+  const p = app.isPackaged
+    ? path.join(app.getAppPath(), 'dist/renderer/context-menu.html')
+    : path.join(__dirname, '../../src/renderer/context-menu.html');
+  logger.info(`Context menu HTML path: ${p}`);
+  return p;
 }
 
 function getMenuPreloadPath(): string {
-  return path.join(__dirname, 'menu-preload.js');
+  const p = path.join(__dirname, 'menu-preload.js');
+  logger.info(`Context menu preload path: ${p}`);
+  return p;
 }
 
 export function createContextMenuWindow(): void {
@@ -90,11 +94,22 @@ export function createContextMenuWindow(): void {
 
   menuWindow.setAlwaysOnTop(true, 'pop-up-menu');
 
-  menuWindow.loadFile(getMenuHtmlPath()).catch(err => {
-    logger.error('Failed to load context menu HTML:', err);
+  menuWindow
+    .loadFile(getMenuHtmlPath())
+    .then(() => {
+      logger.info('Context menu HTML loaded successfully');
+    })
+    .catch(err => {
+      logger.error('Failed to load context menu HTML:', err);
+    });
+
+  menuWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    logger.error(`Context menu did-fail-load: ${errorCode} ${errorDescription}`);
   });
 
   menuWindow.on('blur', () => {
+    // Guard against immediate blur after show (race with native overlay focus)
+    if (Date.now() - lastShowTime < 300) return;
     hideContextMenu();
   });
 
@@ -213,7 +228,10 @@ export async function showContextMenu(x: number, y: number, state: MenuState): P
     height: MENU_HEIGHT,
   });
 
-  menuWindow.show();
+  lastShowTime = Date.now();
+  logger.info(`Showing context menu at (${Math.round(menuX)}, ${Math.round(menuY)})`);
+  menuWindow.showInactive();
+  menuWindow.focus();
 }
 
 export function hideContextMenu(): void {

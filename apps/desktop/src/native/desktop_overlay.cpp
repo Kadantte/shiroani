@@ -419,6 +419,11 @@ static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             return 0;
         }
 
+        case WM_LBUTTONDBLCLK: {
+            CallJsCallback("open-app");
+            return 0;
+        }
+
         case WM_RBUTTONUP: {
             // Send cursor position to JS for custom styled context menu
             POINT screenPt;
@@ -621,6 +626,7 @@ static DWORD WINAPI OverlayThreadProc(LPVOID param) {
     // Register window classes
     WNDCLASSEXW wcOverlay = {};
     wcOverlay.cbSize = sizeof(WNDCLASSEXW);
+    wcOverlay.style = CS_DBLCLKS;
     wcOverlay.lpfnWndProc = OverlayWndProc;
     wcOverlay.hInstance = GetModuleHandle(NULL);
     wcOverlay.lpszClassName = OVERLAY_CLASS_NAME;

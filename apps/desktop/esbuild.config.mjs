@@ -26,7 +26,6 @@ await build({
     'src/main/index.ts',
     'src/main/preload.ts',
     'src/main/menu-preload.ts',
-    'src/main/mascot-preload.ts',
   ],
   bundle: true,
   platform: 'node',
