@@ -20,7 +20,7 @@ export async function handleGatewayRequest<TDefault, TResult = TDefault>(options
   handler: () => Promise<TResult>;
 }): Promise<TResult | (TDefault & { error: string })> {
   const { logger, action, defaultResult, handler } = options;
-  logger.debug(`${action}`);
+  logger.info(`${action}`);
   try {
     return await handler();
   } catch (error) {
