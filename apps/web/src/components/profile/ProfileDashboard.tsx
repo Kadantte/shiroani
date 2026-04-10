@@ -33,7 +33,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
   const maxGenreCount = Math.max(...stats.genres.map(g => g.count), 1);
   const maxFormatCount = Math.max(...stats.formats.map(f => f.count), 1);
   const maxScoreCount = Math.max(...stats.scores.map(s => s.count), 1);
-  const maxStudioCount = Math.max(...stats.studios.map(s => s.count), 1);
+  const maxStudioCount = Math.max(...stats.studios.slice(0, 5).map(s => s.count), 1);
   const maxYearCount = Math.max(...stats.releaseYears.map(y => y.count), 1);
 
   const totalStatusCount = stats.statuses.reduce((sum, s) => sum + s.count, 0) || 1;
@@ -58,19 +58,21 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
           <Button
             variant="ghost"
             size="icon"
-            className="w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
+            className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={() => setShareOpen(true)}
             title="Udostepnij"
+            aria-label="Udostępnij profil"
           >
             <Share2 className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
+            className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={() => fetchProfile()}
             disabled={isLoading}
             title="Odśwież"
+            aria-label="Odśwież profil"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
           </Button>
@@ -78,9 +80,10 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
+              className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
               onClick={() => window.open(profile.siteUrl, '_blank')}
               title="Otwórz na AniList"
+              aria-label="Otwórz profil na AniList"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
@@ -88,9 +91,10 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
           <Button
             variant="ghost"
             size="icon"
-            className="w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
+            className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={clearProfile}
             title="Rozłącz profil"
+            aria-label="Rozłącz profil AniList"
           >
             <LogOut className="w-3.5 h-3.5" />
           </Button>
@@ -120,28 +124,36 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
         </div>
 
         {/* ── Key metrics row ────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-2.5 mb-8">
-          <MetricCard icon={<Tv className="w-4 h-4" />} value={stats.count} label="Anime" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+          <MetricCard
+            icon={<Tv className="w-4 h-4" />}
+            value={stats.count}
+            label="Anime"
+            accent="primary"
+          />
           <MetricCard
             icon={<Eye className="w-4 h-4" />}
             value={stats.episodesWatched}
             label="Odcinki"
+            accent="info"
           />
           <MetricCard
             icon={<Clock className="w-4 h-4" />}
             value={formatDays(stats.minutesWatched)}
             label={formatDaysLabel(stats.minutesWatched)}
+            accent="warning"
           />
           <MetricCard
             icon={<Star className="w-4 h-4" />}
             value={formatScore(stats.meanScore)}
             label="Średnia"
+            accent="success"
           />
         </div>
 
         {/* ── Status distribution ────────────────────────── */}
         {stats.statuses.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-6">
             <SectionLabel>Statusy</SectionLabel>
             <div className="flex h-2.5 rounded-full overflow-hidden gap-px bg-muted/20 mb-3">
               {stats.statuses.map(s => {
@@ -178,7 +190,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
         )}
 
         {/* ── Two-column layout for charts ───────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-8 mb-10">
           {/* Genre distribution */}
           {stats.genres.length > 0 && (
             <section>
@@ -216,6 +228,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
                     label={FORMAT_LABELS[f.name] ?? f.name}
                     value={f.count}
                     max={maxFormatCount}
+                    color="info"
                   />
                 ))}
               </div>
@@ -227,13 +240,14 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
             <section>
               <SectionLabel>Studia</SectionLabel>
               <div className="space-y-1.5">
-                {stats.studios.map(s => (
+                {stats.studios.slice(0, 5).map(s => (
                   <BarRow
                     key={s.name}
                     label={s.name}
                     value={s.count}
                     max={maxStudioCount}
                     suffix={`${s.meanScore.toFixed(1)} avg`}
+                    color="warning"
                   />
                 ))}
               </div>
@@ -246,7 +260,13 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
               <SectionLabel>Lata premiery</SectionLabel>
               <div className="space-y-1.5">
                 {stats.releaseYears.map(y => (
-                  <BarRow key={y.year} label={String(y.year)} value={y.count} max={maxYearCount} />
+                  <BarRow
+                    key={y.year}
+                    label={String(y.year)}
+                    value={y.count}
+                    max={maxYearCount}
+                    color="success"
+                  />
                 ))}
               </div>
             </section>
@@ -260,7 +280,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
                 {stats.tags.map(t => (
                   <span
                     key={t.name}
-                    className="px-2.5 py-1 rounded-md text-xs bg-primary/8 text-foreground/70 border border-primary/10"
+                    className="px-2.5 py-1 rounded-md text-xs bg-primary/[0.08] text-foreground/70 border border-primary/10"
                     title={`${t.count} anime, avg ${t.meanScore.toFixed(1)}`}
                   >
                     {t.name}

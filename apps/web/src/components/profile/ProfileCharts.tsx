@@ -10,36 +10,56 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+export type AccentColor = 'primary' | 'info' | 'warning' | 'success';
+
+const ACCENT_ICON_CLASS: Record<AccentColor, string> = {
+  primary: 'text-primary/60',
+  info: 'text-status-info/60',
+  warning: 'text-status-warning/60',
+  success: 'text-status-success/60',
+};
+
 export function MetricCard({
   icon,
   value,
   label,
+  accent = 'primary',
 }: {
   icon: React.ReactNode;
   value: string | number;
   label: string;
+  accent?: AccentColor;
 }) {
   return (
-    <div className="relative p-3 rounded-xl bg-background/40 border border-border-glass overflow-hidden group">
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-primary/60">{icon}</span>
+    <div className="relative p-3 rounded-xl bg-background/30 overflow-hidden group">
+      <div className="flex items-center gap-2">
+        <span className={ACCENT_ICON_CLASS[accent]}>{icon}</span>
+        <div className="text-lg font-bold text-foreground tabular-nums leading-none">{value}</div>
       </div>
-      <div className="text-lg font-bold text-foreground tabular-nums leading-none">{value}</div>
-      <div className="text-2xs text-muted-foreground/60 mt-1">{label}</div>
+      <div className="text-2xs text-muted-foreground/60 mt-1.5">{label}</div>
     </div>
   );
 }
+
+const BAR_BG_CLASS: Record<AccentColor, string> = {
+  primary: 'bg-primary/25',
+  info: 'bg-status-info/25',
+  warning: 'bg-status-warning/25',
+  success: 'bg-status-success/25',
+};
 
 export function BarRow({
   label,
   value,
   max,
   suffix,
+  color = 'primary',
 }: {
   label: string;
   value: number;
   max: number;
   suffix?: string;
+  color?: AccentColor;
 }) {
   const pct = (value / max) * 100;
   return (
@@ -47,7 +67,7 @@ export function BarRow({
       <span className="text-xs text-foreground/70 w-24 truncate shrink-0 text-right">{label}</span>
       <div className="flex-1 h-5 rounded bg-muted/15 relative overflow-hidden">
         <div
-          className="h-full rounded bg-primary/25 transition-all duration-700 ease-out"
+          className={`h-full rounded ${BAR_BG_CLASS[color]} transition-[width] duration-700 ease-out`}
           style={{ width: `${pct}%` }}
         />
         <span className="absolute inset-y-0 left-2 flex items-center text-2xs font-semibold text-foreground/60">
@@ -57,6 +77,14 @@ export function BarRow({
       {suffix && <span className="text-2xs text-muted-foreground/40 w-14 shrink-0">{suffix}</span>}
     </div>
   );
+}
+
+function scoreBarColor(score: number): string {
+  const idx = score / 10;
+  if (idx <= 3) return 'var(--destructive)';
+  if (idx <= 6) return 'var(--status-warning)';
+  if (idx <= 8) return 'var(--primary)';
+  return 'var(--status-success)';
 }
 
 export function ScoreChart({
@@ -81,10 +109,19 @@ export function ScoreChart({
         const pct = maxCount > 0 ? (s.count / maxCount) * 100 : 0;
         return (
           <div key={s.score} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full relative flex-1 flex items-end">
+            <div className="w-full relative flex-1 flex items-end justify-center">
+              {s.count > 0 && (
+                <span className="absolute bottom-full mb-0.5 text-[9px] font-semibold text-foreground/50 tabular-nums">
+                  {s.count}
+                </span>
+              )}
               <div
-                className="w-full rounded-t bg-primary/30 transition-all duration-700 ease-out hover:bg-primary/50"
-                style={{ height: `${Math.max(pct, 2)}%` }}
+                className="w-full rounded-t transition-[height,background-color] duration-700 ease-out"
+                style={{
+                  height: `${Math.max(pct, 2)}%`,
+                  backgroundColor: scoreBarColor(s.score),
+                  opacity: 0.35,
+                }}
                 title={`Ocena ${s.score / 10}: ${s.count} anime`}
               />
             </div>
@@ -108,7 +145,7 @@ export function FavouriteCard({ fav }: { fav: UserProfile['favourites'][number] 
         {fav.coverImage && !imgError ? (
           <img
             src={fav.coverImage}
-            alt=""
+            alt={title}
             className="w-full h-full object-cover"
             loading="lazy"
             onError={() => setImgError(true)}
