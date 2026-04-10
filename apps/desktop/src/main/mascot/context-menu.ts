@@ -63,7 +63,7 @@ function getMenuHtmlPath(): string {
 }
 
 function getMenuPreloadPath(): string {
-  return path.join(__dirname, '../menu-preload.js');
+  return path.join(__dirname, 'menu-preload.js');
 }
 
 export function createContextMenuWindow(): void {

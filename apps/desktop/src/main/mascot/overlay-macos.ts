@@ -25,13 +25,13 @@ function getMascotHtmlPath(): string {
 }
 
 function getMascotPreloadPath(): string {
-  return path.join(__dirname, '../mascot-preload.js');
+  return path.join(__dirname, 'mascot-preload.js');
 }
 
 function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
-    : path.join(__dirname, '../../../resources/mascot');
+    : path.join(__dirname, '../../resources/mascot');
 }
 
 function showMascotWindowInactive(): void {

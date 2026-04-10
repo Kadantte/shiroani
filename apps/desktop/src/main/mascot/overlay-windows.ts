@@ -50,7 +50,7 @@ function getAddonPath(): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'native', 'desktop_overlay.node');
   }
-  return path.join(__dirname, '../../../build/Release/desktop_overlay.node');
+  return path.join(__dirname, '../../build/Release/desktop_overlay.node');
 }
 
 function loadAddon(): boolean {
@@ -67,7 +67,7 @@ function loadAddon(): boolean {
 function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
-    : path.join(__dirname, '../../../resources/mascot');
+    : path.join(__dirname, '../../resources/mascot');
 }
 
 function registerWin32PositionCallbacks(): void {
@@ -99,7 +99,7 @@ export function createWin32Overlay(
   const resourcesPath = getResourcesPath();
   const spritePath = path.join(resourcesPath, 'chibi_base.png');
   const iconPath = path.join(
-    app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../../resources'),
+    app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../resources'),
     'icon.ico'
   );
 

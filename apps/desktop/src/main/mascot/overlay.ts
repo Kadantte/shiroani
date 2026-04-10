@@ -67,7 +67,7 @@ const spriteCache = new Map<MascotPose, string>();
 function getResourcesPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'mascot')
-    : path.join(__dirname, '../../../resources/mascot');
+    : path.join(__dirname, '../../resources/mascot');
 }
 
 /**
