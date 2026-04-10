@@ -1,10 +1,22 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { User, ExternalLink, RefreshCw, LogOut, Tv, Eye, Clock, Star, Film } from 'lucide-react';
+import {
+  User,
+  ExternalLink,
+  RefreshCw,
+  LogOut,
+  Tv,
+  Eye,
+  Clock,
+  Star,
+  Film,
+  Share2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProfileStore, startProfileRefresh } from '@/stores/useProfileStore';
+import { ProfileShareDialog } from './ProfileShareDialog';
 import type { UserProfile } from '@shiroani/shared';
 
 // ── Formatters ───────────────────────────────────────────────────
@@ -144,6 +156,7 @@ function ProfileDashboard({ profile }: { profile: UserProfile }) {
   const clearProfile = useProfileStore(s => s.clearProfile);
   const fetchProfile = useProfileStore(s => s.fetchProfile);
   const isLoading = useProfileStore(s => s.isLoading);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const memberSince = profile.createdAt
     ? new Date(profile.createdAt * 1000).toLocaleDateString('pl-PL', {
@@ -178,6 +191,15 @@ function ProfileDashboard({ profile }: { profile: UserProfile }) {
 
         {/* Action buttons */}
         <div className="absolute top-3 right-4 flex items-center gap-2 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
+            onClick={() => setShareOpen(true)}
+            title="Udostepnij"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -398,6 +420,8 @@ function ProfileDashboard({ profile }: { profile: UserProfile }) {
           </section>
         )}
       </div>
+
+      <ProfileShareDialog open={shareOpen} onOpenChange={setShareOpen} profile={profile} />
     </div>
   );
 }

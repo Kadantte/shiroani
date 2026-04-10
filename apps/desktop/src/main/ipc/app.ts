@@ -1,7 +1,7 @@
-import { ipcMain, app, shell, clipboard } from 'electron';
+import { ipcMain, app, shell, clipboard, nativeImage } from 'electron';
 import { existsSync } from 'fs';
-import { readdir, stat, readFile } from 'fs/promises';
-import { join } from 'path';
+import { readdir, stat, readFile, writeFile } from 'fs/promises';
+import { join, resolve, sep } from 'path';
 import { LOG_FILE_PREFIX, LOG_MAX_FILE_SIZE } from '@shiroani/shared';
 import { getLogsDir, createMainLogger } from '../logger';
 import { getBackendPort } from '../backend-port';
@@ -47,6 +47,40 @@ export function registerAppHandlers(): void {
       throw new Error('clipboard-write expects a string');
     }
     clipboard.writeText(text);
+  });
+
+  ipcMain.handle('app:clipboard-write-image', (_event, pngBase64: string) => {
+    if (typeof pngBase64 !== 'string') {
+      throw new Error('clipboard-write-image expects a base64 PNG string');
+    }
+    const image = nativeImage.createFromBuffer(Buffer.from(pngBase64, 'base64'));
+    if (image.isEmpty()) {
+      throw new Error('Failed to create image from provided data');
+    }
+    clipboard.writeImage(image);
+  });
+
+  ipcMain.handle('app:save-file-binary', async (_event, filePath: string, base64Data: string) => {
+    if (typeof filePath !== 'string' || filePath.trim().length === 0) {
+      throw new Error('save-file-binary expects a non-empty file path');
+    }
+    if (typeof base64Data !== 'string') {
+      throw new Error('save-file-binary expects base64 data string');
+    }
+    const resolved = resolve(filePath);
+    const allowedDirs = [
+      app.getPath('documents'),
+      app.getPath('downloads'),
+      app.getPath('desktop'),
+      app.getPath('pictures'),
+    ];
+    const isAllowed = allowedDirs.some(dir => resolved.startsWith(dir + sep) || resolved === dir);
+    if (!isAllowed) {
+      logger.warn(`[security] Blocked save-file-binary outside allowed directories: ${resolved}`);
+      throw new Error('File path outside allowed directories');
+    }
+    await writeFile(resolved, Buffer.from(base64Data, 'base64'));
+    return { success: true };
   });
 
   ipcMain.handle('app:get-auto-launch', () => {
@@ -137,6 +171,8 @@ export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-version');
   ipcMain.removeHandler('app:open-logs-folder');
   ipcMain.removeHandler('app:clipboard-write');
+  ipcMain.removeHandler('app:clipboard-write-image');
+  ipcMain.removeHandler('app:save-file-binary');
   ipcMain.removeHandler('app:get-auto-launch');
   ipcMain.removeHandler('app:set-auto-launch');
   ipcMain.removeHandler('app:get-backend-port');

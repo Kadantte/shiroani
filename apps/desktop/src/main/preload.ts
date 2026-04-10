@@ -36,6 +36,8 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'app:get-backend-port',
   'app:get-path',
   'app:clipboard-write',
+  'app:clipboard-write-image',
+  'app:save-file-binary',
   'app:open-logs-folder',
   'app:list-log-files',
   'app:read-log-file',
@@ -189,6 +191,8 @@ export interface ElectronAPI {
     getVersion: () => Promise<string>;
     getBackendPort: () => Promise<number>;
     clipboardWrite: (text: string) => Promise<void>;
+    clipboardWriteImage: (pngBase64: string) => Promise<void>;
+    saveFileBinary: (filePath: string, base64Data: string) => Promise<{ success: boolean }>;
     openLogsFolder: () => Promise<void>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
@@ -300,6 +304,12 @@ const electronAPI: ElectronAPI = {
     getVersion: () => ipcRenderer.invoke('app:get-version'),
     getBackendPort: () => ipcRenderer.invoke('app:get-backend-port') as Promise<number>,
     clipboardWrite: (text: string) => ipcRenderer.invoke('app:clipboard-write', text),
+    clipboardWriteImage: (pngBase64: string) =>
+      ipcRenderer.invoke('app:clipboard-write-image', pngBase64) as Promise<void>,
+    saveFileBinary: (filePath: string, base64Data: string) =>
+      ipcRenderer.invoke('app:save-file-binary', filePath, base64Data) as Promise<{
+        success: boolean;
+      }>,
     openLogsFolder: () => ipcRenderer.invoke('app:open-logs-folder') as Promise<void>,
     listLogFiles: () => ipcRenderer.invoke('app:list-log-files'),
     readLogFile: (fileName: string) => ipcRenderer.invoke('app:read-log-file', fileName),

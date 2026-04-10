@@ -45,6 +45,8 @@ interface ElectronAPI {
     getVersion: () => Promise<string>;
     openLogsFolder: () => Promise<void>;
     clipboardWrite: (text: string) => Promise<void>;
+    clipboardWriteImage: (pngBase64: string) => Promise<void>;
+    saveFileBinary: (filePath: string, base64Data: string) => Promise<{ success: boolean }>;
     getBackendPort: () => Promise<number>;
     listLogFiles: () => Promise<Array<{ name: string; size: number; lastModified: number }>>;
     readLogFile: (fileName: string) => Promise<string>;
