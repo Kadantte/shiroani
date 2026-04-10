@@ -493,13 +493,14 @@ export function AnimeInfoDialog({ anime, open, onOpenChange }: AnimeInfoDialogPr
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs gap-1.5"
-                    asChild
+                    onClick={() => {
+                      navigateToBrowser(link.url);
+                      onOpenChange(false);
+                    }}
                   >
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
-                      {link.icon && <img src={link.icon} alt="" className="w-3.5 h-3.5" />}
-                      {link.site}
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                    </a>
+                    {link.icon && <img src={link.icon} alt="" className="w-3.5 h-3.5" />}
+                    {link.site}
+                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
                   </Button>
                 ))}
               </div>
