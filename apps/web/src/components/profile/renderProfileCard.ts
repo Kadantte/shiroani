@@ -14,15 +14,30 @@ const ACCENT = '#7c5bf5'; // Purple accent matching oklch(0.55 0.25 265)
 const ACCENT_DIM = '#4a3596';
 const DIVIDER = '#22222e';
 
-/** Load an image from URL, returning null on failure. */
+/** Load an image from URL via fetch→blob to avoid CORS canvas tainting. */
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
+  return fetch(url)
+    .then(res => {
+      if (!res.ok) return null;
+      return res.blob();
+    })
+    .then(blob => {
+      if (!blob) return null;
+      const objectUrl = URL.createObjectURL(blob);
+      return new Promise<HTMLImageElement | null>(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(img);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(null);
+        };
+        img.src = objectUrl;
+      });
+    })
+    .catch(() => null);
 }
 
 /** Draw text truncated to a max pixel width. */
