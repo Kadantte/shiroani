@@ -1,6 +1,6 @@
 {
   "name": "@shiroani/shared",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "description": "ShiroAni shared types and utilities",
   "main": "./dist/index.js",
