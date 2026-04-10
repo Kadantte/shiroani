@@ -1,0 +1,55 @@
+import { useState, useCallback } from 'react';
+import { User, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useProfileStore } from '@/stores/useProfileStore';
+
+export function ProfileSetup() {
+  const [input, setInput] = useState('');
+  const setUsername = useProfileStore(s => s.setUsername);
+  const isLoading = useProfileStore(s => s.isLoading);
+  const error = useProfileStore(s => s.error);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (input.trim()) setUsername(input.trim());
+    },
+    [input, setUsername]
+  );
+
+  return (
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="w-full max-w-sm space-y-6 text-center">
+        <div className="space-y-2">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <User className="w-7 h-7 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Połącz profil AniList</h2>
+          <p className="text-sm text-muted-foreground/70 leading-relaxed">
+            Wpisz swoją nazwę użytkownika AniList, aby zobaczyć statystyki oglądania
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <Input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Nazwa użytkownika AniList"
+            className="h-10 text-sm bg-background/60 border-border-glass text-center"
+            autoFocus
+          />
+          <Button
+            type="submit"
+            disabled={!input.trim() || isLoading}
+            className="w-full h-9 text-sm"
+          >
+            {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Połącz'}
+          </Button>
+        </form>
+
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+    </div>
+  );
+}
