@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { Compass, Search, SearchX, X, Loader2 } from 'lucide-react';
+import { Compass, Search, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
 import { DiscoverSkeleton } from '@/components/discover/DiscoverSkeleton';
@@ -73,7 +74,7 @@ export function DiscoverView() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialFetchDone = useRef(false);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Fetch trending on mount
   useEffect(() => {
@@ -111,12 +112,34 @@ export function DiscoverView() {
     useDiscoverStore.getState().clearSearch();
   }, []);
 
-  // Infinite scroll via IntersectionObserver
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+  const handleRetry = useCallback(() => {
+    const store = useDiscoverStore.getState();
+    if (store.isSearching && store.searchQuery.trim()) {
+      store.search(store.searchQuery.trim());
+    } else {
+      switch (store.activeTab) {
+        case 'trending':
+          store.fetchTrending();
+          break;
+        case 'popular':
+          store.fetchPopular();
+          break;
+        case 'seasonal':
+          store.fetchSeasonal();
+          break;
+      }
+    }
+  }, []);
 
-    const observer = new IntersectionObserver(
+  // Infinite scroll — callback ref so the observer re-attaches when the sentinel mounts/unmounts
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+    if (!node) return;
+
+    observerRef.current = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting) {
           const state = useDiscoverStore.getState();
@@ -125,9 +148,7 @@ export function DiscoverView() {
       },
       { rootMargin: '200px' }
     );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
+    observerRef.current.observe(node);
   }, []);
 
   // Determine which data to display
@@ -237,8 +258,12 @@ export function DiscoverView() {
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         {/* Error state */}
         {error && !showLoading && (
-          <div className="text-center py-8">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <p className="text-sm text-center max-w-xs">{error}</p>
+            <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 text-xs">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Spróbuj ponownie
+            </Button>
           </div>
         )}
 
@@ -251,9 +276,7 @@ export function DiscoverView() {
             icon={isSearchMode ? SearchX : Compass}
             title={isSearchMode ? 'Brak wyników' : 'Brak anime do wyświetlenia'}
             subtitle={
-              isSearchMode
-                ? 'Spróbuj innej frazy wyszukiwania'
-                : 'Nie udało się załadować anime. Spróbuj ponownie.'
+              isSearchMode ? 'Spróbuj innej frazy wyszukiwania' : 'Nie udało się załadować anime.'
             }
           />
         )}
