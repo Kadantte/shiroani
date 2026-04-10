@@ -1,4 +1,4 @@
-import type { NotificationSettings } from '@shiroani/shared';
+import type { NotificationSettings, NotificationSubscription, AiringAnime } from '@shiroani/shared';
 import {
   isInQuietHours,
   getTitle,
@@ -7,6 +7,10 @@ import {
   buildNotificationBody,
   mergeSettings,
   sanitizeSettingsUpdate,
+  updateLastSeenTimestamps,
+  pruneStaleSubscriptions,
+  computeUpcomingNotifications,
+  STALE_SUBSCRIPTION_DAYS,
   DEFAULT_SETTINGS,
   CHECK_INTERVAL_MS,
   MISSED_WINDOW_MS,
@@ -380,5 +384,203 @@ describe('sanitizeSettingsUpdate', () => {
   it('handles empty updates', () => {
     const result = sanitizeSettingsUpdate(base, {});
     expect(result).toEqual(base);
+  });
+});
+
+// ========================================
+// updateLastSeenTimestamps
+// ========================================
+
+function makeSub(overrides: Partial<NotificationSubscription> = {}): NotificationSubscription {
+  return {
+    anilistId: 1,
+    title: 'Test Anime',
+    subscribedAt: '2025-01-01T00:00:00.000Z',
+    enabled: true,
+    source: 'schedule',
+    ...overrides,
+  };
+}
+
+describe('updateLastSeenTimestamps', () => {
+  it('stamps lastSeenAt for subscriptions in schedule', () => {
+    const subs = [makeSub({ anilistId: 100 }), makeSub({ anilistId: 200 })];
+    const scheduleIds = new Set([100]);
+    const result = updateLastSeenTimestamps(subs, scheduleIds);
+    expect(result).not.toBe(subs); // new reference
+    expect(result[0].lastSeenAt).toBeDefined();
+    expect(result[1].lastSeenAt).toBeUndefined();
+  });
+
+  it('returns same reference if nothing changed', () => {
+    const subs = [makeSub({ anilistId: 100 })];
+    const scheduleIds = new Set([999]); // no match
+    const result = updateLastSeenTimestamps(subs, scheduleIds);
+    expect(result).toBe(subs);
+  });
+
+  it('handles empty subscriptions', () => {
+    const result = updateLastSeenTimestamps([], new Set([100]));
+    expect(result).toEqual([]);
+  });
+
+  it('handles empty schedule', () => {
+    const subs = [makeSub({ anilistId: 100 })];
+    const result = updateLastSeenTimestamps(subs, new Set());
+    expect(result).toBe(subs);
+  });
+});
+
+// ========================================
+// pruneStaleSubscriptions
+// ========================================
+
+describe('pruneStaleSubscriptions', () => {
+  const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  it('keeps subscriptions without lastSeenAt (legacy grace)', () => {
+    const subs = [makeSub({ anilistId: 1 })]; // no lastSeenAt
+    const { kept, pruned } = pruneStaleSubscriptions(subs);
+    expect(kept).toHaveLength(1);
+    expect(pruned).toHaveLength(0);
+  });
+
+  it('keeps subscriptions with recent lastSeenAt', () => {
+    const subs = [makeSub({ anilistId: 1, lastSeenAt: daysAgo(3) })];
+    const { kept, pruned } = pruneStaleSubscriptions(subs);
+    expect(kept).toHaveLength(1);
+    expect(pruned).toHaveLength(0);
+  });
+
+  it('prunes subscriptions older than 14 days', () => {
+    const subs = [makeSub({ anilistId: 1, lastSeenAt: daysAgo(15), title: 'Old Anime' })];
+    const { kept, pruned } = pruneStaleSubscriptions(subs);
+    expect(kept).toHaveLength(0);
+    expect(pruned).toHaveLength(1);
+    expect(pruned[0].title).toBe('Old Anime');
+  });
+
+  it('keeps subscriptions at exactly 14 days', () => {
+    const subs = [makeSub({ anilistId: 1, lastSeenAt: daysAgo(STALE_SUBSCRIPTION_DAYS) })];
+    const { kept, pruned } = pruneStaleSubscriptions(subs);
+    expect(kept).toHaveLength(1);
+    expect(pruned).toHaveLength(0);
+  });
+
+  it('handles mixed fresh, stale, and legacy subscriptions', () => {
+    const subs = [
+      makeSub({ anilistId: 1, lastSeenAt: daysAgo(1) }), // fresh
+      makeSub({ anilistId: 2, lastSeenAt: daysAgo(20) }), // stale
+      makeSub({ anilistId: 3 }), // legacy
+    ];
+    const { kept, pruned } = pruneStaleSubscriptions(subs);
+    expect(kept).toHaveLength(2);
+    expect(pruned).toHaveLength(1);
+    expect(pruned[0].anilistId).toBe(2);
+  });
+
+  it('handles empty subscriptions', () => {
+    const { kept, pruned } = pruneStaleSubscriptions([]);
+    expect(kept).toHaveLength(0);
+    expect(pruned).toHaveLength(0);
+  });
+
+  it('supports custom maxAgeDays', () => {
+    const subs = [makeSub({ anilistId: 1, lastSeenAt: daysAgo(5) })];
+    const { kept, pruned } = pruneStaleSubscriptions(subs, 3);
+    expect(kept).toHaveLength(0);
+    expect(pruned).toHaveLength(1);
+  });
+});
+
+// ========================================
+// computeUpcomingNotifications
+// ========================================
+
+function makeAiring(overrides: Partial<AiringAnime> & { mediaId?: number } = {}): AiringAnime {
+  const { mediaId = 1, ...rest } = overrides;
+  return {
+    id: 1,
+    airingAt: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+    episode: 1,
+    media: {
+      id: mediaId,
+      title: { romaji: 'Test Anime' },
+      coverImage: {},
+      status: 'RELEASING',
+      genres: [],
+    },
+    ...rest,
+  };
+}
+
+describe('computeUpcomingNotifications', () => {
+  const baseSettings = makeSettings({ enabled: true, leadTimeMinutes: 15 });
+  const notifyIds = new Set([1, 2]);
+  const emptySent = new Set<string>();
+
+  it('returns upcoming notifications for monitored anime', () => {
+    const schedule = [makeAiring({ mediaId: 1 })];
+    const result = computeUpcomingNotifications(schedule, baseSettings, notifyIds, emptySent);
+    expect(result).toHaveLength(1);
+    expect(result[0].airing.media.id).toBe(1);
+    expect(result[0].deliveryTime).toBeInstanceOf(Date);
+  });
+
+  it('excludes anime not in notifyIds', () => {
+    const schedule = [makeAiring({ mediaId: 999 })];
+    const result = computeUpcomingNotifications(schedule, baseSettings, notifyIds, emptySent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes already-sent notifications', () => {
+    const schedule = [makeAiring({ mediaId: 1, episode: 5 })];
+    const sent = new Set(['1:5']);
+    const result = computeUpcomingNotifications(schedule, baseSettings, notifyIds, sent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes airings in the past', () => {
+    const pastAiring = makeAiring({
+      mediaId: 1,
+      airingAt: Math.floor(Date.now() / 1000) - 3600,
+    });
+    const result = computeUpcomingNotifications([pastAiring], baseSettings, notifyIds, emptySent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes airings beyond 48 hours', () => {
+    const farFuture = makeAiring({
+      mediaId: 1,
+      airingAt: Math.floor(Date.now() / 1000) + 49 * 3600,
+    });
+    const result = computeUpcomingNotifications([farFuture], baseSettings, notifyIds, emptySent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes notifications whose delivery time is in the past', () => {
+    // Airing is 5 minutes from now, lead time is 15 minutes
+    // Delivery would be 10 minutes ago — should be excluded
+    const soonAiring = makeAiring({
+      mediaId: 1,
+      airingAt: Math.floor(Date.now() / 1000) + 5 * 60,
+    });
+    const settings = makeSettings({ enabled: true, leadTimeMinutes: 15 });
+    const result = computeUpcomingNotifications([soonAiring], settings, notifyIds, emptySent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('handles empty schedule', () => {
+    const result = computeUpcomingNotifications([], baseSettings, notifyIds, emptySent);
+    expect(result).toHaveLength(0);
+  });
+
+  it('handles leadTimeMinutes = 0 (delivery at airing time)', () => {
+    const schedule = [makeAiring({ mediaId: 1 })];
+    const settings = makeSettings({ enabled: true, leadTimeMinutes: 0 });
+    const result = computeUpcomingNotifications(schedule, settings, notifyIds, emptySent);
+    expect(result).toHaveLength(1);
+    // Delivery time should be the same as airing time
+    expect(result[0].deliveryTime.getTime()).toBe(schedule[0].airingAt * 1000);
   });
 });

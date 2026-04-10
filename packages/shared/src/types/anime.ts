@@ -231,6 +231,8 @@ export interface NotificationSubscription {
   subscribedAt: string;
   enabled: boolean;
   source: 'schedule' | 'library';
+  /** ISO 8601 timestamp, updated when anime appears in the weekly schedule */
+  lastSeenAt?: string;
 }
 
 export interface NotificationSettings {

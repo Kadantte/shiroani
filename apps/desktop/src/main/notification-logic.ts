@@ -1,4 +1,4 @@
-import type { AiringAnime, NotificationSettings } from '@shiroani/shared';
+import type { AiringAnime, NotificationSettings, NotificationSubscription } from '@shiroani/shared';
 
 export const CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
 export const SCHEDULE_CACHE_TTL_MS = 30 * 60 * 1000; // Re-fetch schedule every 30 minutes
@@ -95,6 +95,98 @@ export function mergeSettings(
       ? [...stored.subscriptions]
       : [...DEFAULT_SETTINGS.subscriptions],
   };
+}
+
+export const STALE_SUBSCRIPTION_DAYS = 14;
+export const SCHEDULE_AHEAD_SECONDS = 48 * 60 * 60; // 48 hours
+
+/** Upcoming notification with computed delivery time */
+export interface UpcomingNotification {
+  airing: AiringAnime;
+  deliveryTime: Date;
+}
+
+/**
+ * Compute which airings should be scheduled as OS-level notifications.
+ * Filters to the next 48 hours, excludes past, quiet hours, and already-sent.
+ */
+export function computeUpcomingNotifications(
+  schedule: AiringAnime[],
+  settings: NotificationSettings,
+  notifyIds: Set<number>,
+  sentKeys: Set<string>
+): UpcomingNotification[] {
+  const nowMs = Date.now();
+  const nowUnix = Math.floor(nowMs / 1000);
+  const leadTimeSeconds = settings.leadTimeMinutes * 60;
+  const results: UpcomingNotification[] = [];
+
+  for (const airing of schedule) {
+    if (!notifyIds.has(airing.media.id)) continue;
+
+    // Only within the next 48 hours
+    const timeUntilAiring = airing.airingAt - nowUnix;
+    if (timeUntilAiring < 0 || timeUntilAiring > SCHEDULE_AHEAD_SECONDS) continue;
+
+    // Skip already-sent
+    const dedupeKey = `${airing.media.id}:${airing.episode}`;
+    if (sentKeys.has(dedupeKey)) continue;
+
+    // Compute delivery time (airing time minus lead time)
+    const deliveryUnix = airing.airingAt - leadTimeSeconds;
+    const deliveryTime = new Date(deliveryUnix * 1000);
+
+    // Skip if delivery time is already past
+    if (deliveryTime.getTime() < nowMs) continue;
+
+    // Skip if delivery falls in quiet hours
+    const deliveryMinutes = deliveryTime.getHours() * 60 + deliveryTime.getMinutes();
+    if (isInQuietHours(settings, deliveryMinutes)) continue;
+
+    results.push({ airing, deliveryTime });
+  }
+
+  return results;
+}
+
+/**
+ * Update `lastSeenAt` on subscriptions whose anime appeared in the current schedule.
+ * Returns the same array reference if nothing changed (avoids unnecessary store writes).
+ */
+export function updateLastSeenTimestamps(
+  subscriptions: NotificationSubscription[],
+  scheduleMediaIds: Set<number>
+): NotificationSubscription[] {
+  if (subscriptions.length === 0 || scheduleMediaIds.size === 0) return subscriptions;
+  if (!subscriptions.some(s => scheduleMediaIds.has(s.anilistId))) return subscriptions;
+
+  const now = new Date().toISOString();
+  return subscriptions.map(sub =>
+    scheduleMediaIds.has(sub.anilistId) ? { ...sub, lastSeenAt: now } : sub
+  );
+}
+
+/**
+ * Remove subscriptions not seen in the schedule for `maxAgeDays` days.
+ * Subscriptions without `lastSeenAt` (legacy) are kept — they get stamped on the next check cycle.
+ */
+export function pruneStaleSubscriptions(
+  subscriptions: NotificationSubscription[],
+  maxAgeDays: number = STALE_SUBSCRIPTION_DAYS
+): { kept: NotificationSubscription[]; pruned: NotificationSubscription[] } {
+  const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+  const kept: NotificationSubscription[] = [];
+  const pruned: NotificationSubscription[] = [];
+
+  for (const sub of subscriptions) {
+    if (!sub.lastSeenAt || new Date(sub.lastSeenAt).getTime() >= cutoff) {
+      kept.push(sub);
+    } else {
+      pruned.push(sub);
+    }
+  }
+
+  return { kept, pruned };
 }
 
 /** Validate and sanitize notification settings updates */

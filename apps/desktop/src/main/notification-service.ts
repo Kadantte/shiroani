@@ -16,13 +16,17 @@ import {
   buildNotificationBody,
   mergeSettings,
   sanitizeSettingsUpdate,
+  updateLastSeenTimestamps,
+  pruneStaleSubscriptions,
 } from './notification-logic';
+import { scheduleToastsOnQuit, clearScheduledToasts } from './win-scheduled-notifications';
 import { createMainLogger } from './logger';
 
 const logger = createMainLogger('NotificationService');
 
 const STORE_KEY = 'notification-settings';
 const SENT_STORE_KEY = 'notification-sent';
+const SCHEDULE_CACHE_STORE_KEY = 'notification-cached-schedule';
 
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 let initialTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -84,6 +88,7 @@ async function getScheduleData(): Promise<AiringAnime[]> {
     }
     cachedSchedule = allAiring;
     cacheTimestamp = now;
+    store.set(SCHEDULE_CACHE_STORE_KEY, allAiring);
     logger.info(`Schedule cache refreshed: ${allAiring.length} airing entries`);
     return allAiring;
   } catch (error) {
@@ -168,6 +173,15 @@ async function checkAndNotify(): Promise<void> {
   }
 
   const airingData = await getScheduleData();
+
+  // Update lastSeenAt for subscriptions that appear in this week's schedule
+  const scheduleMediaIds = new Set(airingData.map(a => a.media.id));
+  const updatedSubs = updateLastSeenTimestamps(settings.subscriptions, scheduleMediaIds);
+  if (updatedSubs !== settings.subscriptions) {
+    settings.subscriptions = updatedSubs;
+    saveSettings(settings);
+  }
+
   const nowUnix = Math.floor(Date.now() / 1000);
   const leadTimeSeconds = settings.leadTimeMinutes * 60;
 
@@ -278,6 +292,32 @@ function stopChecking(): void {
 }
 
 // ========================================
+// Windows scheduled notifications helpers
+// ========================================
+
+/** Get schedule data for quit-time toast scheduling (memory cache or persisted fallback). */
+function getScheduleForQuit(): AiringAnime[] {
+  if (cachedSchedule) return cachedSchedule;
+  const stored = store.get(SCHEDULE_CACHE_STORE_KEY);
+  return Array.isArray(stored) ? (stored as AiringAnime[]) : [];
+}
+
+/** Build the set of AniList IDs to monitor (library watching + enabled subscriptions). */
+function getNotifyIds(): Set<number> {
+  const ids = new Set<number>();
+  if (libraryService) {
+    for (const entry of libraryService.getAllEntries('watching')) {
+      if (entry.anilistId) ids.add(entry.anilistId);
+    }
+  }
+  const settings = getSettings();
+  for (const sub of settings.subscriptions) {
+    if (sub.enabled) ids.add(sub.anilistId);
+  }
+  return ids;
+}
+
+// ========================================
 // Subscription CRUD
 // ========================================
 
@@ -358,6 +398,24 @@ export function initializeNotificationService(
   );
 
   const settings = getSettings();
+
+  // Prune stale subscriptions (anime not seen in schedule for 14+ days)
+  const { kept, pruned } = pruneStaleSubscriptions(settings.subscriptions);
+  if (pruned.length > 0) {
+    settings.subscriptions = kept;
+    saveSettings(settings);
+    logger.info(
+      `Pruned ${pruned.length} stale subscription(s): ${pruned.map(s => s.title).join(', ')}`
+    );
+  }
+
+  // Clear any Windows scheduled toasts — the in-app system takes over
+  if (process.platform === 'win32') {
+    clearScheduledToasts().catch(error => {
+      logger.warn('Failed to clear scheduled Windows toasts on init:', error);
+    });
+  }
+
   logger.info(
     `NotificationService initialized (enabled: ${settings.enabled}, leadTime: ${settings.leadTimeMinutes}min, subscriptions: ${settings.subscriptions.length})`
   );
@@ -390,7 +448,21 @@ export function updateNotificationSettings(
   return next;
 }
 
-export function cleanupNotificationService(): void {
+export async function cleanupNotificationService(): Promise<void> {
+  // Schedule Windows toast notifications before stopping (best-effort)
+  if (process.platform === 'win32') {
+    const settings = getSettings();
+    if (settings.enabled) {
+      try {
+        const schedule = getScheduleForQuit();
+        const notifyIds = getNotifyIds();
+        await scheduleToastsOnQuit(schedule, settings, notifyIds, sentNotifications);
+      } catch (error) {
+        logger.warn('Failed to schedule Windows toasts on quit:', error);
+      }
+    }
+  }
+
   stopChecking();
   saveSentNotifications();
   targetWindow = null;

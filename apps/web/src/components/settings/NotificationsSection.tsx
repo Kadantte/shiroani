@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, X, BellRing } from 'lucide-react';
+import { Bell, X, BellRing, Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -12,6 +12,7 @@ import {
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { IS_WINDOWS } from '@/lib/platform';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
@@ -233,6 +234,20 @@ export function NotificationsSection() {
           />
         </div>
       </SettingsCard>
+
+      {/* Windows scheduled notifications info */}
+      {IS_WINDOWS && data.enabled && (
+        <SettingsCard>
+          <div className="flex items-start gap-2.5">
+            <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
+            <p className="text-xs font-medium text-muted-foreground/80">
+              Na systemie Windows, po zamknięciu aplikacji nadchodzące powiadomienia są planowane za
+              pomocą polecenia PowerShell uruchamianego w tle. Nie wymaga to żadnej interakcji z
+              Twojej strony.
+            </p>
+          </div>
+        </SettingsCard>
+      )}
 
       {/* Subscriptions list */}
       <SettingsCard
