@@ -14,6 +14,20 @@ const ACCENT = '#7c5bf5'; // Purple accent matching oklch(0.55 0.25 265)
 const ACCENT_DIM = '#4a3596';
 const DIVIDER = '#22222e';
 
+// Score bar colors: warm (low scores) → cool (high scores)
+const SCORE_COLORS: Record<number, string> = {
+  10: '#e5484d', // 1 — destructive
+  20: '#e5484d',
+  30: '#e5484d',
+  40: '#f5a623', // 4 — warning
+  50: '#f5a623',
+  60: '#f5a623',
+  70: '#7c5bf5', // 7 — primary
+  80: '#7c5bf5',
+  90: '#30a46c', // 9 — success
+  100: '#30a46c',
+};
+
 /** Load an image from URL via fetch→blob to avoid CORS canvas tainting. */
 function loadImage(url: string): Promise<HTMLImageElement | null> {
   return fetch(url)
@@ -333,13 +347,13 @@ export async function renderProfileCard(profile: UserProfile): Promise<string> {
       const x = scoreChartX + i * (barW + 4);
       const y = chartBottom - barH;
 
-      // Bar
-      const grad = ctx.createLinearGradient(0, y, 0, chartBottom);
-      grad.addColorStop(0, ACCENT);
-      grad.addColorStop(1, ACCENT_DIM);
-      ctx.fillStyle = grad;
+      // Bar — color by score range
+      const barColor = SCORE_COLORS[score] ?? ACCENT;
+      ctx.fillStyle = barColor;
+      ctx.globalAlpha = 0.75;
       roundRect(ctx, x, y, barW, barH, 3);
       ctx.fill();
+      ctx.globalAlpha = 1;
 
       // Score label
       ctx.fillStyle = TEXT_MUTED;
