@@ -1,13 +1,14 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { Compass, Search, SearchX, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
 import { DiscoverSkeleton } from '@/components/discover/DiscoverSkeleton';
-import { useDiscoverStore } from '@/stores/useDiscoverStore';
+import { AnimeInfoDialog } from '@/components/schedule/AnimeInfoDialog';
+import { useDiscoverStore, type DiscoverMedia } from '@/stores/useDiscoverStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import type { AiringAnime } from '@shiroani/shared';
 
 type Tab = 'trending' | 'popular' | 'seasonal';
 
@@ -45,8 +46,34 @@ export function DiscoverView() {
 
   const libraryIds = useLibraryAnilistIds();
 
+  const [selectedAnime, setSelectedAnime] = useState<AiringAnime | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleCardClick = useCallback((media: DiscoverMedia) => {
+    // Map DiscoverMedia to a minimal AiringAnime shape for the dialog
+    const asAiring: AiringAnime = {
+      id: media.id,
+      airingAt: media.nextAiringEpisode?.airingAt ?? 0,
+      episode: media.nextAiringEpisode?.episode ?? 0,
+      media: {
+        id: media.id,
+        title: media.title,
+        coverImage: media.coverImage,
+        episodes: media.episodes,
+        status: media.status ?? 'UNKNOWN',
+        genres: media.genres ?? [],
+        format: media.format,
+        averageScore: media.averageScore,
+        popularity: media.popularity,
+      },
+    };
+    setSelectedAnime(asAiring);
+    setDialogOpen(true);
+  }, []);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialFetchDone = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch trending on mount
   useEffect(() => {
@@ -84,8 +111,23 @@ export function DiscoverView() {
     useDiscoverStore.getState().clearSearch();
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    useDiscoverStore.getState().loadMore();
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          const state = useDiscoverStore.getState();
+          if (!state.isLoading) state.loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
   }, []);
 
   // Determine which data to display
@@ -218,31 +260,27 @@ export function DiscoverView() {
 
         {/* Grid */}
         {showGrid && (
-          <>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
-              {items.map(media => (
-                <DiscoverCard key={media.id} media={media} inLibrary={libraryIds.has(media.id)} />
-              ))}
-            </div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
+            {items.map(media => (
+              <DiscoverCard
+                key={media.id}
+                media={media}
+                inLibrary={libraryIds.has(media.id)}
+                onClick={() => handleCardClick(media)}
+              />
+            ))}
+          </div>
+        )}
 
-            {/* Load more */}
-            {page.hasNext && (
-              <div className="flex justify-center mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLoadMore}
-                  disabled={showLoading}
-                  className="gap-2 text-xs border-primary/20 text-primary hover:bg-primary/10 hover:text-primary"
-                >
-                  {showLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Załaduj więcej
-                </Button>
-              </div>
-            )}
-          </>
+        {/* Infinite scroll sentinel */}
+        {page.hasNext && (
+          <div ref={sentinelRef} className="flex justify-center py-8">
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
+          </div>
         )}
       </div>
+
+      <AnimeInfoDialog anime={selectedAnime} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }
