@@ -1,7 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { BookOpen, Globe, SearchX, BarChart3, Download, Upload } from 'lucide-react';
+import { BookOpen, Globe, SearchX, BarChart3, Download, Upload, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TooltipButton } from '@/components/ui/tooltip-button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ExportDialog } from '@/components/shared/ExportDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
@@ -11,6 +18,7 @@ import { useLibraryStore, getFilteredEntries } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
 import { LibraryListItem } from '@/components/library/LibraryListItem';
+import { LibrarySkeleton } from '@/components/library/LibrarySkeleton';
 import { LibraryStats } from '@/components/library/LibraryStats';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
@@ -19,8 +27,22 @@ import { useNextAiringMap } from '@/hooks/useNextAiringMap';
 import { pluralize } from '@shiroani/shared';
 import type { AnimeEntry } from '@shiroani/shared';
 
-const { setFilter, setSearchQuery, setViewMode, openDetail, closeDetail, removeFromLibrary } =
-  useLibraryStore.getState();
+const SORT_OPTIONS = [
+  { value: 'title', label: 'Tytuł' },
+  { value: 'score', label: 'Ocena' },
+  { value: 'progress', label: 'Postęp' },
+  { value: 'updatedAt', label: 'Ostatnia aktualizacja' },
+] as const;
+
+const {
+  setFilter,
+  setSearchQuery,
+  setViewMode,
+  setSort,
+  openDetail,
+  closeDetail,
+  removeFromLibrary,
+} = useLibraryStore.getState();
 
 export function LibraryView() {
   const entries = useLibraryStore(s => s.entries);
@@ -29,6 +51,7 @@ export function LibraryView() {
   const sortBy = useLibraryStore(s => s.sortBy);
   const sortOrder = useLibraryStore(s => s.sortOrder);
   const viewMode = useLibraryStore(s => s.viewMode);
+  const isLoading = useLibraryStore(s => s.isLoading);
   const isDetailOpen = useLibraryStore(s => s.isDetailOpen);
   const selectedEntry = useLibraryStore(s => s.selectedEntry);
 
@@ -41,6 +64,17 @@ export function LibraryView() {
   const navigateTo = useAppStore(s => s.navigateTo);
 
   const nextAiringMap = useNextAiringMap();
+
+  const handleSortChange = useCallback(
+    (value: string) => {
+      setSort(value as 'title' | 'score' | 'progress' | 'updatedAt', sortOrder);
+    },
+    [sortOrder]
+  );
+
+  const toggleSortOrder = useCallback(() => {
+    setSort(sortBy, sortOrder === 'asc' ? 'desc' : 'asc');
+  }, [sortBy, sortOrder]);
 
   // Navigate to the browser view and open the resume URL
   const handleContinue = useCallback(
@@ -79,6 +113,30 @@ export function LibraryView() {
         onViewModeChange={setViewMode}
         actions={
           <>
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-[140px] h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map(option => (
+                  <SelectItem key={option.value} value={option.value} className="text-xs">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={toggleSortOrder}
+              tooltip={sortOrder === 'asc' ? 'Rosnąco' : 'Malejąco'}
+            >
+              <ArrowUpDown
+                className={cn('w-4 h-4 transition-transform', sortOrder === 'asc' && 'rotate-180')}
+              />
+            </TooltipButton>
+            <div className="w-px h-4 bg-border/50 mx-1" />
             <TooltipButton
               variant="ghost"
               size="icon"
@@ -119,7 +177,9 @@ export function LibraryView() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {filteredEntries.length === 0 ? (
+        {isLoading ? (
+          <LibrarySkeleton />
+        ) : filteredEntries.length === 0 ? (
           searchQuery ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 py-16">
               <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center border border-border-glass">
