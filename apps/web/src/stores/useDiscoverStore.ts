@@ -92,6 +92,15 @@ type DiscoverStore = DiscoverState & DiscoverActions;
 
 const initialPage: PageInfo = { current: 1, hasNext: false };
 
+const RATE_LIMIT_MSG = 'Zbyt wiele zapytań — odczekaj chwilę i spróbuj ponownie';
+
+function toUserError(err: Error): string {
+  if (err.message.includes('rate limit') || err.message.includes('429')) {
+    return RATE_LIMIT_MSG;
+  }
+  return err.message;
+}
+
 export const useDiscoverStore = create<DiscoverStore>()(
   devtools(
     (set, get) => ({
@@ -139,6 +148,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
       search: (query: string) => {
         if (!query.trim()) return;
 
+        logger.info(`Search: "${query.trim()}" (page 1)`);
         set(
           { isSearching: true, isLoading: true, searchQuery: query, error: null },
           undefined,
@@ -150,6 +160,9 @@ export const useDiscoverStore = create<DiscoverStore>()(
           { query: query.trim(), page: 1 }
         )
           .then(data => {
+            logger.info(
+              `Search results: ${data.results.length} items (page ${data.pageInfo.currentPage}/${data.pageInfo.lastPage})`
+            );
             set(
               {
                 searchResults: data.results,
@@ -166,18 +179,20 @@ export const useDiscoverStore = create<DiscoverStore>()(
             );
           })
           .catch((err: Error) => {
-            logger.error('Nie udalo sie wyszukac:', err.message);
-            set({ isLoading: false, error: err.message }, undefined, 'discover/searchError');
+            logger.error('Search failed:', err.message);
+            set({ isLoading: false, error: toUserError(err) }, undefined, 'discover/searchError');
           });
       },
 
       fetchTrending: () => {
+        logger.info('Fetching trending (page 1)');
         set({ isLoading: true, error: null }, undefined, 'discover/fetchingTrending');
 
         emitWithErrorHandling<{ page?: number }, PaginatedResponse>(AnimeEvents.GET_TRENDING, {
           page: 1,
         })
           .then(data => {
+            logger.info(`Trending: ${data.results.length} items loaded`);
             set(
               {
                 trending: data.results,
@@ -193,18 +208,20 @@ export const useDiscoverStore = create<DiscoverStore>()(
             );
           })
           .catch((err: Error) => {
-            logger.error('Nie udalo sie pobrac popularnych:', err.message);
-            set({ isLoading: false, error: err.message }, undefined, 'discover/trendingError');
+            logger.error('Trending fetch failed:', err.message);
+            set({ isLoading: false, error: toUserError(err) }, undefined, 'discover/trendingError');
           });
       },
 
       fetchPopular: () => {
+        logger.info('Fetching popular (page 1)');
         set({ isLoading: true, error: null }, undefined, 'discover/fetchingPopular');
 
         emitWithErrorHandling<{ page?: number }, PaginatedResponse>(AnimeEvents.GET_POPULAR, {
           page: 1,
         })
           .then(data => {
+            logger.info(`Popular: ${data.results.length} items loaded`);
             set(
               {
                 popular: data.results,
@@ -220,21 +237,22 @@ export const useDiscoverStore = create<DiscoverStore>()(
             );
           })
           .catch((err: Error) => {
-            logger.error('Nie udalo sie pobrac najpopularniejszych:', err.message);
-            set({ isLoading: false, error: err.message }, undefined, 'discover/popularError');
+            logger.error('Popular fetch failed:', err.message);
+            set({ isLoading: false, error: toUserError(err) }, undefined, 'discover/popularError');
           });
       },
 
       fetchSeasonal: () => {
-        set({ isLoading: true, error: null }, undefined, 'discover/fetchingSeasonal');
-
         const { year, season } = getCurrentSeason();
+        logger.info(`Fetching seasonal: ${season} ${year} (page 1)`);
+        set({ isLoading: true, error: null }, undefined, 'discover/fetchingSeasonal');
 
         emitWithErrorHandling<{ year: number; season: string; page?: number }, PaginatedResponse>(
           AnimeEvents.GET_SEASONAL,
           { year, season, page: 1 }
         )
           .then(data => {
+            logger.info(`Seasonal: ${data.results.length} items loaded`);
             set(
               {
                 seasonal: data.results,
@@ -250,8 +268,8 @@ export const useDiscoverStore = create<DiscoverStore>()(
             );
           })
           .catch((err: Error) => {
-            logger.error('Nie udalo sie pobrac sezonowych:', err.message);
-            set({ isLoading: false, error: err.message }, undefined, 'discover/seasonalError');
+            logger.error('Seasonal fetch failed:', err.message);
+            set({ isLoading: false, error: toUserError(err) }, undefined, 'discover/seasonalError');
           });
       },
 
@@ -264,6 +282,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
           if (!state.searchPage.hasNext) return;
 
           const nextPage = state.searchPage.current + 1;
+          logger.info(`Search load more: "${state.searchQuery.trim()}" (page ${nextPage})`);
           set({ isLoading: true, error: null }, undefined, 'discover/loadMoreSearch');
 
           emitWithErrorHandling<{ query: string; page?: number }, PaginatedResponse>(
@@ -286,9 +305,9 @@ export const useDiscoverStore = create<DiscoverStore>()(
               );
             })
             .catch((err: Error) => {
-              logger.error('Nie udalo sie zaladowac wiecej wynikow:', err.message);
+              logger.error('Search load more failed:', err.message);
               set(
-                { isLoading: false, error: err.message },
+                { isLoading: false, error: toUserError(err) },
                 undefined,
                 'discover/loadMoreSearchError'
               );
@@ -304,6 +323,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         if (!pageInfo.hasNext) return;
 
         const nextPage = pageInfo.current + 1;
+        logger.info(`Load more ${activeTab} (page ${nextPage})`);
         set({ isLoading: true, error: null }, undefined, `discover/loadMore-${activeTab}`);
 
         let event: string;
@@ -343,9 +363,9 @@ export const useDiscoverStore = create<DiscoverStore>()(
             );
           })
           .catch((err: Error) => {
-            logger.error('Nie udalo sie zaladowac wiecej:', err.message);
+            logger.error(`Load more ${activeTab} failed:`, err.message);
             set(
-              { isLoading: false, error: err.message },
+              { isLoading: false, error: toUserError(err) },
               undefined,
               `discover/loadMore-${activeTab}-error`
             );

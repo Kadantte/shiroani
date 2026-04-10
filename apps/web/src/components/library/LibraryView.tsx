@@ -114,7 +114,7 @@ export function LibraryView() {
         actions={
           <>
             <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[140px] h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
+              <SelectTrigger className="w-[180px] h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
