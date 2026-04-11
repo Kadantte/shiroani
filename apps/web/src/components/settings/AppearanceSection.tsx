@@ -2,10 +2,11 @@ import { useState, useCallback } from 'react';
 import {
   Download,
   GripHorizontal,
+  Moon,
   Palette,
   Pencil,
   Plus,
-  Sparkles,
+  Sun,
   Type,
   Trash2,
   Upload,
@@ -17,13 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
 import { useDockStore } from '@/stores/useDockStore';
-import {
-  animeDarkThemes,
-  animeLightThemes,
-  classicDarkThemes,
-  classicLightThemes,
-  getAllThemeOptions,
-} from '@/lib/theme';
+import { darkThemes, lightThemes, getAllThemeOptions } from '@/lib/theme';
 import { removeCustomThemeCSS } from '@/lib/custom-theme-css';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
@@ -226,7 +221,7 @@ export function AppearanceSection() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-1.5">
             {customThemeOptions.map(opt => (
               <CustomThemeSwatchWrapper
                 key={opt.value}
@@ -262,63 +257,29 @@ export function AppearanceSection() {
 
         <Separator className="bg-border/50" />
 
-        {/* Anime section */}
-        <div>
-          <h4 className="text-xs font-medium text-primary mb-3 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3" />
-            Anime
-          </h4>
+        {/* Dark themes */}
+        <ThemeGrid
+          themes={darkThemes}
+          label="Ciemne"
+          icon={Moon}
+          activeTheme={theme}
+          onSelect={setTheme}
+          onPreview={setPreviewTheme}
+          onPreviewEnd={clearPreview}
+          onClone={handleCloneTheme}
+        />
 
-          <ThemeGrid
-            themes={animeDarkThemes}
-            label="Ciemne"
-            activeTheme={theme}
-            onSelect={setTheme}
-            onPreview={setPreviewTheme}
-            onPreviewEnd={clearPreview}
-            onClone={handleCloneTheme}
-          />
-
-          <ThemeGrid
-            themes={animeLightThemes}
-            label="Jasne"
-            activeTheme={theme}
-            onSelect={setTheme}
-            onPreview={setPreviewTheme}
-            onPreviewEnd={clearPreview}
-            onClone={handleCloneTheme}
-          />
-        </div>
-
-        <Separator className="bg-border/50" />
-
-        {/* Classic section */}
-        <div>
-          <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-            <Palette className="w-3 h-3" />
-            Klasyczne
-          </h4>
-
-          <ThemeGrid
-            themes={classicDarkThemes}
-            label="Ciemne"
-            activeTheme={theme}
-            onSelect={setTheme}
-            onPreview={setPreviewTheme}
-            onPreviewEnd={clearPreview}
-            onClone={handleCloneTheme}
-          />
-
-          <ThemeGrid
-            themes={classicLightThemes}
-            label="Jasne"
-            activeTheme={theme}
-            onSelect={setTheme}
-            onPreview={setPreviewTheme}
-            onPreviewEnd={clearPreview}
-            onClone={handleCloneTheme}
-          />
-        </div>
+        {/* Light themes */}
+        <ThemeGrid
+          themes={lightThemes}
+          label="Jasne"
+          icon={Sun}
+          activeTheme={theme}
+          onSelect={setTheme}
+          onPreview={setPreviewTheme}
+          onPreviewEnd={clearPreview}
+          onClone={handleCloneTheme}
+        />
       </SettingsCard>
 
       {/* Theme editor dialog */}

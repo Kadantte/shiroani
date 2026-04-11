@@ -1,44 +1,23 @@
-/* Import all theme files — 24 dark + 15 light = 39 total */
+/* Import all theme files — 10 dark + 8 light = 18 built-in themes */
 /* Classic themes */
 @import './themes/light.css';
 @import './themes/dark.css';
-@import './themes/retro.css';
-@import './themes/dracula.css';
-@import './themes/nord.css';
-@import './themes/monokai.css';
-@import './themes/tokyonight.css';
-@import './themes/solarized.css';
-@import './themes/gruvbox.css';
 @import './themes/catppuccin.css';
-@import './themes/onedark.css';
+@import './themes/dracula.css';
+@import './themes/gruvbox.css';
+@import './themes/monokai.css';
+@import './themes/nord.css';
+@import './themes/retro.css';
 @import './themes/synthwave.css';
-@import './themes/ocean.css';
-@import './themes/ayu-dark.css';
-@import './themes/ayu-mirage.css';
-@import './themes/matcha.css';
 @import './themes/solarizedlight.css';
 @import './themes/github.css';
-@import './themes/mint.css';
-@import './themes/lavender.css';
 @import './themes/sepia.css';
-@import './themes/gruvboxlight.css';
-@import './themes/nordlight.css';
 @import './themes/ayu-light.css';
 /* Anime themes */
 @import './themes/evangelion.css';
-@import './themes/ghibli-forest.css';
-@import './themes/ghibli-sunset.css';
-@import './themes/sailor-moon.css';
-@import './themes/demon-slayer.css';
-@import './themes/akira.css';
-@import './themes/jujutsu-kaisen.css';
 @import './themes/spy-family.css';
-@import './themes/your-name.css';
-@import './themes/attack-on-titan.css';
-@import './themes/dragon-ball.css';
-@import './themes/chainsaw-man.css';
 @import './themes/bocchi.css';
-@import './themes/cyberpunk-edgerunners.css';
+@import './themes/ghibli-forest.css';
 @import './themes/one-piece.css';
 
 @import 'tailwindcss';

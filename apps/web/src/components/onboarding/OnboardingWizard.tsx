@@ -23,28 +23,9 @@ import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useDockStore } from '@/stores/useDockStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
-import { animeDarkThemes, animeLightThemes, classicDarkThemes, classicLightThemes } from '@/lib/theme';
+import { darkThemes, lightThemes } from '@/lib/theme';
 
 const TOTAL_STEPS = 6;
-
-/** Curated theme subset for onboarding — the most appealing ones */
-const FEATURED_DARK = [
-  ...animeDarkThemes.filter(t =>
-    ['evangelion', 'spy-family', 'demon-slayer', 'jujutsu-kaisen', 'cyberpunk-edgerunners', 'chainsaw-man'].includes(t.value),
-  ),
-  ...classicDarkThemes.filter(t =>
-    ['dark', 'catppuccin', 'dracula', 'tokyonight', 'synthwave', 'nord'].includes(t.value),
-  ),
-];
-
-const FEATURED_LIGHT = [
-  ...animeLightThemes.filter(t =>
-    ['sailor-moon', 'bocchi', 'ghibli-forest', 'one-piece', 'your-name'].includes(t.value),
-  ),
-  ...classicLightThemes.filter(t =>
-    ['light', 'lavender', 'mint'].includes(t.value),
-  ),
-];
 
 // Playful mascot captions per step
 const MASCOT_CAPTIONS = [
@@ -113,7 +94,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         'fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-background overflow-hidden',
         'transition-[opacity,transform] duration-500 ease-out',
         isExiting && 'opacity-0 scale-[1.03]',
-        IS_ELECTRON && 'rounded-t-[10px]',
+        IS_ELECTRON && 'rounded-t-[10px]'
       )}
       role="dialog"
       aria-modal="true"
@@ -153,7 +134,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             'w-full',
             direction === 'forward'
               ? 'animate-[onb-slide-in-right_0.35s_ease-out_both]'
-              : 'animate-[onb-slide-in-left_0.35s_ease-out_both]',
+              : 'animate-[onb-slide-in-left_0.35s_ease-out_both]'
           )}
         >
           {step === 0 && <WelcomeStep />}
@@ -197,7 +178,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       ? 'w-6 h-2 bg-primary'
                       : i < step
                         ? 'w-2 h-2 bg-primary/50'
-                        : 'w-2 h-2 bg-muted-foreground/30',
+                        : 'w-2 h-2 bg-muted-foreground/30'
                   )}
                 />
               </button>
@@ -241,8 +222,7 @@ function WelcomeStep() {
           Witaj w <span className="text-gradient">ShiroAni</span>!
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          Skonfigurujmy razem Twoje idealne anime-gniazdko.
-          Zajmie to tylko chwilkę~
+          Skonfigurujmy razem Twoje idealne anime-gniazdko. Zajmie to tylko chwilkę~
         </p>
       </div>
 
@@ -254,10 +234,7 @@ function WelcomeStep() {
           { icon: MessageCircle, label: 'Discord' },
           { icon: Shield, label: 'Adblock' },
         ].map(({ icon: Icon, label }) => (
-          <div
-            key={label}
-            className="flex flex-col items-center gap-1.5 p-2"
-          >
+          <div key={label} className="flex flex-col items-center gap-1.5 p-2">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <Icon className="w-4 h-4 text-primary" />
             </div>
@@ -294,7 +271,7 @@ function ThemeStep() {
           Ciemne
         </p>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1">
-          {FEATURED_DARK.map(opt => (
+          {darkThemes.map(opt => (
             <ThemeSwatch
               key={opt.value}
               option={opt}
@@ -314,7 +291,7 @@ function ThemeStep() {
           Jasne
         </p>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1">
-          {FEATURED_LIGHT.map(opt => (
+          {lightThemes.map(opt => (
             <ThemeSwatch
               key={opt.value}
               option={opt}
@@ -352,11 +329,7 @@ function BackgroundStep() {
       <div className="bg-background/40 border border-border-glass backdrop-blur-sm rounded-xl p-4 space-y-3">
         {customBackground ? (
           <div className="rounded-lg overflow-hidden border border-border-glass h-28">
-            <img
-              src={customBackground}
-              alt="Podgląd tła"
-              className="w-full h-full object-cover"
-            />
+            <img src={customBackground} alt="Podgląd tła" className="w-full h-full object-cover" />
           </div>
         ) : (
           <div className="rounded-lg border-2 border-dashed border-border-glass h-28 flex flex-col items-center justify-center gap-2">
@@ -376,11 +349,7 @@ function BackgroundStep() {
             Wybierz obraz
           </Button>
           {customBackground && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={removeBackground}
-            >
+            <Button variant="ghost" size="sm" onClick={removeBackground}>
               <RotateCcw className="w-4 h-4" />
               Usuń
             </Button>
@@ -455,7 +424,8 @@ function DiscordStep() {
 
   // Load current setting
   useEffect(() => {
-    window.electronAPI?.discordRpc?.getSettings()
+    window.electronAPI?.discordRpc
+      ?.getSettings()
       .then((s: { enabled?: boolean } | null) => {
         if (s && typeof s.enabled === 'boolean') setEnabled(s.enabled);
       })
@@ -519,9 +489,7 @@ function DiscordStep() {
                 {enabled ? 'Ogląda: Spy × Family S2' : 'Wyłączone'}
               </p>
               {enabled && (
-                <p className="text-[10px] text-gray-400 truncate">
-                  02:15 &middot; odcinek 3
-                </p>
+                <p className="text-[10px] text-gray-400 truncate">02:15 &middot; odcinek 3</p>
               )}
             </div>
           </div>
@@ -535,8 +503,8 @@ function DiscordStep() {
         )}
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Pokazywanie statusu na Discordzie pomaga innym odkryć ShiroAni.
-          Szablony statusu dostosujesz potem w ustawieniach.
+          Pokazywanie statusu na Discordzie pomaga innym odkryć ShiroAni. Szablony statusu
+          dostosujesz potem w ustawieniach.
         </p>
       </div>
     </div>
@@ -556,7 +524,7 @@ function FinishStep() {
       window.electronAPI?.store?.set('browser-settings', { adblockEnabled: value });
       window.electronAPI?.browser?.toggleAdblock(value);
     },
-    [setAdblockEnabled],
+    [setAdblockEnabled]
   );
 
   const sparkles = useMemo(
@@ -573,7 +541,7 @@ function FinishStep() {
           duration: 1.5 + Math.random() * 1.5,
         };
       }),
-    [],
+    []
   );
 
   return (
@@ -601,8 +569,8 @@ function FinishStep() {
 
         <h2 className="text-lg font-semibold text-foreground">Wszystko gotowe!</h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-          ShiroAni jest skonfigurowane. Ostatnia rzecz — chcesz blokować reklamy
-          w wbudowanej przeglądarce?
+          ShiroAni jest skonfigurowane. Ostatnia rzecz — chcesz blokować reklamy w wbudowanej
+          przeglądarce?
         </p>
       </div>
 
@@ -650,7 +618,9 @@ function ToggleRow({
         <p className="text-sm font-medium text-foreground" id={`${id}-label`}>
           {label}
         </p>
-        <p className="text-xs text-muted-foreground" id={`${id}-desc`}>{description}</p>
+        <p className="text-xs text-muted-foreground" id={`${id}-desc`}>
+          {description}
+        </p>
       </div>
       <Switch
         aria-labelledby={`${id}-label`}

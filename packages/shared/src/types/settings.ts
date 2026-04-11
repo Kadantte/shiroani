@@ -4,50 +4,30 @@
 
 /**
  * BuiltInTheme - All built-in color themes
- * 24 dark themes + 15 light themes = 39 total
+ * 10 dark themes + 8 light themes = 18 total
+ * Users can create unlimited custom themes via the theme editor.
  */
 export type BuiltInTheme =
-  // Dark themes (24)
+  // Dark themes (10)
   | 'dark'
-  | 'akira'
-  | 'attack-on-titan'
-  | 'ayu-dark'
-  | 'ayu-mirage'
   | 'catppuccin'
-  | 'chainsaw-man'
-  | 'cyberpunk-edgerunners'
-  | 'demon-slayer'
   | 'dracula'
   | 'evangelion'
-  | 'ghibli-sunset'
   | 'gruvbox'
-  | 'jujutsu-kaisen'
-  | 'matcha'
   | 'monokai'
   | 'nord'
-  | 'ocean'
-  | 'onedark'
   | 'retro'
-  | 'solarized'
   | 'spy-family'
   | 'synthwave'
-  | 'tokyonight'
-  // Light themes (15)
+  // Light themes (8)
   | 'light'
   | 'ayu-light'
   | 'bocchi'
-  | 'dragon-ball'
   | 'ghibli-forest'
   | 'github'
-  | 'gruvboxlight'
-  | 'lavender'
-  | 'mint'
-  | 'nordlight'
   | 'one-piece'
-  | 'sailor-moon'
   | 'sepia'
-  | 'solarizedlight'
-  | 'your-name';
+  | 'solarizedlight';
 
 /**
  * Theme - Either a built-in theme or a custom theme ID.
@@ -91,29 +71,15 @@ export interface CustomThemeDefinition {
  */
 export const DARK_THEMES: BuiltInTheme[] = [
   'dark',
-  'akira',
-  'attack-on-titan',
-  'ayu-dark',
-  'ayu-mirage',
   'catppuccin',
-  'chainsaw-man',
-  'cyberpunk-edgerunners',
-  'demon-slayer',
   'dracula',
   'evangelion',
-  'ghibli-sunset',
   'gruvbox',
-  'jujutsu-kaisen',
-  'matcha',
   'monokai',
   'nord',
-  'ocean',
-  'onedark',
   'retro',
-  'solarized',
   'spy-family',
   'synthwave',
-  'tokyonight',
 ];
 
 /**
@@ -123,18 +89,11 @@ export const LIGHT_THEMES: BuiltInTheme[] = [
   'light',
   'ayu-light',
   'bocchi',
-  'dragon-ball',
   'ghibli-forest',
   'github',
-  'gruvboxlight',
-  'lavender',
-  'mint',
-  'nordlight',
   'one-piece',
-  'sailor-moon',
   'sepia',
   'solarizedlight',
-  'your-name',
 ];
 
 /**

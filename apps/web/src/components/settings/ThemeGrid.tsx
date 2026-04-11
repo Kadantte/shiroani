@@ -1,4 +1,4 @@
-import { Copy } from 'lucide-react';
+import { Copy, type LucideIcon } from 'lucide-react';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 import type { ThemeOption } from '@/lib/theme';
 import type { Theme } from '@shiroani/shared';
@@ -6,6 +6,7 @@ import type { Theme } from '@shiroani/shared';
 interface ThemeGridProps {
   themes: ThemeOption[];
   label: string;
+  icon?: LucideIcon;
   activeTheme: Theme;
   onSelect: (theme: Theme) => void;
   onPreview: (theme: Theme) => void;
@@ -16,6 +17,7 @@ interface ThemeGridProps {
 export function ThemeGrid({
   themes,
   label,
+  icon: Icon,
   activeTheme,
   onSelect,
   onPreview,
@@ -24,8 +26,11 @@ export function ThemeGrid({
 }: ThemeGridProps) {
   return (
     <div className="mb-3">
-      <p className="text-xs text-muted-foreground mb-2 ml-0.5">{label}</p>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-1.5">
+      <p className="text-xs text-muted-foreground mb-2 ml-0.5 flex items-center gap-1.5">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </p>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-1.5">
         {themes.map(opt => (
           <div key={opt.value} className="relative group">
             <ThemeSwatch
