@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Apple, Monitor, Terminal, Download, ExternalLink, FileText } from 'lucide-react';
+import { Apple, Monitor, Download, ExternalLink, FileText } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { formatDate, GITHUB_RELEASES_API_URL, GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { ease } from '@/lib/animations';
@@ -18,7 +18,7 @@ interface ReleaseData {
   assets: ReleaseAsset[];
 }
 
-type Platform = 'mac' | 'win' | 'linux';
+type Platform = 'mac' | 'win';
 
 interface PlatformInfo {
   key: Platform;
@@ -26,7 +26,6 @@ interface PlatformInfo {
   icon: typeof Apple;
   extension: string;
   pattern: RegExp;
-  available: boolean;
 }
 
 const PLATFORMS: PlatformInfo[] = [
@@ -36,7 +35,6 @@ const PLATFORMS: PlatformInfo[] = [
     icon: Apple,
     extension: '.dmg',
     pattern: /\.dmg$/,
-    available: true,
   },
   {
     key: 'win',
@@ -44,15 +42,6 @@ const PLATFORMS: PlatformInfo[] = [
     icon: Monitor,
     extension: '.exe',
     pattern: /\.exe$/,
-    available: true,
-  },
-  {
-    key: 'linux',
-    label: 'Linux',
-    icon: Terminal,
-    extension: '.AppImage',
-    pattern: /\.AppImage$/,
-    available: false,
   },
 ];
 
@@ -60,7 +49,6 @@ function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'win';
   const ua = navigator.userAgent.toLowerCase();
   if (ua.includes('mac')) return 'mac';
-  if (ua.includes('linux')) return 'linux';
   return 'win';
 }
 
@@ -178,33 +166,6 @@ function AssetButton({
 }) {
   const Icon = platform.icon;
 
-  if (!platform.available) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay, ease }}
-      >
-        <div className="flex items-center gap-4 rounded-2xl border border-border/30 bg-card/30 px-6 py-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted/50">
-            <Icon className="h-5 w-5 text-muted-foreground/40" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-muted-foreground/50">
-                {platform.label}
-              </span>
-              <span className="rounded-md bg-gold/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-dim">
-                Planowane
-              </span>
-            </div>
-            <p className="mt-0.5 text-xs text-muted-foreground/30">Wkrótce dostępne</p>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
   if (!asset) {
     return <SkeletonButton delay={delay} />;
   }
@@ -314,7 +275,6 @@ export function DownloadPage() {
     return [...PLATFORMS].sort((a, b) => {
       if (a.key === detectedPlatform) return -1;
       if (b.key === detectedPlatform) return 1;
-      if (a.available !== b.available) return a.available ? -1 : 1;
       return 0;
     });
   }, [detectedPlatform]);
@@ -450,7 +410,7 @@ export function DownloadPage() {
                       key={platform.key}
                       platform={platform}
                       asset={assetMap.get(platform.key) ?? null}
-                      isPrimary={platform.key === detectedPlatform && platform.available}
+                      isPrimary={platform.key === detectedPlatform}
                       delay={0.15 + i * 0.08}
                       onDownload={handleDownload}
                     />
