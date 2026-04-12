@@ -2,6 +2,7 @@ import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useEffect, useRef, useCallback } from 'react';
 import { ease } from '@/lib/animations';
+import { latestRelease } from '@/lib/releases';
 import { MotionProvider } from './MotionProvider';
 
 /** Floating sparkle particles that follow cursor in hero */
@@ -228,7 +229,7 @@ export function Hero() {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
             <span className="text-[10px] font-medium text-primary sm:text-xs">
-              v0.4.0 — Blokowanie popupów i skróty klawiszowe
+              v{latestRelease.version} — {latestRelease.title}
             </span>
           </motion.div>
 
