@@ -57,49 +57,23 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Tiny confetti burst — fires particles from a point */
-function useConfetti() {
-  const [particles, setParticles] = useState<
-    { id: number; x: number; y: number; color: string; angle: number; speed: number }[]
-  >([]);
-  const timeoutRef = useRef<number>();
+interface ConfettiParticle {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+  angle: number;
+  speed: number;
+}
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
+const CONFETTI_COLORS = [
+  'var(--color-accent-pink)',
+  'var(--color-accent-gold)',
+  'var(--color-accent-brand)',
+];
 
-  const fire = useCallback((e: React.MouseEvent) => {
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    )
-      return;
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const colors = [
-      'oklch(0.72 0.15 350)',
-      'oklch(0.75 0.12 85)',
-      'oklch(0.78 0.13 350)',
-      'oklch(0.65 0.17 348)',
-      'oklch(0.8 0.1 85)',
-    ];
-    const batch = Array.from({ length: 12 }, (_, i) => ({
-      id: Date.now() + i,
-      x: cx,
-      y: cy,
-      color: colors[i % colors.length],
-      angle: (i / 12) * 360 + (Math.random() - 0.5) * 30,
-      speed: 60 + Math.random() * 40,
-    }));
-    setParticles(batch);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => setParticles([]), 800);
-  }, []);
-
-  const layer = (
+function ConfettiLayer({ particles }: { particles: ConfettiParticle[] }) {
+  return (
     <AnimatePresence>
       {particles.map(p => {
         const rad = (p.angle * Math.PI) / 180;
@@ -129,8 +103,44 @@ function useConfetti() {
       })}
     </AnimatePresence>
   );
+}
 
-  return { fire, layer };
+/** Tiny confetti burst — fires particles from a point */
+function useConfetti() {
+  const [particles, setParticles] = useState<ConfettiParticle[]>([]);
+  const timeoutRef = useRef<number | undefined>(undefined);
+  const counterRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const fire = useCallback((e: React.MouseEvent) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const batchId = ++counterRef.current;
+    const batch: ConfettiParticle[] = Array.from({ length: 12 }, (_, i) => ({
+      id: `${batchId}-${i}`,
+      x: cx,
+      y: cy,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      angle: (i / 12) * 360 + (Math.random() - 0.5) * 30,
+      speed: 60 + Math.random() * 40,
+    }));
+    setParticles(batch);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => setParticles([]), 800);
+  }, []);
+
+  return { fire, particles };
 }
 
 function SkeletonButton({ delay }: { delay: number }) {
@@ -239,7 +249,7 @@ export function DownloadPage() {
   const [error, setError] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const detectedPlatform = useMemo(detectPlatform, []);
-  const { fire, layer } = useConfetti();
+  const { fire, particles } = useConfetti();
 
   useEffect(() => {
     fetch(GITHUB_RELEASES_API_URL)
@@ -281,7 +291,7 @@ export function DownloadPage() {
 
   return (
     <MotionProvider>
-      {layer}
+      <ConfettiLayer particles={particles} />
 
       <header className="border-b border-border px-6 py-4">
         <nav className="mx-auto flex max-w-3xl items-center justify-between">
@@ -309,7 +319,8 @@ export function DownloadPage() {
           <div
             className="absolute left-1/2 top-24 h-[400px] w-[500px] -translate-x-1/2 rounded-full opacity-[0.08]"
             style={{
-              background: 'radial-gradient(ellipse, oklch(0.72 0.15 350 / 0.3), transparent 70%)',
+              background:
+                'radial-gradient(ellipse, oklch(from var(--color-accent-pink) l c h / 0.3), transparent 70%)',
             }}
           />
         </div>
@@ -428,7 +439,7 @@ export function DownloadPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.4 }}
           >
-            <p className="mb-1 text-sm font-medium text-foreground/90">Niepodpisana aplikacja</p>
+            <h2 className="mb-1 text-sm font-medium text-foreground/90">Niepodpisana aplikacja</h2>
             <p className="mb-3 text-xs text-muted-foreground">
               macOS wymaga uruchomienia komendy w Terminalu po każdym pobraniu.
             </p>

@@ -45,7 +45,7 @@ export function Navbar() {
               <a
                 key={label}
                 href={href}
-                className={`rounded-md text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground ${focusRing}`}
+                className={`rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground ${focusRing}`}
               >
                 {label}
               </a>
@@ -77,7 +77,7 @@ export function Navbar() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="overflow-hidden border-t border-white/10 bg-background/95 backdrop-blur-lg md:hidden"
+              className="overflow-hidden border-t border-white/10 bg-background md:hidden"
               role="navigation"
               aria-label="Menu mobilne"
               onKeyDown={(e: React.KeyboardEvent) => {
@@ -101,7 +101,7 @@ export function Navbar() {
                         setMobileOpen(false);
                       }
                     }}
-                    className={`rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground ${focusRing}`}
+                    className={`rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground ${focusRing}`}
                   >
                     {label}
                   </a>

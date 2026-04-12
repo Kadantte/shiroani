@@ -1,9 +1,12 @@
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useEffect, useRef, useCallback } from 'react';
+import { DISCORD_INVITE_URL } from '@shiroani/shared';
 import { ease } from '@/lib/animations';
 import { latestRelease } from '@/lib/releases';
 import { MotionProvider } from './MotionProvider';
+
+const MAX_SPARKLES = 30;
 
 /** Floating sparkle particles that follow cursor in hero */
 function useCursorSparkles() {
@@ -79,7 +82,8 @@ function useCursorSparkles() {
       const now = Date.now();
       if (now - lastSpawn > 50) {
         lastSpawn = now;
-        for (let j = 0; j < 2; j++) {
+        if (particles.current.length >= MAX_SPARKLES) return;
+        for (let j = 0; j < 2 && particles.current.length < MAX_SPARKLES; j++) {
           particles.current.push({
             x: mx + (Math.random() - 0.5) * 8,
             y: my + (Math.random() - 0.5) * 8,
@@ -277,14 +281,14 @@ export function Hero() {
             >
               Pobierz ShiroAni
             </a>
-            <button
-              aria-disabled="true"
-              onClick={e => e.preventDefault()}
-              className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border/50 px-7 py-3.5 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-              title="Wkrótce dostępne"
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-border/60 px-7 py-3.5 text-sm font-semibold text-foreground/90 transition-colors duration-200 hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
             >
-              Dołącz do Discord — Wkrótce
-            </button>
+              Dołącz do Discord
+            </a>
           </motion.div>
         </div>
 

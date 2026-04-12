@@ -1,6 +1,7 @@
 import { motion, useInView } from 'framer-motion';
 import { Trophy, Shield, Sparkles, UserCheck, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { DISCORD_INVITE_URL } from '@shiroani/shared';
 import { ease } from '@/lib/animations';
 import { MotionProvider } from './MotionProvider';
 import { useRef } from 'react';
@@ -49,7 +50,8 @@ function XpProgressBar() {
         <motion.div
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
-            background: 'linear-gradient(90deg, oklch(0.65 0.17 348), oklch(0.72 0.15 350))',
+            background:
+              'linear-gradient(90deg, var(--color-accent-brand), var(--color-accent-pink))',
           }}
           initial={{ width: '0%' }}
           animate={inView ? { width: '86%' } : {}}
@@ -60,7 +62,8 @@ function XpProgressBar() {
           <motion.div
             className="absolute inset-y-0 w-12 rounded-full"
             style={{
-              background: 'linear-gradient(90deg, transparent, oklch(1 0 0 / 0.2), transparent)',
+              background:
+                'linear-gradient(90deg, transparent, rgb(255 255 255 / 0.2), transparent)',
             }}
             initial={{ left: '-3rem' }}
             animate={{ left: '100%' }}
@@ -74,7 +77,7 @@ function XpProgressBar() {
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ delay: 1.8, duration: 0.4 }}
       >
-        ✨ Jeszcze 400 XP do Poziomu 8!
+        Jeszcze 400 XP do Poziomu 8
       </motion.p>
     </div>
   );
@@ -113,15 +116,14 @@ export function BotSection() {
                 </p>
               </div>
 
-              {/* Join link with typing indicator */}
-              <button
-                aria-disabled="true"
-                onClick={e => e.preventDefault()}
-                className="mt-6 inline-flex cursor-not-allowed items-center gap-2 text-sm font-semibold text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                title="Wkrótce dostępne"
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-primary transition-colors duration-200 hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               >
-                <span>Dołącz do serwera — Wkrótce</span>
-              </button>
+                <span>Dołącz do serwera &rarr;</span>
+              </a>
 
               {/* XP progress bar demo */}
               <XpProgressBar />

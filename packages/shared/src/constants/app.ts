@@ -38,6 +38,9 @@ export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GI
 /** GitHub releases API URL (for fetching latest release data) */
 export const GITHUB_RELEASES_API_URL = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`;
 
+/** Discord community invite URL */
+export const DISCORD_INVITE_URL = 'https://discord.gg/M3ujRdUJpn';
+
 /** Custom protocol URL for the new tab page */
 export const NEW_TAB_URL = 'shiroani://newtab';
 

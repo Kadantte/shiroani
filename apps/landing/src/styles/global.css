@@ -25,6 +25,13 @@
   --color-brand-glow: oklch(0.65 0.17 348 / 0.5);
   --color-gold-glow: oklch(0.7 0.1 85 / 0.5);
 
+  /* Accent bases — reference via oklch(from ... / alpha) for per-use opacity */
+  --color-accent-pink: oklch(0.72 0.15 350);
+  --color-accent-brand: oklch(0.65 0.17 348);
+  --color-accent-discord: oklch(0.55 0.15 280);
+  --color-accent-gold: oklch(0.75 0.12 85);
+  --color-accent-gold-warm: oklch(0.55 0.08 85);
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;

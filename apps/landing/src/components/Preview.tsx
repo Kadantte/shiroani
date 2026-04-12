@@ -106,7 +106,7 @@ export function Preview() {
               className="absolute -inset-6 -z-10 rounded-3xl blur-3xl opacity-20"
               style={{
                 background:
-                  'radial-gradient(ellipse at center, oklch(0.72 0.15 350 / 0.3), transparent 70%)',
+                  'radial-gradient(ellipse at center, oklch(from var(--color-accent-pink) l c h / 0.3), transparent 70%)',
               }}
             />
 
