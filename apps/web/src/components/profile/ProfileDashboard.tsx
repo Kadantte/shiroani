@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User, ExternalLink, RefreshCw, LogOut, Tv, Eye, Clock, Star, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { ProfileShareDialog } from './ProfileShareDialog';
 import {
@@ -55,49 +55,53 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
 
         {/* Action buttons */}
         <div className="absolute top-3 right-4 flex items-center gap-2 z-10">
-          <Button
+          <TooltipButton
             variant="ghost"
             size="icon"
             className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={() => setShareOpen(true)}
-            title="Udostepnij"
+            tooltip="Udostępnij profil"
+            tooltipSide="bottom"
             aria-label="Udostępnij profil"
           >
             <Share2 className="w-3.5 h-3.5" />
-          </Button>
-          <Button
+          </TooltipButton>
+          <TooltipButton
             variant="ghost"
             size="icon"
             className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={() => fetchProfile()}
             disabled={isLoading}
-            title="Odśwież"
+            tooltip="Odśwież"
+            tooltipSide="bottom"
             aria-label="Odśwież profil"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
-          </Button>
+          </TooltipButton>
           {profile.siteUrl && (
-            <Button
+            <TooltipButton
               variant="ghost"
               size="icon"
               className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
               onClick={() => window.open(profile.siteUrl, '_blank')}
-              title="Otwórz na AniList"
+              tooltip="Otwórz na AniList"
+              tooltipSide="bottom"
               aria-label="Otwórz profil na AniList"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-            </Button>
+            </TooltipButton>
           )}
-          <Button
+          <TooltipButton
             variant="ghost"
             size="icon"
             className="min-w-[44px] min-h-[44px] w-7 h-7 bg-background/40 hover:bg-background/60 text-foreground/70"
             onClick={clearProfile}
-            title="Rozłącz profil"
+            tooltip="Rozłącz profil"
+            tooltipSide="bottom"
             aria-label="Rozłącz profil AniList"
           >
             <LogOut className="w-3.5 h-3.5" />
-          </Button>
+          </TooltipButton>
         </div>
       </div>
 
