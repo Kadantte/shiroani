@@ -15,6 +15,7 @@ import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
+import { APP_ID as WINDOWS_APP_ID } from './win-scheduled-notifications';
 import {
   initializeDiscordRpc,
   cleanupDiscordRpc,
@@ -58,6 +59,14 @@ protocol.registerSchemesAsPrivileged([
 // see the overridden path.
 if (process.env.ELECTRON_USER_DATA_DIR) {
   app.setPath('userData', process.env.ELECTRON_USER_DATA_DIR);
+}
+
+// Pin the Windows AppUserModelID so scheduled toast notifications resolve to
+// the same Start Menu shortcut electron-builder installs (see electron-builder.json
+// "appId"). Without this, Windows silently suppresses toast banners because the
+// queue's AppID doesn't match any registered shortcut.
+if (process.platform === 'win32') {
+  app.setAppUserModelId(WINDOWS_APP_ID);
 }
 
 export let mainWindow: BrowserWindow | null = null;

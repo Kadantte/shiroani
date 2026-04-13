@@ -19,7 +19,11 @@ import {
   updateLastSeenTimestamps,
   pruneStaleSubscriptions,
 } from './notification-logic';
-import { scheduleToastsOnQuit, clearScheduledToasts } from './win-scheduled-notifications';
+import {
+  scheduleToastsOnQuit,
+  clearScheduledToasts,
+  logWindowsToastDiagnostics,
+} from './win-scheduled-notifications';
 import { createMainLogger } from './logger';
 
 const logger = createMainLogger('NotificationService');
@@ -413,6 +417,9 @@ export function initializeNotificationService(
   if (process.platform === 'win32') {
     clearScheduledToasts().catch(error => {
       logger.warn('Failed to clear scheduled Windows toasts on init:', error);
+    });
+    logWindowsToastDiagnostics().catch(error => {
+      logger.warn('Failed to log Windows toast diagnostics:', error);
     });
   }
 

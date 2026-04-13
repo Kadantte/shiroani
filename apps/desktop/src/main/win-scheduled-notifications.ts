@@ -9,7 +9,13 @@ import { createMainLogger } from './logger';
 
 const logger = createMainLogger('WinScheduledNotifications');
 
-const APP_ID = 'com.shironex.shiroani';
+/**
+ * Windows AppUserModelID used both as the toast scheduler ID and as the value
+ * passed to `app.setAppUserModelId()` in main entry. Must match the `appId` in
+ * electron-builder.json so the installed Start Menu shortcut is tagged with
+ * the same value — Windows silently suppresses toast banners otherwise.
+ */
+export const APP_ID = 'com.shironex.shiroani';
 const POWERSHELL_TIMEOUT_MS = 8000;
 
 /** Escape a string for use inside a PowerShell single-quoted string literal. */
@@ -118,6 +124,50 @@ export async function scheduleToastsOnQuit(
   } catch (error) {
     logger.warn('Failed to schedule Windows toast notifications:', error);
     return 0;
+  }
+}
+
+/**
+ * Log Windows toast notification diagnostics on startup so user-reported
+ * "notifications don't show" bugs can be diagnosed straight from the log file.
+ *
+ * Windows requires the AppUserModelID we use when scheduling toasts to match
+ * a registered Start Menu shortcut — otherwise toast banners are silently
+ * suppressed even though the API succeeds. Electron has no public getter for
+ * the runtime AppID, so we just log the constant we use and verify the
+ * matching shortcut exists.
+ */
+export async function logWindowsToastDiagnostics(): Promise<void> {
+  if (process.platform !== 'win32') return;
+
+  logger.info(`Toast scheduler AppID configured as "${APP_ID}"`);
+
+  try {
+    const script =
+      "Get-StartApps | Where-Object { $_.AppID -like '*shironex*' -or $_.AppID -like '*shiroani*' -or $_.Name -like '*hiroAni*' } | ForEach-Object { \"$($_.Name)|$($_.AppID)\" }";
+    const { stdout } = await runPowerShell(script);
+    const shortcuts = stdout.trim().split(/\r?\n/).filter(Boolean);
+
+    if (shortcuts.length === 0) {
+      logger.warn(
+        'No ShiroAni Start Menu shortcut registered with Windows. Toast banners ' +
+          'will not display until the app is installed via the official installer ' +
+          '(dev mode runs unpackaged and has no shortcut).'
+      );
+      return;
+    }
+
+    logger.info(`Registered Start Menu shortcuts: ${shortcuts.join(', ')}`);
+    const hasMatching = shortcuts.some(s => s.endsWith(`|${APP_ID}`));
+    if (!hasMatching) {
+      logger.warn(
+        `No shortcut tagged with AppID "${APP_ID}". Existing shortcut is from an ` +
+          'older install — uninstall and reinstall via the latest installer to ' +
+          'restore toast banners.'
+      );
+    }
+  } catch (error) {
+    logger.warn('Failed to query Start Menu shortcuts for diagnostics:', error);
   }
 }
 
