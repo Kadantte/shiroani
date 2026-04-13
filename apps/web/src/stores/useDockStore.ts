@@ -4,6 +4,9 @@ import { createLogger } from '@shiroani/shared';
 import { IS_ELECTRON } from '@/lib/platform';
 import { electronStoreGet } from '@/lib/electron-store';
 import { createDebouncedPersist } from '@/lib/electron-store';
+import { ALWAYS_VISIBLE_VIEWS, ALL_NAV_ITEMS } from '@/lib/nav-items';
+import type { ActiveView } from '@/stores/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 
 const logger = createLogger('Dock');
 
@@ -20,6 +23,8 @@ interface DockSettings {
   draggable: boolean;
   /** Whether to show text labels under icons */
   showLabels: boolean;
+  /** View ids the user has hidden from the dock (settings is always visible) */
+  hiddenViews: ActiveView[];
 }
 
 interface DockState extends DockSettings {
@@ -39,6 +44,8 @@ interface DockActions {
   setAutoHide: (autoHide: boolean) => void;
   setDraggable: (draggable: boolean) => void;
   setShowLabels: (showLabels: boolean) => void;
+  /** Toggle a view's visibility in the dock. Always-visible views are no-ops. */
+  toggleViewVisibility: (view: ActiveView) => void;
   setDragging: (isDragging: boolean) => void;
   setDragPosition: (pos: { x: number; y: number } | null) => void;
   setExpanded: (expanded: boolean) => void;
@@ -66,8 +73,18 @@ function persistCurrentSettings(state: DockState) {
     autoHide: state.autoHide,
     draggable: state.draggable,
     showLabels: state.showLabels,
+    hiddenViews: state.hiddenViews,
   };
   persistSettings(settings);
+}
+
+/** First visible view in display order — used as a fallback when the active view is hidden. */
+function firstVisibleView(hidden: ActiveView[]): ActiveView {
+  const hiddenSet = new Set(hidden);
+  const first = ALL_NAV_ITEMS.find(
+    item => ALWAYS_VISIBLE_VIEWS.has(item.id) || !hiddenSet.has(item.id)
+  );
+  return first?.id ?? 'settings';
 }
 
 export const useDockStore = create<DockStore>()(
@@ -79,6 +96,7 @@ export const useDockStore = create<DockStore>()(
       autoHide: false,
       draggable: true,
       showLabels: true,
+      hiddenViews: [],
       isDragging: false,
       dragPosition: null,
       isExpanded: false,
@@ -108,6 +126,24 @@ export const useDockStore = create<DockStore>()(
       setShowLabels: (showLabels: boolean) => {
         set({ showLabels }, undefined, 'dock/setShowLabels');
         persistCurrentSettings(get());
+      },
+
+      toggleViewVisibility: (view: ActiveView) => {
+        if (ALWAYS_VISIBLE_VIEWS.has(view)) return;
+        const { hiddenViews } = get();
+        const isHidden = hiddenViews.includes(view);
+        const nextHidden = isHidden ? hiddenViews.filter(v => v !== view) : [...hiddenViews, view];
+        set({ hiddenViews: nextHidden }, undefined, 'dock/toggleViewVisibility');
+        persistCurrentSettings(get());
+
+        // Redirect away from the active view if it was just hidden — otherwise
+        // the user is stranded on a view with no dock entry pointing at it.
+        if (!isHidden) {
+          const appState = useAppStore.getState();
+          if (appState.activeView === view) {
+            appState.navigateTo(firstVisibleView(nextHidden));
+          }
+        }
       },
 
       setDragging: (isDragging: boolean) => {
@@ -173,6 +209,9 @@ export const useDockStore = create<DockStore>()(
                 autoHide: saved.autoHide ?? false,
                 draggable: saved.draggable ?? true,
                 showLabels: saved.showLabels ?? true,
+                hiddenViews: Array.isArray(saved.hiddenViews)
+                  ? saved.hiddenViews.filter(v => !ALWAYS_VISIBLE_VIEWS.has(v))
+                  : [],
                 isExpanded: !(saved.autoHide ?? false),
                 initialized: true,
               },

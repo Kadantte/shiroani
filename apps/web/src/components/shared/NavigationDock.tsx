@@ -1,26 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Calendar, Compass, NotebookPen, Rss, Settings, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
 import { useDockDrag } from '@/hooks/useDockDrag';
 import { APP_LOGO_URL } from '@/lib/constants';
-
-interface NavItem {
-  id: ActiveView;
-  label: string;
-}
-
-const ALL_ITEMS: NavItem[] = [
-  { id: 'browser', label: 'Internet' },
-  { id: 'library', label: 'Biblioteka' },
-  { id: 'discover', label: 'Odkrywaj' },
-  { id: 'diary', label: 'Dziennik' },
-  { id: 'schedule', label: 'Harmonogram' },
-  { id: 'feed', label: 'Aktualności' },
-  { id: 'profile', label: 'Profil' },
-  { id: 'settings', label: 'Ustawienia' },
-];
+import { ALL_NAV_ITEMS, ALWAYS_VISIBLE_VIEWS, type NavItem } from '@/lib/nav-items';
 
 // Layout constants (rem) — keep in sync with classNames below so root font scaling
 // changes the pill geometry together with the dock items.
@@ -326,6 +311,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
   const autoHide = useDockStore(s => s.autoHide);
   const draggable = useDockStore(s => s.draggable);
   const showLabels = useDockStore(s => s.showLabels);
+  const hiddenViews = useDockStore(s => s.hiddenViews);
   const isDragging = useDockStore(s => s.isDragging);
   const dragPosition = useDockStore(s => s.dragPosition);
   const isExpanded = useDockStore(s => s.isExpanded);
@@ -339,11 +325,22 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
   const [justSnapped, setJustSnapped] = useState(false);
   const prevDragging = useRef(isDragging);
 
-  const activeIndex = ALL_ITEMS.findIndex(item => item.id === activeView);
+  const visibleItems = useMemo<NavItem[]>(() => {
+    const hiddenSet = new Set(hiddenViews);
+    return ALL_NAV_ITEMS.filter(
+      item => ALWAYS_VISIBLE_VIEWS.has(item.id) || !hiddenSet.has(item.id)
+    );
+  }, [hiddenViews]);
+
+  const activeIndex = visibleItems.findIndex(item => item.id === activeView);
   const vertical = isVerticalEdge(edge);
 
   const dockStyle = getDockStyle(edge, offset, isDragging, dragPosition);
-  const pillStyle = getPillStyle(activeIndex, vertical, showLabels);
+  // If the active view is somehow not in the visible list (e.g. user just hid it
+  // from settings before the redirect lands), don't render the pill at a bogus
+  // negative offset.
+  const pillStyle =
+    activeIndex >= 0 ? getPillStyle(activeIndex, vertical, showLabels) : { display: 'none' };
 
   // Show expanded dock (full nav) when: not auto-hide, or expanded, or collapsing (exit anim)
   const showFullDock = !autoHide || isExpanded || isCollapsing || isDragging;
@@ -516,7 +513,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           style={pillStyle}
         />
 
-        {ALL_ITEMS.map(item => (
+        {visibleItems.map(item => (
           <DockItem
             key={item.id}
             item={item}

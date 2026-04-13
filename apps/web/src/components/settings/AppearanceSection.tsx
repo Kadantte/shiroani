@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   Download,
+  Eye,
   GripHorizontal,
   Moon,
   Palette,
@@ -28,6 +29,7 @@ import { ThemeGrid } from '@/components/settings/ThemeGrid';
 import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
 import { UI_FONT_SCALE_PRESETS, type Theme } from '@shiroani/shared';
+import { ALL_NAV_ITEMS, ALWAYS_VISIBLE_VIEWS } from '@/lib/nav-items';
 
 export function AppearanceSection() {
   const { theme, setTheme, setPreviewTheme, uiFontScale, setUIFontScale } = useSettingsStore();
@@ -84,6 +86,8 @@ export function AppearanceSection() {
   const dockShowLabels = useDockStore(s => s.showLabels);
   const setDockShowLabels = useDockStore(s => s.setShowLabels);
   const resetDockPosition = useDockStore(s => s.resetPosition);
+  const hiddenViews = useDockStore(s => s.hiddenViews);
+  const toggleViewVisibility = useDockStore(s => s.toggleViewVisibility);
 
   return (
     <div className="space-y-4">
@@ -195,6 +199,39 @@ export function AppearanceSection() {
           <Button variant="outline" size="sm" className="h-7 text-xs" onClick={resetDockPosition}>
             Przywróć pozycję
           </Button>
+        </div>
+      </SettingsCard>
+
+      {/* View visibility toggles */}
+      <SettingsCard
+        icon={Eye}
+        title="Widoczność widoków"
+        subtitle="Ukryj sekcje, których nie używasz — Ustawienia są zawsze dostępne"
+      >
+        <div className="space-y-2">
+          {ALL_NAV_ITEMS.map(item => {
+            const alwaysOn = ALWAYS_VISIBLE_VIEWS.has(item.id);
+            const visible = alwaysOn || !hiddenViews.includes(item.id);
+            const labelId = `view-visibility-${item.id}`;
+            return (
+              <div key={item.id} className="flex items-center justify-between">
+                <p className="text-sm text-foreground" id={labelId}>
+                  {item.label}
+                  {alwaysOn && (
+                    <span className="ml-2 text-2xs text-muted-foreground/70">
+                      (zawsze widoczne)
+                    </span>
+                  )}
+                </p>
+                <Switch
+                  checked={visible}
+                  disabled={alwaysOn}
+                  onCheckedChange={() => toggleViewVisibility(item.id)}
+                  aria-labelledby={labelId}
+                />
+              </div>
+            );
+          })}
         </div>
       </SettingsCard>
 
