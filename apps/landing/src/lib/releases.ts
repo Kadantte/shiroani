@@ -33,6 +33,69 @@ export interface Release {
 
 export const releases: Release[] = [
   {
+    version: '0.5.0',
+    date: '13 kwietnia 2026',
+    title: 'Odkrywaj anime, pokaż swój profil i wracaj szybciej do oglądania',
+    description:
+      'Ta aktualizacja skupia się głównie na wygodzie. Pojawił się nowy widok Odkrywaj, profil AniList z kartą do udostępniania, lepsze powiadomienia na Windowsie i kilka zmian, które ułatwiają codzienne korzystanie z aplikacji.',
+    categories: [
+      {
+        label: 'Nowe funkcje',
+        icon: Sparkles,
+        color: 'text-primary',
+        entries: [
+          {
+            icon: Sparkles,
+            text: 'Odkrywaj — nowy widok z wyszukiwarką oraz zakładkami Na czasie, Popularne i Sezonowe',
+          },
+          {
+            icon: Zap,
+            text: 'Losowe — nowa zakładka w Odkrywaj do szukania anime po wybranych i wykluczonych gatunkach',
+          },
+          {
+            icon: Monitor,
+            text: 'Profil AniList — widok ze statystykami oglądania po wpisaniu nazwy użytkownika, bez logowania',
+          },
+          {
+            icon: Palette,
+            text: 'Karta profilu PNG — możliwość skopiowania albo zapisania obrazka profilu do udostępnienia',
+          },
+          {
+            icon: Zap,
+            text: 'Biblioteka i dziennik — sortowanie biblioteki, sortowanie wpisów w dzienniku i losowanie anime z listy do obejrzenia',
+          },
+        ],
+      },
+      {
+        label: 'Ulepszenia',
+        icon: Wrench,
+        color: 'text-muted-foreground',
+        entries: [
+          {
+            icon: Bell,
+            text: 'Powiadomienia na Windowsie — działają pewniej i mogą pojawić się nawet po zamknięciu aplikacji',
+          },
+          {
+            icon: Monitor,
+            text: 'Emitowane dzisiaj — nowy, bardziej zwarty układ z poziomymi kartami i Twoimi seriami na początku',
+          },
+          {
+            icon: Monitor,
+            text: 'Dock nawigacyjny — w ustawieniach można ukryć nieużywane widoki z docka',
+          },
+          {
+            icon: Palette,
+            text: 'Motywy — pozostało 18 bardziej wyraźnych presetów, a te zbyt podobne do siebie zostały usunięte',
+          },
+          {
+            icon: Wrench,
+            text: 'O aplikacji — nowy przycisk do otwierania folderu z logami',
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.2',
     date: '10 kwietnia 2026',
     title: 'Poprawki stabilności i wygody',
