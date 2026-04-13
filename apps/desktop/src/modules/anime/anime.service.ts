@@ -8,6 +8,7 @@ import {
   AIRING_SCHEDULE_QUERY,
   TRENDING_ANIME_QUERY,
   POPULAR_THIS_SEASON_QUERY,
+  RANDOM_BY_GENRE_QUERY,
   USER_PROFILE_QUERY,
 } from './queries';
 import type {
@@ -146,6 +147,66 @@ export class AnimeService {
       { season, seasonYear, page, perPage },
       `popular:${season}:${seasonYear}:${page}`
     );
+  }
+
+  /**
+   * Get a randomized pool of anime filtered by included/excluded genres.
+   *
+   * AniList quirks this method works around:
+   *  - No RANDOM sort exists → we pick a random page of popularity-sorted results.
+   *  - `genre_in` is OR, not AND → for ≥2 included genres we filter the response
+   *    so only media containing ALL included genres remain (matches user expectation).
+   *  - With tight filters the result set may have far fewer than 20 pages, so a
+   *    naive random page in [1..20] often lands on an empty page. We probe page 1
+   *    first to learn `lastPage` and clamp accordingly, falling back to page 1 if
+   *    the random page survives no AND-filtered matches.
+   */
+  async getRandomByGenre(
+    includedGenres: string[] = [],
+    excludedGenres: string[] = [],
+    perPage = 50
+  ): Promise<PaginatedMediaResult> {
+    const baseVars = {
+      perPage,
+      genre_in: includedGenres.length > 0 ? includedGenres : undefined,
+      genre_not_in: excludedGenres.length > 0 ? excludedGenres : undefined,
+    };
+
+    const firstPage = await this.queryPagedMedia('Probing random pool', RANDOM_BY_GENRE_QUERY, {
+      ...baseVars,
+      page: 1,
+    });
+
+    const maxPage = Math.min(20, Math.max(1, firstPage.pageInfo.lastPage));
+    let pool = firstPage.media;
+
+    if (maxPage > 1) {
+      const randomPage = Math.floor(Math.random() * maxPage) + 1;
+      if (randomPage !== 1) {
+        const random = await this.queryPagedMedia(
+          `Fetching random page ${randomPage}`,
+          RANDOM_BY_GENRE_QUERY,
+          { ...baseVars, page: randomPage }
+        );
+        pool = random.media;
+      }
+    }
+
+    // Enforce AND semantics for ≥2 included genres
+    if (includedGenres.length >= 2) {
+      const required = includedGenres;
+      const matchesAll = (m: AniListMedia) => required.every(g => (m.genres ?? []).includes(g));
+      const filtered = pool.filter(matchesAll);
+
+      // If the random page yielded nothing after AND-filter, fall back to page 1
+      if (filtered.length === 0 && pool !== firstPage.media) {
+        pool = firstPage.media.filter(matchesAll);
+      } else {
+        pool = filtered;
+      }
+    }
+
+    return { media: pool, pageInfo: firstPage.pageInfo };
   }
 
   /**

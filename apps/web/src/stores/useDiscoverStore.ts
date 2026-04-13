@@ -8,7 +8,7 @@ const logger = createLogger('DiscoverStore');
 
 // ── Types ────────────────────────────────────────────────────────
 
-export type DiscoverTab = 'trending' | 'popular' | 'seasonal';
+export type DiscoverTab = 'trending' | 'popular' | 'seasonal' | 'random';
 
 export interface DiscoverMedia {
   id: number;
@@ -67,6 +67,12 @@ interface DiscoverState {
   trendingPage: PageInfo;
   popularPage: PageInfo;
   seasonalPage: PageInfo;
+  // Random discovery
+  randomPool: DiscoverMedia[];
+  randomShuffled: DiscoverMedia[];
+  randomIncludedGenres: string[];
+  randomExcludedGenres: string[];
+  isRandomLoading: boolean;
   // Search
   searchQuery: string;
   searchResults: DiscoverMedia[];
@@ -84,6 +90,9 @@ interface DiscoverActions {
   fetchTrending: () => void;
   fetchPopular: () => void;
   fetchSeasonal: () => void;
+  fetchRandomPool: () => void;
+  reshuffleRandom: () => void;
+  setRandomGenres: (included: string[], excluded: string[]) => void;
   loadMore: () => void;
   clearSearch: () => void;
 }
@@ -93,6 +102,15 @@ type DiscoverStore = DiscoverState & DiscoverActions;
 const initialPage: PageInfo = { current: 1, hasNext: false };
 
 const RATE_LIMIT_MSG = 'Zbyt wiele zapytań — odczekaj chwilę i spróbuj ponownie';
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 function toUserError(err: Error): string {
   if (err.message.includes('rate limit') || err.message.includes('429')) {
@@ -112,6 +130,11 @@ export const useDiscoverStore = create<DiscoverStore>()(
       trendingPage: { ...initialPage },
       popularPage: { ...initialPage },
       seasonalPage: { ...initialPage },
+      randomPool: [],
+      randomShuffled: [],
+      randomIncludedGenres: [],
+      randomExcludedGenres: [],
+      isRandomLoading: false,
       searchQuery: '',
       searchResults: [],
       searchPage: { ...initialPage },
@@ -126,18 +149,19 @@ export const useDiscoverStore = create<DiscoverStore>()(
 
         // Fetch data if tab has no results yet
         const state = get();
-        if (state[tab].length === 0) {
-          switch (tab) {
-            case 'trending':
-              state.fetchTrending();
-              break;
-            case 'popular':
-              state.fetchPopular();
-              break;
-            case 'seasonal':
-              state.fetchSeasonal();
-              break;
-          }
+        switch (tab) {
+          case 'trending':
+            if (state.trending.length === 0) state.fetchTrending();
+            break;
+          case 'popular':
+            if (state.popular.length === 0) state.fetchPopular();
+            break;
+          case 'seasonal':
+            if (state.seasonal.length === 0) state.fetchSeasonal();
+            break;
+          case 'random':
+            if (state.randomPool.length === 0) state.fetchRandomPool();
+            break;
         }
       },
 
@@ -273,6 +297,75 @@ export const useDiscoverStore = create<DiscoverStore>()(
           });
       },
 
+      fetchRandomPool: () => {
+        const { randomIncludedGenres, randomExcludedGenres } = get();
+        logger.info(
+          `Fetching random pool — include=[${randomIncludedGenres.join(',')}] exclude=[${randomExcludedGenres.join(',')}]`
+        );
+        set({ isRandomLoading: true, error: null }, undefined, 'discover/fetchingRandom');
+
+        emitWithErrorHandling<
+          { includedGenres?: string[]; excludedGenres?: string[]; perPage?: number },
+          PaginatedResponse
+        >(AnimeEvents.GET_RANDOM, {
+          includedGenres: randomIncludedGenres,
+          excludedGenres: randomExcludedGenres,
+          perPage: 50,
+        })
+          .then(data => {
+            const pool = data.results;
+            const shuffled = shuffleArray(pool);
+            logger.info(`Random pool: ${pool.length} items loaded`);
+            set(
+              {
+                randomPool: pool,
+                randomShuffled: shuffled,
+                isRandomLoading: false,
+                error: null,
+              },
+              undefined,
+              'discover/randomResult'
+            );
+          })
+          .catch((err: Error) => {
+            logger.error('Random fetch failed:', err.message);
+            set(
+              { isRandomLoading: false, error: toUserError(err) },
+              undefined,
+              'discover/randomError'
+            );
+          });
+      },
+
+      reshuffleRandom: () => {
+        const { randomPool } = get();
+        if (randomPool.length === 0) return;
+        set({ randomShuffled: shuffleArray(randomPool) }, undefined, 'discover/reshuffleRandom');
+      },
+
+      setRandomGenres: (included: string[], excluded: string[]) => {
+        const current = get();
+        const sameInc =
+          included.length === current.randomIncludedGenres.length &&
+          included.every(g => current.randomIncludedGenres.includes(g));
+        const sameExc =
+          excluded.length === current.randomExcludedGenres.length &&
+          excluded.every(g => current.randomExcludedGenres.includes(g));
+        if (sameInc && sameExc) return;
+
+        set(
+          {
+            randomIncludedGenres: included,
+            randomExcludedGenres: excluded,
+            randomPool: [],
+            randomShuffled: [],
+          },
+          undefined,
+          'discover/setRandomGenres'
+        );
+        get().fetchRandomPool();
+      },
+
       loadMore: () => {
         const state = get();
         if (state.isLoading) return;
@@ -315,8 +408,10 @@ export const useDiscoverStore = create<DiscoverStore>()(
           return;
         }
 
-        // Load more for current tab
+        // Load more for current tab — random tab has no pagination
         const { activeTab } = state;
+        if (activeTab === 'random') return;
+
         const pageKey = `${activeTab}Page` as const;
         const pageInfo = state[pageKey];
 
@@ -344,13 +439,16 @@ export const useDiscoverStore = create<DiscoverStore>()(
             payload = { year, season, page: nextPage };
             break;
           }
+          default:
+            return;
         }
 
+        const tabKey = activeTab as 'trending' | 'popular' | 'seasonal';
         emitWithErrorHandling<Record<string, unknown>, PaginatedResponse>(event, payload)
           .then(data => {
             set(
               s => ({
-                [activeTab]: [...s[activeTab], ...data.results],
+                [tabKey]: [...s[tabKey], ...data.results],
                 [pageKey]: {
                   current: data.pageInfo.currentPage,
                   hasNext: data.pageInfo.hasNextPage,

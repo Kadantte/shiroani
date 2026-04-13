@@ -155,6 +155,21 @@ query TrendingAnime($page: Int, $perPage: Int) {
 }
 `;
 
+export const RANDOM_BY_GENRE_QUERY = `
+query RandomByGenre($page: Int, $perPage: Int, $genre_in: [String], $genre_not_in: [String]) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo { total currentPage lastPage hasNextPage }
+    media(type: ANIME, sort: POPULARITY_DESC, genre_in: $genre_in, genre_not_in: $genre_not_in, popularity_greater: 1000) {
+      ${MEDIA_FIELDS_BASIC}
+      bannerImage
+      season
+      seasonYear
+      description(asHtml: false)
+    }
+  }
+}
+`;
+
 export const POPULAR_THIS_SEASON_QUERY = `
 query PopularThisSeason($season: MediaSeason, $seasonYear: Int, $page: Int, $perPage: Int) {
   Page(page: $page, perPage: $perPage) {

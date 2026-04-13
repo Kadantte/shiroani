@@ -6,17 +6,19 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
 import { DiscoverSkeleton } from '@/components/discover/DiscoverSkeleton';
+import { RandomDiscoveryPanel } from '@/components/discover/RandomDiscoveryPanel';
 import { AnimeInfoDialog } from '@/components/schedule/AnimeInfoDialog';
 import { useDiscoverStore, type DiscoverMedia } from '@/stores/useDiscoverStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import type { AiringAnime } from '@shiroani/shared';
 
-type Tab = 'trending' | 'popular' | 'seasonal';
+type Tab = 'trending' | 'popular' | 'seasonal' | 'random';
 
 const TABS: { value: Tab; label: string }[] = [
   { value: 'trending', label: 'Na czasie' },
   { value: 'popular', label: 'Popularne' },
   { value: 'seasonal', label: 'Sezonowe' },
+  { value: 'random', label: 'Losowe' },
 ];
 
 /** Set of anilistIds present in the user's library */
@@ -91,6 +93,7 @@ export function DiscoverView() {
     if (tab === 'trending' && store.trending.length === 0) store.fetchTrending();
     else if (tab === 'popular' && store.popular.length === 0) store.fetchPopular();
     else if (tab === 'seasonal' && store.seasonal.length === 0) store.fetchSeasonal();
+    else if (tab === 'random' && store.randomPool.length === 0) store.fetchRandomPool();
   }, []);
 
   // Debounced search
@@ -127,6 +130,9 @@ export function DiscoverView() {
         case 'seasonal':
           store.fetchSeasonal();
           break;
+        case 'random':
+          store.fetchRandomPool();
+          break;
       }
     }
   }, []);
@@ -153,13 +159,17 @@ export function DiscoverView() {
 
   // Determine which data to display
   const isSearchMode = searchQuery.trim().length > 0;
+  const isRandomMode = !isSearchMode && activeTab === 'random';
+
   const items = isSearchMode
     ? searchResults
     : activeTab === 'trending'
       ? trending
       : activeTab === 'popular'
         ? popular
-        : seasonal;
+        : activeTab === 'seasonal'
+          ? seasonal
+          : [];
 
   const page = isSearchMode
     ? searchPage
@@ -167,11 +177,13 @@ export function DiscoverView() {
       ? trendingPage
       : activeTab === 'popular'
         ? popularPage
-        : seasonalPage;
+        : activeTab === 'seasonal'
+          ? seasonalPage
+          : { current: 1, hasNext: false };
 
   const showLoading = isSearchMode ? isSearching : isLoading;
-  const showEmpty = !showLoading && items.length === 0;
-  const showGrid = items.length > 0;
+  const showEmpty = !isRandomMode && !showLoading && items.length === 0;
+  const showGrid = !isRandomMode && items.length > 0;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -256,8 +268,17 @@ export function DiscoverView() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 pb-20">
+        {/* Random discovery — own panel, owns its own loading/error/empty */}
+        {isRandomMode && (
+          <RandomDiscoveryPanel
+            libraryIds={libraryIds}
+            onCardClick={handleCardClick}
+            onError={handleRetry}
+          />
+        )}
+
         {/* Error state */}
-        {error && !showLoading && (
+        {!isRandomMode && error && !showLoading && (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
             <p className="text-sm text-center max-w-xs">{error}</p>
             <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 text-xs">
@@ -268,7 +289,7 @@ export function DiscoverView() {
         )}
 
         {/* Loading state — only show skeleton on initial load (no items yet) */}
-        {showLoading && items.length === 0 && <DiscoverSkeleton />}
+        {!isRandomMode && showLoading && items.length === 0 && <DiscoverSkeleton />}
 
         {/* Empty state */}
         {showEmpty && !error && (
@@ -296,7 +317,7 @@ export function DiscoverView() {
         )}
 
         {/* Infinite scroll sentinel */}
-        {page.hasNext && (
+        {!isRandomMode && page.hasNext && (
           <div ref={sentinelRef} className="flex justify-center py-8">
             {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
           </div>

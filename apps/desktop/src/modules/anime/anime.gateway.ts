@@ -112,6 +112,30 @@ export class AnimeGateway {
     });
   }
 
+  @SubscribeMessage(AnimeEvents.GET_RANDOM)
+  async handleGetRandom(
+    @MessageBody()
+    payload: {
+      includedGenres?: string[];
+      excludedGenres?: string[];
+      perPage?: number;
+    }
+  ) {
+    return handleGatewayRequest({
+      logger,
+      action: `anime:get-random — include=[${(payload.includedGenres ?? []).join(',')}] exclude=[${(payload.excludedGenres ?? []).join(',')}]`,
+      defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
+      handler: async () => {
+        const result = await this.animeService.getRandomByGenre(
+          payload.includedGenres,
+          payload.excludedGenres,
+          payload.perPage
+        );
+        return { results: result.media, pageInfo: result.pageInfo };
+      },
+    });
+  }
+
   @SubscribeMessage(AnimeEvents.GET_USER_PROFILE)
   async handleGetUserProfile(@MessageBody() payload: { username: string }) {
     return handleGatewayRequest({
