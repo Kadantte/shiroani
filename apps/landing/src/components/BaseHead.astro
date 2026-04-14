@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title,
-  description = 'ShiroAni — Twoja osobista przeglądarka i tracker anime. Przeglądaj, śledź i odkrywaj anime z wbudowaną przeglądarką i społecznością Discord.',
+  description = 'ShiroAni to osobista przeglądarka i tracker anime. Przeglądaj, śledź i odkrywaj anime z wbudowaną przeglądarką i społecznością Discord.',
 } = Astro.props;
 
 const ogImage = new URL('/og-default.png', Astro.site);
@@ -27,12 +27,12 @@ const ogImage = new URL('/og-default.png', Astro.site);
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content={Astro.url} />
-<meta property="og:title" content="ShiroAni — Twój przytulny kącik anime" />
-<meta property="og:description" content="Przeglądaj, śledź i odkrywaj anime — wszystko w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
+<meta property="og:title" content="ShiroAni · Twój przytulny kącik anime" />
+<meta property="og:description" content="Przeglądaj, śledź i odkrywaj anime w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
 <meta property="og:image" content={ogImage} />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ShiroAni — Twój przytulny kącik anime" />
-<meta name="twitter:description" content="Przeglądaj, śledź i odkrywaj anime — wszystko w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
+<meta name="twitter:title" content="ShiroAni · Twój przytulny kącik anime" />
+<meta name="twitter:description" content="Przeglądaj, śledź i odkrywaj anime w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
 <meta name="twitter:image" content={ogImage} />

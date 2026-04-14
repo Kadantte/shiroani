@@ -161,7 +161,7 @@ function InteractiveMascot() {
     >
       <img
         src="/mascot-wave.png"
-        alt="ShiroAni maskotka — Shiro-chan macha na powitanie"
+        alt="Maskotka ShiroAni, Shiro-chan macha na powitanie"
         className="mx-auto mb-4 h-36 w-36 drop-shadow-2xl select-none sm:h-44 sm:w-44"
         draggable={false}
       />
@@ -176,16 +176,6 @@ function InteractiveMascot() {
 
 export function Hero() {
   const { canvasRef, sectionRef } = useCursorSparkles();
-
-  // Console easter egg
-  useEffect(() => {
-    console.log(
-      '%c🌸 ShiroAni %c— Open source & free forever. %chttps://github.com/Shironex/shiroani',
-      'font-size: 16px; font-weight: bold; color: #f472b6;',
-      'font-size: 13px; color: #a1a1aa;',
-      'font-size: 13px; color: #60a5fa; text-decoration: underline;'
-    );
-  }, []);
 
   return (
     <MotionProvider>
@@ -233,7 +223,7 @@ export function Hero() {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
             <span className="text-[10px] font-medium text-primary sm:text-xs">
-              v{latestRelease.version} — {latestRelease.title}
+              v{latestRelease.version} · {latestRelease.title}
             </span>
           </motion.div>
 
@@ -264,8 +254,8 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35, ease }}
           >
-            Przeglądaj, śledź i odkrywaj anime — wszystko w jednej desktopowej aplikacji z wbudowaną
-            przeglądarką i&nbsp;społecznością.
+            Przeglądaj, śledź i odkrywaj anime w jednej desktopowej aplikacji z wbudowaną
+            przeglądarką i społecznością.
           </motion.p>
 
           {/* CTAs with tactile press */}

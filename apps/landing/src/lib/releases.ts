@@ -37,7 +37,7 @@ export const releases: Release[] = [
     date: '13 kwietnia 2026',
     title: 'Odkrywaj anime, pokaż swój profil i wracaj szybciej do oglądania',
     description:
-      'Ta aktualizacja skupia się głównie na wygodzie. Pojawił się nowy widok Odkrywaj, profil AniList z kartą do udostępniania, lepsze powiadomienia na Windowsie i kilka zmian, które ułatwiają codzienne korzystanie z aplikacji.',
+      'Ta aktualizacja skupia się głównie na wygodzie. Pojawił się nowy widok Odkrywaj, profil AniList z kartą do udostępniania, lepsze powiadomienia na Windowsie i kilka zmian, które po prostu ułatwiają codzienne korzystanie z aplikacji.',
     categories: [
       {
         label: 'Nowe funkcje',
@@ -46,23 +46,23 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Sparkles,
-            text: 'Odkrywaj — nowy widok z wyszukiwarką oraz zakładkami Na czasie, Popularne i Sezonowe',
+            text: 'Odkrywaj: nowy widok z wyszukiwarką oraz zakładkami Na czasie, Popularne i Sezonowe',
           },
           {
             icon: Zap,
-            text: 'Losowe — nowa zakładka w Odkrywaj do szukania anime po wybranych i wykluczonych gatunkach',
+            text: 'Losowe: nowa zakładka w Odkrywaj do szukania anime po wybranych i wykluczonych gatunkach',
           },
           {
             icon: Monitor,
-            text: 'Profil AniList — widok ze statystykami oglądania po wpisaniu nazwy użytkownika, bez logowania',
+            text: 'Profil AniList: statystyki oglądania dostępne po wpisaniu nazwy użytkownika, bez logowania',
           },
           {
             icon: Palette,
-            text: 'Karta profilu PNG — możliwość skopiowania albo zapisania obrazka profilu do udostępnienia',
+            text: 'Karta profilu PNG: profil możesz skopiować albo zapisać jako obrazek do udostępnienia',
           },
           {
             icon: Zap,
-            text: 'Biblioteka i dziennik — sortowanie biblioteki, sortowanie wpisów w dzienniku i losowanie anime z listy do obejrzenia',
+            text: 'Biblioteka i dziennik: sortowanie biblioteki, sortowanie wpisów w dzienniku i losowanie anime z listy do obejrzenia',
           },
         ],
       },
@@ -73,23 +73,23 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Bell,
-            text: 'Powiadomienia na Windowsie — działają pewniej i mogą pojawić się nawet po zamknięciu aplikacji',
+            text: 'Powiadomienia na Windowsie działają pewniej i mogą pojawić się nawet po zamknięciu aplikacji',
           },
           {
             icon: Monitor,
-            text: 'Emitowane dzisiaj — nowy, bardziej zwarty układ z poziomymi kartami i Twoimi seriami na początku',
+            text: 'Emitowane dzisiaj: nowy, bardziej zwarty układ z poziomymi kartami i Twoimi seriami na początku',
           },
           {
             icon: Monitor,
-            text: 'Dock nawigacyjny — w ustawieniach można ukryć nieużywane widoki z docka',
+            text: 'Dock nawigacyjny: w ustawieniach można ukryć nieużywane widoki',
           },
           {
             icon: Palette,
-            text: 'Motywy — pozostało 18 bardziej wyraźnych presetów, a te zbyt podobne do siebie zostały usunięte',
+            text: 'Motywy: zostało 18 bardziej wyraźnych presetów, a te zbyt podobne do siebie usunęliśmy',
           },
           {
             icon: Wrench,
-            text: 'O aplikacji — nowy przycisk do otwierania folderu z logami',
+            text: 'O aplikacji: nowy przycisk do otwierania folderu z logami',
           },
         ],
       },
@@ -136,7 +136,7 @@ export const releases: Release[] = [
     date: '9 kwietnia 2026',
     title: 'Aktualizacja bezpieczeństwa',
     description:
-      'Mała, ale ważna aktualizacja — odświeżyliśmy kilka bibliotek, na których opiera się aplikacja, aby zamknąć zgłoszone luki bezpieczeństwa. Nie ma nowych funkcji, ale warto zainstalować ją jak najszybciej. Aktualizacja pobierze się automatycznie.',
+      'Mała, ale ważna aktualizacja. Odświeżyliśmy kilka bibliotek, na których opiera się aplikacja, żeby zamknąć zgłoszone luki bezpieczeństwa. Nie ma tu nowych funkcji, ale warto zainstalować ją jak najszybciej. Aktualizacja pobierze się automatycznie.',
     categories: [
       {
         label: 'Bezpieczeństwo',
@@ -145,7 +145,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Shield,
-            text: 'Zaktualizowany silnik Electron, na którym działa ShiroAni — zamknięte luki związane z obsługą okien, uprawnieniami procesów i wczytywaniem obrazów ze schowka',
+            text: 'Zaktualizowany silnik Electron, na którym działa ShiroAni. Zamknięte zostały luki związane z obsługą okien, uprawnieniami procesów i wczytywaniem obrazów ze schowka',
           },
           {
             icon: Shield,
@@ -153,7 +153,7 @@ export const releases: Release[] = [
           },
           {
             icon: Wrench,
-            text: 'Odświeżone zależności narzędziowe używane podczas budowania aplikacji — bez zmian w działaniu dla użytkowników',
+            text: 'Odświeżone zależności narzędziowe używane podczas budowania aplikacji, bez zmian w działaniu dla użytkowników',
           },
         ],
       },
@@ -164,7 +164,7 @@ export const releases: Release[] = [
     date: '8 kwietnia 2026',
     title: 'Blokowanie reklam popupowych i skr\u00F3ty klawiszowe',
     description:
-      'Wbudowana przeglądarka stała się znacznie przyjemniejsza w użyciu — inteligentne blokowanie popupów reklamowych z iframe video playerów, pełna obsługa skrótów klawiszowych oraz naprawiona ikona w zasobniku systemowym.',
+      'Wbudowana przeglądarka stała się znacznie przyjemniejsza w użyciu. Doszło inteligentne blokowanie popupów reklamowych z iframe video playerów, pełna obsługa skrótów klawiszowych i naprawiona ikona w zasobniku systemowym.',
     categories: [
       {
         label: 'Nowe funkcje',
@@ -173,7 +173,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Shield,
-            text: 'Inteligentne blokowanie popupów — filtruje wywołania `window.open` na podstawie list filtrów i reguł pochodzenia (tryb smart/strict/off)',
+            text: 'Inteligentne blokowanie popupów filtruje wywołania `window.open` na podstawie list filtrów i reguł pochodzenia (tryb smart/strict/off)',
           },
           {
             icon: Zap,
@@ -181,7 +181,7 @@ export const releases: Release[] = [
           },
           {
             icon: Shield,
-            text: 'Dodatkowe filtry adblocka — blokuje banery cookies i nakładki z prośbą o wyłączenie blokady',
+            text: 'Dodatkowe filtry adblocka blokują banery cookies i nakładki z prośbą o wyłączenie blokady',
           },
           {
             icon: Monitor,
@@ -196,7 +196,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Wrench,
-            text: 'Naprawiono ikonę w zasobniku systemowym — w spakowanej aplikacji brakowało pliku icon-32.png, teraz używany jest icon.ico',
+            text: 'Naprawiono ikonę w zasobniku systemowym. W spakowanej aplikacji brakowało pliku icon-32.png, teraz używany jest icon.ico',
           },
           {
             icon: Zap,
@@ -204,11 +204,11 @@ export const releases: Release[] = [
           },
           {
             icon: Globe,
-            text: 'Logowanie do kont Google działa poprawnie — Firefox UA dla domen autoryzacyjnych',
+            text: 'Logowanie do kont Google działa poprawnie dzięki Firefox UA dla domen autoryzacyjnych',
           },
           {
             icon: Wrench,
-            text: 'Discord RPC — timer sesji nie resetuje się przy zmianie widoku ani trybu bezczynności',
+            text: 'Discord RPC: timer sesji nie resetuje się przy zmianie widoku ani trybu bezczynności',
           },
         ],
       },
@@ -228,7 +228,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Globe,
-            text: 'Logowanie do kont Google działa poprawnie — przeglądarka wysyła Firefox UA dla domen autoryzacyjnych Google',
+            text: 'Logowanie do kont Google działa poprawnie, bo przeglądarka wysyła Firefox UA dla domen autoryzacyjnych Google',
           },
           {
             icon: Wrench,
@@ -241,7 +241,7 @@ export const releases: Release[] = [
   {
     version: '0.3.1',
     date: '6 kwietnia 2026',
-    title: 'Discord RPC — ciągły timer sesji',
+    title: 'Discord RPC: ciągły timer sesji',
     description:
       'Czas wyświetlany w Discord Rich Presence teraz pokazuje całkowity czas od uruchomienia aplikacji, zamiast resetować się przy zmianie widoku lub przejściu w tryb bezczynności.',
     categories: [
@@ -252,7 +252,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Wrench,
-            text: 'Discord RPC — timer sesji nie resetuje się już przy zmianie widoku ani przy przejściu w/z trybu bezczynności',
+            text: 'Discord RPC: timer sesji nie resetuje się już przy zmianie widoku ani przy przejściu w i z trybu bezczynności',
           },
         ],
       },
@@ -263,7 +263,7 @@ export const releases: Release[] = [
     date: '27 marca 2026',
     title: 'Czytelność i szczegóły anime',
     description:
-      'Nowe narzędzia do personalizacji interfejsu i szybszego dostępu do informacji o anime — skalowanie czcionek, dialog szczegółów anime w harmonogramie i przywrócone linki do repozytorium.',
+      'Nowe narzędzia do personalizacji interfejsu i szybszego dostępu do informacji o anime: skalowanie czcionek, dialog szczegółów anime w harmonogramie i przywrócone linki do repozytorium.',
     categories: [
       {
         label: 'Nowe funkcje',
@@ -272,7 +272,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Zap,
-            text: 'Skalowanie czytelności — zmiana rozmiaru czcionek w ustawieniach aplikacji',
+            text: 'Skalowanie czytelności: zmiana rozmiaru czcionek w ustawieniach aplikacji',
           },
           {
             icon: Monitor,
@@ -302,7 +302,7 @@ export const releases: Release[] = [
     date: '19 marca 2026',
     title: 'Stabilizacja i poprawki',
     description:
-      'Wydanie poprawkowe skupione na dopracowaniu nowego widoku Aktualności i usunięciu najbardziej uciążliwych problemów na macOS — od stanów ładowania RSS po zachowanie maskotki, Docka i okna aplikacji.',
+      'Wydanie poprawkowe skupione na dopracowaniu nowego widoku Aktualności i usunięciu najbardziej uciążliwych problemów na macOS, od stanów ładowania RSS po zachowanie maskotki, Docka i okna aplikacji.',
     categories: [
       {
         label: 'Feed i RSS',
@@ -315,7 +315,7 @@ export const releases: Release[] = [
           },
           {
             icon: Wrench,
-            text: 'Dodano ustawienie odświeżania RSS przy starcie aplikacji — domyślnie wyłączone',
+            text: 'Dodano ustawienie odświeżania RSS przy starcie aplikacji, domyślnie wyłączone',
           },
           {
             icon: Zap,
@@ -357,10 +357,10 @@ export const releases: Release[] = [
     date: '19 marca 2026',
     title: 'Anime News Feed',
     description:
-      'ShiroAni teraz agreguje wiadomości ze świata anime z 11 źródeł RSS — po angielsku i po polsku. Nowy widok "Aktualności" pozwala być na bieżąco z newsami, premierami odcinków i recenzjami.',
+      'ShiroAni agreguje teraz wiadomości ze świata anime z 11 źródeł RSS, po angielsku i po polsku. Nowy widok "Aktualności" pozwala być na bieżąco z newsami, premierami odcinków i recenzjami.',
     categories: [
       {
-        label: 'Nowy widok — Aktualności',
+        label: 'Nowy widok: Aktualności',
         icon: Rss,
         color: 'text-primary',
         entries: [
@@ -394,7 +394,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Bell,
-            text: 'Naprawiono powiadomienia o odcinkach — auto-zapis ustawień i łapanie pominiętych odcinków',
+            text: 'Naprawiono powiadomienia o odcinkach: autozapis ustawień i wyłapywanie pominiętych odcinków',
           },
           {
             icon: Shield,
@@ -417,7 +417,7 @@ export const releases: Release[] = [
     date: '17 marca 2026',
     title: 'Pierwsze wydanie',
     description:
-      'Wszystko zaczęło się od prostego pytania: "a co, gdyby śledzenie anime było wygodne?" Oto wynik — pierwszy publiczny build ShiroAni.',
+      'Wszystko zaczęło się od prostego pytania: a co, gdyby śledzenie anime było wygodne? Tak powstał pierwszy publiczny build ShiroAni.',
     categories: [
       {
         label: 'Aplikacja desktopowa',
@@ -430,16 +430,16 @@ export const releases: Release[] = [
           },
           {
             icon: Sparkles,
-            text: 'Discord Rich Presence — automatyczne wykrywanie anime z ogladajanime.pl, shinden.pl i YouTube',
+            text: 'Discord Rich Presence: automatyczne wykrywanie anime z ogladajanime.pl, shinden.pl i YouTube',
           },
           { icon: Palette, text: 'Biblioteka anime z ręcznym dodawaniem, statusami i ocenami' },
           { icon: Zap, text: 'Harmonogram anime z odliczaniem do nowych odcinków' },
-          { icon: Palette, text: 'Dziennik — osobiste notatki o oglądanych seriach' },
+          { icon: Palette, text: 'Dziennik: osobiste notatki o oglądanych seriach' },
           {
             icon: Sparkles,
             text: 'Maskotka Shiro-chan z trzema pozami (powitanie, myślenie, sen)',
           },
-          { icon: Monitor, text: 'Kreator pierwszego uruchomienia — konfiguracja krok po kroku' },
+          { icon: Monitor, text: 'Kreator pierwszego uruchomienia: konfiguracja krok po kroku' },
           {
             icon: Zap,
             text: 'Ikona w zasobniku systemowym, autostart i ekran startowy z animacjami',
@@ -464,9 +464,9 @@ export const releases: Release[] = [
           },
           {
             icon: Sparkles,
-            text: '/post — kreator embedów w oknie modalnym (tytuł, opis, kolor, obraz, stopka)',
+            text: '/post: kreator embedów w oknie modalnym (tytuł, opis, kolor, obraz, stopka)',
           },
-          { icon: Zap, text: 'Dziennik audytowy — automatyczne logi usunięć i edycji wiadomości' },
+          { icon: Zap, text: 'Dziennik audytowy: automatyczne logi usunięć i edycji wiadomości' },
         ],
       },
     ],

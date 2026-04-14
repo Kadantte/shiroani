@@ -1,7 +1,20 @@
 import { motion } from 'framer-motion';
-import { Github } from 'lucide-react';
 import { DISCORD_INVITE_URL } from '@shiroani/shared';
 import { MotionProvider } from './MotionProvider';
+
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M12 .5a12 12 0 0 0-3.794 23.385c.6.111.82-.261.82-.577v-2.234c-3.338.726-4.042-1.61-4.042-1.61a3.18 3.18 0 0 0-1.334-1.755c-1.09-.745.083-.73.083-.73a2.52 2.52 0 0 1 1.84 1.239 2.554 2.554 0 0 0 3.49.997 2.556 2.556 0 0 1 .762-1.603c-2.665-.303-5.466-1.333-5.466-5.931a4.64 4.64 0 0 1 1.236-3.218 4.31 4.31 0 0 1 .117-3.176s1.008-.323 3.301 1.23a11.4 11.4 0 0 1 6.01 0c2.29-1.553 3.296-1.23 3.296-1.23a4.31 4.31 0 0 1 .12 3.176 4.63 4.63 0 0 1 1.234 3.218c0 4.61-2.805 5.625-5.478 5.921a2.86 2.86 0 0 1 .814 2.219v3.286c0 .319.216.694.825.576A12 12 0 0 0 12 .5Z" />
+    </svg>
+  );
+}
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -59,7 +72,7 @@ export function Footer() {
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Github className="h-4.5 w-4.5" />
+              <GitHubIcon className="h-4.5 w-4.5" />
             </motion.a>
             <motion.a
               href={DISCORD_INVITE_URL}

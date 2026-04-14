@@ -8,7 +8,6 @@ const links = [
   { label: 'Podgląd', href: '#podglad' },
   { label: 'Społeczność', href: '#spolecznosc' },
   { label: 'Lista zmian', href: '/changelog' },
-  { label: 'Pobierz', href: '/download' },
 ];
 
 const focusRing = 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none';
@@ -55,7 +54,7 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <a
               href="/download"
-              className={`rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 sm:px-4 sm:py-2 sm:text-sm ${focusRing}`}
+              className={`rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/85 sm:px-4 sm:py-2 sm:text-sm ${focusRing}`}
             >
               Pobierz
             </a>
@@ -64,6 +63,8 @@ export function Navbar() {
               className={`rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground md:hidden ${focusRing}`}
               onClick={() => setMobileOpen(prev => !prev)}
               aria-label={mobileOpen ? 'Zamknij menu' : 'Otwórz menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -73,39 +74,42 @@ export function Navbar() {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
+              id="mobile-nav"
+              initial={{ opacity: 0, gridTemplateRows: '0fr' }}
+              animate={{ opacity: 1, gridTemplateRows: '1fr' }}
+              exit={{ opacity: 0, gridTemplateRows: '0fr' }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="overflow-hidden border-t border-white/10 bg-background md:hidden"
+              className="grid overflow-hidden border-t border-white/10 bg-background md:hidden"
               role="navigation"
               aria-label="Menu mobilne"
               onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Escape') setMobileOpen(false);
               }}
             >
-              <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-4">
-                {links.map(({ label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    onClick={e => {
-                      if (href.startsWith('#')) {
-                        e.preventDefault();
-                        setMobileOpen(false);
-                        const el = document.querySelector(href);
-                        if (el) {
-                          setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 300);
+              <div className="overflow-hidden">
+                <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-4">
+                  {links.map(({ label, href }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      onClick={e => {
+                        if (href.startsWith('#')) {
+                          e.preventDefault();
+                          setMobileOpen(false);
+                          const el = document.querySelector(href);
+                          if (el) {
+                            setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 300);
+                          }
+                        } else {
+                          setMobileOpen(false);
                         }
-                      } else {
-                        setMobileOpen(false);
-                      }
-                    }}
-                    className={`rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground ${focusRing}`}
-                  >
-                    {label}
-                  </a>
-                ))}
+                      }}
+                      className={`rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground ${focusRing}`}
+                    >
+                      {label}
+                    </a>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

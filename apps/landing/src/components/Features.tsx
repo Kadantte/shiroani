@@ -36,7 +36,7 @@ const cells: BentoCell[] = [
   {
     image: '/bento/discord_rpc.webp',
     title: 'Discord Rich Presence',
-    desc: 'Twoi znajomi widzą co oglądasz — automatycznie.',
+    desc: 'Twoi znajomi widzą, co oglądasz, automatycznie.',
     className: 'sm:col-span-1',
     imageMode: 'contain',
     accent: ACCENT_DISCORD_15,
@@ -44,7 +44,7 @@ const cells: BentoCell[] = [
   {
     image: '/bento/onboarding.webp',
     title: 'Konfiguracja krok po kroku',
-    desc: 'Motyw, tło, dock, Discord, adblock — gotowe w minutę.',
+    desc: 'Motyw, tło, dock, Discord i adblock ustawisz w minutę.',
     className: 'sm:col-span-1',
     accent: ACCENT_PINK_12,
   },
@@ -78,7 +78,7 @@ const cells: BentoCell[] = [
   },
   {
     title: 'Eksport i import danych',
-    desc: 'Twoje dane, Twoja kontrola. Przenieś bibliotekę jednym kliknięciem.',
+    desc: 'Twoje dane, pełna kontrola. Przenieś bibliotekę jednym kliknięciem.',
     className: 'sm:col-span-1',
     accent: ACCENT_GOLD_10,
   },
@@ -230,7 +230,7 @@ function Cell({
         className={`${baseClass} ${interactiveClass}`}
         {...motionProps}
         onClick={() => onOpen(cell.image!, cell.title)}
-        aria-label={`${cell.title} — kliknij aby powiększyć`}
+        aria-label={`${cell.title}. Kliknij, aby powiększyć`}
       >
         {inner}
       </motion.button>
@@ -274,7 +274,7 @@ export function Features() {
               Wszystko w jednym miejscu
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Nie opowiadamy — pokazujemy. Tak wygląda ShiroAni od środka.
+              Nie opowiadamy, tylko pokazujemy. Tak wygląda ShiroAni od środka.
             </p>
           </motion.div>
 

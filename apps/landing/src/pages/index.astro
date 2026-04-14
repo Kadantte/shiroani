@@ -5,18 +5,20 @@ import { Hero } from '../components/Hero';
 import { Features } from '../components/Features';
 import { Preview } from '../components/Preview';
 import { BotSection } from '../components/BotSection';
-import { Download } from '../components/Download';
+import { ChangelogPreview } from '../components/ChangelogPreview';
+import { FAQ } from '../components/FAQ';
 import { Footer } from '../components/Footer';
 ---
 
-<BaseLayout title="ShiroAni — Anime Browser & Tracker">
+<BaseLayout title="ShiroAni · Przeglądarka i tracker anime">
   <Navbar client:load />
   <main id="main">
     <Hero client:idle />
     <Features client:visible />
     <Preview client:visible />
     <BotSection client:visible />
-    <Download client:visible />
+    <ChangelogPreview client:visible />
+    <FAQ client:visible />
   </main>
   <Footer client:visible />
 </BaseLayout>

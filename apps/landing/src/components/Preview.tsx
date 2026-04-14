@@ -7,7 +7,7 @@ const screenshots = [
   {
     src: '/screenshots/library.webp',
     label: 'Biblioteka anime',
-    caption: 'Twoja osobista kolekcja — wszystko w jednym miejscu',
+    caption: 'Twoja kolekcja, wszystko w jednym miejscu',
     alt: 'Zrzut ekranu biblioteki anime z okładkami i filtrami statusu',
   },
   {

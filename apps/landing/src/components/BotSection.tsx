@@ -21,7 +21,7 @@ const botFeatures: BotFeature[] = [
   {
     icon: Shield,
     title: 'Moderacja',
-    desc: 'Ban, mute, clear z pełnym audytem. Logi edycji i usuwania wiadomości.',
+    desc: 'Ban, mute i clear z pełnym audytem. Do tego logi edycji i usuwania wiadomości.',
   },
   {
     icon: Sparkles,
@@ -31,7 +31,7 @@ const botFeatures: BotFeature[] = [
   {
     icon: UserCheck,
     title: 'Weryfikacja',
-    desc: 'System anti-bot z przyciskiem weryfikacji i automatycznym nadawaniem roli.',
+    desc: 'System antybotowy z przyciskiem weryfikacji i automatycznym nadawaniem roli.',
   },
 ];
 
@@ -104,14 +104,14 @@ export function BotSection() {
                 Nasz Discord
               </h2>
               <p className="mt-4 leading-relaxed text-muted-foreground">
-                ShiroAni to nie tylko aplikacja — to społeczność. Nasz bot zarządza serwerem, śledzi
-                aktywność i&nbsp;nagradza zaangażowanie.
+                ShiroAni to nie tylko aplikacja. To też społeczność. Nasz bot zarządza serwerem,
+                śledzi aktywność i nagradza zaangażowanie.
               </p>
 
               <div className="mt-6 flex items-start gap-3 rounded-xl border border-border bg-surface p-4">
                 <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold-dim" />
                 <p className="text-sm text-muted-foreground">
-                  Bot jest <span className="font-medium text-foreground">prywatny</span> — działa
+                  Bot jest <span className="font-medium text-foreground">prywatny</span> i działa
                   wyłącznie na serwerze społeczności ShiroAni.
                 </p>
               </div>
