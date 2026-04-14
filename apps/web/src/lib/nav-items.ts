@@ -7,7 +7,7 @@ export interface NavItem {
 
 /** All navigation views in display order. Source of truth for the dock + settings toggles. */
 export const ALL_NAV_ITEMS: NavItem[] = [
-  { id: 'browser', label: 'Internet' },
+  { id: 'browser', label: 'Przeglądarka' },
   { id: 'library', label: 'Biblioteka' },
   { id: 'discover', label: 'Odkrywaj' },
   { id: 'diary', label: 'Dziennik' },

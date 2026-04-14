@@ -361,7 +361,7 @@ export function DownloadPage() {
             >
               {downloaded
                 ? 'Shiro-chan już nie może się doczekać. Do zobaczenia w aplikacji!'
-                : 'Wybierz swoją platformę i zacznijmy oglądać razem.'}
+                : 'Wybierz swoją platformę i pobierz aplikację.'}
             </motion.p>
           </AnimatePresence>
 
@@ -461,7 +461,7 @@ export function DownloadPage() {
             className="inline-flex items-center gap-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
           >
             <FileText className="h-3.5 w-3.5" />
-            Changelog
+            Lista zmian
           </a>
           {release && (
             <a

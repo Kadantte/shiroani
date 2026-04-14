@@ -287,7 +287,7 @@ export function Hero() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl border border-border/60 px-7 py-3.5 text-sm font-semibold text-foreground/90 transition-colors duration-200 hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
             >
-              Dołącz do Discord
+              Dołącz do Discorda
             </a>
           </motion.div>
         </div>

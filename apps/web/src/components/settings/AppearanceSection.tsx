@@ -150,7 +150,7 @@ export function AppearanceSection() {
               Automatyczne ukrywanie
             </p>
             <p className="text-xs text-muted-foreground/70">
-              Dock zwija się do ikony i rozwija po najechaniu
+              Dock chowa się do ikony i rozwija po najechaniu kursorem
             </p>
           </div>
           <Switch

@@ -307,7 +307,7 @@ export function AnimeInfoDialog({ anime, open, onOpenChange }: AnimeInfoDialogPr
           {/* Studios */}
           {mainStudios.length > 0 && (
             <div>
-              <h3 className="text-xs font-medium text-muted-foreground mb-1">Studio</h3>
+              <h3 className="text-xs font-medium text-muted-foreground mb-1">Studia</h3>
               <p className="text-sm font-medium">{mainStudios.join(', ')}</p>
             </div>
           )}

@@ -35,7 +35,7 @@ const SubscribeBellButton = memo(function SubscribeBellButton({
         isSubscribed && 'opacity-100',
         className
       )}
-      tooltip={isSubscribed ? 'Anuluj subskrypcję' : 'Subskrybuj powiadomienia'}
+      tooltip={isSubscribed ? 'Wyłącz powiadomienia' : 'Włącz powiadomienia'}
       tooltipSide={tooltipSide}
       onClick={toggle}
     >

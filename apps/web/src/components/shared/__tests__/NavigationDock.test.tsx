@@ -7,7 +7,7 @@ import { NavigationDock } from '../NavigationDock';
 vi.mock('@/lib/platform', () => ({ IS_ELECTRON: false }));
 
 const NAV_ITEMS = [
-  { id: 'browser', label: 'Internet' },
+  { id: 'browser', label: 'Przeglądarka' },
   { id: 'library', label: 'Biblioteka' },
   { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Harmonogram' },
@@ -90,7 +90,7 @@ describe('NavigationDock', () => {
     render(<NavigationDock hasBg={false} />);
 
     // Default: browser is active
-    expect(screen.getByRole('button', { name: 'Internet' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Przeglądarka' })).toHaveAttribute(
       'aria-current',
       'page'
     );
@@ -104,7 +104,9 @@ describe('NavigationDock', () => {
       'aria-current',
       'page'
     );
-    expect(screen.getByRole('button', { name: 'Internet' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: 'Przeglądarka' })).not.toHaveAttribute(
+      'aria-current'
+    );
   });
 
   it('shows collapsed logo when autoHide is enabled', () => {
@@ -113,7 +115,7 @@ describe('NavigationDock', () => {
 
     // Should show the logo image but not nav buttons
     expect(screen.getByAltText('ShiroAni')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Internet' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Przeglądarka' })).not.toBeInTheDocument();
   });
 
   it('renders vertically when edge is left or right', () => {

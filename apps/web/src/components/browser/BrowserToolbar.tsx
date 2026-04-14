@@ -104,7 +104,7 @@ export function BrowserToolbar({
         className="w-8 h-8"
         onClick={onGoForward}
         disabled={!canGoForward}
-        tooltip="Do przodu"
+        tooltip="Dalej"
         tooltipSide="bottom"
       >
         <ArrowRight className="w-4 h-4" />
@@ -156,7 +156,7 @@ export function BrowserToolbar({
         size="icon"
         className={cn('w-8 h-8', adblockEnabled && 'text-status-success')}
         onClick={onToggleAdblock}
-        tooltip={adblockEnabled ? 'Adblock włączony' : 'Adblock wyłączony'}
+        tooltip={adblockEnabled ? 'Blokowanie reklam włączone' : 'Blokowanie reklam wyłączone'}
         tooltipSide="bottom"
       >
         {adblockEnabled ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}

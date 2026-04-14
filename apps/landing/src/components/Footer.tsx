@@ -76,7 +76,7 @@ export function Footer() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          © {YEAR} ShiroAni · Source-available
+          © {YEAR} ShiroAni · Kod źródłowy dostępny publicznie
         </p>
       </footer>
     </MotionProvider>

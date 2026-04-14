@@ -173,7 +173,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Shield,
-            text: 'Inteligentne blokowanie popupów — filtruje window.open na podstawie list filtrów i heurystyk origin (tryb smart/strict/off)',
+            text: 'Inteligentne blokowanie popupów — filtruje wywołania `window.open` na podstawie list filtrów i reguł pochodzenia (tryb smart/strict/off)',
           },
           {
             icon: Zap,
@@ -181,7 +181,7 @@ export const releases: Release[] = [
           },
           {
             icon: Shield,
-            text: 'Pełne listy filtrów adblock — rozszerzono o filtry irytujących elementów (banery cookies, nakładki "wyłącz adblock")',
+            text: 'Dodatkowe filtry adblocka — blokuje banery cookies i nakładki z prośbą o wyłączenie blokady',
           },
           {
             icon: Monitor,
@@ -302,7 +302,7 @@ export const releases: Release[] = [
     date: '19 marca 2026',
     title: 'Stabilizacja i poprawki',
     description:
-      'Patch release skupiony na dopracowaniu nowego widoku Aktualności i usunięciu najbardziej uciążliwych problemów na macOS — od stanów ładowania RSS po zachowanie maskotki, Docka i okna aplikacji.',
+      'Wydanie poprawkowe skupione na dopracowaniu nowego widoku Aktualności i usunięciu najbardziej uciążliwych problemów na macOS — od stanów ładowania RSS po zachowanie maskotki, Docka i okna aplikacji.',
     categories: [
       {
         label: 'Feed i RSS',
@@ -311,7 +311,7 @@ export const releases: Release[] = [
         entries: [
           {
             icon: Sparkles,
-            text: 'Loader Aktualności poprawnie pokazuje się przy pustym cache i pierwszym otwarciu widoku',
+            text: 'Ekran ładowania Aktualności poprawnie pokazuje się przy pustym cache i pierwszym otwarciu widoku',
           },
           {
             icon: Wrench,
@@ -374,7 +374,7 @@ export const releases: Release[] = [
           },
           {
             icon: Sparkles,
-            text: 'Animowana scena ładowania z sygnałem RSS, unoszącymi się kartami i efektami sparkle',
+            text: 'Animowana scena ładowania z sygnałem RSS, unoszącymi się kartami i efektami iskierek',
           },
           {
             icon: Zap,
@@ -382,7 +382,7 @@ export const releases: Release[] = [
           },
           {
             icon: Palette,
-            text: "Karty z obrazkami, badge'ami źródeł w kolorach marki i tagami kategorii",
+            text: 'Karty z obrazkami, odznakami źródeł w kolorach marki i tagami kategorii',
           },
           { icon: Monitor, text: 'Kliknięcie otwiera artykuł w wbudowanej przeglądarce' },
         ],
@@ -439,8 +439,11 @@ export const releases: Release[] = [
             icon: Sparkles,
             text: 'Maskotka Shiro-chan z trzema pozami (powitanie, myślenie, sen)',
           },
-          { icon: Monitor, text: 'Wizard pierwszego uruchomienia — konfiguracja krok po kroku' },
-          { icon: Zap, text: 'Tray icon, autostart, splash screen z animacjami' },
+          { icon: Monitor, text: 'Kreator pierwszego uruchomienia — konfiguracja krok po kroku' },
+          {
+            icon: Zap,
+            text: 'Ikona w zasobniku systemowym, autostart i ekran startowy z animacjami',
+          },
         ],
       },
       {
@@ -461,9 +464,9 @@ export const releases: Release[] = [
           },
           {
             icon: Sparkles,
-            text: '/post — builder embedów z modalem (tytuł, opis, kolor, obraz, stopka)',
+            text: '/post — kreator embedów w oknie modalnym (tytuł, opis, kolor, obraz, stopka)',
           },
-          { icon: Zap, text: 'Audit trail — automatyczne logi usunięć i edycji wiadomości' },
+          { icon: Zap, text: 'Dziennik audytowy — automatyczne logi usunięć i edycji wiadomości' },
         ],
       },
     ],

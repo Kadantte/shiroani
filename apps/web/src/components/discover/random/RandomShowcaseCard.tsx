@@ -236,10 +236,10 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
             variant="outline"
             onClick={onRefetch}
             disabled={isLoading}
-            tooltip="Pobierz nową pulę z AniList"
+            tooltip="Odśwież propozycje z AniList"
             tooltipSide="top"
             className="px-2"
-            aria-label="Pobierz nową pulę"
+            aria-label="Odśwież propozycje"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
           </TooltipButton>

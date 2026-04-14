@@ -7,7 +7,7 @@ const links = [
   { label: 'Funkcje', href: '#funkcje' },
   { label: 'Podgląd', href: '#podglad' },
   { label: 'Społeczność', href: '#spolecznosc' },
-  { label: 'Changelog', href: '/changelog' },
+  { label: 'Lista zmian', href: '/changelog' },
   { label: 'Pobierz', href: '/download' },
 ];
 

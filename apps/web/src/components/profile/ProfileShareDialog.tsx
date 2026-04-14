@@ -48,7 +48,7 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
       })
       .catch(() => {
         if (!cancelled) {
-          setError('Nie udalo sie wygenerowac karty profilu');
+          setError('Nie udało się wygenerować karty profilu');
           setIsRendering(false);
         }
       });
@@ -77,7 +77,7 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
       setCopyState('done');
       setTimeout(() => setCopyState('idle'), 2000);
     } catch {
-      setError('Nie udalo sie skopiowac do schowka');
+      setError('Nie udało się skopiować do schowka');
       setCopyState('idle');
     }
   }, [profile]);
@@ -112,7 +112,7 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
       setSaveState('done');
       setTimeout(() => setSaveState('idle'), 2000);
     } catch {
-      setError('Nie udalo sie zapisac pliku');
+      setError('Nie udało się zapisać pliku');
       setSaveState('idle');
     }
   }, [profile]);
@@ -121,9 +121,9 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[860px] p-0 gap-0 bg-background border-border-glass overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-3">
-          <DialogTitle className="text-base font-semibold">Udostepnij profil</DialogTitle>
+          <DialogTitle className="text-base font-semibold">Udostępnij profil</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground/70">
-            Karta profilu w formacie PNG — idealna do udostepnienia na Discordzie
+            Karta profilu w formacie PNG — idealna do udostępnienia na Discordzie
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +137,7 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
             ) : previewUrl ? (
               <img
                 src={previewUrl}
-                alt="Podglad karty profilu"
+                alt="Podgląd karty profilu"
                 className="w-full h-auto block"
                 draggable={false}
               />

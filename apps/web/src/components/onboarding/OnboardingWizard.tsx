@@ -260,7 +260,7 @@ function ThemeStep() {
           Wybierz motyw
         </h2>
         <p className="text-sm text-muted-foreground">
-          Możesz zmienić to później w ustawieniach. Najedź by podejrzeć!
+          Możesz zmienić to później w ustawieniach. Najedź kursorem, żeby podejrzeć.
         </p>
       </div>
 
@@ -390,7 +390,7 @@ function DockStep() {
         <ToggleRow
           id="onb-dock-autohide"
           label="Automatyczne ukrywanie"
-          description="Dock zwija się do ikony i rozwija po najechaniu"
+          description="Dock chowa się do ikony i rozwija po najechaniu kursorem"
           checked={autoHide}
           onChange={setAutoHide}
         />
@@ -455,7 +455,7 @@ function DiscordStep() {
       <div className="text-center space-y-1">
         <h2 className="text-lg font-semibold text-foreground flex items-center justify-center gap-2">
           <MessageCircle className="w-4.5 h-4.5 text-primary" />
-          Discord Rich Presence
+          Status na Discordzie
         </h2>
         <p className="text-sm text-muted-foreground">
           Pokaż znajomym co oglądasz i wspieraj rozwój ShiroAni!
@@ -470,7 +470,7 @@ function DiscordStep() {
         <ToggleRow
           id="onb-discord"
           label="Włącz integrację"
-          description="Wyświetlaj aktywność w ShiroAni na profilu Discord"
+          description="Pokaż swoją aktywność w ShiroAni na Discordzie"
           checked={enabled}
           onChange={handleToggle}
           disabled={saving || !IS_ELECTRON}
@@ -569,8 +569,8 @@ function FinishStep() {
 
         <h2 className="text-lg font-semibold text-foreground">Wszystko gotowe!</h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-          ShiroAni jest skonfigurowane. Ostatnia rzecz — chcesz blokować reklamy w wbudowanej
-          przeglądarce?
+          ShiroAni jest już skonfigurowane. Na koniec: chcesz włączyć blokowanie reklam we
+          wbudowanej przeglądarce?
         </p>
       </div>
 

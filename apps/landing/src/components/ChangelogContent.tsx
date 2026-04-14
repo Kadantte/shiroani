@@ -74,7 +74,7 @@ export function ChangelogContent() {
         transition={{ duration: 0.5, ease }}
       >
         <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
-          Changelog
+          Lista zmian
         </p>
         <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Co nowego?</h1>
         <p className="mt-4 text-lg text-muted-foreground">

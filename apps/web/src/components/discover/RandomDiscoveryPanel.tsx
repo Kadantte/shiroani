@@ -63,7 +63,7 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
       ) : pool.length === 0 ? (
         <EmptyState
           icon={Sparkles}
-          title="Brak losowań"
+          title="Brak propozycji"
           subtitle="Wybierz inne gatunki lub spróbuj ponownie."
         />
       ) : current ? (

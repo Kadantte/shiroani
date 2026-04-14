@@ -127,7 +127,7 @@ export function TimetableView({
                 {dayEntries.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/30">
                     <Calendar className="w-6 h-6 mb-1.5" />
-                    <p className="text-xs">Brak</p>
+                    <p className="text-xs">Brak emisji</p>
                   </div>
                 )}
               </div>

@@ -33,9 +33,9 @@ export const STATUS_COLORS: Record<string, string> = {
 
 export const FORMAT_LABELS: Record<string, string> = {
   TV: 'TV',
-  TV_SHORT: 'TV Short',
+  TV_SHORT: 'Krótki serial TV',
   MOVIE: 'Film',
-  SPECIAL: 'Special',
+  SPECIAL: 'Odcinek specjalny',
   OVA: 'OVA',
   ONA: 'ONA',
   MUSIC: 'Muzyka',

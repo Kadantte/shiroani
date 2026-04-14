@@ -22,7 +22,7 @@ export function DiscordPreview({
 
   return (
     <div className="bg-[#2b2d31] rounded-lg p-3 text-white/90 font-sans">
-      <p className="text-2xs font-semibold text-white/60 uppercase mb-2">Gra w grę</p>
+      <p className="text-2xs font-semibold text-white/60 uppercase mb-2">Ogląda anime</p>
       <div className="flex gap-3">
         {/* Large image */}
         {showLargeImage && (
@@ -44,7 +44,7 @@ export function DiscordPreview({
           <p className="text-xs font-semibold text-white truncate">ShiroAni</p>
           {details && <p className="text-xs text-white/70 truncate">{details}</p>}
           {state && <p className="text-xs text-white/70 truncate">{state}</p>}
-          {showTimestamp && <p className="text-xs text-white/50">00:42:15 upłynęło</p>}
+          {showTimestamp && <p className="text-xs text-white/50">Upłynęło 00:42:15</p>}
         </div>
       </div>
 

@@ -182,7 +182,7 @@ export function DiaryView() {
             <EmptyState
               icon={NotebookPen}
               title="Twój dziennik jest pusty"
-              subtitle="Zacznij pisać swoje przemyślenia o anime, recenzje odcinków i notatki"
+              subtitle="Zacznij zapisywać przemyślenia o anime, recenzje odcinków i notatki"
               action={{
                 label: 'Napisz pierwszy wpis',
                 icon: Plus,

@@ -75,7 +75,7 @@ export const ANILIST_STATUS_LABELS: Record<string, string> = {
   RELEASING: 'Emitowane',
   NOT_YET_RELEASED: 'Nadchodzące',
   CANCELLED: 'Anulowane',
-  HIATUS: 'Przerwa',
+  HIATUS: 'W przerwie',
 };
 
 export const ANILIST_SOURCE_LABELS: Record<string, string> = {
@@ -102,9 +102,9 @@ export const ANILIST_RELATION_LABELS: Record<string, string> = {
   ADAPTATION: 'Adaptacja',
   PREQUEL: 'Prequel',
   SEQUEL: 'Sequel',
-  PARENT: 'Główne',
+  PARENT: 'Seria główna',
   SIDE_STORY: 'Historia poboczna',
-  CHARACTER: 'Postaci',
+  CHARACTER: 'Postacie',
   SUMMARY: 'Streszczenie',
   ALTERNATIVE: 'Alternatywne',
   SPIN_OFF: 'Spin-off',

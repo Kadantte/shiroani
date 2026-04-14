@@ -70,8 +70,8 @@ export function GeneralSection() {
                 Odświeżaj RSS przy starcie aplikacji
               </p>
               <p className="text-xs text-muted-foreground/70">
-                Gdy wyłączone, pierwszy fetch aktualności nastąpi dopiero po wejściu do widoku
-                Aktualności lub ręcznym odświeżeniu
+                Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku
+                Aktualności lub po ręcznym odświeżeniu
               </p>
               <p className="text-xs text-muted-foreground/55 mt-1">
                 Zmiana zacznie działać od następnego uruchomienia aplikacji

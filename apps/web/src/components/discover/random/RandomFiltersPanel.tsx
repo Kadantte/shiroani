@@ -42,7 +42,8 @@ export const RandomFiltersPanel = memo(function RandomFiltersPanel({
       {open && (
         <div className="px-4 pb-3 pt-1 space-y-2">
           <p className="text-2xs text-muted-foreground/70">
-            Klik = wymagaj · drugi klik = wyklucz · trzeci = wyczyść · wymagane łączą się przez „i"
+            Kliknij, aby wybrać. Kliknij ponownie, aby wykluczyć. Trzeci klik czyści wybór. Wybrane
+            gatunki łączą się przez „i”.
           </p>
           <GenrePicker
             included={included}

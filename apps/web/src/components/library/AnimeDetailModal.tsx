@@ -106,12 +106,12 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
     const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
 
     if (!activeTab?.url) {
-      toast.error('Brak aktywnej karty przeglądarki');
+      toast.error('Nie ma otwartej karty w przeglądarce');
       return;
     }
 
     setResumeUrl(activeTab.url);
-    toast.success('URL zaktualizowany', {
+    toast.success('Link zaktualizowany', {
       description: activeTab.url,
     });
   }, [entry, setResumeUrl]);
@@ -168,7 +168,9 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* Status */}
           <div className="space-y-1.5">
-            <label htmlFor="detail-status" className="text-xs font-medium text-muted-foreground">Status</label>
+            <label htmlFor="detail-status" className="text-xs font-medium text-muted-foreground">
+              Status
+            </label>
             <Select value={status} onValueChange={v => setStatus(v as AnimeStatus)}>
               <SelectTrigger id="detail-status" className="h-8">
                 <SelectValue />
@@ -205,7 +207,9 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label htmlFor="detail-notes" className="text-xs font-medium text-muted-foreground">Notatki</label>
+            <label htmlFor="detail-notes" className="text-xs font-medium text-muted-foreground">
+              Notatki
+            </label>
             <textarea
               id="detail-notes"
               value={notes}
@@ -224,7 +228,10 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
           {/* Resume URL */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="detail-resume-url" className="text-xs font-medium text-muted-foreground">
+              <label
+                htmlFor="detail-resume-url"
+                className="text-xs font-medium text-muted-foreground"
+              >
                 Link do kontynuacji
               </label>
               <Button
@@ -234,7 +241,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
                 onClick={handleUpdateUrl}
               >
                 <Link2 className="w-3 h-3" />
-                Pobierz z przeglądarki
+                Pobierz link z przeglądarki
               </Button>
             </div>
             <Input
@@ -248,7 +255,12 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
 
           {/* AniList ID */}
           <div className="space-y-1.5">
-            <label htmlFor="detail-anilist-id" className="text-xs font-medium text-muted-foreground">AniList ID</label>
+            <label
+              htmlFor="detail-anilist-id"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              AniList ID
+            </label>
             <p className="text-2xs text-muted-foreground/70">
               Wymagane do powiadomień i odliczania odcinków
             </p>

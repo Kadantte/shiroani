@@ -218,7 +218,7 @@ export function FeedView() {
             <div className="text-center space-y-1">
               <p className="text-sm font-medium text-foreground/70">Brak aktualności</p>
               <p className="text-xs text-muted-foreground/50">
-                Nie znaleziono żadnych wpisów dla wybranych filtrów
+                Dla wybranych filtrów nie ma żadnych wpisów
               </p>
             </div>
             <Button
@@ -258,7 +258,7 @@ export function FeedView() {
                       Ładowanie...
                     </>
                   ) : (
-                    'Załaduj więcej'
+                    'Pokaż więcej'
                   )}
                 </Button>
               </div>

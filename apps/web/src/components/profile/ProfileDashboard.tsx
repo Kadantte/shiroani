@@ -206,7 +206,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
                     label={g.name}
                     value={g.count}
                     max={maxGenreCount}
-                    suffix={`${g.meanScore.toFixed(1)} avg`}
+                    suffix={`${g.meanScore.toFixed(1)} śr.`}
                   />
                 ))}
               </div>
@@ -250,7 +250,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
                     label={s.name}
                     value={s.count}
                     max={maxStudioCount}
-                    suffix={`${s.meanScore.toFixed(1)} avg`}
+                    suffix={`${s.meanScore.toFixed(1)} śr.`}
                     color="warning"
                   />
                 ))}
@@ -285,7 +285,7 @@ export function ProfileDashboard({ profile }: { profile: UserProfile }) {
                   <span
                     key={t.name}
                     className="px-2.5 py-1 rounded-md text-xs bg-primary/[0.08] text-foreground/70 border border-primary/10"
-                    title={`${t.count} anime, avg ${t.meanScore.toFixed(1)}`}
+                    title={`${t.count} anime, śr. ${t.meanScore.toFixed(1)}`}
                   >
                     {t.name}
                     <span className="ml-1.5 text-primary/70 font-semibold">{t.count}</span>

@@ -96,7 +96,7 @@ export function ScheduleView() {
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'daily' && 'bg-primary/10 text-primary hover:bg-primary/15'
               )}
-              tooltip="Dzienny"
+              tooltip="Widok dzienny"
             >
               <CalendarDays className="w-4 h-4" />
             </TooltipButton>
@@ -109,7 +109,7 @@ export function ScheduleView() {
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'weekly' && 'bg-primary/10 text-primary hover:bg-primary/15'
               )}
-              tooltip="Tydzień — lista"
+              tooltip="Widok tygodnia: lista"
             >
               <List className="w-4 h-4" />
             </TooltipButton>
@@ -122,7 +122,7 @@ export function ScheduleView() {
                 'w-8 h-8 transition-all duration-200',
                 viewMode === 'timetable' && 'bg-primary/10 text-primary hover:bg-primary/15'
               )}
-              tooltip="Tydzień — siatka"
+              tooltip="Widok tygodnia: siatka"
             >
               <LayoutGrid className="w-4 h-4" />
             </TooltipButton>

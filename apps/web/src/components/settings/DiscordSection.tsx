@@ -96,7 +96,7 @@ export function DiscordSection() {
       {/* Card 1: Main toggle */}
       <SettingsCard
         icon={MessageCircle}
-        title="Discord Rich Presence"
+        title="Status na Discordzie"
         subtitle="Pokaż swoją aktywność na Discordzie"
       >
         <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export function DiscordSection() {
               Włącz integrację
             </h4>
             <p className="text-xs text-muted-foreground">
-              Wyświetlaj swoją aktywność w ShiroAni na profilu Discord
+              Pokaż swoją aktywność w ShiroAni na Discordzie
             </p>
           </div>
           <Switch
@@ -217,7 +217,7 @@ export function DiscordSection() {
         <div className="flex items-start gap-2.5">
           <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
           <p className="text-xs font-medium text-muted-foreground/80">
-            Discord Rich Presence wymaga uruchomionego klienta Discord na komputerze. Inni
+            Status na Discordzie wymaga uruchomionego klienta Discord na komputerze. Inni
             użytkownicy zobaczą na Twoim profilu Discord, co robisz w ShiroAni.
           </p>
         </div>
