@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FolderOpen, FolderPlus, HardDrive, Trash2 } from 'lucide-react';
+import { FolderOpen, FolderPlus, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -8,15 +8,19 @@ import { useLocalLibraryStore } from '@/stores/useLocalLibraryStore';
 import { useFfmpegStore } from '@/stores/useFfmpegStore';
 import { FfmpegSetupDialog } from './ffmpeg/FfmpegSetupDialog';
 import { FfmpegStatusBadge } from './ffmpeg/FfmpegStatusBadge';
+import { ScanProgressBanner } from './ScanProgressBanner';
 
 export function LocalLibraryView() {
   const roots = useLocalLibraryStore(s => s.roots);
   const isLoading = useLocalLibraryStore(s => s.isLoading);
   const isAddingRoot = useLocalLibraryStore(s => s.isAddingRoot);
   const error = useLocalLibraryStore(s => s.error);
+  const scanProgress = useLocalLibraryStore(s => s.scanProgress);
   const refreshRoots = useLocalLibraryStore(s => s.refreshRoots);
   const pickAndAddRoot = useLocalLibraryStore(s => s.pickAndAddRoot);
   const removeRoot = useLocalLibraryStore(s => s.removeRoot);
+  const startScan = useLocalLibraryStore(s => s.startScan);
+  const cancelScan = useLocalLibraryStore(s => s.cancelScan);
 
   const ffmpegInstalled = useFfmpegStore(s => s.status.installed);
 
@@ -64,6 +68,14 @@ export function LocalLibraryView() {
       setSetupOpen(false);
       continueAddRoot();
     }
+  };
+
+  const handleRescan = (rootId: number) => {
+    if (!ffmpegInstalled) {
+      setSetupOpen(true);
+      return;
+    }
+    void startScan(rootId);
   };
 
   const hasRoots = roots.length > 0;
@@ -128,37 +140,73 @@ export function LocalLibraryView() {
               </div>
             )}
 
+            {Object.keys(scanProgress).length > 0 && (
+              <div className="space-y-2">
+                {Object.entries(scanProgress).map(([rootIdStr, progress]) => {
+                  const rootId = Number(rootIdStr);
+                  const root = roots.find(r => r.id === rootId);
+                  if (!root) return null;
+                  return (
+                    <ScanProgressBanner
+                      key={rootId}
+                      rootPath={root.path}
+                      rootLabel={root.label}
+                      progress={progress}
+                      onCancel={() => void cancelScan(rootId)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
             <div>
               <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70 mb-2">
                 Foldery ({roots.length})
               </h2>
               <ul className="flex flex-wrap gap-2">
-                {roots.map(root => (
-                  <li
-                    key={root.id}
-                    className="group flex items-center gap-2 rounded-full border border-border/60 bg-card/40 pl-3 pr-1 py-1 text-xs"
-                  >
-                    <FolderOpen className="w-3.5 h-3.5 text-primary/70 shrink-0" />
-                    <span className="max-w-[320px] truncate text-foreground/80" title={root.path}>
-                      {root.label ?? root.path}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground/60 hover:text-destructive"
-                      onClick={() => void removeRoot(root.id)}
-                      aria-label={`Usuń folder ${root.label ?? root.path}`}
+                {roots.map(root => {
+                  const isScanning = Boolean(scanProgress[root.id]);
+                  return (
+                    <li
+                      key={root.id}
+                      className="group flex items-center gap-2 rounded-full border border-border/60 bg-card/40 pl-3 pr-1 py-1 text-xs"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </li>
-                ))}
+                      <FolderOpen className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                      <span className="max-w-[320px] truncate text-foreground/80" title={root.path}>
+                        {root.label ?? root.path}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground/60 hover:text-primary"
+                        onClick={() => handleRescan(root.id)}
+                        disabled={isScanning}
+                        aria-label={`Ponownie przeskanuj ${root.label ?? root.path}`}
+                        title="Skanuj ponownie"
+                      >
+                        <RefreshCw
+                          className={isScanning ? 'w-3.5 h-3.5 animate-spin' : 'w-3.5 h-3.5'}
+                        />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground/60 hover:text-destructive"
+                        onClick={() => void removeRoot(root.id)}
+                        disabled={isScanning}
+                        aria-label={`Usuń folder ${root.label ?? root.path}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
             <div className="rounded-lg border border-border/60 bg-card/30 px-4 py-6 text-center">
               <p className="text-sm text-muted-foreground/80">
-                Brak serii — skanowanie folderów pojawi się w kolejnej fazie.
+                Siatka serii pojawi się w kolejnej fazie. Skan zapisuje dane do bazy już teraz.
               </p>
             </div>
           </div>

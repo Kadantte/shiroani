@@ -108,6 +108,78 @@ export interface LocalLibraryListSeriesPayload {
   rootId?: number;
 }
 
+export interface LocalLibraryStartScanPayload {
+  rootId: number;
+}
+
+export interface LocalLibraryCancelScanPayload {
+  rootId: number;
+}
+
+/** High-level phase of a scan run. */
+export type LocalLibraryScanPhase =
+  | 'starting'
+  | 'discovering'
+  | 'parsing'
+  | 'probing'
+  | 'persisting'
+  | 'cleanup'
+  | 'done';
+
+export interface LocalLibraryScanStartedPayload {
+  rootId: number;
+  scanId: number;
+}
+
+export interface LocalLibraryScanProgressPayload {
+  rootId: number;
+  scanId: number;
+  phase: LocalLibraryScanPhase;
+  filesSeen: number;
+  filesDone: number;
+  filesTotal: number;
+  filesSkipped: number;
+  currentPath: string | null;
+  seriesCount: number;
+}
+
+export interface LocalLibraryScanDonePayload {
+  rootId: number;
+  scanId: number;
+  filesAdded: number;
+  filesRemoved: number;
+  filesSkipped: number;
+  seriesCount: number;
+}
+
+export interface LocalLibraryScanFailedPayload {
+  rootId: number;
+  scanId: number | null;
+  error: string;
+  code?: string;
+}
+
+export interface LocalLibraryScanCancelledPayload {
+  rootId: number;
+  scanId: number;
+}
+
+export interface LocalLibrarySeriesUpdatedPayload {
+  rootId: number;
+  series: LocalSeries[];
+}
+
+export interface LocalLibraryStartScanResult {
+  scanId: number | null;
+  error?: string;
+  code?: string;
+}
+
+export interface LocalLibraryCancelScanResult {
+  success: boolean;
+  error?: string;
+}
+
 export interface LocalLibraryRootsResult {
   roots: LibraryRoot[];
 }

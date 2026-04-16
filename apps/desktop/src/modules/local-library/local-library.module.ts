@@ -4,6 +4,8 @@ import { LocalLibraryGateway } from './local-library.gateway';
 import { FfmpegService } from './ffmpeg/ffmpeg.service';
 import { FfmpegInstallerService } from './ffmpeg/ffmpeg-installer.service';
 import { FfmpegGateway } from './ffmpeg/ffmpeg.gateway';
+import { ScannerService } from './scanner/scanner.service';
+import { ScannerGateway } from './scanner/scanner.gateway';
 
 @Module({
   providers: [
@@ -12,7 +14,9 @@ import { FfmpegGateway } from './ffmpeg/ffmpeg.gateway';
     FfmpegService,
     FfmpegInstallerService,
     FfmpegGateway,
+    ScannerService,
+    ScannerGateway,
   ],
-  exports: [LocalLibraryService, FfmpegService],
+  exports: [LocalLibraryService, FfmpegService, ScannerService],
 })
 export class LocalLibraryModule {}

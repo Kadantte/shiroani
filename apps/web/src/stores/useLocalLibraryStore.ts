@@ -15,17 +15,43 @@ import {
   type LocalLibrarySeriesResult,
   type LocalLibraryRootAddedResult,
   type LocalLibraryRootRemovedResult,
+  type LocalLibraryScanPhase,
+  type LocalLibraryScanStartedPayload,
+  type LocalLibraryScanProgressPayload,
+  type LocalLibraryScanDonePayload,
+  type LocalLibraryScanFailedPayload,
+  type LocalLibraryScanCancelledPayload,
+  type LocalLibrarySeriesUpdatedPayload,
+  type LocalLibraryStartScanResult,
+  type LocalLibraryCancelScanResult,
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { IS_ELECTRON } from '@/lib/platform';
 
 const logger = createLogger('LocalLibraryStore');
 
+/** Per-root scan progress snapshot. Absent when no scan is in flight. */
+export interface ScanProgressSnapshot {
+  scanId: number;
+  phase: LocalLibraryScanPhase;
+  filesSeen: number;
+  filesDone: number;
+  filesTotal: number;
+  filesSkipped: number;
+  currentPath: string | null;
+  seriesCount: number;
+  /** Last error from a SCAN_FAILED. Cleared when a new scan starts. */
+  error: string | null;
+  errorCode: string | null;
+}
+
 interface LocalLibraryState extends SocketStoreSlice {
   roots: LibraryRoot[];
   series: LocalSeries[];
   /** Path currently being submitted (add-root in flight) — disables UI. */
   isAddingRoot: boolean;
+  /** Active scan state keyed by rootId. */
+  scanProgress: Record<number, ScanProgressSnapshot>;
 }
 
 interface LocalLibraryActions {
@@ -35,11 +61,25 @@ interface LocalLibraryActions {
   removeRoot: (id: number) => Promise<void>;
   /** Open the native folder picker then add the chosen folder as a root. */
   pickAndAddRoot: () => Promise<LibraryRoot | null>;
+  /** Kick off a scan for the given root. No-op if already scanning. */
+  startScan: (rootId: number) => Promise<void>;
+  /** Request cancellation of an in-flight scan. */
+  cancelScan: (rootId: number) => Promise<void>;
   initListeners: () => void;
   cleanupListeners: () => void;
 }
 
 type LocalLibraryStore = LocalLibraryState & LocalLibraryActions;
+
+/** Merge incoming series into the cached list, de-duping by id. */
+function mergeSeries(existing: LocalSeries[], incoming: LocalSeries[]): LocalSeries[] {
+  if (incoming.length === 0) return existing;
+  const byId = new Map(existing.map(s => [s.id, s]));
+  for (const s of incoming) {
+    byId.set(s.id, s);
+  }
+  return Array.from(byId.values());
+}
 
 export const useLocalLibraryStore = create<LocalLibraryStore>()(
   devtools(
@@ -59,8 +99,6 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
                 if (!root) return;
                 set(
                   state => {
-                    // De-dupe — the gateway may have emitted back to the same
-                    // client that invoked addRoot and already updated locally.
                     if (state.roots.some(r => r.id === root.id)) return state;
                     return { roots: [...state.roots, root] };
                   },
@@ -75,13 +113,160 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
                 const { id } = (data as LocalLibraryRootRemovedResult) ?? { id: -1 };
                 if (typeof id !== 'number' || id < 0) return;
                 set(
-                  state => ({
-                    roots: state.roots.filter(r => r.id !== id),
-                    // Drop series belonging to the removed root.
-                    series: state.series.filter(s => s.rootId !== id),
-                  }),
+                  state => {
+                    const { [id]: _removed, ...remainingScans } = state.scanProgress;
+                    void _removed;
+                    return {
+                      roots: state.roots.filter(r => r.id !== id),
+                      series: state.series.filter(s => s.rootId !== id),
+                      scanProgress: remainingScans,
+                    };
+                  },
                   undefined,
                   'localLibrary/rootRemoved'
+                );
+              },
+            },
+            {
+              event: LocalLibraryEvents.SCAN_STARTED,
+              handler: data => {
+                const payload = data as LocalLibraryScanStartedPayload | undefined;
+                if (!payload || typeof payload.rootId !== 'number') return;
+                set(
+                  state => ({
+                    scanProgress: {
+                      ...state.scanProgress,
+                      [payload.rootId]: {
+                        scanId: payload.scanId,
+                        phase: 'starting',
+                        filesSeen: 0,
+                        filesDone: 0,
+                        filesTotal: 0,
+                        filesSkipped: 0,
+                        currentPath: null,
+                        seriesCount: 0,
+                        error: null,
+                        errorCode: null,
+                      },
+                    },
+                  }),
+                  undefined,
+                  'localLibrary/scanStarted'
+                );
+              },
+            },
+            {
+              event: LocalLibraryEvents.SCAN_PROGRESS,
+              handler: data => {
+                const payload = data as LocalLibraryScanProgressPayload | undefined;
+                if (!payload) return;
+                set(
+                  state => {
+                    const prev = state.scanProgress[payload.rootId];
+                    return {
+                      scanProgress: {
+                        ...state.scanProgress,
+                        [payload.rootId]: {
+                          scanId: payload.scanId,
+                          phase: payload.phase,
+                          filesSeen: payload.filesSeen,
+                          filesDone: payload.filesDone,
+                          filesTotal: payload.filesTotal,
+                          filesSkipped: payload.filesSkipped,
+                          currentPath: payload.currentPath,
+                          seriesCount: payload.seriesCount,
+                          error: prev?.error ?? null,
+                          errorCode: prev?.errorCode ?? null,
+                        },
+                      },
+                    };
+                  },
+                  undefined,
+                  'localLibrary/scanProgress'
+                );
+              },
+            },
+            {
+              event: LocalLibraryEvents.SERIES_UPDATED,
+              handler: data => {
+                const payload = data as LocalLibrarySeriesUpdatedPayload | undefined;
+                if (!payload || !Array.isArray(payload.series)) return;
+                set(
+                  state => ({
+                    series: mergeSeries(state.series, payload.series),
+                  }),
+                  undefined,
+                  'localLibrary/seriesUpdated'
+                );
+              },
+            },
+            {
+              event: LocalLibraryEvents.SCAN_DONE,
+              handler: (data, get) => {
+                const payload = data as LocalLibraryScanDonePayload | undefined;
+                if (!payload) return;
+                set(
+                  state => {
+                    const { [payload.rootId]: _done, ...rest } = state.scanProgress;
+                    void _done;
+                    return { scanProgress: rest };
+                  },
+                  undefined,
+                  'localLibrary/scanDone'
+                );
+                // Refresh authoritative series list + roots (last_scanned_at updated).
+                get().refreshSeries();
+                get().refreshRoots();
+              },
+            },
+            {
+              event: LocalLibraryEvents.SCAN_FAILED,
+              handler: data => {
+                const payload = data as LocalLibraryScanFailedPayload | undefined;
+                if (!payload) return;
+                set(
+                  state => {
+                    const prev = state.scanProgress[payload.rootId];
+                    // Keep the row around so UI can display the error, but mark phase done.
+                    return {
+                      scanProgress: {
+                        ...state.scanProgress,
+                        [payload.rootId]: {
+                          ...(prev ?? {
+                            scanId: payload.scanId ?? -1,
+                            phase: 'done' as LocalLibraryScanPhase,
+                            filesSeen: 0,
+                            filesDone: 0,
+                            filesTotal: 0,
+                            filesSkipped: 0,
+                            currentPath: null,
+                            seriesCount: 0,
+                          }),
+                          phase: 'done',
+                          error: payload.error,
+                          errorCode: payload.code ?? null,
+                        },
+                      },
+                    };
+                  },
+                  undefined,
+                  'localLibrary/scanFailed'
+                );
+              },
+            },
+            {
+              event: LocalLibraryEvents.SCAN_CANCELLED,
+              handler: data => {
+                const payload = data as LocalLibraryScanCancelledPayload | undefined;
+                if (!payload) return;
+                set(
+                  state => {
+                    const { [payload.rootId]: _cancelled, ...rest } = state.scanProgress;
+                    void _cancelled;
+                    return { scanProgress: rest };
+                  },
+                  undefined,
+                  'localLibrary/scanCancelled'
                 );
               },
             },
@@ -98,6 +283,7 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
         roots: [],
         series: [],
         isAddingRoot: false,
+        scanProgress: {},
 
         // Socket actions
         ...socketActions,
@@ -207,7 +393,66 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
           if (result.cancelled || !result.path) {
             return null;
           }
-          return get().addRoot(result.path);
+          const root = await get().addRoot(result.path);
+          if (root) {
+            // Auto-kick the initial scan so the user flow is single-click.
+            void get().startScan(root.id);
+          }
+          return root;
+        },
+
+        startScan: async (rootId: number) => {
+          if (get().scanProgress[rootId]) {
+            logger.info(`Scan already in progress for root ${rootId}`);
+            return;
+          }
+          try {
+            const result = await emitWithErrorHandling<
+              { rootId: number },
+              LocalLibraryStartScanResult
+            >(LocalLibraryEvents.START_SCAN, { rootId });
+            if (!result?.scanId) {
+              const message = result?.error ?? 'Failed to start scan';
+              logger.error(`startScan failed: ${message}`);
+              set(
+                state => ({
+                  scanProgress: {
+                    ...state.scanProgress,
+                    [rootId]: {
+                      scanId: -1,
+                      phase: 'done',
+                      filesSeen: 0,
+                      filesDone: 0,
+                      filesTotal: 0,
+                      filesSkipped: 0,
+                      currentPath: null,
+                      seriesCount: 0,
+                      error: message,
+                      errorCode: result?.code ?? null,
+                    },
+                  },
+                }),
+                undefined,
+                'localLibrary/startScanError'
+              );
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`startScan threw: ${message}`);
+            set({ error: message }, undefined, 'localLibrary/startScanThrew');
+          }
+        },
+
+        cancelScan: async (rootId: number) => {
+          try {
+            await emitWithErrorHandling<{ rootId: number }, LocalLibraryCancelScanResult>(
+              LocalLibraryEvents.CANCEL_SCAN,
+              { rootId }
+            );
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`cancelScan failed: ${message}`);
+          }
         },
 
         initListeners,

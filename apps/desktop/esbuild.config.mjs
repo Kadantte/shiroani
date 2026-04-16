@@ -26,7 +26,14 @@ await build({
     'src/main/index.ts',
     'src/main/preload.ts',
     'src/main/menu-preload.ts',
+    // Worker entry — built as a standalone CJS file emitted next to the main
+    // bundle. scanner.service.ts resolves it via `path.join(__dirname,
+    // 'scanner.worker.js')`. Keeping it a separate entry (instead of
+    // require.resolve-ing the TS source) means we get tree-shaking +
+    // sourcemaps for free and no runtime TypeScript dependency.
+    'src/modules/local-library/scanner/scanner.worker.ts',
   ],
+  entryNames: '[name]',
   bundle: true,
   platform: 'node',
   target: 'node22',

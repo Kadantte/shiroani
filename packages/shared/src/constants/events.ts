@@ -109,12 +109,20 @@ export const LocalLibraryEvents = {
   ADD_ROOT: 'local-library:add-root',
   REMOVE_ROOT: 'local-library:remove-root',
   LIST_SERIES: 'local-library:list-series',
+  START_SCAN: 'local-library:start-scan',
+  CANCEL_SCAN: 'local-library:cancel-scan',
 
   // Server -> Client (broadcasts)
   ROOTS_RESULT: 'local-library:roots-result',
   SERIES_RESULT: 'local-library:series-result',
   ROOT_ADDED: 'local-library:root-added',
   ROOT_REMOVED: 'local-library:root-removed',
+  SCAN_STARTED: 'local-library:scan-started',
+  SCAN_PROGRESS: 'local-library:scan-progress',
+  SCAN_DONE: 'local-library:scan-done',
+  SCAN_FAILED: 'local-library:scan-failed',
+  SCAN_CANCELLED: 'local-library:scan-cancelled',
+  SERIES_UPDATED: 'local-library:series-updated',
 } as const;
 
 // ============================================

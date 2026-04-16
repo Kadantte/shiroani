@@ -1,6 +1,7 @@
 export { LocalLibraryModule } from './local-library.module';
 export { LocalLibraryService } from './local-library.service';
 export { LocalLibraryGateway } from './local-library.gateway';
+export { ScannerService, ScannerGateway, ScannerInternalEvents } from './scanner';
 export {
   FfmpegService,
   FfmpegInstallerService,
