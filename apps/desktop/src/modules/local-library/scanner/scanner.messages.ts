@@ -43,6 +43,8 @@ export interface ScannerDoneMessage {
   filesRemoved: number;
   filesSkipped: number;
   seriesCount: number;
+  /** IDs of series removed during cleanup (zero episodes remaining). */
+  removedSeriesIds: number[];
 }
 
 export interface ScannerErrorMessage {

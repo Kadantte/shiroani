@@ -196,6 +196,7 @@ describe('ScannerService lifecycle', () => {
       filesRemoved: 1,
       filesSkipped: 0,
       seriesCount: 2,
+      removedSeriesIds: [],
     };
     worker.emit('message', done);
     worker.emit('exit', 0);
@@ -205,6 +206,49 @@ describe('ScannerService lifecycle', () => {
     );
     expect(service.getActiveScans()).toHaveLength(0);
     expect(scans.get(1)?.status).toBe('completed');
+  });
+
+  it('emits SERIES_REMOVED when the worker reports orphaned series ids', async () => {
+    const { service } = makeService();
+    const removedSpy = jest.fn();
+    service.events.on(ScannerInternalEvents.SERIES_REMOVED, removedSpy);
+
+    await service.startScan(1);
+    const worker = mockWorkers[0];
+
+    const done: ScannerWorkerMessage = {
+      type: 'done',
+      filesAdded: 0,
+      filesRemoved: 2,
+      filesSkipped: 0,
+      seriesCount: 0,
+      removedSeriesIds: [17, 42],
+    };
+    worker.emit('message', done);
+    worker.emit('exit', 0);
+
+    expect(removedSpy).toHaveBeenCalledWith({ rootId: 1, seriesIds: [17, 42] });
+  });
+
+  it('does not emit SERIES_REMOVED when no series were orphaned', async () => {
+    const { service } = makeService();
+    const removedSpy = jest.fn();
+    service.events.on(ScannerInternalEvents.SERIES_REMOVED, removedSpy);
+
+    await service.startScan(1);
+    const worker = mockWorkers[0];
+
+    worker.emit('message', {
+      type: 'done',
+      filesAdded: 5,
+      filesRemoved: 0,
+      filesSkipped: 0,
+      seriesCount: 2,
+      removedSeriesIds: [],
+    });
+    worker.emit('exit', 0);
+
+    expect(removedSpy).not.toHaveBeenCalled();
   });
 
   it('finalizes with CANCELLED when cancelScan is called and worker acknowledges', async () => {

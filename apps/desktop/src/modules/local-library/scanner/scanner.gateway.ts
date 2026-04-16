@@ -29,6 +29,7 @@ import {
   type LocalLibraryScanProgressPayload,
   type LocalLibraryScanStartedPayload,
   type LocalLibrarySeriesUpdatedPayload,
+  type LocalLibrarySeriesRemovedPayload,
 } from '@shiroani/shared';
 
 import { CORS_CONFIG } from '../../shared/cors.config';
@@ -81,6 +82,10 @@ export class ScannerGateway implements OnGatewayInit, OnModuleDestroy {
     wire<LocalLibrarySeriesUpdatedPayload>(
       ScannerInternalEvents.SERIES_UPDATED,
       LocalLibraryEvents.SERIES_UPDATED
+    );
+    wire<LocalLibrarySeriesRemovedPayload>(
+      ScannerInternalEvents.SERIES_REMOVED,
+      LocalLibraryEvents.SERIES_REMOVED
     );
   }
 

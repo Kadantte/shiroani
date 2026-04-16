@@ -299,6 +299,8 @@ describe('removeMissingFiles', () => {
 
       expect(cleanup.filesRemoved).toBe(2);
       expect(cleanup.seriesRemoved).toBe(1);
+      expect(cleanup.removedSeriesIds).toHaveLength(1);
+      expect(cleanup.removedSeriesIds[0]).toBeGreaterThan(0);
 
       const surviving = db
         .prepare('SELECT COUNT(*) as n FROM local_series WHERE root_id = ?')

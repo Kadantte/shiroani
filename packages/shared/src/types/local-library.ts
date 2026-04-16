@@ -169,6 +169,101 @@ export interface LocalLibrarySeriesUpdatedPayload {
   series: LocalSeries[];
 }
 
+/** Broadcast when a scan orphans series (zero episodes remaining). */
+export interface LocalLibrarySeriesRemovedPayload {
+  rootId: number;
+  seriesIds: number[];
+}
+
+// ============================================
+// Episodes + progress
+// ============================================
+
+export interface LocalLibraryListEpisodesPayload {
+  seriesId: number;
+}
+
+export interface LocalLibraryEpisodesResult {
+  seriesId: number;
+  episodes: LocalEpisode[];
+}
+
+export interface LocalLibraryListContinueWatchingPayload {
+  limit?: number;
+}
+
+/** Item shown on the "Continue watching" rail — series + episode + progress. */
+export interface ContinueWatchingItem {
+  series: LocalSeries;
+  episode: LocalEpisode;
+  progress: PlaybackProgress;
+}
+
+export interface LocalLibraryContinueWatchingResult {
+  items: ContinueWatchingItem[];
+}
+
+/** Aggregate progress info for a single series. */
+export interface SeriesProgressSummary {
+  seriesId: number;
+  watchedCount: number;
+  totalCount: number;
+  lastWatchedAt: string | null;
+  /** Episode id to resume on, if any in-progress episode exists. */
+  resumeEpisodeId: number | null;
+  resumePositionSeconds: number | null;
+  resumeDurationSeconds: number | null;
+}
+
+export interface LocalLibraryGetSeriesProgressPayload {
+  seriesId: number;
+}
+
+export interface LocalLibrarySeriesProgressResult {
+  summary: SeriesProgressSummary;
+}
+
+export interface LocalLibraryMarkEpisodeWatchedPayload {
+  episodeId: number;
+  watched: boolean;
+}
+
+export interface LocalLibraryMarkSeriesWatchedPayload {
+  seriesId: number;
+  watched: boolean;
+}
+
+export interface LocalLibrarySetEpisodeProgressPayload {
+  episodeId: number;
+  positionSeconds: number;
+  durationSeconds: number;
+}
+
+export interface LocalLibraryEpisodeProgressUpdatedPayload {
+  episodeId: number;
+  seriesId: number;
+  progress: PlaybackProgress;
+}
+
+export interface LocalLibraryMarkEpisodeWatchedResult {
+  episodeId: number;
+  seriesId: number;
+  progress: PlaybackProgress | null;
+  error?: string;
+}
+
+export interface LocalLibraryMarkSeriesWatchedResult {
+  seriesId: number;
+  affectedEpisodes: number;
+  error?: string;
+}
+
+export interface LocalLibrarySetEpisodeProgressResult {
+  episodeId: number;
+  progress: PlaybackProgress | null;
+  error?: string;
+}
+
 export interface LocalLibraryStartScanResult {
   scanId: number | null;
   error?: string;

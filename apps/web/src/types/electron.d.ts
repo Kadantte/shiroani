@@ -136,6 +136,7 @@ interface ShiroaniLocalLibraryAPI {
     title?: string;
     filters?: { name: string; extensions: string[] }[];
   }) => Promise<PickFileResult>;
+  revealInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {

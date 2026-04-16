@@ -90,6 +90,7 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'overlay:reset-position',
   'local-library:pick-folder',
   'local-library:pick-file',
+  'local-library:reveal-in-explorer',
 ]);
 
 function assertAllowedChannel(channel: string): void {
@@ -437,12 +438,18 @@ export interface ShiroaniLocalLibraryAPI {
     title?: string;
     filters?: { name: string; extensions: string[] }[];
   }) => Promise<PickFileResult>;
+  revealInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const shiroaniLocalLibrary: ShiroaniLocalLibraryAPI = {
   pickFolder: () => ipcRenderer.invoke('local-library:pick-folder') as Promise<PickFolderResult>,
   pickFile: options =>
     ipcRenderer.invoke('local-library:pick-file', options) as Promise<PickFileResult>,
+  revealInExplorer: filePath =>
+    ipcRenderer.invoke('local-library:reveal-in-explorer', filePath) as Promise<{
+      success: boolean;
+      error?: string;
+    }>,
 };
 
 contextBridge.exposeInMainWorld('shiroaniLocalLibrary', shiroaniLocalLibrary);

@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, dialog } from 'electron';
+import { BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import type { PickFolderResult, PickFileResult } from '@shiroani/shared';
 
 /**
@@ -60,9 +60,31 @@ export function registerLocalLibraryHandlers(mainWindow: BrowserWindow): void {
       return { cancelled: false, path: result.filePaths[0] };
     }
   );
+
+  // Reveal a file in the OS file manager. Used by the 3-dot menu on episode
+  // rows. Guards against path injection by only passing the renderer's string
+  // straight to electron's shell API — electron itself validates absolute paths.
+  ipcMain.handle(
+    'local-library:reveal-in-explorer',
+    async (_event, filePath: string): Promise<{ success: boolean; error?: string }> => {
+      if (typeof filePath !== 'string' || filePath.length === 0) {
+        return { success: false, error: 'Invalid file path' };
+      }
+      try {
+        shell.showItemInFolder(filePath);
+        return { success: true };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }
+  );
 }
 
 export function cleanupLocalLibraryHandlers(): void {
   ipcMain.removeHandler('local-library:pick-folder');
   ipcMain.removeHandler('local-library:pick-file');
+  ipcMain.removeHandler('local-library:reveal-in-explorer');
 }

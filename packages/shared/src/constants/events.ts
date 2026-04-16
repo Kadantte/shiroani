@@ -111,10 +111,19 @@ export const LocalLibraryEvents = {
   LIST_SERIES: 'local-library:list-series',
   START_SCAN: 'local-library:start-scan',
   CANCEL_SCAN: 'local-library:cancel-scan',
+  LIST_EPISODES: 'local-library:list-episodes',
+  LIST_CONTINUE_WATCHING: 'local-library:list-continue-watching',
+  GET_SERIES_PROGRESS: 'local-library:get-series-progress',
+  MARK_EPISODE_WATCHED: 'local-library:mark-episode-watched',
+  MARK_SERIES_WATCHED: 'local-library:mark-series-watched',
+  SET_EPISODE_PROGRESS: 'local-library:set-episode-progress',
 
   // Server -> Client (broadcasts)
   ROOTS_RESULT: 'local-library:roots-result',
   SERIES_RESULT: 'local-library:series-result',
+  EPISODES_RESULT: 'local-library:episodes-result',
+  CONTINUE_WATCHING_RESULT: 'local-library:continue-watching-result',
+  SERIES_PROGRESS_RESULT: 'local-library:series-progress-result',
   ROOT_ADDED: 'local-library:root-added',
   ROOT_REMOVED: 'local-library:root-removed',
   SCAN_STARTED: 'local-library:scan-started',
@@ -123,6 +132,8 @@ export const LocalLibraryEvents = {
   SCAN_FAILED: 'local-library:scan-failed',
   SCAN_CANCELLED: 'local-library:scan-cancelled',
   SERIES_UPDATED: 'local-library:series-updated',
+  SERIES_REMOVED: 'local-library:series-removed',
+  EPISODE_PROGRESS_UPDATED: 'local-library:episode-progress-updated',
 } as const;
 
 // ============================================

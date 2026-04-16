@@ -93,6 +93,7 @@ async function run(): Promise<void> {
     filesRemoved: 0,
     filesSkipped: 0,
     seriesCount: 0,
+    removedSeriesIds: [] as number[],
   };
 
   try {
@@ -250,6 +251,7 @@ async function run(): Promise<void> {
     const cleanup = removeMissingFiles(db, init.rootId, currentPaths);
     totals.filesRemoved = cleanup.filesRemoved;
     totals.seriesCount = Math.max(0, groups.length - cleanup.seriesRemoved);
+    totals.removedSeriesIds = cleanup.removedSeriesIds;
 
     log(
       'info',
@@ -262,6 +264,7 @@ async function run(): Promise<void> {
       filesRemoved: totals.filesRemoved,
       filesSkipped: totals.filesSkipped,
       seriesCount: totals.seriesCount,
+      removedSeriesIds: totals.removedSeriesIds,
     });
   } catch (err) {
     const message = (err as Error)?.message ?? String(err);

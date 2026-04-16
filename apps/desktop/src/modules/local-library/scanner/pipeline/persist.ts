@@ -216,6 +216,8 @@ export function persistGroup(
 export interface CleanupResult {
   filesRemoved: number;
   seriesRemoved: number;
+  /** IDs of the series that were deleted during cleanup. */
+  removedSeriesIds: number[];
 }
 
 /**
@@ -264,6 +266,7 @@ export function removeMissingFiles(
     .all(rootId) as { id: number }[];
 
   let seriesRemoved = 0;
+  const removedSeriesIds: number[] = [];
   if (orphanSeries.length > 0) {
     const deleteStmt = db.prepare('DELETE FROM local_series WHERE id = ?');
     const runDelete = db.transaction((rows: { id: number }[]) => {
@@ -271,7 +274,8 @@ export function removeMissingFiles(
     });
     runDelete(orphanSeries);
     seriesRemoved = orphanSeries.length;
+    for (const row of orphanSeries) removedSeriesIds.push(row.id);
   }
 
-  return { filesRemoved, seriesRemoved };
+  return { filesRemoved, seriesRemoved, removedSeriesIds };
 }

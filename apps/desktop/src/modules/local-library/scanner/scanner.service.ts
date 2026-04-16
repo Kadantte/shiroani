@@ -21,6 +21,7 @@ import {
   type LocalLibraryScanProgressPayload,
   type LocalLibraryScanStartedPayload,
   type LocalLibrarySeriesUpdatedPayload,
+  type LocalLibrarySeriesRemovedPayload,
 } from '@shiroani/shared';
 
 import { DatabaseService } from '../../database';
@@ -52,6 +53,7 @@ export const ScannerInternalEvents = {
   FAILED: 'scanner:failed',
   CANCELLED: 'scanner:cancelled',
   SERIES_UPDATED: 'scanner:series-updated',
+  SERIES_REMOVED: 'scanner:series-removed',
 } as const;
 
 interface ActiveScan {
@@ -254,6 +256,8 @@ export class ScannerService {
       const filesRemoved = finalMessage?.type === 'done' ? finalMessage.filesRemoved : 0;
       const seriesCount = finalMessage?.type === 'done' ? finalMessage.seriesCount : 0;
       const filesSkipped = finalMessage?.type === 'done' ? finalMessage.filesSkipped : 0;
+      const removedSeriesIds =
+        finalMessage?.type === 'done' ? (finalMessage.removedSeriesIds ?? []) : [];
 
       db.prepare(
         `UPDATE library_scans
@@ -265,6 +269,16 @@ export class ScannerService {
         scan.rootId
       );
 
+      // Broadcast deletions BEFORE the done event so the renderer prunes state
+      // before it re-fetches lists in the done handler.
+      if (removedSeriesIds.length > 0) {
+        const removedPayload: LocalLibrarySeriesRemovedPayload = {
+          rootId: scan.rootId,
+          seriesIds: removedSeriesIds,
+        };
+        this.events.emit(ScannerInternalEvents.SERIES_REMOVED, removedPayload);
+      }
+
       const payload: LocalLibraryScanDonePayload = {
         rootId: scan.rootId,
         scanId: scan.scanId,
@@ -275,7 +289,7 @@ export class ScannerService {
       };
       this.events.emit(ScannerInternalEvents.DONE, payload);
       logger.info(
-        `Scan ${scan.scanId} done: ${filesAdded} added, ${filesRemoved} removed, ${seriesCount} series, ${filesSkipped} skipped`
+        `Scan ${scan.scanId} done: ${filesAdded} added, ${filesRemoved} removed, ${seriesCount} series, ${filesSkipped} skipped, ${removedSeriesIds.length} series removed`
       );
       return;
     }
