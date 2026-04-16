@@ -63,8 +63,16 @@ export async function extractFontAttachments(input: ExtractFontsInput): Promise<
 
   // `-dump_attachment:t ""` — the ":t" stream specifier scopes to attachment
   // streams; the empty string asks ffmpeg to name each file after the
-  // attachment's `filename` tag. We pair it with `-f null -` so ffmpeg has a
-  // muxer but produces no output stream.
+  // attachment's `filename` tag.
+  //
+  // `-t 0` is critical: ffmpeg dumps attachments during the input-open phase,
+  // then by default proceeds to transcode mapped streams. Without a time
+  // limit, ffmpeg will read the ENTIRE input file (multi-GB anime MKV → many
+  // minutes) before exiting. `-t 0` caps output duration so the process
+  // terminates immediately after the attachment dump.
+  //
+  // `-vn -an -sn` belt-and-suspenders: explicitly disable all stream types so
+  // ffmpeg has nothing to transcode even if `-t 0` is misinterpreted.
   const args = [
     '-nostdin',
     '-hide_banner',
@@ -75,6 +83,11 @@ export async function extractFontAttachments(input: ExtractFontsInput): Promise<
     '',
     '-i',
     filePath,
+    '-t',
+    '0',
+    '-vn',
+    '-an',
+    '-sn',
     '-f',
     'null',
     '-',

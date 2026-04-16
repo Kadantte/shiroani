@@ -99,7 +99,7 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
           it stays readable even when the placeholder gradient fills the
           artwork area. */}
       <div className="px-2.5 py-2 space-y-0.5">
-        <h3 className="text-xs font-medium text-foreground leading-tight truncate-2">{title}</h3>
+        <h3 className="text-xs font-medium text-foreground leading-tight line-clamp-2">{title}</h3>
         <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5 truncate">
           <span>{total > 0 ? `${watched} / ${total} odc.` : 'Brak odcinków'}</span>
           {lastWatched && (

@@ -59,9 +59,13 @@ export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGri
     return (containerWidth - GAP * (columnCount - 1)) / columnCount;
   }, [columnCount, containerWidth]);
 
-  // Card height: poster (4/3 of width) + title/meta block (~44px for two lines
-  // of title + one meta line with py-2 padding) + row gap.
-  const TITLE_BLOCK_HEIGHT = 44;
+  // Card height: poster (4/3 of width) + title/meta block + row gap.
+  //
+  // Title block measures ~64px rendered: px-2.5 py-2 padding (16px total) +
+  // 2-line title (`text-xs` / `leading-tight` ≈ 30px) + space-y-0.5 gap (2px)
+  // + meta row (`text-[10px]` ≈ 14px) = 62px. Pad up to 68 so nothing gets
+  // clipped by `overflow-hidden` on the card.
+  const TITLE_BLOCK_HEIGHT = 68;
   const rowHeight = Math.round(cardWidth * (4 / 3)) + TITLE_BLOCK_HEIGHT + GAP;
 
   const virtualizer = useVirtualizer({
