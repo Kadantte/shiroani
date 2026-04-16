@@ -58,6 +58,9 @@ export interface ExtractedFont {
  */
 export async function extractFontAttachments(input: ExtractFontsInput): Promise<ExtractedFont[]> {
   const { ffmpegPath, filePath, outputDir, signal, timeoutMs = 60_000 } = input;
+  const started = Date.now();
+
+  logger.debug(`font extract start src=${filePath} dst=${outputDir} timeout=${timeoutMs}ms`);
 
   await fs.mkdir(outputDir, { recursive: true });
 
@@ -173,6 +176,8 @@ export async function extractFontAttachments(input: ExtractFontsInput): Promise<
     });
   }
 
-  logger.debug(`extracted ${fonts.length} font attachment(s) from ${filePath}`);
+  logger.info(
+    `font extract done ${fonts.length} attachment(s) (+${Date.now() - started}ms) from ${filePath}`
+  );
   return fonts;
 }

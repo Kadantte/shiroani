@@ -51,6 +51,11 @@ export interface ExtractSubtitleInput {
  */
 export async function extractSubtitleToAss(input: ExtractSubtitleInput): Promise<void> {
   const { ffmpegPath, filePath, relativeIndex, outputPath, signal, timeoutMs = 60_000 } = input;
+  const started = Date.now();
+
+  logger.debug(
+    `extract start track=0:s:${relativeIndex} src=${filePath} dst=${outputPath} timeout=${timeoutMs}ms`
+  );
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
 
@@ -129,9 +134,15 @@ export async function extractSubtitleToAss(input: ExtractSubtitleInput): Promise
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
       if (code === 0) {
-        logger.debug(`extracted ${filePath}#s:${relativeIndex} -> ${outputPath}`);
+        logger.info(
+          `extract done track=0:s:${relativeIndex} (+${Date.now() - started}ms) -> ${outputPath}`
+        );
         resolve();
       } else {
+        logger.warn(
+          `extract failed track=0:s:${relativeIndex} code=${code} (+${Date.now() - started}ms) ` +
+            `stderr=${stderrBuf.slice(-256)}`
+        );
         reject(
           new SubtitleExtractionError(
             `ffmpeg exited with code ${code} while extracting subtitle track ${relativeIndex}`,

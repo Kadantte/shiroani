@@ -49,8 +49,8 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
       tabIndex={0}
       aria-label={title}
       className={cn(
-        'group relative rounded-lg overflow-hidden cursor-pointer',
-        'bg-card/80 border border-border-glass',
+        'group relative rounded-lg cursor-pointer',
+        'bg-card border border-border-glass',
         'transition-shadow duration-200',
         'hover:shadow-primary-glow focus-visible:shadow-primary-glow',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
@@ -60,8 +60,11 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
     >
       {/* Poster area — fixed 3/4 aspect so the artwork box is always the same
           size regardless of whether PosterImage renders an <img> or the
-          placeholder gradient. Badges + progress bar live as overlays here. */}
-      <div className="relative aspect-[3/4] overflow-hidden">
+          placeholder gradient. Badges + progress bar live as overlays here.
+          Only the poster gets overflow-hidden so rounded corners clip the
+          artwork; the title/meta block below must stay visible on any card
+          height. */}
+      <div className="relative aspect-[3/4] overflow-hidden rounded-t-lg">
         <PosterImage
           series={series}
           kind="poster"

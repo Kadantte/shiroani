@@ -127,53 +127,83 @@ export class PlayerService implements OnModuleDestroy {
    * before the new one is inserted.
    */
   async openSession(episodeId: number): Promise<PlayerSession> {
+    const t0 = Date.now();
+    const phase = (label: string, since: number): void => {
+      logger.info(`openSession episode=${episodeId} ${label} (+${Date.now() - since}ms)`);
+    };
+
+    logger.info(`openSession episode=${episodeId} start`);
+
     const episode = this.localLibraryService.getEpisodeById(episodeId);
     if (!episode) {
       throw new PlayerFileNotFoundError(`Episode ${episodeId}`);
     }
     if (!existsSync(episode.filePath)) {
+      logger.warn(`openSession episode=${episodeId} file missing path=${episode.filePath}`);
       throw new PlayerFileNotFoundError(episode.filePath);
     }
+    logger.info(
+      `openSession episode=${episodeId} resolved file size=${episode.fileSize} path=${episode.filePath}`
+    );
 
     // Throws FfmpegNotInstalledError -- the gateway maps it to the typed
     // code the renderer's setup dialog listens for.
     const { ffmpegPath, ffprobePath } = this.ffmpegService.resolvePaths();
+    logger.debug(`openSession episode=${episodeId} ffmpeg=${ffmpegPath} ffprobe=${ffprobePath}`);
 
+    const tServer = Date.now();
     const server = await this.ensureHttpServer();
+    phase(`http-server-ready port=${server.port}`, tServer);
 
+    const tProbe = Date.now();
     let probe: PlayerProbeResult;
     try {
       probe = await probeForPlayback(ffprobePath, episode.filePath);
     } catch (err) {
       if (err instanceof PlayerProbeError) {
+        logger.error(
+          `openSession episode=${episodeId} probe failed: ${err.message} stderr=${err.stderr.slice(-512)}`
+        );
         throw new PlayerProbeFailedError(err.message);
       }
       throw err;
     }
+    phase(
+      `probe-complete video=${probe.videoCodec} ${probe.width}x${probe.height} ` +
+        `audio=${probe.audioTracks.length}tracks subs=${probe.subtitleTracks.length}tracks ` +
+        `attach=${probe.attachments.length} dur=${probe.durationSeconds.toFixed(1)}s`,
+      tProbe
+    );
 
     const sessionId = randomUUID();
     const tmpDir = path.join(tmpdir(), 'shiroani-player', sessionId);
     await fs.mkdir(tmpDir, { recursive: true });
+    logger.debug(`openSession episode=${episodeId} session=${sessionId} tmpDir=${tmpDir}`);
 
     const audioTrack = pickDefaultAudioTrack(probe.audioTracks);
     const resumePositionSeconds = this.resolveResumePosition(episodeId, probe.durationSeconds);
 
     // Subtitle extraction runs in parallel; each text track -> one ffmpeg
     // invocation. Image subs are included as disabled entries.
+    const tSubs = Date.now();
     const subtitleTracks = await this.extractSubtitlesForSession({
       ffmpegPath,
       filePath: episode.filePath,
       tmpDir,
       tracks: probe.subtitleTracks,
     });
+    const extractedCount = subtitleTracks.filter(s => s.extractedPath !== null).length;
+    phase(`subs-extracted ${extractedCount}/${probe.subtitleTracks.length}`, tSubs);
 
     // Font extraction runs once per session, regardless of track count --
     // the dump_attachment pass dumps every attachment in one ffmpeg call.
+    const tFonts = Date.now();
     const fonts = await this.extractFontsForSession({
       ffmpegPath,
       filePath: episode.filePath,
       tmpDir,
     });
+    phase(`fonts-extracted ${fonts.length}`, tFonts);
 
     const { args, mode } = buildPipeline({
       filePath: episode.filePath,
@@ -214,9 +244,10 @@ export class PlayerService implements OnModuleDestroy {
     }
 
     logger.info(
-      `Opened session ${sessionId} episode=${episodeId} mode=${mode} ` +
+      `openSession episode=${episodeId} session=${sessionId} READY mode=${mode} ` +
         `video=${probe.videoCodec} audio=${audioTrack?.codec ?? 'none'} ` +
-        `durationSec=${probe.durationSeconds.toFixed(1)} resume=${resumePositionSeconds.toFixed(1)}`
+        `durationSec=${probe.durationSeconds.toFixed(1)} resume=${resumePositionSeconds.toFixed(1)} ` +
+        `(total +${Date.now() - t0}ms)`
     );
 
     return this.buildSessionPayload(state, server.port, mode);

@@ -12,6 +12,9 @@
  */
 
 import { spawn } from 'node:child_process';
+import { createLogger } from '@shiroani/shared';
+
+const logger = createLogger('PlayerProbe');
 
 export interface PlayerProbedAudioTrack {
   /** ffmpeg absolute stream index. */
@@ -140,6 +143,7 @@ function runFfprobe(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const { signal, timeoutMs } = options;
+    const started = Date.now();
 
     if (signal?.aborted) {
       reject(new PlayerProbeError(filePath, 'Probe aborted before spawn', ''));
@@ -159,10 +163,14 @@ function runFfprobe(
       filePath,
     ];
 
+    logger.debug(`ffprobe spawn bin=${ffprobePath} file=${filePath} timeout=${timeoutMs}ms`);
+
     const child = spawn(ffprobePath, args, {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+
+    logger.debug(`ffprobe spawned pid=${child.pid ?? 'unknown'}`);
 
     let stdoutBuf = '';
     let stderrBuf = '';
@@ -216,8 +224,12 @@ function runFfprobe(
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
       if (code === 0) {
+        logger.debug(`ffprobe close ok (+${Date.now() - started}ms) bytes=${stdoutBuf.length}`);
         resolve(stdoutBuf);
       } else {
+        logger.warn(
+          `ffprobe close code=${code} (+${Date.now() - started}ms) stderr=${stderrBuf.slice(-256)}`
+        );
         reject(new PlayerProbeError(filePath, `ffprobe exited with code ${code}`, stderrBuf));
       }
     });
