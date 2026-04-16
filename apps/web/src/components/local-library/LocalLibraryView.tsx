@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocalLibraryStore } from '@/stores/useLocalLibraryStore';
 import { LibraryGridView } from './grid/LibraryGridView';
 import { SeriesDetailView } from './detail/SeriesDetailView';
-import { PlayerPlaceholder } from './player/PlayerPlaceholder';
+import { LocalPlayer } from './player/LocalPlayer';
 
 /**
  * Top-level local library surface. Acts as a lightweight router: the actual
@@ -37,7 +37,7 @@ export function LocalLibraryView() {
   }, [activeSeriesId, playingEpisodeId, backToGrid, closePlayer]);
 
   if (playingEpisodeId !== null) {
-    return <PlayerPlaceholder episodeId={playingEpisodeId} />;
+    return <LocalPlayer episodeId={playingEpisodeId} />;
   }
   if (activeSeriesId !== null) {
     return <SeriesDetailView seriesId={activeSeriesId} />;

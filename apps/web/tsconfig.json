@@ -9,6 +9,11 @@
     "jsx": "react-jsx",
     "outDir": "./dist",
     "noEmit": true,
+    // `jassub` pulls in `abslink`, whose published `.d.ts` files import
+    // sibling types with a literal `.ts` extension (e.g. `./types.ts`). That
+    // requires this flag for typecheck to succeed — it's a pure type-only
+    // concession (noEmit is true, so no actual emit is affected).
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],

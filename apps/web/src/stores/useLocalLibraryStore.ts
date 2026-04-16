@@ -6,6 +6,7 @@ import {
   createSocketActions,
   createSocketListeners,
 } from '@/stores/utils/createSocketStore';
+import type { PlayerSessionMode } from '@/components/local-library/player/player.types';
 import {
   LocalLibraryEvents,
   createLogger,
@@ -93,6 +94,12 @@ interface LocalLibraryState extends SocketStoreSlice {
   activeSeriesId: number | null;
   /** Sub-navigation: non-null when the player is open. */
   playingEpisodeId: number | null;
+  /**
+   * Current ffmpeg delivery mode when a player session is live. Non-null only
+   * while the player is mounted and has a session — the grid/header reads this
+   * to show a lightweight "Playing: … (transcoding)" hint.
+   */
+  playerMode: PlayerSessionMode | null;
   /** Grid filters (client-side only — no server round-trip). */
   filters: LibraryFilters;
 }
@@ -127,6 +134,8 @@ interface LocalLibraryActions {
   backToGrid: () => void;
   openPlayer: (episodeId: number) => void;
   closePlayer: () => void;
+  /** Set by the player once a session is open so the shell can show a badge. */
+  setPlayerMode: (mode: PlayerSessionMode | null) => void;
   /** Partial update for the filter panel. */
   updateFilters: (patch: Partial<LibraryFilters>) => void;
   resetFilters: () => void;
@@ -436,6 +445,7 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
         scanProgress: {},
         activeSeriesId: null,
         playingEpisodeId: null,
+        playerMode: null,
         filters: { ...DEFAULT_FILTERS },
 
         // Socket actions
@@ -730,18 +740,26 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
 
         backToGrid: () => {
           set(
-            { activeSeriesId: null, playingEpisodeId: null },
+            { activeSeriesId: null, playingEpisodeId: null, playerMode: null },
             undefined,
             'localLibrary/backToGrid'
           );
         },
 
         openPlayer: (episodeId: number) => {
-          set({ playingEpisodeId: episodeId }, undefined, 'localLibrary/openPlayer');
+          set(
+            { playingEpisodeId: episodeId, playerMode: null },
+            undefined,
+            'localLibrary/openPlayer'
+          );
         },
 
         closePlayer: () => {
-          set({ playingEpisodeId: null }, undefined, 'localLibrary/closePlayer');
+          set({ playingEpisodeId: null, playerMode: null }, undefined, 'localLibrary/closePlayer');
+        },
+
+        setPlayerMode: (mode: PlayerSessionMode | null) => {
+          set({ playerMode: mode }, undefined, 'localLibrary/setPlayerMode');
         },
 
         updateFilters: patch => {
