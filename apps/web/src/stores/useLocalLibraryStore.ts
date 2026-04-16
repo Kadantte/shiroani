@@ -390,7 +390,7 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
             },
             {
               event: LocalLibraryEvents.SCAN_FAILED,
-              handler: data => {
+              handler: (data, get) => {
                 const payload = data as LocalLibraryScanFailedPayload | undefined;
                 if (!payload) return;
                 set(
@@ -421,11 +421,15 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
                   undefined,
                   'localLibrary/scanFailed'
                 );
+                // Partial results may have been persisted before failure — pull
+                // the authoritative list from the DB so the grid matches reality.
+                get().refreshSeries();
+                get().refreshRoots();
               },
             },
             {
               event: LocalLibraryEvents.SCAN_CANCELLED,
-              handler: data => {
+              handler: (data, get) => {
                 const payload = data as LocalLibraryScanCancelledPayload | undefined;
                 if (!payload) return;
                 set(
@@ -437,6 +441,10 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
                   undefined,
                   'localLibrary/scanCancelled'
                 );
+                // Same rationale as SCAN_FAILED — the worker may have persisted
+                // some episodes before it saw the cancel flag.
+                get().refreshSeries();
+                get().refreshRoots();
               },
             },
           ],

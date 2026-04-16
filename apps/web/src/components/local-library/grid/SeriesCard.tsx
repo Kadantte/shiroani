@@ -58,6 +58,9 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
+      {/* Poster area — fixed 3/4 aspect so the artwork box is always the same
+          size regardless of whether PosterImage renders an <img> or the
+          placeholder gradient. Badges + progress bar live as overlays here. */}
       <div className="relative aspect-[3/4] overflow-hidden">
         <PosterImage
           series={series}
@@ -82,20 +85,6 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
           </div>
         )}
 
-        {/* Bottom gradient overlay with title + meta */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent p-3 pt-10">
-          <h3 className="text-sm font-medium text-foreground leading-tight truncate-2">{title}</h3>
-          <p className="text-[10px] text-muted-foreground/80 mt-1 flex items-center gap-1.5 truncate">
-            <span>{total > 0 ? `${watched} / ${total} odc.` : 'Brak odcinków'}</span>
-            {lastWatched && (
-              <>
-                <span className="opacity-40">•</span>
-                <span className="truncate">{lastWatched}</span>
-              </>
-            )}
-          </p>
-        </div>
-
         {total > 0 && watched > 0 && (
           <div className="absolute bottom-0 inset-x-0 h-0.5 bg-background/30">
             <div
@@ -104,6 +93,22 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
             />
           </div>
         )}
+      </div>
+
+      {/* Title + meta below the poster. Kept outside the aspect-ratio box so
+          it stays readable even when the placeholder gradient fills the
+          artwork area. */}
+      <div className="px-2.5 py-2 space-y-0.5">
+        <h3 className="text-xs font-medium text-foreground leading-tight truncate-2">{title}</h3>
+        <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5 truncate">
+          <span>{total > 0 ? `${watched} / ${total} odc.` : 'Brak odcinków'}</span>
+          {lastWatched && (
+            <>
+              <span className="opacity-40">•</span>
+              <span className="truncate">{lastWatched}</span>
+            </>
+          )}
+        </p>
       </div>
     </div>
   );

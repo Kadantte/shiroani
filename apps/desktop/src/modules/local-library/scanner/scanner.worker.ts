@@ -276,6 +276,14 @@ async function run(): Promise<void> {
     } catch {
       // ignore
     }
+    // Unref the control channel so the worker thread can exit once run()
+    // completes. Without this the `cancel` listener on parentPort keeps the
+    // event loop alive indefinitely, `worker.on('exit')` never fires on the
+    // main thread, and the service's finalize() path (which emits
+    // SCAN_DONE/FAILED/CANCELLED) never runs. `unref` is safer than `close`
+    // — any queued terminal message still gets flushed to the main thread
+    // before the worker actually tears down.
+    parentPort?.unref();
   }
 }
 
