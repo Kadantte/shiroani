@@ -10,7 +10,7 @@ import { useJassub } from './useJassub';
 import { usePlayerKeyboard } from './usePlayerKeyboard';
 import { usePlayerProgress } from './usePlayerProgress';
 import { usePlayerSession } from './usePlayerSession';
-import type { PlayerSubtitleTrack } from './player.types';
+import type { PlayerSubtitleTrack } from '@shiroani/shared';
 
 interface LocalPlayerProps {
   episodeId: number;

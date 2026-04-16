@@ -6,13 +6,13 @@ import {
   createSocketActions,
   createSocketListeners,
 } from '@/stores/utils/createSocketStore';
-import type { PlayerSessionMode } from '@/components/local-library/player/player.types';
 import {
   LocalLibraryEvents,
   createLogger,
   type ContinueWatchingItem,
   type LibraryRoot,
   type LocalEpisode,
+  type PlayerSessionMode,
   type LocalSeries,
   type PlaybackProgress,
   type SeriesProgressSummary,

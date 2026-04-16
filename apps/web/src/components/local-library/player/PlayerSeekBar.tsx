@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { cn } from '@/lib/utils';
-import type { PlayerChapter } from './player.types';
+import type { PlayerChapter } from '@shiroani/shared';
 
 interface PlayerSeekBarProps {
   /** Total duration in seconds. Required (0 disables the bar). */

@@ -1,6 +1,6 @@
 import { Languages } from 'lucide-react';
 import { PlayerMenu } from './PlayerMenu';
-import type { PlayerAudioTrack } from './player.types';
+import type { PlayerAudioTrack } from '@shiroani/shared';
 
 interface PlayerAudioTrackMenuProps {
   tracks: PlayerAudioTrack[];

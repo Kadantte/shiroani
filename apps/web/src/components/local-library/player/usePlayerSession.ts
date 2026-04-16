@@ -1,35 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createLogger } from '@shiroani/shared';
-import { emitAsync } from '@/lib/socketHelpers';
 import {
-  PlayerSessionEvents,
-  type ClosePlayerSessionPayload,
-  type OpenPlayerSessionPayload,
-  type OpenPlayerSessionResult,
+  createLogger,
+  LocalLibraryEvents,
+  type PlayerClosePayload,
+  type PlayerOpenErrorCode,
+  type PlayerOpenSessionPayload,
+  type PlayerOpenSessionResult,
+  type PlayerSeekPayload,
+  type PlayerSeekResult,
   type PlayerSession,
-  type SeekPlayerSessionPayload,
-  type SeekResult,
-  type SwitchAudioTrackPayload,
-} from './player.types';
+  type PlayerSwitchAudioPayload,
+} from '@shiroani/shared';
+import { emitAsync } from '@/lib/socketHelpers';
 
 const logger = createLogger('PlayerSession');
 
 /**
- * Raw error shape we expose to the UI. Machine code + human message. The
- * backend may return `EPISODE_NOT_FOUND` (from `OpenPlayerSessionResult.code`);
- * we collapse that into `UNKNOWN` since it indicates a stale store pointer
- * rather than a recoverable per-session problem.
+ * Raw error shape we expose to the UI. Machine code + human message. Maps
+ * backend error codes that aren't per-session-recoverable (INVALID_PAYLOAD,
+ * INTERNAL_ERROR) down to a generic UNKNOWN so the error overlay stays tidy.
  */
 export interface PlayerSessionError {
   code: 'FFMPEG_NOT_INSTALLED' | 'FILE_NOT_FOUND' | 'PROBE_FAILED' | 'UNKNOWN';
   message: string;
 }
 
-function normalizeErrorCode(
-  code: 'FFMPEG_NOT_INSTALLED' | 'FILE_NOT_FOUND' | 'PROBE_FAILED' | 'EPISODE_NOT_FOUND' | 'UNKNOWN'
-): PlayerSessionError['code'] {
-  if (code === 'EPISODE_NOT_FOUND') return 'UNKNOWN';
-  return code;
+function normalizeErrorCode(code: PlayerOpenErrorCode): PlayerSessionError['code'] {
+  if (code === 'FFMPEG_NOT_INSTALLED') return 'FFMPEG_NOT_INSTALLED';
+  if (code === 'FILE_NOT_FOUND') return 'FILE_NOT_FOUND';
+  if (code === 'PROBE_FAILED') return 'PROBE_FAILED';
+  return 'UNKNOWN';
 }
 
 export interface UsePlayerSessionResult {
@@ -88,15 +88,14 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     let cancelled = false;
     (async () => {
       try {
-        const result = await emitAsync<OpenPlayerSessionPayload, OpenPlayerSessionResult>(
-          PlayerSessionEvents.OPEN,
+        const result = await emitAsync<PlayerOpenSessionPayload, PlayerOpenSessionResult>(
+          LocalLibraryEvents.OPEN_PLAYER_SESSION,
           { episodeId },
           { timeout: 30_000 }
         );
         if (cancelled) {
-          // Close the session we just opened — we're already unmounted.
-          if (result.ok && result.session) {
-            emitAsync<ClosePlayerSessionPayload, { ok: boolean }>(PlayerSessionEvents.CLOSE, {
+          if (result.ok) {
+            emitAsync<PlayerClosePayload, unknown>(LocalLibraryEvents.CLOSE_PLAYER_SESSION, {
               sessionId: result.session.sessionId,
             }).catch(() => {
               /* best effort */
@@ -105,12 +104,12 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
           return;
         }
 
-        if (!result.ok || !result.session) {
+        if (!result.ok) {
           setSession(null);
           sessionIdRef.current = null;
           setError({
-            code: normalizeErrorCode(result.code ?? 'UNKNOWN'),
-            message: result.error ?? 'Failed to open player session.',
+            code: normalizeErrorCode(result.error.code),
+            message: result.error.message || 'Failed to open player session.',
           });
           setIsOpening(false);
           return;
@@ -138,7 +137,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
       const sid = sessionIdRef.current;
       if (sid) {
         sessionIdRef.current = null;
-        emitAsync<ClosePlayerSessionPayload, { ok: boolean }>(PlayerSessionEvents.CLOSE, {
+        emitAsync<PlayerClosePayload, unknown>(LocalLibraryEvents.CLOSE_PLAYER_SESSION, {
           sessionId: sid,
         }).catch(() => {
           /* teardown — no retry */
@@ -151,7 +150,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     const sid = sessionIdRef.current;
     sessionIdRef.current = null;
     if (sid) {
-      emitAsync<ClosePlayerSessionPayload, { ok: boolean }>(PlayerSessionEvents.CLOSE, {
+      emitAsync<PlayerClosePayload, unknown>(LocalLibraryEvents.CLOSE_PLAYER_SESSION, {
         sessionId: sid,
       }).catch(() => {
         /* best effort */
@@ -164,7 +163,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     const sid = sessionIdRef.current;
     if (!sid) return;
     sessionIdRef.current = null;
-    emitAsync<ClosePlayerSessionPayload, { ok: boolean }>(PlayerSessionEvents.CLOSE, {
+    emitAsync<PlayerClosePayload, unknown>(LocalLibraryEvents.CLOSE_PLAYER_SESSION, {
       sessionId: sid,
     }).catch(() => {
       /* best effort */
@@ -175,12 +174,12 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     const sid = sessionIdRef.current;
     if (!sid) return false;
     try {
-      const result = await emitAsync<SeekPlayerSessionPayload, SeekResult>(
-        PlayerSessionEvents.SEEK,
+      const result = await emitAsync<PlayerSeekPayload, PlayerSeekResult>(
+        LocalLibraryEvents.SEEK_PLAYER_SESSION,
         { sessionId: sid, positionSeconds },
         { timeout: 20_000 }
       );
-      if (!result.ok) {
+      if (result.error || result.code) {
         logger.warn('SEEK rejected:', result.error ?? result.code ?? 'unknown');
         return false;
       }
@@ -198,12 +197,12 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
       const sid = sessionIdRef.current;
       if (!sid) return false;
       try {
-        const result = await emitAsync<SwitchAudioTrackPayload, SeekResult>(
-          PlayerSessionEvents.SWITCH_AUDIO,
+        const result = await emitAsync<PlayerSwitchAudioPayload, PlayerSeekResult>(
+          LocalLibraryEvents.SWITCH_AUDIO_TRACK,
           { sessionId: sid, trackIndex, atPositionSeconds },
           { timeout: 20_000 }
         );
-        if (!result.ok) {
+        if (result.error || result.code) {
           logger.warn('SWITCH_AUDIO rejected:', result.error ?? result.code ?? 'unknown');
           return false;
         }

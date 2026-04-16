@@ -1,6 +1,6 @@
 import { Subtitles } from 'lucide-react';
 import { PlayerMenu } from './PlayerMenu';
-import type { PlayerSubtitleTrack } from './player.types';
+import type { PlayerSubtitleTrack } from '@shiroani/shared';
 
 interface PlayerSubtitleTrackMenuProps {
   tracks: PlayerSubtitleTrack[];

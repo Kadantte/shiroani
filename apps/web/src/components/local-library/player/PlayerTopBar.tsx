@@ -1,6 +1,6 @@
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PlayerSessionMode } from './player.types';
+import type { PlayerSessionMode } from '@shiroani/shared';
 
 interface PlayerTopBarProps {
   seriesTitle: string;

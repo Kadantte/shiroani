@@ -5,7 +5,7 @@ import { PlayerVolumeControl } from './PlayerVolumeControl';
 import { PlayerSpeedMenu } from './PlayerSpeedMenu';
 import { PlayerAudioTrackMenu } from './PlayerAudioTrackMenu';
 import { PlayerSubtitleTrackMenu } from './PlayerSubtitleTrackMenu';
-import type { PlayerAudioTrack, PlayerChapter, PlayerSubtitleTrack } from './player.types';
+import type { PlayerAudioTrack, PlayerChapter, PlayerSubtitleTrack } from '@shiroani/shared';
 
 interface PlayerBottomBarProps {
   visible: boolean;
