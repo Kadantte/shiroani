@@ -155,10 +155,14 @@ export function SeriesHero({
       >
         {hasBanner && (
           <>
-            <div className="absolute inset-0 scale-110 blur-md opacity-70">
+            <div className="absolute inset-0 scale-110 blur-3xl opacity-45">
               <PosterImage series={series} kind="banner" fallbackToPoster alt="" />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
+            <div className="absolute inset-0 opacity-80">
+              <PosterImage series={series} kind="banner" fallbackToPoster alt="" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-background/92 via-background/58 to-background/32" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/62 to-background/12" />
           </>
         )}
         {!hasBanner && (

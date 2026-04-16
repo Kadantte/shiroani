@@ -10,6 +10,11 @@ import { useJassub } from './useJassub';
 import { usePlayerKeyboard } from './usePlayerKeyboard';
 import { usePlayerProgress } from './usePlayerProgress';
 import { usePlayerSession } from './usePlayerSession';
+import {
+  clampPlaybackPosition,
+  getAbsolutePlaybackPosition,
+  getStreamPlaybackTime,
+} from './timeline';
 import type { PlayerSubtitleTrack } from '@shiroani/shared';
 
 interface LocalPlayerProps {
@@ -65,8 +70,17 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ---- Session lifecycle ----
-  const { session, error, isOpening, streamGeneration, reopen, closeSession, seek, switchAudio } =
-    usePlayerSession(episodeId);
+  const {
+    session,
+    error,
+    isOpening,
+    streamStartSeconds,
+    streamGeneration,
+    reopen,
+    closeSession,
+    seek,
+    switchAudio,
+  } = usePlayerSession(episodeId);
 
   // Mirror mode to the store so the shell can show a hint elsewhere if it
   // ever wants to.
@@ -182,6 +196,31 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
     }
   }, [session, streamGeneration]);
 
+  useEffect(() => {
+    if (!session || streamStartSeconds <= 0) return;
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    const normalize = () => {
+      if (video.currentTime <= 0.001) return;
+      try {
+        // Keep the media timeline stream-relative; absolute episode position is
+        // tracked separately via `streamStartSeconds`.
+        video.currentTime = 0;
+      } catch {
+        /* non-seekable live fragment â€” leave as-is */
+      }
+    };
+
+    if (video.readyState >= 1) {
+      normalize();
+    } else {
+      video.addEventListener('loadedmetadata', normalize, { once: true });
+      return () => video.removeEventListener('loadedmetadata', normalize);
+    }
+  }, [session, streamGeneration, streamStartSeconds]);
+
   // ---- Video event wiring ----
   // rAF-driven imperative update of the seek bar so we're not re-rendering
   // the whole player every ~33ms. React state (`displayTime`) only ticks
@@ -191,6 +230,23 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
     seekSetTimeRef.current = setter;
   }, []);
 
+  const streamStartRef = useRef(streamStartSeconds);
+  useEffect(() => {
+    streamStartRef.current = streamStartSeconds;
+  }, [streamStartSeconds]);
+
+  const durationSecondsRef = useRef(session?.durationSeconds ?? 0);
+  useEffect(() => {
+    durationSecondsRef.current = session?.durationSeconds ?? 0;
+  }, [session?.durationSeconds]);
+
+  useEffect(() => {
+    if (!session) return;
+    const absolute = clampPlaybackPosition(streamStartSeconds, session.durationSeconds);
+    setDisplayTime(absolute);
+    seekSetTimeRef.current?.(absolute);
+  }, [session, streamStartSeconds, streamGeneration]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -199,12 +255,16 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
     let lastReactTick = 0;
 
     const tick = () => {
-      const t = video.currentTime;
-      seekSetTimeRef.current?.(t);
+      const absolute = getAbsolutePlaybackPosition(
+        streamStartRef.current,
+        video.currentTime,
+        durationSecondsRef.current
+      );
+      seekSetTimeRef.current?.(absolute);
       const now = performance.now();
       if (now - lastReactTick > 500) {
         lastReactTick = now;
-        setDisplayTime(t);
+        setDisplayTime(absolute);
       }
       rafId = requestAnimationFrame(tick);
     };
@@ -220,8 +280,13 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
         rafId = null;
       }
       // Make sure the UI reflects the final paused time exactly.
-      setDisplayTime(video.currentTime);
-      seekSetTimeRef.current?.(video.currentTime);
+      const absolute = getAbsolutePlaybackPosition(
+        streamStartRef.current,
+        video.currentTime,
+        durationSecondsRef.current
+      );
+      setDisplayTime(absolute);
+      seekSetTimeRef.current?.(absolute);
     };
     const onEnded = () => {
       setIsPlaying(false);
@@ -285,6 +350,7 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
   const { flush: flushProgress } = usePlayerProgress({
     episodeId,
     durationSeconds: session?.durationSeconds ?? 0,
+    streamStartSeconds,
     videoRef,
   });
 
@@ -310,7 +376,12 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
     (delta: number) => {
       const video = videoRef.current;
       if (!video || !session) return;
-      const target = Math.max(0, Math.min(session.durationSeconds, video.currentTime + delta));
+      const currentAbsolute = getAbsolutePlaybackPosition(
+        streamStartRef.current,
+        video.currentTime,
+        session.durationSeconds
+      );
+      const target = clampPlaybackPosition(currentAbsolute + delta, session.durationSeconds);
       applySeekRef.current(target);
     },
     [session]
@@ -320,13 +391,22 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
     async (target: number) => {
       const video = videoRef.current;
       if (!video || !session) return;
-      const distance = Math.abs(target - video.currentTime);
+      const absoluteTarget = clampPlaybackPosition(target, session.durationSeconds);
+      const currentAbsolute = getAbsolutePlaybackPosition(
+        streamStartRef.current,
+        video.currentTime,
+        session.durationSeconds
+      );
+      const distance = Math.abs(absoluteTarget - currentAbsolute);
+      const canClientSeek = absoluteTarget >= streamStartRef.current;
 
       // Small seeks: assume the buffered range contains the target and just
       // move the element's currentTime. Cheap and responsive.
-      if (distance <= SMALL_SEEK_THRESHOLD_SECONDS) {
+      if (distance <= SMALL_SEEK_THRESHOLD_SECONDS && canClientSeek) {
         try {
-          video.currentTime = target;
+          video.currentTime = getStreamPlaybackTime(streamStartRef.current, absoluteTarget);
+          setDisplayTime(absoluteTarget);
+          seekSetTimeRef.current?.(absoluteTarget);
           // Persist the new position on manual seek — the throttled tick
           // might otherwise skip an emit between the jump and the next
           // `timeupdate`.
@@ -339,14 +419,21 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
 
       // Large seeks: kill + re-spawn the ffmpeg stream at the new position.
       setIsSeeking(true);
+      setDisplayTime(absoluteTarget);
+      seekSetTimeRef.current?.(absoluteTarget);
       flushProgress();
-      const ok = await seek(target);
+      const ok = await seek(absoluteTarget);
       setIsSeeking(false);
       if (!ok) {
         // Session refused the seek — reset the display time back to where the
         // video actually is so the UI doesn't lie.
-        setDisplayTime(video.currentTime);
-        seekSetTimeRef.current?.(video.currentTime);
+        const absolute = getAbsolutePlaybackPosition(
+          streamStartRef.current,
+          video.currentTime,
+          session.durationSeconds
+        );
+        setDisplayTime(absolute);
+        seekSetTimeRef.current?.(absolute);
       }
     },
     [session, seek, flushProgress]
@@ -409,7 +496,13 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
       if (!session) return;
       if (trackIndex === activeAudioIndex) return;
       const video = videoRef.current;
-      const at = video?.currentTime ?? 0;
+      const at = video
+        ? getAbsolutePlaybackPosition(
+            streamStartRef.current,
+            video.currentTime,
+            session.durationSeconds
+          )
+        : streamStartRef.current;
       setActiveAudioIndex(trackIndex);
       setIsSeeking(true);
       flushProgress();

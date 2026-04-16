@@ -78,8 +78,9 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
   // Set up Content Security Policy before creating the window
   setupContentSecurityPolicy(isDev, getBackendPort());
 
-  // Allow clipboard access, deny all other permission requests (camera, mic, geolocation, etc.)
-  const allowedPermissions = new Set(['clipboard-read', 'clipboard-sanitized-write']);
+  // Allow the small set of permissions the desktop shell actually uses.
+  // `fullscreen` is required by the local-library player.
+  const allowedPermissions = new Set(['clipboard-read', 'clipboard-sanitized-write', 'fullscreen']);
 
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     if (allowedPermissions.has(permission)) {

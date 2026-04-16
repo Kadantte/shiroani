@@ -5,6 +5,7 @@ import type {
   LocalLibrarySetEpisodeProgressPayload,
   LocalLibrarySetEpisodeProgressResult,
 } from '@shiroani/shared';
+import { getAbsolutePlaybackPosition } from './timeline';
 
 const logger = createLogger('PlayerProgress');
 
@@ -18,6 +19,8 @@ const THROTTLE_MS = 10_000;
 export interface UsePlayerProgressOptions {
   episodeId: number;
   durationSeconds: number;
+  /** Absolute episode position that maps to `video.currentTime === 0`. */
+  streamStartSeconds: number;
   /** Ref to the `<video>` element so we can read `currentTime` on demand. */
   videoRef: RefObject<HTMLVideoElement | null>;
 }
@@ -41,6 +44,7 @@ export interface UsePlayerProgressResult {
 export function usePlayerProgress({
   episodeId,
   durationSeconds,
+  streamStartSeconds,
   videoRef,
 }: UsePlayerProgressOptions): UsePlayerProgressResult {
   // Wall-clock timestamp (ms) of the last emit. Zero = never emitted.
@@ -51,6 +55,11 @@ export function usePlayerProgress({
   useEffect(() => {
     durationRef.current = durationSeconds;
   }, [durationSeconds]);
+
+  const streamStartRef = useRef(streamStartSeconds);
+  useEffect(() => {
+    streamStartRef.current = streamStartSeconds;
+  }, [streamStartSeconds]);
 
   const emit = useCallback(
     (positionSeconds: number) => {
@@ -74,7 +83,9 @@ export function usePlayerProgress({
   const flush = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    emit(video.currentTime);
+    emit(
+      getAbsolutePlaybackPosition(streamStartRef.current, video.currentTime, durationRef.current)
+    );
   }, [emit, videoRef]);
 
   // Throttled tick: attach a `timeupdate` listener (~4 Hz from the browser)
@@ -88,11 +99,19 @@ export function usePlayerProgress({
       if (video.paused || video.ended) return;
       const now = Date.now();
       if (now - lastEmitAtRef.current < THROTTLE_MS) return;
-      emit(video.currentTime);
+      emit(
+        getAbsolutePlaybackPosition(streamStartRef.current, video.currentTime, durationRef.current)
+      );
     };
 
-    const onEnded = () => emit(video.currentTime);
-    const onPause = () => emit(video.currentTime);
+    const onEnded = () =>
+      emit(
+        getAbsolutePlaybackPosition(streamStartRef.current, video.currentTime, durationRef.current)
+      );
+    const onPause = () =>
+      emit(
+        getAbsolutePlaybackPosition(streamStartRef.current, video.currentTime, durationRef.current)
+      );
 
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('ended', onEnded);
@@ -112,7 +131,9 @@ export function usePlayerProgress({
       if (!video) return;
       // Read directly — `flush()` would be captured with a stale closure by
       // the cleanup; `emit` is stable via useCallback deps.
-      emit(video.currentTime);
+      emit(
+        getAbsolutePlaybackPosition(streamStartRef.current, video.currentTime, durationRef.current)
+      );
     };
   }, [emit, videoRef]);
 

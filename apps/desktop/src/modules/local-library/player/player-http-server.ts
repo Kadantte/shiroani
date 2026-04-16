@@ -27,6 +27,7 @@ import * as http from 'node:http';
 import { createReadStream, promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createLogger, LOCALHOST } from '@shiroani/shared';
+import { isOriginAllowed } from '../../shared/cors.config';
 
 import type { SessionRegistry } from './session-registry';
 
@@ -127,9 +128,21 @@ async function handleRequest(
     return;
   }
 
+  if (!applyCorsHeaders(req, res)) {
+    return;
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    res.setHeader('Allow', 'GET, HEAD, OPTIONS');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end();
+    return;
+  }
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.statusCode = 405;
-    res.setHeader('Allow', 'GET, HEAD');
+    res.setHeader('Allow', 'GET, HEAD, OPTIONS');
     res.setHeader('Cache-Control', 'no-store');
     res.end();
     return;
@@ -160,6 +173,39 @@ async function handleRequest(
   res.statusCode = 404;
   res.setHeader('Cache-Control', 'no-store');
   res.end('not found');
+}
+
+function applyCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+  const origin = req.headers.origin;
+  if (!origin) {
+    return true;
+  }
+
+  if (!isOriginAllowed(origin)) {
+    logger.warn(`[security] Rejected request from origin=${origin}`);
+    res.statusCode = 403;
+    res.setHeader('Cache-Control', 'no-store');
+    res.end('forbidden');
+    return false;
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  const requestedHeaders = req.headers['access-control-request-headers'];
+  if (requestedHeaders) {
+    res.setHeader('Access-Control-Allow-Headers', requestedHeaders);
+  }
+
+  const vary = res.getHeader('Vary');
+  if (typeof vary === 'string' && vary.length > 0) {
+    res.setHeader('Vary', `${vary}, Origin`);
+  } else if (Array.isArray(vary) && vary.length > 0) {
+    res.setHeader('Vary', [...vary, 'Origin']);
+  } else {
+    res.setHeader('Vary', 'Origin');
+  }
+
+  return true;
 }
 
 function handleStream(

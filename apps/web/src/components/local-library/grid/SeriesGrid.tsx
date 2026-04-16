@@ -24,6 +24,7 @@ const GAP = 12;
 export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
 
   useLayoutEffect(() => {
     const node = scrollRef.current;
@@ -32,12 +33,14 @@ export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGri
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
         setContainerWidth(entry.contentRect.width);
+        setContainerHeight(entry.contentRect.height);
       }
     });
     observer.observe(node);
     // Initial measurement — ResizeObserver fires on attach but we want the
     // first render to already have the correct width so there's no flash.
     setContainerWidth(node.clientWidth);
+    setContainerHeight(node.clientHeight);
 
     return () => observer.disconnect();
   }, []);
@@ -51,13 +54,20 @@ export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGri
   }, [containerWidth]);
 
   const rowCount = Math.ceil(series.length / columnCount);
+  const TITLE_BLOCK_HEIGHT = 84;
 
   // Derive actual card width so columns fully fill the container (no dead
   // space on the right). The aspect ratio is 3:4 so height = width * 4/3.
   const cardWidth = useMemo(() => {
     if (columnCount === 0 || containerWidth === 0) return TARGET_CARD_WIDTH;
-    return (containerWidth - GAP * (columnCount - 1)) / columnCount;
-  }, [columnCount, containerWidth]);
+    const widthByColumns = (containerWidth - GAP * (columnCount - 1)) / columnCount;
+    if (rowCount > 1 || containerHeight <= 0) {
+      return widthByColumns;
+    }
+
+    const maxWidthByHeight = ((containerHeight - GAP - TITLE_BLOCK_HEIGHT) * 3) / 4;
+    return Math.max(120, Math.min(widthByColumns, maxWidthByHeight));
+  }, [columnCount, containerHeight, containerWidth, rowCount]);
 
   // Card height: poster (4/3 of width) + title/meta block + row gap.
   //
@@ -65,7 +75,6 @@ export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGri
   // 2-line title (`text-xs` / `leading-tight` ≈ 30px) + space-y-0.5 gap (2px)
   // + meta row (`text-[10px]` ≈ 14px) = 62px. Pad up to 68 so nothing gets
   // clipped by `overflow-hidden` on the card.
-  const TITLE_BLOCK_HEIGHT = 68;
   const rowHeight = Math.round(cardWidth * (4 / 3)) + TITLE_BLOCK_HEIGHT + GAP;
 
   const virtualizer = useVirtualizer({

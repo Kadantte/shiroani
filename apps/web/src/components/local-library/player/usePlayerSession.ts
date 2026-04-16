@@ -36,6 +36,8 @@ export interface UsePlayerSessionResult {
   session: PlayerSession | null;
   error: PlayerSessionError | null;
   isOpening: boolean;
+  /** Absolute episode position that maps to `video.currentTime === 0`. */
+  streamStartSeconds: number;
   /**
    * Monotonically incremented whenever the session gets a new stream (initial
    * open, after seek / audio switch). Consumers use it to force the `<video>`
@@ -69,6 +71,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
   const [session, setSession] = useState<PlayerSession | null>(null);
   const [error, setError] = useState<PlayerSessionError | null>(null);
   const [isOpening, setIsOpening] = useState(true);
+  const [streamStartSeconds, setStreamStartSeconds] = useState(0);
   const [streamGeneration, setStreamGeneration] = useState(0);
 
   // Active sessionId — kept in a ref so the unmount cleanup can reach it
@@ -84,6 +87,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     unmountedRef.current = false;
     setIsOpening(true);
     setError(null);
+    setStreamStartSeconds(0);
 
     let cancelled = false;
     (async () => {
@@ -117,6 +121,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
 
         sessionIdRef.current = result.session.sessionId;
         setSession(result.session);
+        setStreamStartSeconds(result.session.resumePositionSeconds);
         setError(null);
         setStreamGeneration(g => g + 1);
         setIsOpening(false);
@@ -126,6 +131,7 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
         logger.error('OPEN_PLAYER_SESSION failed:', message);
         setSession(null);
         sessionIdRef.current = null;
+        setStreamStartSeconds(0);
         setError({ code: 'UNKNOWN', message });
         setIsOpening(false);
       }
@@ -156,6 +162,8 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
         /* best effort */
       });
     }
+    setSession(null);
+    setStreamStartSeconds(0);
     setOpenAttempt(n => n + 1);
   }, []);
 
@@ -183,6 +191,16 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
         logger.warn('SEEK rejected:', result.error ?? result.code ?? 'unknown');
         return false;
       }
+      setSession(prev =>
+        prev
+          ? {
+              ...prev,
+              streamUrl: result.streamUrl,
+              resumePositionSeconds: result.positionSeconds,
+            }
+          : prev
+      );
+      setStreamStartSeconds(result.positionSeconds);
       setStreamGeneration(g => g + 1);
       return true;
     } catch (err) {
@@ -206,6 +224,16 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
           logger.warn('SWITCH_AUDIO rejected:', result.error ?? result.code ?? 'unknown');
           return false;
         }
+        setSession(prev =>
+          prev
+            ? {
+                ...prev,
+                streamUrl: result.streamUrl,
+                resumePositionSeconds: result.positionSeconds,
+              }
+            : prev
+        );
+        setStreamStartSeconds(result.positionSeconds);
         setStreamGeneration(g => g + 1);
         return true;
       } catch (err) {
@@ -217,5 +245,15 @@ export function usePlayerSession(episodeId: number): UsePlayerSessionResult {
     []
   );
 
-  return { session, error, isOpening, streamGeneration, reopen, closeSession, seek, switchAudio };
+  return {
+    session,
+    error,
+    isOpening,
+    streamStartSeconds,
+    streamGeneration,
+    reopen,
+    closeSession,
+    seek,
+    switchAudio,
+  };
 }
