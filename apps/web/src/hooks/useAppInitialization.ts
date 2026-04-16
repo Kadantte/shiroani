@@ -4,6 +4,7 @@ import { initializeSocket, connectSocket } from '@/lib/socket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useLocalLibraryStore } from '@/stores/useLocalLibraryStore';
+import { useFfmpegStore } from '@/stores/useFfmpegStore';
 import { useFeedStore } from '@/stores/useFeedStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
@@ -25,6 +26,8 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
   const cleanupLibraryListeners = useLibraryStore(s => s.cleanupListeners);
   const initLocalLibraryListeners = useLocalLibraryStore(s => s.initListeners);
   const cleanupLocalLibraryListeners = useLocalLibraryStore(s => s.cleanupListeners);
+  const initFfmpegListeners = useFfmpegStore(s => s.initListeners);
+  const cleanupFfmpegListeners = useFfmpegStore(s => s.cleanupListeners);
   const initFeedListeners = useFeedStore(s => s.initListeners);
   const cleanupFeedListeners = useFeedStore(s => s.cleanupListeners);
   const initConnectionListeners = useConnectionStore(s => s.initListeners);
@@ -36,12 +39,14 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     initScheduleListeners();
     initLibraryListeners();
     initLocalLibraryListeners();
+    initFfmpegListeners();
     initFeedListeners();
   }, [
     initConnectionListeners,
     initScheduleListeners,
     initLibraryListeners,
     initLocalLibraryListeners,
+    initFfmpegListeners,
     initFeedListeners,
   ]);
 
@@ -50,12 +55,14 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     cleanupScheduleListeners();
     cleanupLibraryListeners();
     cleanupLocalLibraryListeners();
+    cleanupFfmpegListeners();
     cleanupFeedListeners();
   }, [
     cleanupConnectionListeners,
     cleanupScheduleListeners,
     cleanupLibraryListeners,
     cleanupLocalLibraryListeners,
+    cleanupFfmpegListeners,
     cleanupFeedListeners,
   ]);
 

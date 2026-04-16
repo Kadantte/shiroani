@@ -1,11 +1,13 @@
 import { BrowserWindow, ipcMain, dialog } from 'electron';
-import type { PickFolderResult } from '@shiroani/shared';
+import type { PickFolderResult, PickFileResult } from '@shiroani/shared';
 
 /**
  * IPC handlers dedicated to the local-library feature.
  *
- * Exposes a folder picker that omits the selection from the OS "recent files"
- * list, so adding a private anime folder doesn't bleed into system history.
+ * Exposes folder and file pickers that omit the selection from the OS
+ * "recent files" list, so adding a private anime folder doesn't bleed into
+ * system history. The file picker is used by the FFmpeg setup flow to let
+ * users point at an existing system ffmpeg / ffprobe binary.
  */
 export function registerLocalLibraryHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('local-library:pick-folder', async (): Promise<PickFolderResult> => {
@@ -19,8 +21,48 @@ export function registerLocalLibraryHandlers(mainWindow: BrowserWindow): void {
 
     return { cancelled: false, path: result.filePaths[0] };
   });
+
+  ipcMain.handle(
+    'local-library:pick-file',
+    async (
+      _event,
+      options?: { title?: string; filters?: Electron.FileFilter[] }
+    ): Promise<PickFileResult> => {
+      const title = typeof options?.title === 'string' ? options.title.slice(0, 200) : undefined;
+
+      // Sanitize filters — only allow name + extensions string arrays.
+      let filters: Electron.FileFilter[] | undefined;
+      if (Array.isArray(options?.filters)) {
+        filters = options.filters
+          .slice(0, 5)
+          .filter(
+            f =>
+              f &&
+              typeof f.name === 'string' &&
+              Array.isArray(f.extensions) &&
+              f.extensions.every(ext => typeof ext === 'string')
+          )
+          .map(f => ({
+            name: f.name.slice(0, 100),
+            extensions: f.extensions.slice(0, 10).map(e => e.slice(0, 20)),
+          }));
+      }
+
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile', 'dontAddToRecent'],
+        title,
+        filters,
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return { cancelled: true };
+      }
+      return { cancelled: false, path: result.filePaths[0] };
+    }
+  );
 }
 
 export function cleanupLocalLibraryHandlers(): void {
   ipcMain.removeHandler('local-library:pick-folder');
+  ipcMain.removeHandler('local-library:pick-file');
 }

@@ -22,6 +22,9 @@ export * from './types/system';
 // Local Library types
 export * from './types/local-library';
 
+// FFmpeg installer types
+export * from './types/ffmpeg';
+
 // Utilities
 export * from './utils';
 

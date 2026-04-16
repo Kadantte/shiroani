@@ -133,3 +133,12 @@ export interface PickFolderResult {
   cancelled: boolean;
   path?: string;
 }
+
+/**
+ * Result of a native file picker — used when the user needs to point at a
+ * specific binary (e.g. a system ffmpeg) rather than a folder.
+ */
+export interface PickFileResult {
+  cancelled: boolean;
+  path?: string;
+}

@@ -7,6 +7,7 @@ import type {
   DiscordRpcSettings,
   DiscordPresenceActivity,
   PickFolderResult,
+  PickFileResult,
 } from '@shiroani/shared';
 
 /**
@@ -131,6 +132,10 @@ interface ElectronAPI {
  */
 interface ShiroaniLocalLibraryAPI {
   pickFolder: () => Promise<PickFolderResult>;
+  pickFile: (options?: {
+    title?: string;
+    filters?: { name: string; extensions: string[] }[];
+  }) => Promise<PickFileResult>;
 }
 
 declare global {

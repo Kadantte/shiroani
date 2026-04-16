@@ -8,6 +8,7 @@ import type {
   DiscordRpcSettings,
   DiscordPresenceActivity,
   PickFolderResult,
+  PickFileResult,
 } from '@shiroani/shared';
 
 /**
@@ -88,6 +89,7 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'overlay:get-position-locked',
   'overlay:reset-position',
   'local-library:pick-folder',
+  'local-library:pick-file',
 ]);
 
 function assertAllowedChannel(channel: string): void {
@@ -431,10 +433,16 @@ contextBridge.exposeInMainWorld('electronAPI', electronAPI);
  */
 export interface ShiroaniLocalLibraryAPI {
   pickFolder: () => Promise<PickFolderResult>;
+  pickFile: (options?: {
+    title?: string;
+    filters?: { name: string; extensions: string[] }[];
+  }) => Promise<PickFileResult>;
 }
 
 const shiroaniLocalLibrary: ShiroaniLocalLibraryAPI = {
   pickFolder: () => ipcRenderer.invoke('local-library:pick-folder') as Promise<PickFolderResult>,
+  pickFile: options =>
+    ipcRenderer.invoke('local-library:pick-file', options) as Promise<PickFileResult>,
 };
 
 contextBridge.exposeInMainWorld('shiroaniLocalLibrary', shiroaniLocalLibrary);

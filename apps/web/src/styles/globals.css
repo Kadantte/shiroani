@@ -88,6 +88,16 @@
   --animate-blob-drift-1: blob-drift 20s ease-in-out infinite;
   --animate-blob-drift-2: blob-drift 25s ease-in-out infinite reverse;
   --animate-blob-drift-3: blob-drift 30s ease-in-out 5s infinite;
+  --animate-progress-slide: progress-slide 1.4s ease-in-out infinite;
+
+  @keyframes progress-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
 
   @keyframes fadeIn {
     0% {

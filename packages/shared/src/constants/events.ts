@@ -118,6 +118,27 @@ export const LocalLibraryEvents = {
 } as const;
 
 // ============================================
+// FFmpeg Installer Events
+// ============================================
+export const FfmpegEvents = {
+  // Client -> Server (requests)
+  STATUS: 'ffmpeg:status',
+  INSTALL: 'ffmpeg:install',
+  CANCEL: 'ffmpeg:cancel',
+  UNINSTALL: 'ffmpeg:uninstall',
+  SET_SYSTEM_PATHS: 'ffmpeg:set-system-paths',
+  CLEAR_SYSTEM_PATHS: 'ffmpeg:clear-system-paths',
+
+  // Server -> Client (broadcasts)
+  STATUS_RESULT: 'ffmpeg:status-result',
+  INSTALL_START: 'ffmpeg:install-start',
+  INSTALL_PROGRESS: 'ffmpeg:install-progress',
+  INSTALL_DONE: 'ffmpeg:install-done',
+  INSTALL_FAILED: 'ffmpeg:install-failed',
+  INSTALL_CANCELLED: 'ffmpeg:install-cancelled',
+} as const;
+
+// ============================================
 // System Events
 // ============================================
 export const SystemEvents = {
