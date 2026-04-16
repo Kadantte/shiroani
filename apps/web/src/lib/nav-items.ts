@@ -9,6 +9,7 @@ export interface NavItem {
 export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'browser', label: 'Przeglądarka' },
   { id: 'library', label: 'Biblioteka' },
+  { id: 'local-library', label: 'Lokalna' },
   { id: 'discover', label: 'Odkrywaj' },
   { id: 'diary', label: 'Dziennik' },
   { id: 'schedule', label: 'Harmonogram' },

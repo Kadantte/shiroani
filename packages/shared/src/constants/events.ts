@@ -101,6 +101,23 @@ export const FeedEvents = {
 } as const;
 
 // ============================================
+// Local Library Events
+// ============================================
+export const LocalLibraryEvents = {
+  // Client -> Server (requests)
+  LIST_ROOTS: 'local-library:list-roots',
+  ADD_ROOT: 'local-library:add-root',
+  REMOVE_ROOT: 'local-library:remove-root',
+  LIST_SERIES: 'local-library:list-series',
+
+  // Server -> Client (broadcasts)
+  ROOTS_RESULT: 'local-library:roots-result',
+  SERIES_RESULT: 'local-library:series-result',
+  ROOT_ADDED: 'local-library:root-added',
+  ROOT_REMOVED: 'local-library:root-removed',
+} as const;
+
+// ============================================
 // System Events
 // ============================================
 export const SystemEvents = {

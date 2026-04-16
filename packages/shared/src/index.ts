@@ -19,6 +19,9 @@ export * from './types/feed';
 // System types
 export * from './types/system';
 
+// Local Library types
+export * from './types/local-library';
+
 // Utilities
 export * from './utils';
 

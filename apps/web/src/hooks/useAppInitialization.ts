@@ -3,6 +3,7 @@ import { createLogger } from '@shiroani/shared';
 import { initializeSocket, connectSocket } from '@/lib/socket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useLocalLibraryStore } from '@/stores/useLocalLibraryStore';
 import { useFeedStore } from '@/stores/useFeedStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useUpdateStore } from '@/stores/useUpdateStore';
@@ -22,6 +23,8 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
   const cleanupScheduleListeners = useScheduleStore(s => s.cleanupListeners);
   const initLibraryListeners = useLibraryStore(s => s.initListeners);
   const cleanupLibraryListeners = useLibraryStore(s => s.cleanupListeners);
+  const initLocalLibraryListeners = useLocalLibraryStore(s => s.initListeners);
+  const cleanupLocalLibraryListeners = useLocalLibraryStore(s => s.cleanupListeners);
   const initFeedListeners = useFeedStore(s => s.initListeners);
   const cleanupFeedListeners = useFeedStore(s => s.cleanupListeners);
   const initConnectionListeners = useConnectionStore(s => s.initListeners);
@@ -32,18 +35,27 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     initConnectionListeners();
     initScheduleListeners();
     initLibraryListeners();
+    initLocalLibraryListeners();
     initFeedListeners();
-  }, [initConnectionListeners, initScheduleListeners, initLibraryListeners, initFeedListeners]);
+  }, [
+    initConnectionListeners,
+    initScheduleListeners,
+    initLibraryListeners,
+    initLocalLibraryListeners,
+    initFeedListeners,
+  ]);
 
   const cleanupAllListeners = useCallback(() => {
     cleanupConnectionListeners();
     cleanupScheduleListeners();
     cleanupLibraryListeners();
+    cleanupLocalLibraryListeners();
     cleanupFeedListeners();
   }, [
     cleanupConnectionListeners,
     cleanupScheduleListeners,
     cleanupLibraryListeners,
+    cleanupLocalLibraryListeners,
     cleanupFeedListeners,
   ]);
 

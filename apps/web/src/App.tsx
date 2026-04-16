@@ -7,6 +7,7 @@ import { NavigationDock } from '@/components/shared/NavigationDock';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { BrowserView } from '@/components/browser/BrowserView';
 import { LibraryView } from '@/components/library/LibraryView';
+import { LocalLibraryView } from '@/components/local-library/LocalLibraryView';
 import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DiaryView } from '@/components/diary/DiaryView';
@@ -64,6 +65,7 @@ function App() {
       if (
         view === 'schedule' ||
         view === 'library' ||
+        view === 'local-library' ||
         view === 'discover' ||
         view === 'profile' ||
         view === 'settings' ||
@@ -125,6 +127,7 @@ function App() {
                 <BrowserView />
               </div>
               {activeView === 'library' && <LibraryView />}
+              {activeView === 'local-library' && <LocalLibraryView />}
               {activeView === 'discover' && <DiscoverView />}
               {activeView === 'diary' && <DiaryView />}
               {activeView === 'schedule' && <ScheduleView />}

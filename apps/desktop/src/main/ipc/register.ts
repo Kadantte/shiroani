@@ -22,6 +22,8 @@ import {
   cleanupOverlayHandlers,
   registerDiscordRpcHandlers,
   cleanupDiscordRpcHandlers,
+  registerLocalLibraryHandlers,
+  cleanupLocalLibraryHandlers,
 } from './';
 import { BrowserManager } from '../browser/browser-manager';
 
@@ -43,6 +45,7 @@ export function registerIpcHandlers(
   registerFileHandlers();
   registerOverlayHandlers();
   registerDiscordRpcHandlers();
+  registerLocalLibraryHandlers(mainWindow);
 }
 
 /**
@@ -60,4 +63,5 @@ export function cleanupIpcHandlers(): void {
   cleanupFileHandlers();
   cleanupOverlayHandlers();
   cleanupDiscordRpcHandlers();
+  cleanupLocalLibraryHandlers();
 }

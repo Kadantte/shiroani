@@ -6,6 +6,7 @@ import type {
   NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
+  PickFolderResult,
 } from '@shiroani/shared';
 
 /**
@@ -123,9 +124,19 @@ interface ElectronAPI {
   platform: NodeJS.Platform;
 }
 
+/**
+ * Local library bridge — see apps/desktop/src/main/preload.ts.
+ * Kept separate from ElectronAPI so the feature can grow without touching the
+ * global API surface.
+ */
+interface ShiroaniLocalLibraryAPI {
+  pickFolder: () => Promise<PickFolderResult>;
+}
+
 declare global {
   interface Window {
     electronAPI?: ElectronAPI;
+    shiroaniLocalLibrary?: ShiroaniLocalLibraryAPI;
     __testStores?: Record<string, unknown>;
     __testSocket?: unknown;
   }

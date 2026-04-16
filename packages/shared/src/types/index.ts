@@ -15,3 +15,6 @@ export * from './import-export';
 
 // System types
 export * from './system';
+
+// Local Library types
+export * from './local-library';

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Calendar, Compass, NotebookPen, Rss, Settings, User } from 'lucide-react';
+import {
+  BookOpen,
+  Calendar,
+  Compass,
+  HardDrive,
+  NotebookPen,
+  Rss,
+  Settings,
+  User,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
@@ -75,6 +84,16 @@ function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
             base,
             'group-hover:rotate-[-8deg] group-hover:scale-110',
             isActive && 'animate-[dock-wiggle_2.5s_ease-in-out_infinite] motion-reduce:animate-none'
+          )}
+        />
+      );
+    case 'local-library':
+      return (
+        <HardDrive
+          className={cn(
+            base,
+            'group-hover:scale-110 group-hover:-translate-y-0.5',
+            isActive && 'animate-[dock-pulse_2s_ease-in-out_infinite] motion-reduce:animate-none'
           )}
         />
       );

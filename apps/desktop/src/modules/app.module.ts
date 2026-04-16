@@ -3,6 +3,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
 import { LibraryModule } from './library';
+import { LocalLibraryModule } from './local-library';
 import { ScheduleModule } from './schedule';
 import { DiaryModule } from './diary';
 import { ImportExportModule } from './import-export';
@@ -25,6 +26,7 @@ import { FeedModule } from './feed';
     DatabaseModule,
     AnimeModule,
     LibraryModule,
+    LocalLibraryModule,
     ScheduleModule,
     DiaryModule,
     ImportExportModule,

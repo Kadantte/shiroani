@@ -7,6 +7,7 @@ import type {
   NotificationSubscription,
   DiscordRpcSettings,
   DiscordPresenceActivity,
+  PickFolderResult,
 } from '@shiroani/shared';
 
 /**
@@ -86,6 +87,7 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'overlay:set-position-locked',
   'overlay:get-position-locked',
   'overlay:reset-position',
+  'local-library:pick-folder',
 ]);
 
 function assertAllowedChannel(channel: string): void {
@@ -420,8 +422,26 @@ const electronAPI: ElectronAPI = {
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
 
+/**
+ * Local library bridge
+ *
+ * Kept as its own `window.shiroaniLocalLibrary` namespace (rather than under
+ * `electronAPI`) so the feature can evolve independently and a future Phase
+ * can expose streaming / playback helpers without bloating the main API.
+ */
+export interface ShiroaniLocalLibraryAPI {
+  pickFolder: () => Promise<PickFolderResult>;
+}
+
+const shiroaniLocalLibrary: ShiroaniLocalLibraryAPI = {
+  pickFolder: () => ipcRenderer.invoke('local-library:pick-folder') as Promise<PickFolderResult>,
+};
+
+contextBridge.exposeInMainWorld('shiroaniLocalLibrary', shiroaniLocalLibrary);
+
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
+    shiroaniLocalLibrary: ShiroaniLocalLibraryAPI;
   }
 }

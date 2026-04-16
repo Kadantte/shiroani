@@ -37,3 +37,6 @@ export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';
 
 // Discord RPC handlers
 export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord-rpc';
+
+// Local library handlers
+export { registerLocalLibraryHandlers, cleanupLocalLibraryHandlers } from './local-library';

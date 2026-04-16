@@ -129,6 +129,95 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_feed_items_hash ON feed_items(content_hash);
     `,
   },
+  {
+    version: 6,
+    description:
+      'Create local-library tables: library_roots, local_series, local_episodes, playback_progress, library_scans',
+    up: `
+      CREATE TABLE IF NOT EXISTS library_roots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT NOT NULL UNIQUE,
+        label TEXT,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        added_at TEXT NOT NULL DEFAULT (datetime('now')),
+        last_scanned_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS local_series (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        root_id INTEGER NOT NULL REFERENCES library_roots(id) ON DELETE CASCADE,
+        folder_path TEXT NOT NULL,
+        parsed_title TEXT NOT NULL,
+        display_title TEXT,
+        anilist_id INTEGER,
+        match_status TEXT NOT NULL DEFAULT 'unmatched'
+          CHECK(match_status IN ('unmatched','auto','manual','ignored')),
+        match_confidence REAL,
+        poster_path TEXT,
+        banner_path TEXT,
+        synopsis TEXT,
+        genres_json TEXT,
+        season INTEGER,
+        year INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(root_id, folder_path)
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_series_root ON local_series(root_id);
+      CREATE INDEX IF NOT EXISTS idx_local_series_anilist ON local_series(anilist_id);
+      CREATE INDEX IF NOT EXISTS idx_local_series_match_status ON local_series(match_status);
+      CREATE INDEX IF NOT EXISTS idx_local_series_updated ON local_series(updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS local_episodes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        series_id INTEGER NOT NULL REFERENCES local_series(id) ON DELETE CASCADE,
+        file_path TEXT NOT NULL UNIQUE,
+        file_size INTEGER NOT NULL,
+        file_hash TEXT,
+        duration_seconds INTEGER,
+        width INTEGER,
+        height INTEGER,
+        video_codec TEXT,
+        audio_tracks_json TEXT,
+        subtitle_tracks_json TEXT,
+        parsed_episode_number REAL,
+        parsed_season INTEGER,
+        parsed_title TEXT,
+        release_group TEXT,
+        kind TEXT NOT NULL DEFAULT 'episode'
+          CHECK(kind IN ('episode','ova','movie','special','nced','nceed','extra')),
+        mtime TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_episodes_series_epnum
+        ON local_episodes(series_id, parsed_season, parsed_episode_number);
+
+      CREATE TABLE IF NOT EXISTS playback_progress (
+        episode_id INTEGER PRIMARY KEY REFERENCES local_episodes(id) ON DELETE CASCADE,
+        position_seconds REAL NOT NULL,
+        duration_seconds REAL NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        completed_at TEXT,
+        watch_count INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_playback_updated ON playback_progress(updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS library_scans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        root_id INTEGER NOT NULL REFERENCES library_roots(id) ON DELETE CASCADE,
+        started_at TEXT NOT NULL DEFAULT (datetime('now')),
+        finished_at TEXT,
+        status TEXT NOT NULL DEFAULT 'running'
+          CHECK(status IN ('running','completed','failed','cancelled')),
+        files_seen INTEGER NOT NULL DEFAULT 0,
+        files_added INTEGER NOT NULL DEFAULT 0,
+        files_removed INTEGER NOT NULL DEFAULT 0,
+        error TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_library_scans_root ON library_scans(root_id, started_at DESC);
+    `,
+  },
 ];
 
 /**

@@ -8,6 +8,7 @@ import { useLibraryStore } from '@/stores/useLibraryStore';
 export type ActiveView =
   | 'browser'
   | 'library'
+  | 'local-library'
   | 'discover'
   | 'diary'
   | 'schedule'
