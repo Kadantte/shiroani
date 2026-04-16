@@ -9,12 +9,14 @@ import {
 import {
   LocalLibraryEvents,
   createLogger,
+  type AniListSearchHit,
   type ContinueWatchingItem,
   type LibraryRoot,
   type LocalEpisode,
   type PlayerSessionMode,
   type LocalSeries,
   type PlaybackProgress,
+  type PosterKind,
   type SeriesProgressSummary,
   type LocalLibraryRootsResult,
   type LocalLibrarySeriesResult,
@@ -36,6 +38,8 @@ import {
   type LocalLibraryEpisodeProgressUpdatedPayload,
   type LocalLibraryStartScanResult,
   type LocalLibraryCancelScanResult,
+  type LocalLibrarySearchAniListResult,
+  type LocalLibrarySetSeriesArtworkResult,
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { IS_ELECTRON } from '@/lib/platform';
@@ -139,6 +143,18 @@ interface LocalLibraryActions {
   /** Partial update for the filter panel. */
   updateFilters: (patch: Partial<LibraryFilters>) => void;
   resetFilters: () => void;
+  /** Search AniList for poster/banner candidates. Returns [] on error. */
+  searchAniList: (query: string) => Promise<AniListSearchHit[]>;
+  /** Point a series's poster/banner at a local file (main-process copies it). */
+  setSeriesArtworkFromFile: (
+    seriesId: number,
+    kind: PosterKind,
+    filePath: string
+  ) => Promise<boolean>;
+  /** Point a series's poster/banner at a remote URL (main-process downloads it). */
+  setSeriesArtworkFromUrl: (seriesId: number, kind: PosterKind, url: string) => Promise<boolean>;
+  /** Drop the series's cached poster/banner. */
+  removeSeriesArtwork: (seriesId: number, kind: PosterKind) => Promise<boolean>;
   initListeners: () => void;
   cleanupListeners: () => void;
 }
@@ -772,6 +788,64 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
 
         resetFilters: () => {
           set({ filters: { ...DEFAULT_FILTERS } }, undefined, 'localLibrary/resetFilters');
+        },
+
+        searchAniList: async (query: string) => {
+          const trimmed = query.trim();
+          if (!trimmed) return [];
+          try {
+            const result = await emitWithErrorHandling<
+              { query: string },
+              LocalLibrarySearchAniListResult
+            >(LocalLibraryEvents.SEARCH_ANILIST, { query: trimmed });
+            return result.results ?? [];
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.warn(`AniList search failed: ${message}`);
+            throw err;
+          }
+        },
+
+        setSeriesArtworkFromFile: async (seriesId: number, kind: PosterKind, filePath: string) => {
+          try {
+            const result = await emitWithErrorHandling<
+              { seriesId: number; kind: PosterKind; filePath: string },
+              LocalLibrarySetSeriesArtworkResult
+            >(LocalLibraryEvents.SET_SERIES_ARTWORK_FROM_FILE, { seriesId, kind, filePath });
+            return !!result.artworkPath;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to set ${kind} from file:`, message);
+            throw err;
+          }
+        },
+
+        setSeriesArtworkFromUrl: async (seriesId: number, kind: PosterKind, url: string) => {
+          try {
+            const result = await emitWithErrorHandling<
+              { seriesId: number; kind: PosterKind; url: string },
+              LocalLibrarySetSeriesArtworkResult
+            >(LocalLibraryEvents.SET_SERIES_ARTWORK_FROM_URL, { seriesId, kind, url });
+            return !!result.artworkPath;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to set ${kind} from URL:`, message);
+            throw err;
+          }
+        },
+
+        removeSeriesArtwork: async (seriesId: number, kind: PosterKind) => {
+          try {
+            await emitWithErrorHandling<
+              { seriesId: number; kind: PosterKind },
+              LocalLibrarySetSeriesArtworkResult
+            >(LocalLibraryEvents.REMOVE_SERIES_ARTWORK, { seriesId, kind });
+            return true;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to remove ${kind}:`, message);
+            throw err;
+          }
         },
 
         initListeners,

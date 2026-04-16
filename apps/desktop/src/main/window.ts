@@ -26,7 +26,7 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       // Allow styles from same origin and inline (needed for CSS-in-JS)
       "style-src 'self' 'unsafe-inline'",
       // Allow images from any HTTPS source (favicons, anime covers, user-browsed sites)
-      "img-src 'self' data: blob: shiroani-bg: https: http:",
+      "img-src 'self' data: blob: shiroani-bg: shiroani-poster: https: http:",
       // Allow fonts from same origin
       "font-src 'self' data:",
       // Allow connections to localhost (WebSocket and API) and AniList GraphQL.

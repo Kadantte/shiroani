@@ -1,34 +1,12 @@
 import { memo, useCallback } from 'react';
-import { Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LocalSeries, SeriesProgressSummary } from '@shiroani/shared';
+import { PosterImage } from '../posters/PosterImage';
 
 interface SeriesCardProps {
   series: LocalSeries;
   progress?: SeriesProgressSummary;
   onSelect: (id: number) => void;
-}
-
-/** Extract up to two uppercase initials from a title for the poster fallback. */
-function initialsOf(title: string): string {
-  return (
-    title
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(w => w[0])
-      .join('')
-      .toUpperCase() || '?'
-  );
-}
-
-/** Deterministic hue from the title so every card has its own placeholder color. */
-function hueOf(title: string): number {
-  let hash = 0;
-  for (let i = 0; i < title.length; i += 1) {
-    hash = (hash * 31 + title.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % 360;
 }
 
 function formatLastWatched(iso: string | null): string | null {
@@ -49,8 +27,6 @@ function formatLastWatched(iso: string | null): string | null {
 
 const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: SeriesCardProps) {
   const title = series.displayTitle ?? series.parsedTitle;
-  const initials = initialsOf(title);
-  const hue = hueOf(title);
 
   const watched = progress?.watchedCount ?? 0;
   const total = progress?.totalCount ?? 0;
@@ -83,26 +59,12 @@ const SeriesCard = memo(function SeriesCard({ series, progress, onSelect }: Seri
       onKeyDown={handleKeyDown}
     >
       <div className="relative aspect-[3/4] overflow-hidden">
-        {series.posterPath ? (
-          <img
-            src={series.posterPath}
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex flex-col items-center justify-center gap-3"
-            style={{
-              background: `linear-gradient(135deg, hsl(${hue}, 45%, 28%) 0%, hsl(${(hue + 40) % 360}, 35%, 18%) 100%)`,
-            }}
-          >
-            <div className="w-14 h-14 rounded-2xl bg-background/20 backdrop-blur-sm flex items-center justify-center">
-              <span className="text-xl font-semibold text-foreground/90">{initials}</span>
-            </div>
-            <Film className="w-4 h-4 text-foreground/30" />
-          </div>
-        )}
+        <PosterImage
+          series={series}
+          kind="poster"
+          showIcon
+          className="transition-transform duration-300 group-hover:scale-105"
+        />
 
         {total > 0 && watched > 0 && (
           <div className="absolute top-2 right-2">

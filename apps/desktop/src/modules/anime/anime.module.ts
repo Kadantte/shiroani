@@ -5,6 +5,6 @@ import { AnimeGateway } from './anime.gateway';
 
 @Module({
   providers: [AniListClient, AnimeService, AnimeGateway],
-  exports: [AnimeService],
+  exports: [AnimeService, AniListClient],
 })
 export class AnimeModule {}

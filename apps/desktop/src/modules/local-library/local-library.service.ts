@@ -6,9 +6,15 @@ import {
   type LocalEpisode,
   type LocalSeries,
   type PlaybackProgress,
+  type PosterKind,
   type SeriesProgressSummary,
 } from '@shiroani/shared';
 import { DatabaseService } from '../database';
+import {
+  removePoster as removePosterFromDisk,
+  savePosterFromLocalFile,
+  savePosterFromUrl,
+} from './poster-cache';
 import {
   type LibraryRootRow,
   type LocalEpisodeRow,
@@ -496,5 +502,80 @@ export class LocalLibraryService {
       });
       return { progress, episode, series };
     });
+  }
+
+  // ==========================================================================
+  // Posters + banners (Phase 5)
+  // ==========================================================================
+
+  /** Update the row column for the given artwork kind. */
+  private updateArtworkColumn(
+    seriesId: number,
+    kind: PosterKind,
+    value: string | null
+  ): LocalSeries {
+    const db = this.databaseService.db;
+    const column = kind === 'poster' ? 'poster_path' : 'banner_path';
+    db.prepare(
+      `UPDATE local_series SET ${column} = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(value, seriesId);
+    const series = this.getSeriesById(seriesId);
+    if (!series) {
+      throw new Error(`Series ${seriesId} not found after artwork update`);
+    }
+    return series;
+  }
+
+  /**
+   * Copy a local image file into the cache and point the series row at it.
+   * Returns the updated series so callers can broadcast SERIES_UPDATED.
+   */
+  async setSeriesArtworkFromFile(
+    seriesId: number,
+    kind: PosterKind,
+    filePath: string
+  ): Promise<{ series: LocalSeries; artworkPath: string }> {
+    const existing = this.getSeriesById(seriesId);
+    if (!existing) {
+      throw new Error(`Series ${seriesId} not found`);
+    }
+    const artworkPath = await savePosterFromLocalFile(seriesId, filePath, kind);
+    const series = this.updateArtworkColumn(seriesId, kind, artworkPath);
+    logger.info(`Updated ${kind} for series ${seriesId} from local file`);
+    return { series, artworkPath };
+  }
+
+  /**
+   * Download a remote image (typically an AniList CDN URL) into the cache
+   * and point the series row at it.
+   */
+  async setSeriesArtworkFromUrl(
+    seriesId: number,
+    kind: PosterKind,
+    url: string
+  ): Promise<{ series: LocalSeries; artworkPath: string }> {
+    const existing = this.getSeriesById(seriesId);
+    if (!existing) {
+      throw new Error(`Series ${seriesId} not found`);
+    }
+    const artworkPath = await savePosterFromUrl(seriesId, url, kind);
+    const series = this.updateArtworkColumn(seriesId, kind, artworkPath);
+    logger.info(`Updated ${kind} for series ${seriesId} from URL`);
+    return { series, artworkPath };
+  }
+
+  /**
+   * Remove any cached artwork for a series and clear the corresponding column.
+   * The series falls back to the gradient placeholder in the UI.
+   */
+  async removeSeriesArtwork(seriesId: number, kind: PosterKind): Promise<LocalSeries> {
+    const existing = this.getSeriesById(seriesId);
+    if (!existing) {
+      throw new Error(`Series ${seriesId} not found`);
+    }
+    await removePosterFromDisk(seriesId, kind);
+    const series = this.updateArtworkColumn(seriesId, kind, null);
+    logger.info(`Cleared ${kind} for series ${seriesId}`);
+    return series;
   }
 }

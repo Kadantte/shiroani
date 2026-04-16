@@ -309,3 +309,64 @@ export interface PickFileResult {
   cancelled: boolean;
   path?: string;
 }
+
+// ============================================
+// Posters + banners (Phase 5)
+// ============================================
+
+/** Which piece of series artwork a request is acting on. */
+export type PosterKind = 'poster' | 'banner';
+
+/** A single AniList search hit, trimmed down to what the poster picker needs. */
+export interface AniListSearchHit {
+  anilistId: number;
+  titleRomaji: string | null;
+  titleEnglish: string | null;
+  titleNative: string | null;
+  seasonYear: number | null;
+  format: string | null;
+  coverImageUrl: string | null;
+  bannerImageUrl: string | null;
+  episodes: number | null;
+  synopsis: string | null;
+}
+
+export interface LocalLibrarySearchAniListPayload {
+  query: string;
+}
+
+export interface LocalLibrarySearchAniListResult {
+  results: AniListSearchHit[];
+  error?: string;
+}
+
+export interface LocalLibrarySetSeriesArtworkFromFilePayload {
+  seriesId: number;
+  kind: PosterKind;
+  filePath: string;
+}
+
+export interface LocalLibrarySetSeriesArtworkFromUrlPayload {
+  seriesId: number;
+  kind: PosterKind;
+  url: string;
+}
+
+export interface LocalLibraryRemoveSeriesArtworkPayload {
+  seriesId: number;
+  kind: PosterKind;
+}
+
+export interface LocalLibrarySetSeriesArtworkResult {
+  seriesId: number;
+  kind: PosterKind;
+  /** Absolute path to the cached artwork, or null on remove. */
+  artworkPath: string | null;
+  error?: string;
+}
+
+/** Result of the main-process image picker dialog. */
+export interface PickImageFileResult {
+  cancelled: boolean;
+  path?: string;
+}

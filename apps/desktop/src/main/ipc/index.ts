@@ -40,3 +40,6 @@ export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord
 
 // Local library handlers
 export { registerLocalLibraryHandlers, cleanupLocalLibraryHandlers } from './local-library';
+
+// Poster protocol (library-cache artwork served to the renderer)
+export { registerPosterProtocol } from './poster';

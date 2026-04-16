@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { AnimeModule } from '../anime';
 import { LocalLibraryService } from './local-library.service';
 import { LocalLibraryGateway } from './local-library.gateway';
+import { AniListSearchService } from './anilist-search.service';
 import { FfmpegService } from './ffmpeg/ffmpeg.service';
 import { FfmpegInstallerService } from './ffmpeg/ffmpeg-installer.service';
 import { FfmpegGateway } from './ffmpeg/ffmpeg.gateway';
@@ -10,9 +12,11 @@ import { PlayerService } from './player/player.service';
 import { PlayerGateway } from './player/player.gateway';
 
 @Module({
+  imports: [AnimeModule],
   providers: [
     LocalLibraryService,
     LocalLibraryGateway,
+    AniListSearchService,
     FfmpegService,
     FfmpegInstallerService,
     FfmpegGateway,

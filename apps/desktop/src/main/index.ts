@@ -14,6 +14,7 @@ import { LOCALHOST } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
+import { registerPosterProtocol } from './ipc/poster';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
 import { APP_ID as WINDOWS_APP_ID } from './win-scheduled-notifications';
 import {
@@ -39,11 +40,21 @@ import { isMascotEnabled } from './mascot/overlay-state';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
 
-// Register custom protocol scheme for background images.
-// Must be called before app.ready.
+// Register custom protocol schemes for background images and local-library
+// artwork. Must be called before app.ready.
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'shiroani-bg',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: false,
+      stream: true,
+    },
+  },
+  {
+    scheme: 'shiroani-poster',
     privileges: {
       standard: true,
       secure: true,
@@ -190,6 +201,9 @@ async function bootstrap(): Promise<void> {
 
   // Register custom protocol for serving background images from userData
   registerBackgroundProtocol();
+
+  // Register custom protocol for serving local-library posters/banners
+  registerPosterProtocol();
 
   await bootstrapNestApp();
   browserManager.init();

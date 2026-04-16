@@ -1,7 +1,25 @@
-import { ArrowLeft, CheckCircle2, Circle, Play } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Image as ImageIcon,
+  MoreVertical,
+  Play,
+  Trash2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { LocalEpisode, LocalSeries, SeriesProgressSummary } from '@shiroani/shared';
+import type {
+  LocalEpisode,
+  LocalSeries,
+  PosterKind,
+  SeriesProgressSummary,
+} from '@shiroani/shared';
+import { PosterImage } from '../posters/PosterImage';
+import { PosterPickerDialog } from '../posters/PosterPickerDialog';
+import { useLocalLibraryStore } from '@/stores/useLocalLibraryStore';
 
 interface SeriesHeroProps {
   series: LocalSeries;
@@ -61,8 +79,48 @@ export function SeriesHero({
   onMarkAllUnwatched,
 }: SeriesHeroProps) {
   const title = series.displayTitle ?? series.parsedTitle;
-  const bannerUrl = series.bannerPath ?? series.posterPath;
   const hue = hueOf(title);
+  const hasBanner = !!series.bannerPath || !!series.posterPath;
+
+  const removeArtwork = useLocalLibraryStore(s => s.removeSeriesArtwork);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pickerKind, setPickerKind] = useState<PosterKind | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDocClick = (ev: MouseEvent) => {
+      if (!menuRef.current?.contains(ev.target as Node)) setMenuOpen(false);
+    };
+    const onEsc = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, [menuOpen]);
+
+  const handleChangeArtwork = useCallback((kind: PosterKind) => {
+    setMenuOpen(false);
+    setPickerKind(kind);
+  }, []);
+
+  const handleRemoveArtwork = useCallback(
+    async (kind: PosterKind) => {
+      setMenuOpen(false);
+      try {
+        await removeArtwork(series.id, kind);
+        toast.success(kind === 'poster' ? 'Plakat usunięty.' : 'Baner usunięty.');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : String(err));
+      }
+    },
+    [removeArtwork, series.id]
+  );
 
   const hasResume =
     resumeEpisode &&
@@ -95,18 +153,15 @@ export function SeriesHero({
           background: `linear-gradient(135deg, hsl(${hue}, 40%, 22%) 0%, hsl(${(hue + 60) % 360}, 35%, 14%) 100%)`,
         }}
       >
-        {bannerUrl && (
+        {hasBanner && (
           <>
-            <img
-              src={bannerUrl}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover scale-110 blur-md opacity-70"
-            />
+            <div className="absolute inset-0 scale-110 blur-md opacity-70">
+              <PosterImage series={series} kind="banner" fallbackToPoster alt="" />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
           </>
         )}
-        {!bannerUrl && (
+        {!hasBanner && (
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         )}
 
@@ -122,6 +177,54 @@ export function SeriesHero({
             Biblioteka
           </Button>
         </div>
+
+        {/* Ellipsis menu: change/remove poster + banner */}
+        <div className="absolute top-4 right-4" ref={menuRef}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs bg-background/40 backdrop-blur-sm border border-border/50 hover:bg-background/70"
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label="Opcje grafiki"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <MoreVertical className="w-3.5 h-3.5" />
+          </Button>
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-9 z-20 w-56 rounded-md border border-border/60 bg-popover/95 backdrop-blur-md shadow-lg p-1"
+            >
+              <MenuItem
+                icon={<ImageIcon className="w-3.5 h-3.5" />}
+                label="Zmień plakat"
+                onClick={() => handleChangeArtwork('poster')}
+              />
+              <MenuItem
+                icon={<ImageIcon className="w-3.5 h-3.5" />}
+                label="Zmień baner"
+                onClick={() => handleChangeArtwork('banner')}
+              />
+              {series.posterPath && (
+                <MenuItem
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  label="Usuń plakat"
+                  onClick={() => void handleRemoveArtwork('poster')}
+                  destructive
+                />
+              )}
+              {series.bannerPath && (
+                <MenuItem
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  label="Usuń baner"
+                  onClick={() => void handleRemoveArtwork('banner')}
+                  destructive
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Meta block overlapping the banner's bottom edge */}
@@ -129,26 +232,7 @@ export function SeriesHero({
         <div className="flex items-end gap-5">
           {/* Poster */}
           <div className="shrink-0 w-[140px] aspect-[3/4] rounded-lg overflow-hidden border border-border/60 shadow-xl bg-card/80">
-            {series.posterPath ? (
-              <img src={series.posterPath} alt={title} className="w-full h-full object-cover" />
-            ) : (
-              <div
-                className="w-full h-full flex items-center justify-center"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${hue}, 45%, 28%) 0%, hsl(${(hue + 40) % 360}, 35%, 18%) 100%)`,
-                }}
-              >
-                <span className="text-2xl font-semibold text-foreground/80">
-                  {title
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map(w => w[0])
-                    .join('')
-                    .toUpperCase()}
-                </span>
-              </div>
-            )}
+            <PosterImage series={series} kind="poster" />
           </div>
 
           <div className="flex-1 min-w-0 pb-2">
@@ -213,9 +297,57 @@ export function SeriesHero({
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            size="default"
+            className="gap-2"
+            onClick={() => handleChangeArtwork('poster')}
+          >
+            <ImageIcon className="w-4 h-4" />
+            Zmień plakat
+          </Button>
         </div>
       </div>
+
+      {pickerKind && (
+        <PosterPickerDialog
+          seriesId={series.id}
+          kind={pickerKind}
+          open
+          onClose={() => setPickerKind(null)}
+          initialQuery={title}
+        />
+      )}
     </div>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+  destructive = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-sm transition-colors',
+        destructive
+          ? 'text-destructive hover:bg-destructive/10'
+          : 'text-foreground/90 hover:bg-accent hover:text-accent-foreground'
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 

@@ -25,10 +25,20 @@ import {
   type LocalLibrarySetEpisodeProgressPayload,
   type LocalLibrarySetEpisodeProgressResult,
   type LocalLibraryEpisodeProgressUpdatedPayload,
+  type LocalLibrarySearchAniListPayload,
+  type LocalLibrarySearchAniListResult,
+  type LocalLibrarySetSeriesArtworkFromFilePayload,
+  type LocalLibrarySetSeriesArtworkFromUrlPayload,
+  type LocalLibraryRemoveSeriesArtworkPayload,
+  type LocalLibrarySetSeriesArtworkResult,
+  type LocalLibrarySeriesUpdatedPayload,
+  type LocalSeries,
+  type PosterKind,
 } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
 import { handleGatewayRequest } from '../shared/gateway-handler';
+import { AniListSearchService } from './anilist-search.service';
 import { LocalLibraryService } from './local-library.service';
 
 const logger = createLogger('LocalLibraryGateway');
@@ -39,8 +49,33 @@ export class LocalLibraryGateway {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly localLibraryService: LocalLibraryService) {
+  constructor(
+    private readonly localLibraryService: LocalLibraryService,
+    private readonly anilistSearchService: AniListSearchService
+  ) {
     logger.info('LocalLibraryGateway initialized');
+  }
+
+  /**
+   * Normalise a PosterKind from a loosely-typed payload. Returns `null` when
+   * the input is missing or not one of the two allowed values.
+   */
+  private validateKind(value: unknown): PosterKind | null {
+    if (value === 'poster' || value === 'banner') return value;
+    return null;
+  }
+
+  /**
+   * Broadcast a single updated series so all open grids + detail views see
+   * the new artwork immediately. Reuses the SERIES_UPDATED payload shape the
+   * scanner already emits (rootId + series array).
+   */
+  private broadcastSeriesUpdated(series: LocalSeries): void {
+    const payload: LocalLibrarySeriesUpdatedPayload = {
+      rootId: series.rootId,
+      series: [series],
+    };
+    this.server.emit(LocalLibraryEvents.SERIES_UPDATED, payload);
   }
 
   @SubscribeMessage(LocalLibraryEvents.LIST_ROOTS)
@@ -315,6 +350,123 @@ export class LocalLibraryGateway {
         };
         this.server.emit(LocalLibraryEvents.EPISODE_PROGRESS_UPDATED, updatePayload);
         return { episodeId: payload.episodeId, progress };
+      },
+    });
+  }
+
+  // ==========================================================================
+  // Posters + banners (Phase 5)
+  // ==========================================================================
+
+  @SubscribeMessage(LocalLibraryEvents.SEARCH_ANILIST)
+  handleSearchAniList(@MessageBody() payload: LocalLibrarySearchAniListPayload) {
+    return handleGatewayRequest<LocalLibrarySearchAniListResult>({
+      logger,
+      action: `local-library:search-anilist — query="${payload?.query ?? ''}"`,
+      defaultResult: { results: [] },
+      handler: async () => {
+        if (typeof payload?.query !== 'string' || payload.query.trim().length === 0) {
+          return { results: [], error: 'Missing search query' };
+        }
+        const results = await this.anilistSearchService.searchForArtwork(payload.query);
+        return { results };
+      },
+    });
+  }
+
+  @SubscribeMessage(LocalLibraryEvents.SET_SERIES_ARTWORK_FROM_FILE)
+  handleSetSeriesArtworkFromFile(
+    @MessageBody() payload: LocalLibrarySetSeriesArtworkFromFilePayload
+  ) {
+    return handleGatewayRequest<LocalLibrarySetSeriesArtworkResult>({
+      logger,
+      action: `local-library:set-series-artwork-from-file — seriesId=${payload?.seriesId}, kind=${payload?.kind}`,
+      defaultResult: {
+        seriesId: payload?.seriesId ?? -1,
+        kind: this.validateKind(payload?.kind) ?? 'poster',
+        artworkPath: null,
+      },
+      handler: async () => {
+        const kind = this.validateKind(payload?.kind);
+        if (
+          typeof payload?.seriesId !== 'number' ||
+          !kind ||
+          typeof payload?.filePath !== 'string'
+        ) {
+          return {
+            seriesId: payload?.seriesId ?? -1,
+            kind: kind ?? 'poster',
+            artworkPath: null,
+            error: 'Missing seriesId, kind or filePath',
+          };
+        }
+        const { series, artworkPath } = await this.localLibraryService.setSeriesArtworkFromFile(
+          payload.seriesId,
+          kind,
+          payload.filePath
+        );
+        this.broadcastSeriesUpdated(series);
+        return { seriesId: payload.seriesId, kind, artworkPath };
+      },
+    });
+  }
+
+  @SubscribeMessage(LocalLibraryEvents.SET_SERIES_ARTWORK_FROM_URL)
+  handleSetSeriesArtworkFromUrl(
+    @MessageBody() payload: LocalLibrarySetSeriesArtworkFromUrlPayload
+  ) {
+    return handleGatewayRequest<LocalLibrarySetSeriesArtworkResult>({
+      logger,
+      action: `local-library:set-series-artwork-from-url — seriesId=${payload?.seriesId}, kind=${payload?.kind}`,
+      defaultResult: {
+        seriesId: payload?.seriesId ?? -1,
+        kind: this.validateKind(payload?.kind) ?? 'poster',
+        artworkPath: null,
+      },
+      handler: async () => {
+        const kind = this.validateKind(payload?.kind);
+        if (typeof payload?.seriesId !== 'number' || !kind || typeof payload?.url !== 'string') {
+          return {
+            seriesId: payload?.seriesId ?? -1,
+            kind: kind ?? 'poster',
+            artworkPath: null,
+            error: 'Missing seriesId, kind or url',
+          };
+        }
+        const { series, artworkPath } = await this.localLibraryService.setSeriesArtworkFromUrl(
+          payload.seriesId,
+          kind,
+          payload.url
+        );
+        this.broadcastSeriesUpdated(series);
+        return { seriesId: payload.seriesId, kind, artworkPath };
+      },
+    });
+  }
+
+  @SubscribeMessage(LocalLibraryEvents.REMOVE_SERIES_ARTWORK)
+  handleRemoveSeriesArtwork(@MessageBody() payload: LocalLibraryRemoveSeriesArtworkPayload) {
+    return handleGatewayRequest<LocalLibrarySetSeriesArtworkResult>({
+      logger,
+      action: `local-library:remove-series-artwork — seriesId=${payload?.seriesId}, kind=${payload?.kind}`,
+      defaultResult: {
+        seriesId: payload?.seriesId ?? -1,
+        kind: this.validateKind(payload?.kind) ?? 'poster',
+        artworkPath: null,
+      },
+      handler: async () => {
+        const kind = this.validateKind(payload?.kind);
+        if (typeof payload?.seriesId !== 'number' || !kind) {
+          return {
+            seriesId: payload?.seriesId ?? -1,
+            kind: kind ?? 'poster',
+            artworkPath: null,
+            error: 'Missing seriesId or kind',
+          };
+        }
+        const series = await this.localLibraryService.removeSeriesArtwork(payload.seriesId, kind);
+        this.broadcastSeriesUpdated(series);
+        return { seriesId: payload.seriesId, kind, artworkPath: null };
       },
     });
   }

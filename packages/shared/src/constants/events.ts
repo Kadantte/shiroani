@@ -117,6 +117,10 @@ export const LocalLibraryEvents = {
   MARK_EPISODE_WATCHED: 'local-library:mark-episode-watched',
   MARK_SERIES_WATCHED: 'local-library:mark-series-watched',
   SET_EPISODE_PROGRESS: 'local-library:set-episode-progress',
+  SEARCH_ANILIST: 'local-library:search-anilist',
+  SET_SERIES_ARTWORK_FROM_FILE: 'local-library:set-series-artwork-from-file',
+  SET_SERIES_ARTWORK_FROM_URL: 'local-library:set-series-artwork-from-url',
+  REMOVE_SERIES_ARTWORK: 'local-library:remove-series-artwork',
 
   // Player session (client -> server)
   OPEN_PLAYER_SESSION: 'local-library:open-player-session',
