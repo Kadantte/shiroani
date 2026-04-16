@@ -22,6 +22,9 @@ export * from './types/system';
 // Local Library types
 export * from './types/local-library';
 
+// Player session types
+export * from './types/player';
+
 // FFmpeg installer types
 export * from './types/ffmpeg';
 

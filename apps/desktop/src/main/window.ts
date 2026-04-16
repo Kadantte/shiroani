@@ -29,16 +29,21 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       "img-src 'self' data: blob: shiroani-bg: https: http:",
       // Allow fonts from same origin
       "font-src 'self' data:",
-      // Allow connections to localhost (WebSocket and API) and AniList GraphQL
+      // Allow connections to localhost (WebSocket and API) and AniList GraphQL.
+      // The wildcard 127.0.0.1/localhost ports cover the Nest WebSocket server
+      // (dynamic port) and the local player HTTP server started by
+      // `PlayerService` (different dynamic port) -- JASSUB fetches extracted
+      // ASS + font attachments from there.
       isDev
-        ? `connect-src 'self' http://localhost:${VITE_DEV_PORT} ws://localhost:${VITE_DEV_PORT} http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co`
-        : `connect-src 'self' http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} https://graphql.anilist.co`,
+        ? `connect-src 'self' http://localhost:${VITE_DEV_PORT} ws://localhost:${VITE_DEV_PORT} http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} http://127.0.0.1:* http://localhost:* https://graphql.anilist.co`
+        : `connect-src 'self' http://localhost:${backendPort} ws://localhost:${backendPort} http://127.0.0.1:${backendPort} ws://127.0.0.1:${backendPort} http://127.0.0.1:* http://localhost:* https://graphql.anilist.co`,
       // Restrict object/embed sources
       "object-src 'none'",
       // Allow frames from same origin only (webview tags use their own session)
       "frame-src 'self' https:",
-      // Allow media from HTTPS sources for video/audio playback
-      "media-src 'self' https: blob:",
+      // Allow media from HTTPS sources for video/audio playback + the local
+      // player HTTP server (Phase 4 local-library playback).
+      "media-src 'self' https: blob: http://127.0.0.1:* http://localhost:*",
       // Default to same-origin
       "default-src 'self'",
       // Allow forms to submit to same origin

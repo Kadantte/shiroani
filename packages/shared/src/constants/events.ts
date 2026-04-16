@@ -118,6 +118,12 @@ export const LocalLibraryEvents = {
   MARK_SERIES_WATCHED: 'local-library:mark-series-watched',
   SET_EPISODE_PROGRESS: 'local-library:set-episode-progress',
 
+  // Player session (client -> server)
+  OPEN_PLAYER_SESSION: 'local-library:open-player-session',
+  CLOSE_PLAYER_SESSION: 'local-library:close-player-session',
+  SEEK_PLAYER_SESSION: 'local-library:seek-player-session',
+  SWITCH_AUDIO_TRACK: 'local-library:switch-audio-track',
+
   // Server -> Client (broadcasts)
   ROOTS_RESULT: 'local-library:roots-result',
   SERIES_RESULT: 'local-library:series-result',
@@ -134,6 +140,11 @@ export const LocalLibraryEvents = {
   SERIES_UPDATED: 'local-library:series-updated',
   SERIES_REMOVED: 'local-library:series-removed',
   EPISODE_PROGRESS_UPDATED: 'local-library:episode-progress-updated',
+
+  // Player session results (server -> client)
+  OPEN_PLAYER_SESSION_RESULT: 'local-library:open-player-session-result',
+  CLOSE_PLAYER_SESSION_RESULT: 'local-library:close-player-session-result',
+  SEEK_RESULT: 'local-library:seek-result',
 } as const;
 
 // ============================================

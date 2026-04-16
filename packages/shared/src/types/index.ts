@@ -18,3 +18,6 @@ export * from './system';
 
 // Local Library types
 export * from './local-library';
+
+// Player session types
+export * from './player';
