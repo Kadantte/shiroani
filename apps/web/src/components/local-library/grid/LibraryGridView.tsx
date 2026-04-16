@@ -19,12 +19,8 @@ export function LibraryGridView() {
   const seriesProgress = useLocalLibraryStore(s => s.seriesProgress);
   const continueWatching = useLocalLibraryStore(s => s.continueWatching);
   const scanProgress = useLocalLibraryStore(s => s.scanProgress);
-  const isLoading = useLocalLibraryStore(s => s.isLoading);
   const isAddingRoot = useLocalLibraryStore(s => s.isAddingRoot);
   const error = useLocalLibraryStore(s => s.error);
-  const refreshRoots = useLocalLibraryStore(s => s.refreshRoots);
-  const refreshSeries = useLocalLibraryStore(s => s.refreshSeries);
-  const refreshContinueWatching = useLocalLibraryStore(s => s.refreshContinueWatching);
   const pickAndAddRoot = useLocalLibraryStore(s => s.pickAndAddRoot);
   const removeRoot = useLocalLibraryStore(s => s.removeRoot);
   const startScan = useLocalLibraryStore(s => s.startScan);
@@ -39,24 +35,23 @@ export function LibraryGridView() {
   const [setupOpen, setSetupOpen] = useState(false);
   const pendingAddRoot = useRef(false);
 
-  // Initial hydration on mount — socket onConnect also triggers but views may
-  // be rendered after the socket already connected.
+  // Mount-only hydration fallback for when the view renders after the socket
+  // has already connected (the store's `onConnect` handles the first-connect
+  // case). We read the store imperatively via `getState()` so this effect has
+  // no reactive deps — previously depending on `roots.length`/`series.length`/
+  // `isLoading` caused an infinite loop: `refreshRoots` toggles `isLoading`,
+  // the promise resolves with an empty `roots: []`, the effect re-runs with
+  // the same `roots.length === 0 && !isLoading` condition and fires again.
   useEffect(() => {
-    if (roots.length === 0 && !isLoading) {
-      refreshRoots();
+    const state = useLocalLibraryStore.getState();
+    if (state.roots.length === 0 && !state.isLoading) {
+      state.refreshRoots();
     }
-    if (series.length === 0) {
-      refreshSeries();
+    if (state.series.length === 0) {
+      state.refreshSeries();
     }
-    void refreshContinueWatching();
-  }, [
-    refreshRoots,
-    refreshSeries,
-    refreshContinueWatching,
-    roots.length,
-    series.length,
-    isLoading,
-  ]);
+    void state.refreshContinueWatching();
+  }, []);
 
   const continueAddRoot = () => {
     pendingAddRoot.current = false;
