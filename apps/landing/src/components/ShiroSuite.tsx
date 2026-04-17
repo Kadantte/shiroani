@@ -61,9 +61,9 @@ export function ShiroSuite() {
               muzykę.
             </h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              ShiroAni ma dwie siostrzane aplikacje w tym samym monorepo. Wszystkie trzy dzielą
-              język wizualny i jedną zasadę: działają lokalnie, nie krzyczą i dobrze mieszka się z
-              nimi na co dzień.
+              ShiroAni to jedna z trzech siostrzanych aplikacji zbudowanych wokół tej samej idei —
+              lokalnie, spokojnie, na co dzień. Różne repozytoria, wspólna architektura i język
+              wizualny.
             </p>
           </motion.div>
 
