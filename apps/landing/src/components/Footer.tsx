@@ -89,6 +89,35 @@ export function Footer() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
+          <span className="font-semibold uppercase tracking-widest text-gold-dim">Shiro Suite</span>
+          <span aria-hidden="true"> · </span>
+          <a
+            href="#suite"
+            className="transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
+          >
+            ShiroAni
+          </a>
+          <span aria-hidden="true"> · </span>
+          <a
+            href="https://shiranami.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
+          >
+            Shiranami
+          </a>
+          <span aria-hidden="true"> · </span>
+          <a
+            href="https://kireimanga.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-sm"
+          >
+            KireiManga
+          </a>
+        </p>
+
+        <p className="mt-3 text-center text-xs text-muted-foreground">
           © {YEAR} ShiroAni · Kod źródłowy dostępny publicznie
         </p>
       </footer>
