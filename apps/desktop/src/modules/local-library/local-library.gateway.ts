@@ -32,6 +32,9 @@ import {
   type LocalLibraryRemoveSeriesArtworkPayload,
   type LocalLibrarySetSeriesArtworkResult,
   type LocalLibrarySeriesUpdatedPayload,
+  type LocalLibrarySeriesRemovedPayload,
+  type LocalLibraryRemoveSeriesPayload,
+  type LocalLibraryRemoveSeriesResult,
   type LocalSeries,
   type PosterKind,
 } from '@shiroani/shared';
@@ -76,6 +79,11 @@ export class LocalLibraryGateway {
       series: [series],
     };
     this.server.emit(LocalLibraryEvents.SERIES_UPDATED, payload);
+  }
+
+  private broadcastSeriesRemoved(rootId: number, seriesIds: number[]): void {
+    const payload: LocalLibrarySeriesRemovedPayload = { rootId, seriesIds };
+    this.server.emit(LocalLibraryEvents.SERIES_REMOVED, payload);
   }
 
   @SubscribeMessage(LocalLibraryEvents.LIST_ROOTS)
@@ -467,6 +475,33 @@ export class LocalLibraryGateway {
         const series = await this.localLibraryService.removeSeriesArtwork(payload.seriesId, kind);
         this.broadcastSeriesUpdated(series);
         return { seriesId: payload.seriesId, kind, artworkPath: null };
+      },
+    });
+  }
+
+  @SubscribeMessage(LocalLibraryEvents.REMOVE_SERIES_FROM_LIBRARY)
+  handleRemoveSeriesFromLibrary(@MessageBody() payload: LocalLibraryRemoveSeriesPayload) {
+    return handleGatewayRequest<LocalLibraryRemoveSeriesResult>({
+      logger,
+      action: `local-library:remove-series-from-library — seriesId=${payload?.seriesId}`,
+      defaultResult: { success: false, error: 'Unknown error' },
+      handler: async () => {
+        if (typeof payload?.seriesId !== 'number') {
+          return { success: false, error: 'Missing seriesId' };
+        }
+        const removed = await this.localLibraryService.removeSeries(payload.seriesId);
+        if (!removed) {
+          return {
+            success: false,
+            error: `Series ${payload.seriesId} not found`,
+          };
+        }
+        this.broadcastSeriesRemoved(removed.rootId, [removed.seriesId]);
+        return {
+          success: true,
+          rootId: removed.rootId,
+          seriesId: removed.seriesId,
+        };
       },
     });
   }

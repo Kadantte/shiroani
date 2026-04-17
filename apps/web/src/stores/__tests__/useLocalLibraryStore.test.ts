@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type {
+  LocalEpisode,
   LocalSeries,
   SeriesProgressSummary,
   LocalLibraryEpisodeProgressUpdatedPayload,
@@ -38,6 +39,30 @@ vi.mock('@/lib/platform', () => ({
 
 import { useLocalLibraryStore, getFilteredSeries } from '../useLocalLibraryStore';
 
+function makeEpisode(
+  overrides: Partial<LocalEpisode> & Pick<LocalEpisode, 'id' | 'seriesId'>
+): LocalEpisode {
+  return {
+    filePath: '/lib/x.mkv',
+    fileSize: 1,
+    fileHash: null,
+    durationSeconds: 100,
+    width: null,
+    height: null,
+    videoCodec: null,
+    audioTracks: null,
+    subtitleTracks: null,
+    parsedEpisodeNumber: 1,
+    parsedSeason: 1,
+    parsedTitle: null,
+    releaseGroup: null,
+    kind: 'episode',
+    mtime: '2026-01-01T00:00:00Z',
+    createdAt: '2026-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 function makeSeries(overrides: Partial<LocalSeries> & Pick<LocalSeries, 'id'>): LocalSeries {
   return {
     rootId: 1,
@@ -71,6 +96,7 @@ function freshStore() {
     scanProgress: {},
     activeSeriesId: null,
     playingEpisodeId: null,
+    playerMode: null,
     filters: { search: '', rootIds: [], matchStatus: 'all', sort: 'recent' },
     error: null,
     isLoading: false,
@@ -256,6 +282,36 @@ describe('useLocalLibraryStore - socket listeners', () => {
     expect(series.map(s => s.id)).toEqual([1]);
     // The detail view was open on a now-removed series — kick back to grid.
     expect(activeSeriesId).toBeNull();
+  });
+
+  it('clears playingEpisodeId, playerMode, and episodeProgress when a playing episode belongs to a removed series', () => {
+    const ep = makeEpisode({ id: 100, seriesId: 2 });
+    useLocalLibraryStore.setState({
+      series: [makeSeries({ id: 1 }), makeSeries({ id: 2 })],
+      episodes: { 2: [ep] },
+      playingEpisodeId: 100,
+      playerMode: 'remux',
+      episodeProgress: {
+        100: {
+          episodeId: 100,
+          positionSeconds: 10,
+          durationSeconds: 100,
+          completed: false,
+          completedAt: null,
+          watchCount: 0,
+          updatedAt: '2026-04-17T12:00:00Z',
+        },
+      },
+    });
+
+    const handler = socketHandlers.get(LocalLibraryEvents.SERIES_REMOVED);
+    expect(handler).toBeDefined();
+    handler!({ rootId: 1, seriesIds: [2] });
+
+    const state = useLocalLibraryStore.getState();
+    expect(state.playingEpisodeId).toBeNull();
+    expect(state.playerMode).toBeNull();
+    expect(state.episodeProgress[100]).toBeUndefined();
   });
 
   it('updates episodeProgress cache on EPISODE_PROGRESS_UPDATED', () => {

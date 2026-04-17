@@ -246,3 +246,49 @@ describe('LocalLibraryService - playback progress', () => {
     expect(summary.lastWatchedAt).toBeNull();
   });
 });
+
+describe('LocalLibraryService - removeSeries', () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = openTestDb();
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('removeSeries deletes series, episodes, and playback rows; keeps library root', async () => {
+    const { rootId, seriesId, episodeIds } = seedLibrary(db);
+    const service = makeService(db);
+    service.setEpisodeProgress({
+      episodeId: episodeIds[0],
+      positionSeconds: 100,
+      durationSeconds: 1400,
+    });
+
+    const removed = await service.removeSeries(seriesId);
+    expect(removed).toEqual({ rootId, seriesId });
+
+    expect(service.getSeriesById(seriesId)).toBeUndefined();
+
+    const epRows = db
+      .prepare('SELECT id FROM local_episodes WHERE series_id = ?')
+      .all(seriesId) as { id: number }[];
+    expect(epRows.length).toBe(0);
+
+    for (const eid of episodeIds) {
+      const prog = db.prepare('SELECT * FROM playback_progress WHERE episode_id = ?').get(eid);
+      expect(prog).toBeUndefined();
+    }
+
+    const root = db.prepare('SELECT * FROM library_roots WHERE id = ?').get(rootId);
+    expect(root).toBeDefined();
+  });
+
+  it('removeSeries returns null when the series id does not exist', async () => {
+    seedLibrary(db);
+    const service = makeService(db);
+    await expect(service.removeSeries(999_999)).resolves.toBeNull();
+  });
+});

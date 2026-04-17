@@ -40,6 +40,7 @@ import {
   type LocalLibraryCancelScanResult,
   type LocalLibrarySearchAniListResult,
   type LocalLibrarySetSeriesArtworkResult,
+  type LocalLibraryRemoveSeriesResult,
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { IS_ELECTRON } from '@/lib/platform';
@@ -155,6 +156,8 @@ interface LocalLibraryActions {
   setSeriesArtworkFromUrl: (seriesId: number, kind: PosterKind, url: string) => Promise<boolean>;
   /** Drop the series's cached poster/banner. */
   removeSeriesArtwork: (seriesId: number, kind: PosterKind) => Promise<boolean>;
+  /** Remove series from the app index only (DB); does not delete video files. */
+  removeSeriesFromLibrary: (seriesId: number) => Promise<void>;
   initListeners: () => void;
   cleanupListeners: () => void;
 }
@@ -323,20 +326,44 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
                       const id = Number(key);
                       if (!removedSet.has(id)) nextSeriesProgress[id] = value;
                     }
+                    const episodeIdsToDrop = new Set<number>();
+                    for (const sid of removedSet) {
+                      const eps = state.episodes[sid];
+                      if (eps) for (const e of eps) episodeIdsToDrop.add(e.id);
+                    }
+                    const nextEpisodeProgress = { ...state.episodeProgress };
+                    for (const eid of episodeIdsToDrop) {
+                      delete nextEpisodeProgress[eid];
+                    }
                     // If the user was looking at a now-deleted series, bounce
                     // them back to the grid rather than dangling.
                     const activeSeriesId =
                       state.activeSeriesId && removedSet.has(state.activeSeriesId)
                         ? null
                         : state.activeSeriesId;
+                    let playingEpisodeId = state.playingEpisodeId;
+                    let playerMode = state.playerMode;
+                    if (playingEpisodeId != null) {
+                      for (const eps of Object.values(state.episodes)) {
+                        const hit = eps.find(e => e.id === playingEpisodeId);
+                        if (hit && removedSet.has(hit.seriesId)) {
+                          playingEpisodeId = null;
+                          playerMode = null;
+                          break;
+                        }
+                      }
+                    }
                     return {
                       series: state.series.filter(s => !removedSet.has(s.id)),
                       episodes: nextEpisodes,
                       seriesProgress: nextSeriesProgress,
+                      episodeProgress: nextEpisodeProgress,
                       continueWatching: state.continueWatching.filter(
                         item => !removedSet.has(item.series.id)
                       ),
                       activeSeriesId,
+                      playingEpisodeId,
+                      playerMode,
                     };
                   },
                   undefined,
@@ -854,6 +881,13 @@ export const useLocalLibraryStore = create<LocalLibraryStore>()(
             logger.error(`Failed to remove ${kind}:`, message);
             throw err;
           }
+        },
+
+        removeSeriesFromLibrary: async (seriesId: number) => {
+          await emitWithErrorHandling<{ seriesId: number }, LocalLibraryRemoveSeriesResult>(
+            LocalLibraryEvents.REMOVE_SERIES_FROM_LIBRARY,
+            { seriesId }
+          );
         },
 
         initListeners,

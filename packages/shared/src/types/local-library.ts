@@ -104,6 +104,17 @@ export interface LocalLibraryRemoveRootPayload {
   id: number;
 }
 
+export interface LocalLibraryRemoveSeriesPayload {
+  seriesId: number;
+}
+
+export interface LocalLibraryRemoveSeriesResult {
+  success: boolean;
+  rootId?: number;
+  seriesId?: number;
+  error?: string;
+}
+
 export interface LocalLibraryListSeriesPayload {
   rootId?: number;
 }

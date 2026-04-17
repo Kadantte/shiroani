@@ -578,4 +578,25 @@ export class LocalLibraryService {
     logger.info(`Cleared ${kind} for series ${seriesId}`);
     return series;
   }
+
+  /**
+   * Drop a series from the library index only: deletes DB rows (episodes and
+   * playback progress cascade) and app artwork cache. Does not delete video
+   * files under library roots.
+   */
+  async removeSeries(seriesId: number): Promise<{ rootId: number; seriesId: number } | null> {
+    const existing = this.getSeriesById(seriesId);
+    if (!existing) {
+      return null;
+    }
+    await removePosterFromDisk(seriesId, 'poster');
+    await removePosterFromDisk(seriesId, 'banner');
+    const db = this.databaseService.db;
+    const result = db.prepare('DELETE FROM local_series WHERE id = ?').run(seriesId);
+    if (result.changes === 0) {
+      return null;
+    }
+    logger.info(`Removed series ${seriesId} from library (rootId=${existing.rootId})`);
+    return { rootId: existing.rootId, seriesId };
+  }
 }

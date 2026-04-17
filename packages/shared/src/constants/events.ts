@@ -121,6 +121,7 @@ export const LocalLibraryEvents = {
   SET_SERIES_ARTWORK_FROM_FILE: 'local-library:set-series-artwork-from-file',
   SET_SERIES_ARTWORK_FROM_URL: 'local-library:set-series-artwork-from-url',
   REMOVE_SERIES_ARTWORK: 'local-library:remove-series-artwork',
+  REMOVE_SERIES_FROM_LIBRARY: 'local-library:remove-series-from-library',
 
   // Player session (client -> server)
   OPEN_PLAYER_SESSION: 'local-library:open-player-session',

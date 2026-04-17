@@ -11,6 +11,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import type {
   LocalEpisode,
   LocalSeries,
@@ -83,9 +84,11 @@ export function SeriesHero({
   const hasBanner = !!series.bannerPath || !!series.posterPath;
 
   const removeArtwork = useLocalLibraryStore(s => s.removeSeriesArtwork);
+  const removeSeriesFromLibrary = useLocalLibraryStore(s => s.removeSeriesFromLibrary);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerKind, setPickerKind] = useState<PosterKind | null>(null);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,6 +124,16 @@ export function SeriesHero({
     },
     [removeArtwork, series.id]
   );
+
+  const handleConfirmRemoveFromLibrary = useCallback(async () => {
+    setRemoveDialogOpen(false);
+    try {
+      await removeSeriesFromLibrary(series.id);
+      toast.success('Usunięto z biblioteki.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+  }, [removeSeriesFromLibrary, series.id]);
 
   const hasResume =
     resumeEpisode &&
@@ -226,6 +239,15 @@ export function SeriesHero({
                   destructive
                 />
               )}
+              <MenuItem
+                icon={<Trash2 className="w-3.5 h-3.5" />}
+                label="Usuń z biblioteki"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setRemoveDialogOpen(true);
+                }}
+                destructive
+              />
             </div>
           )}
         </div>
@@ -322,6 +344,17 @@ export function SeriesHero({
           initialQuery={title}
         />
       )}
+
+      <ConfirmDialog
+        open={removeDialogOpen}
+        onOpenChange={setRemoveDialogOpen}
+        title="Usunąć z biblioteki?"
+        description="Seria zniknie z aplikacji wraz z zapisanym postępem oglądania. Pliki wideo na dysku nie zostaną usunięte — przy następnym skanowaniu katalogu seria może pojawić się ponownie."
+        confirmLabel="Usuń z biblioteki"
+        cancelLabel="Anuluj"
+        onConfirm={() => void handleConfirmRemoveFromLibrary()}
+        variant="destructive"
+      />
     </div>
   );
 }
