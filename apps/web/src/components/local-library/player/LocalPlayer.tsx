@@ -55,6 +55,7 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
   const episode = useLocalLibraryStore(s =>
     Object.values(s.episodes)
       .flat()
+      .filter((e): e is NonNullable<typeof e> => e != null)
       .find(e => e.id === episodeId)
   );
   const continueWatchingItem = useLocalLibraryStore(s =>
@@ -651,6 +652,11 @@ export function LocalPlayer({ episodeId }: LocalPlayerProps) {
         {/* Video. Controls attr is intentionally absent — we own them all. */}
         <video
           ref={videoRef}
+          // JASSUB reads `VideoFrame`s from this element; without CORS the bitmap
+          // is tainted when the app origin (e.g. localhost:5173) ≠ stream origin
+          // (127.0.0.1:playerPort) and subtitles never render. Must be set before
+          // `src` — the stream effect runs after paint.
+          crossOrigin="anonymous"
           // `playsInline` is critical on iOS-based webkit; we render inside an
           // Electron window but using the Chrome engine, so it's harmless here.
           playsInline
