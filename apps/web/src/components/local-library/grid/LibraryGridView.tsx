@@ -125,7 +125,7 @@ export function LibraryGridView() {
   });
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <LibraryHeader
         seriesCount={series.length}
         hasRoots={hasRoots}
@@ -261,7 +261,7 @@ export function LibraryGridView() {
               )}
             </div>
           ) : (
-            <div className="flex-1 min-h-0 pt-3">
+            <div className="flex min-h-0 flex-1 flex-col pt-3">
               <SeriesGrid
                 series={filteredSeries}
                 progressBySeries={seriesProgress}

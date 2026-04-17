@@ -110,15 +110,15 @@ const ContinueWatchingCard = memo(function ContinueWatchingCard({
             {label}
           </div>
         </div>
-      </div>
 
-      {/* Progress strip */}
-      <div className="absolute bottom-[36px] inset-x-0 h-[3px] bg-background/40">
-        <div
-          className="h-full bg-primary"
-          style={{ width: `${pct}%` }}
-          aria-label={`${Math.round(pct)}% obejrzane`}
-        />
+        {/* Progress on the thumbnail bottom only — avoids overlapping the title block below */}
+        <div className="absolute bottom-0 inset-x-0 h-[3px] bg-background/40">
+          <div
+            className="h-full bg-primary"
+            style={{ width: `${pct}%` }}
+            aria-label={`${Math.round(pct)}% obejrzane`}
+          />
+        </div>
       </div>
 
       <div className="px-3 py-2">

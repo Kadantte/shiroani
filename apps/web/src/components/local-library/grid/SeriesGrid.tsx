@@ -114,7 +114,7 @@ export function SeriesGrid({ series, progressBySeries, onOpenSeries }: SeriesGri
   );
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-auto px-5 pb-20" style={{ contain: 'strict' }}>
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto px-5 pb-20">
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
