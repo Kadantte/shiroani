@@ -1,0 +1,113 @@
+/* ============ FOOTER ============ */
+.ft {
+  border-top: 1px solid var(--hairline);
+  background: var(--bg-2);
+  padding: 60px 32px 32px;
+}
+.ft-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 40px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--hairline);
+}
+.ft-brand .lg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.ft-brand .lg .mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    oklch(from var(--accent) l c h / 0.35),
+    oklch(from var(--accent) l c h / 0.08)
+  );
+  display: grid;
+  place-items: center;
+  border: 1px solid oklch(from var(--accent) l c h / 0.3);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+.ft-brand .lg .mark img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  object-position: center 15%;
+  filter: drop-shadow(0 2px 4px oklch(0 0 0 / 0.4));
+}
+.ft-brand .lg .name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 17px;
+  line-height: 1.2;
+}
+.ft-brand .lg .name small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--text-3);
+  font-weight: 500;
+  display: block;
+}
+.ft-brand p {
+  color: var(--text-2);
+  max-width: 30ch;
+  font-size: 14px;
+}
+.ft-brand .s {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+.ft-brand .s a {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg-3);
+  display: grid;
+  place-items: center;
+  transition: background 0.2s;
+  color: var(--text);
+}
+.ft-brand .s a:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.ft-col h4 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
+.ft-col a {
+  display: block;
+  padding: 5px 0;
+  color: var(--text-2);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.ft-col a:hover {
+  color: var(--text);
+  transform: translateX(3px);
+}
+.ft-btm {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}

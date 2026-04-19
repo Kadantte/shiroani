@@ -1,24 +1,100 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { Navbar } from '../components/Navbar';
-import { Hero } from '../components/Hero';
-import { Features } from '../components/Features';
-import { Preview } from '../components/Preview';
-import { BotSection } from '../components/BotSection';
-import { ChangelogPreview } from '../components/ChangelogPreview';
-import { FAQ } from '../components/FAQ';
+import Ticker from '../components/Ticker.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import Chapter from '../components/Chapter.astro';
+import Features from '../components/Features.astro';
+import { Anatomy } from '../components/Anatomy';
+import { Themes } from '../components/Themes';
+import Mascot from '../components/Mascot.astro';
+import Suite from '../components/Suite.astro';
+import Download from '../components/Download.astro';
+import FAQ from '../components/FAQ.astro';
 import { Footer } from '../components/Footer';
 ---
 
-<BaseLayout title="ShiroAni · Przeglądarka i tracker anime">
-  <Navbar client:load />
-  <main id="main">
-    <Hero client:idle />
-    <Features client:visible />
-    <Preview client:visible />
-    <BotSection client:visible />
-    <ChangelogPreview client:visible />
-    <FAQ client:visible />
+<BaseLayout title="白アニ · ShiroAni — przeglądarka & tracker anime">
+  <Ticker />
+  <Navbar />
+  <main>
+    <Hero />
+
+    <Chapter
+      id="funkcje"
+      num="01"
+      eyebrow="Chapter one · Co jest w środku"
+      title="Jedna aplikacja. "
+      em="Sześć przestrzeni."
+      meta="9 funkcji<br />str. 04–09"
+    />
+    <Features />
+
+    <Chapter
+      id="podglad"
+      num="02"
+      eyebrow="Chapter two · Anatomia aplikacji"
+      title="Kliknij pin, by "
+      em="zobaczyć szczegóły"
+      titleSuffix="."
+      meta="4 widoki · 12 pinów<br />str. 10–11"
+    />
+    <Anatomy client:visible />
+
+    <Chapter
+      id="motywy"
+      num="03"
+      eyebrow="Chapter three · Motywy"
+      title="Dopasuj aplikację do "
+      em="swojego nastroju"
+      titleSuffix="."
+      meta="6 prototypów<br />str. 12"
+    />
+    <Themes client:visible />
+
+    <Chapter
+      id="maskotka"
+      num="04"
+      eyebrow="Chapter four · Mała towarzyszka"
+      title="Poznaj "
+      em="Shiro-chan"
+      titleSuffix="."
+      meta="8+ póz<br />str. 13"
+    />
+    <Mascot />
+
+    <Chapter
+      id="suite"
+      num="05"
+      eyebrow="Chapter five · Rodzina"
+      title="Jedna cicha półka na "
+      em="anime, mangę i muzykę"
+      titleSuffix="."
+      meta="3 aplikacje<br />1 język wizualny"
+    />
+    <Suite />
+
+    <Chapter
+      id="pobierz"
+      num="06"
+      eyebrow="Chapter six · Zainstaluj"
+      title="Zabierz ją "
+      em="do siebie"
+      titleSuffix="."
+      meta="2 platformy · 48 MB<br />str. 14"
+    />
+    <Download />
+
+    <Chapter
+      id="faq"
+      num="07"
+      eyebrow="Chapter seven · Pytania"
+      title="Krótko i "
+      em="na temat"
+      titleSuffix="."
+      meta="6 pytań<br />str. 15"
+    />
+    <FAQ />
   </main>
   <Footer client:visible />
 </BaseLayout>

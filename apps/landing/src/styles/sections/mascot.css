@@ -1,0 +1,102 @@
+/* ============ MASCOT ============ */
+.mascot {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 32px 80px;
+}
+.mascot-wrap {
+  position: relative;
+  background: var(--bg-2);
+  border: 1px solid var(--hairline-2);
+  border-radius: 24px;
+  padding: 60px 56px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  gap: 40px;
+}
+.mascot-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 60% at 80% 50%, var(--accent-glow), transparent 60%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+.mascot-wrap::after {
+  content: '白';
+  position: absolute;
+  right: -50px;
+  bottom: -120px;
+  font-family: var(--font-mincho);
+  font-weight: 800;
+  font-size: 420px;
+  line-height: 0.82;
+  color: oklch(from var(--text) l c h / 0.04);
+  pointer-events: none;
+}
+.mascot-l {
+  position: relative;
+  z-index: 2;
+}
+.mascot-l h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(36px, 4.8vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.028em;
+}
+.mascot-l h2 em {
+  font-family: var(--font-mincho);
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 800;
+}
+.mascot-l p {
+  margin-top: 20px;
+  font-size: 16.5px;
+  color: var(--text-2);
+  max-width: 48ch;
+}
+.pose-row {
+  margin-top: 28px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pose-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg-3);
+  border: 1px solid var(--hairline);
+  color: var(--text-2);
+  transition: all 0.2s;
+}
+.pose-btn:hover,
+.pose-btn.on {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.mascot-r {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+}
+.mascot-r img {
+  width: 70%;
+  max-width: 300px;
+  filter: drop-shadow(0 20px 40px var(--accent-glow));
+  animation: float 5s ease-in-out infinite;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-12px);
+  }
+}
