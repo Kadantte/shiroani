@@ -3,9 +3,14 @@
   position: sticky;
   top: 0;
   z-index: 60;
-  background: oklch(from var(--bg) l c h / 0.8);
-  backdrop-filter: blur(14px);
+  background: var(--bg);
   border-bottom: 1px solid var(--hairline);
+}
+@supports (backdrop-filter: blur(6px)) {
+  .nav {
+    background: oklch(from var(--bg) l c h / 0.92);
+    backdrop-filter: saturate(130%) blur(6px);
+  }
 }
 .nav-inner {
   max-width: 1440px;
