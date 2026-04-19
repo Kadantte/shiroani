@@ -48,11 +48,13 @@
   color: var(--accent);
   letter-spacing: -0.03em;
 }
-.hero h1 .strike {
+.hero h1 .hl {
   position: relative;
   display: inline-block;
+  background: transparent;
+  color: inherit;
 }
-.hero h1 .strike::after {
+.hero h1 .hl::after {
   content: '';
   position: absolute;
   left: -6px;
