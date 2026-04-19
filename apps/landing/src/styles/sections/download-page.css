@@ -187,9 +187,14 @@
   margin: 0 auto 20px;
 }
 
-/* ---- macOS note ---- */
-.dlp-note {
+/* ---- Platform notes (Win SmartScreen, macOS xattr) ---- */
+.dlp-notes {
   margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dlp-note {
   padding: 28px 32px;
   background: var(--bg-2);
   border: 1px solid var(--hairline);
