@@ -1,4 +1,7 @@
 ---
+import { currentVersion } from '../lib/releases';
+
+const version = currentVersion();
 ---
 
 <section class="suite">
@@ -14,7 +17,7 @@
       </div>
       <div class="suite-bottom">
         <span class="here">Tutaj jesteś</span>
-        <span>v0.7.2</span>
+        <span>v{version}</span>
       </div>
     </div>
 

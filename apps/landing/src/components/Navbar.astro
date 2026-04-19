@@ -1,9 +1,12 @@
 ---
+import { currentVersion } from '../lib/releases';
+
 interface Props {
   activeHref?: string;
 }
 
 const { activeHref } = Astro.props;
+const version = currentVersion();
 
 const links = [
   { num: '01', label: 'Funkcje', href: '/#funkcje' },
@@ -19,7 +22,7 @@ const links = [
   <div class="nav-inner">
     <a class="logo" href="/">
       <span class="mark"><img src="/assets/mascot-wave.png" alt="" width="44" height="44" decoding="async" /></span>
-      <span class="name">ShiroAni<small>SHIRO·ANI · v0.7.2</small></span>
+      <span class="name">ShiroAni<small>SHIRO·ANI · v{version}</small></span>
     </a>
     <div class="nav-links">
       {links.map((l) => (

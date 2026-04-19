@@ -26,6 +26,10 @@ export interface Release {
   categories: ReleaseCategory[];
 }
 
+// Single source of truth for the version string shown in landing UI.
+// Always derived from the first (latest) entry in `releases`.
+export const currentVersion = (): string => releases[0].version;
+
 export const releases: Release[] = [
   {
     version: '0.5.0',
