@@ -26,6 +26,12 @@
   .suite-grid {
     grid-template-columns: 1fr;
   }
+  .dlp-grid {
+    grid-template-columns: 1fr;
+  }
+  .dlp-hdr .kanji-bg {
+    display: none;
+  }
   .hdr .kanji-bg {
     display: none;
   }
