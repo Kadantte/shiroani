@@ -89,6 +89,12 @@
   z-index: 2;
   transform: translate(-50%, -50%);
 }
+.ana-pin::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
 .ana-pin:hover,
 .ana-pin.active {
   transform: translate(-50%, -50%) scale(1.15);

@@ -12,6 +12,7 @@ html[data-theme='plum'] {
   margin: 0 auto;
   padding: 72px 32px 40px;
   position: relative;
+  overflow: hidden;
 }
 .hdr .eyebrow {
   display: inline-flex;
@@ -53,7 +54,7 @@ html[data-theme='plum'] {
   right: -40px;
   font-family: var(--font-mincho);
   font-weight: 800;
-  font-size: 300px;
+  font-size: clamp(180px, 22vw, 300px);
   line-height: 0.82;
   color: oklch(from var(--text) l c h / 0.035);
   pointer-events: none;
