@@ -139,24 +139,43 @@ export function Anatomy() {
     setPin(0);
   };
 
+  const handleTabKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const next = (currentIndex + dir + TAB_ORDER.length) % TAB_ORDER.length;
+    handleTab(TAB_ORDER[next]);
+    const nextEl = document.getElementById(`ana-tab-${TAB_ORDER[next]}`);
+    nextEl?.focus();
+  };
+
   return (
     <section className="anatomy">
       <div className="ana-wrap">
-        <div className="ana-tabs" role="tablist">
+        <div className="ana-tabs" role="tablist" aria-label="Anatomia widoków aplikacji">
           {TAB_ORDER.map((t, i) => (
             <button
               key={t}
+              id={`ana-tab-${t}`}
               className={`ana-tab${tab === t ? ' on' : ''}`}
               onClick={() => handleTab(t)}
+              onKeyDown={e => handleTabKeyDown(e, i)}
               role="tab"
               aria-selected={tab === t}
+              aria-controls={`ana-panel-${t}`}
+              tabIndex={tab === t ? 0 : -1}
             >
               <span className="tn">{`0${i + 1}`}</span>
               {ANA[t].label}
             </button>
           ))}
         </div>
-        <div className="ana-stage">
+        <div
+          className="ana-stage"
+          role="tabpanel"
+          id={`ana-panel-${tab}`}
+          aria-labelledby={`ana-tab-${tab}`}
+        >
           <div className="ana-screen">
             <img key={data.src} src={data.src} alt={data.label} />
             {data.pins.map((p, i) => (
@@ -166,6 +185,8 @@ export function Anatomy() {
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
                 onClick={() => setPin(i)}
                 aria-label={p.title}
+                aria-describedby="ana-note"
+                aria-pressed={i === pin}
               >
                 {i + 1}
               </button>
@@ -176,7 +197,7 @@ export function Anatomy() {
               <h4>{data.viewLabel}</h4>
               <h3>{data.t}</h3>
             </div>
-            <div className="ana-note">
+            <div className="ana-note" id="ana-note" aria-live="polite">
               <b>{`Pin 0${pin + 1} · ${active.title}`}</b>
               {active.text}
             </div>

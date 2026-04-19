@@ -27,9 +27,14 @@
   justify-content: space-between;
   text-align: left;
 }
-.th:hover {
+.th:hover,
+.th:focus-visible {
   transform: translateY(-3px);
   border-color: var(--th-accent);
+}
+.th:focus-visible {
+  outline: 2px solid var(--th-accent);
+  outline-offset: 2px;
 }
 .th.on {
   outline: 2px solid var(--th-accent);

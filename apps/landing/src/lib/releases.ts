@@ -11,6 +11,8 @@ export type CategorySlug =
 export interface ReleaseCategory {
   slug: CategorySlug;
   label: string;
+  // entries are rendered via set:html in ChangelogPage.astro to allow <code> tags.
+  // Source is author-controlled static data only — never accept user input here.
   entries: string[];
 }
 
