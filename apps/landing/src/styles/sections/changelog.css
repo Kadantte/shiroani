@@ -31,7 +31,7 @@ html[data-theme='plum'] {
 .hdr h1 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(52px, 7vw, 96px);
+  font-size: var(--fs-display-xl);
   line-height: 0.95;
   letter-spacing: -0.035em;
   margin-top: 20px;
@@ -217,7 +217,7 @@ html[data-theme='plum'] {
 .rel h2 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(26px, 3vw, 38px);
+  font-size: var(--fs-display-sm);
   line-height: 1.08;
   letter-spacing: -0.025em;
   margin-bottom: 14px;
