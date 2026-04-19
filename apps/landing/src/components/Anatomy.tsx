@@ -177,7 +177,7 @@ export function Anatomy() {
           aria-labelledby={`ana-tab-${tab}`}
         >
           <div className="ana-screen">
-            <img key={data.src} src={data.src} alt={data.label} />
+            <img src={data.src} alt={data.label} decoding="async" />
             {data.pins.map((p, i) => (
               <button
                 key={i}

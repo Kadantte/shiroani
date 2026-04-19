@@ -5,7 +5,14 @@ export function Footer() {
         <div className="ft-brand">
           <div className="lg">
             <span className="mark">
-              <img src="/assets/mascot-wave.png" alt="" />
+              <img
+                src="/assets/mascot-wave.png"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                width="52"
+                height="52"
+              />
             </span>
             <div className="name">
               ShiroAni

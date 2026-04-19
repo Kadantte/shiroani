@@ -1,5 +1,21 @@
 ---
-const features = [
+type Feature = {
+  cls: string;
+  no: string;
+  tag?: string;
+  tagOn?: boolean;
+  title: string;
+  desc: string;
+  img?: string;
+  alt?: string;
+  w?: number;
+  h?: number;
+};
+
+const SHOT = { w: 3420, h: 2214 };
+const RPC = { w: 1116, h: 378 };
+
+const features: Feature[] = [
   {
     cls: 'col-7 hl',
     no: '№ 01 · BROWSER',
@@ -9,6 +25,7 @@ const features = [
     desc: 'Karty, sesje, zakładki, blokada reklam i trackerów Ghostery — wszystko tam, gdzie oglądasz. Bez pop-upów, bez przekierowań.',
     img: '/assets/browser_view.webp',
     alt: 'Wbudowana przeglądarka',
+    ...SHOT,
   },
   {
     cls: 'col-5 hl',
@@ -18,6 +35,7 @@ const features = [
     desc: 'Oglądane, ukończone, planowane, wstrzymane, porzucone. Filtry, notatki, odcinki.',
     img: '/assets/library_view.webp',
     alt: 'Biblioteka anime',
+    ...SHOT,
   },
   {
     cls: 'col-8 hl',
@@ -28,6 +46,7 @@ const features = [
     desc: 'Widok tygodniowy, dzienny i tabelaryczny. Dane prosto z AniList. Powiadomienia kiedy nowy odcinek wchodzi na antenę.',
     img: '/assets/schedule_view.webp',
     alt: 'Harmonogram emisji',
+    ...SHOT,
   },
   {
     cls: 'col-4',
@@ -37,6 +56,7 @@ const features = [
     desc: 'Zapisuj wrażenia po każdym odcinku — rich text, obrazki, nagłówki, wszystko lokalnie.',
     img: '/assets/diary_view.webp',
     alt: 'Pamiętnik',
+    ...SHOT,
   },
   {
     cls: 'col-4',
@@ -46,6 +66,7 @@ const features = [
     desc: 'Rich Presence z własnym szablonem. Podgląd na żywo w ustawieniach — edytuj tekst, obrazki, akcje.',
     img: '/assets/discord_rpc.webp',
     alt: 'Discord Rich Presence',
+    ...RPC,
   },
   {
     cls: 'col-4',
@@ -54,6 +75,7 @@ const features = [
     desc: 'Kafelki szybkiego dostępu. Skonfiguruj raz, korzystaj zawsze.',
     img: '/assets/onboarding.webp',
     alt: 'Nowa karta',
+    ...SHOT,
   },
   {
     cls: 'col-4',
@@ -87,7 +109,16 @@ const features = [
         <h3>{f.title}</h3>
         <p>{f.desc}</p>
         {f.img && (
-          <div class="fimg"><img src={f.img} alt={f.alt} loading="lazy" /></div>
+          <div class="fimg">
+            <img
+              src={f.img}
+              alt={f.alt}
+              loading="lazy"
+              decoding="async"
+              width={f.w}
+              height={f.h}
+            />
+          </div>
         )}
       </article>
     ))}
