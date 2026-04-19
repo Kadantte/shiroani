@@ -27,9 +27,9 @@ html[data-theme='noir'] {
   --text: oklch(0.96 0 0);
   --text-2: oklch(0.7 0.01 280);
   --text-3: oklch(0.48 0.01 280);
-  --accent: oklch(0.88 0.01 280);
-  --accent-2: oklch(0.7 0.02 280);
-  --accent-glow: oklch(0.88 0.01 280 / 0.2);
+  --accent: oklch(0.8 0.015 280);
+  --accent-2: oklch(0.64 0.02 280);
+  --accent-glow: oklch(0.8 0.015 280 / 0.25);
 }
 html[data-theme='matcha'] {
   color-scheme: dark;
@@ -77,8 +77,8 @@ html[data-theme='paper'] {
   --bg-3: oklch(0.9 0.018 340);
   --bg-4: oklch(0.82 0.025 340);
   --text: oklch(0.2 0.02 320);
-  --text-2: oklch(0.4 0.03 320);
-  --text-3: oklch(0.58 0.035 320);
+  --text-2: oklch(0.38 0.03 320);
+  --text-3: oklch(0.48 0.035 320);
   --accent: oklch(0.56 0.2 355);
   --accent-2: oklch(0.48 0.22 0);
   --accent-glow: oklch(0.56 0.2 355 / 0.25);

@@ -127,7 +127,7 @@
   --th-bg-2: oklch(0.15 0.008 280);
   --th-text: oklch(0.96 0 0);
   --th-text-2: oklch(0.7 0.01 280);
-  --th-accent: oklch(0.88 0.01 280);
+  --th-accent: oklch(0.8 0.015 280);
   --th-hair: oklch(1 0 0 / 0.08);
 }
 .th[data-t='matcha'] {
