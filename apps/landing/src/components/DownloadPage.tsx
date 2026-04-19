@@ -131,8 +131,8 @@ export function DownloadPage() {
           Pobierz <em>ShiroAni</em>.
         </h1>
         <p className="sub">
-          Darmowe, bez konta, bez reklam. Auto-update na Windowsie. macOS wymaga jednej komendy w
-          terminalu, bo aplikacja nie jest podpisana.
+          Darmowe, bez konta, bez reklam. Auto-update na Windowsie. Żadna z wersji nie jest jeszcze
+          podpisana — szczegóły dotyczące SmartScreen i macOS poniżej.
         </p>
       </header>
 
@@ -207,16 +207,32 @@ export function DownloadPage() {
           {downloaded ? `Pobieranie ${downloaded === 'win' ? 'Windows' : 'macOS'} rozpoczęte.` : ''}
         </div>
 
-        {detected === 'mac' && (
+        <div className="dlp-notes">
           <aside className="dlp-note">
             <div className="nhead">
               <span className="ndot" aria-hidden="true"></span>
-              macOS · pierwsze uruchomienie
+              Windows · SmartScreen
+            </div>
+            <p>
+              Instalator nie jest podpisany certyfikatem EV, więc Windows SmartScreen pokaże
+              ostrzeżenie <b>„Windows ochronił Twój komputer"</b>. Kliknij <b>Więcej informacji</b>,
+              a następnie <b>Uruchom mimo to</b>, żeby kontynuować instalację.
+            </p>
+            <p className="nmeta">
+              Po instalacji aplikacja aktualizuje się sama — ostrzeżenie pojawi się tylko przy
+              pierwszym uruchomieniu.
+            </p>
+          </aside>
+
+          <aside className="dlp-note">
+            <div className="nhead">
+              <span className="ndot" aria-hidden="true"></span>
+              macOS · po każdym pobraniu
             </div>
             <p>
               Aplikacja nie jest podpisana certyfikatem Apple, więc macOS zablokuje ją przy próbie
-              otwarcia. Po przeniesieniu ShiroAni do folderu <b>Applications</b> uruchom
-              jednokrotnie w terminalu:
+              otwarcia. Po przeniesieniu ShiroAni do folderu <b>Applications</b> uruchom w
+              terminalu:
             </p>
             <div className="ncode">
               <code>{MAC_QUARANTINE_CMD}</code>
@@ -225,10 +241,11 @@ export function DownloadPage() {
               </button>
             </div>
             <p className="nmeta">
-              To jednorazowa czynność — kolejne aktualizacje nie wymagają jej powtarzania.
+              Powtórz tę komendę przy każdej aktualizacji — macOS nakłada kwarantannę na każdy
+              świeżo pobrany plik.
             </p>
           </aside>
-        )}
+        </div>
 
         <div className="dlp-links">
           <a href="/changelog" className="dlp-btn">

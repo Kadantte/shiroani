@@ -26,7 +26,8 @@
   .suite-grid {
     grid-template-columns: 1fr;
   }
-  .dlp-grid {
+  .dlp-grid,
+  .dlp-notes {
     grid-template-columns: 1fr;
   }
   .dlp-hdr .kanji-bg {
