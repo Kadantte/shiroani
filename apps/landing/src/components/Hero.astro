@@ -1,4 +1,8 @@
 ---
+import { currentVersion } from '../lib/releases';
+
+const version = currentVersion();
+
 const libraryCards = [
   { cls: 'c1', title: 'Frieren', ep: '8/28', badge: { text: 'ON AIR', cls: 'live' }, progress: 28 },
   { cls: 'c2', title: 'Dandadan', ep: '5/12', badge: { text: 'NEW' }, progress: 42 },
@@ -12,7 +16,7 @@ const libraryCards = [
 <section class="hero">
   <div class="hero-grid">
     <div>
-      <span class="eyebrow"><span class="blip"></span>v0.7.2 · Dock pływający jest już dostępny</span>
+      <span class="eyebrow"><span class="blip"></span>v{version} · Dock pływający jest już dostępny</span>
       <h1>
         Oglądaj, śledź, odpoczywaj — w
         <span class="kanji">jednym</span>

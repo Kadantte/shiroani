@@ -1,4 +1,7 @@
+import { currentVersion } from '../lib/releases';
+
 export function Footer() {
+  const version = currentVersion();
   return (
     <footer className="ft">
       <div className="ft-inner">
@@ -16,7 +19,7 @@ export function Footer() {
             </span>
             <div className="name">
               ShiroAni
-              <small>SHIRO·ANI · v0.7.2</small>
+              <small>SHIRO·ANI · v{version}</small>
             </div>
           </div>
           <p>
