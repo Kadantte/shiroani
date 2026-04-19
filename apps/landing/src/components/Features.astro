@@ -1,0 +1,95 @@
+---
+const features = [
+  {
+    cls: 'col-7 hl',
+    no: '№ 01 · BROWSER',
+    tag: 'AD-BLOCK · GHOSTERY',
+    tagOn: true,
+    title: 'Wbudowana przeglądarka bez reklam.',
+    desc: 'Karty, sesje, zakładki, blokada reklam i trackerów Ghostery — wszystko tam, gdzie oglądasz. Bez pop-upów, bez przekierowań.',
+    img: '/assets/browser_view.webp',
+    alt: 'Wbudowana przeglądarka',
+  },
+  {
+    cls: 'col-5 hl',
+    no: '№ 02 · LIBRARY',
+    tag: '5 STATUSÓW',
+    title: 'Twoja biblioteka, Twoje zasady.',
+    desc: 'Oglądane, ukończone, planowane, wstrzymane, porzucone. Filtry, notatki, odcinki.',
+    img: '/assets/library_view.webp',
+    alt: 'Biblioteka anime',
+  },
+  {
+    cls: 'col-8 hl',
+    no: '№ 03 · SCHEDULE',
+    tag: 'ANILIST · LIVE',
+    tagOn: true,
+    title: 'Harmonogram emisji z odliczaniem do premiery.',
+    desc: 'Widok tygodniowy, dzienny i tabelaryczny. Dane prosto z AniList. Powiadomienia kiedy nowy odcinek wchodzi na antenę.',
+    img: '/assets/schedule_view.webp',
+    alt: 'Harmonogram emisji',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 04 · DIARY',
+    tag: 'TIPTAP',
+    title: 'Pamiętnik z formatowaniem.',
+    desc: 'Zapisuj wrażenia po każdym odcinku — rich text, obrazki, nagłówki, wszystko lokalnie.',
+    img: '/assets/diary_view.webp',
+    alt: 'Pamiętnik',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 05 · DISCORD RPC',
+    tag: 'TEMPLATE EDITOR',
+    title: 'Pokaż znajomym co oglądasz.',
+    desc: 'Rich Presence z własnym szablonem. Podgląd na żywo w ustawieniach — edytuj tekst, obrazki, akcje.',
+    img: '/assets/discord_rpc.webp',
+    alt: 'Discord Rich Presence',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 06 · NEW TAB',
+    title: 'Ulubione strony — jedno kliknięcie.',
+    desc: 'Kafelki szybkiego dostępu. Skonfiguruj raz, korzystaj zawsze.',
+    img: '/assets/onboarding.webp',
+    alt: 'Nowa karta',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 07 · THEMES',
+    title: '39 motywów. Edytor własnych.',
+    desc: '15 inspirowanych anime. Wizualny edytor palety, czcionek i tła.',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 08 · NOTIFICATIONS',
+    title: 'Nowy odcinek — jesteś pierwszy.',
+    desc: 'Powiadomienia systemowe kiedy tylko seria z biblioteki dostaje nowy odcinek.',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 09 · IMPORT / EXPORT',
+    title: 'Twoje dane — Twoja własność.',
+    desc: 'Lokalne SQLite. Import i eksport biblioteki i pamiętnika jednym kliknięciem. Bez chmury, bez konta.',
+  },
+];
+---
+
+<section class="features">
+  <div class="fgrid">
+    {features.map((f) => (
+      <article class={`fc ${f.cls}`}>
+        <div class="fc-head">
+          <span class="no">{f.no}</span>
+          {f.tag && <span class={`tag ${f.tagOn ? 'on' : ''}`}>{f.tag}</span>}
+        </div>
+        <h3>{f.title}</h3>
+        <p>{f.desc}</p>
+        {f.img && (
+          <div class="fimg"><img src={f.img} alt={f.alt} loading="lazy" /></div>
+        )}
+      </article>
+    ))}
+  </div>
+</section>

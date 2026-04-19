@@ -1,0 +1,47 @@
+---
+const faqs = [
+  {
+    q: 'Czy ShiroAni jest darmowe?',
+    a: 'Tak, całkowicie. Żadnego konta, reklam, ani subskrypcji. Kod jest otwarty — możesz przeglądać, ale redystrybucja nie jest dozwolona.',
+  },
+  {
+    q: 'Na jakich systemach działa?',
+    a: 'Windows 10/11 (auto-update) i macOS 11+. Wersja Linux jest w planach na Q3 2026. macOS wymaga jednokrotnego uruchomienia komendy <code>xattr -cr /Applications/ShiroAni.app</code>, ponieważ aplikacja nie jest jeszcze podpisana.',
+  },
+  {
+    q: 'Jak działa wbudowana przeglądarka?',
+    a: 'Pełna przeglądarka oparta o Chromium z wbudowanym adblockiem Ghostery. Karty, sesje, zakładki, historia — działa tak jak zwykła przeglądarka, tylko bez reklam i w tym samym oknie co biblioteka.',
+  },
+  {
+    q: 'Skąd dane w harmonogramie?',
+    a: 'Harmonogram pobiera dane bezpośrednio z publicznego API AniList. Import biblioteki z MyAnimeList i AniList jest w planach.',
+  },
+  {
+    q: 'Czy moje dane są bezpieczne?',
+    a: 'Wszystkie dane (biblioteka, pamiętnik, ustawienia) są lokalne — SQLite na Twoim dysku. Nie wysyłamy niczego na serwer.',
+  },
+  {
+    q: 'Interfejs jest tylko po polsku?',
+    a: 'Na razie tak. Angielski jest w trakcie dodawania — pojawi się w jednym z najbliższych wydań.',
+  },
+];
+---
+
+<section class="faq-wrap">
+  <div class="hd">
+    <h2>Najczęściej <em>pytane</em>.</h2>
+    <p>Masz inne pytanie? Zajrzyj na Discorda.</p>
+  </div>
+  <div class="faq-list">
+    {faqs.map((f, i) => (
+      <details class="faq" open={i === 0}>
+        <summary>
+          <span class="n">{`Q.${String(i + 1).padStart(2, '0')}`}</span>
+          <span>{f.q}</span>
+          <span class="plus">+</span>
+        </summary>
+        <p set:html={f.a}></p>
+      </details>
+    ))}
+  </div>
+</section>

@@ -1,36 +1,28 @@
 @import 'tailwindcss';
 
+/* Tailwind theme tokens — used on /download and /changelog pages */
 @theme {
-  /* Typography — warm geometric sans + sharp display */
   --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-display: 'Sora', 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Zen Kaku Gothic New', 'DM Sans', system-ui, sans-serif;
 
-  /* Spy×Family palette — noir with Anya pink + Loid gold */
-  --color-background: oklch(0.08 0.005 0);
-  --color-foreground: oklch(0.94 0.01 350);
-  --color-muted: oklch(0.2 0.008 350);
-  --color-muted-foreground: oklch(0.6 0.02 350);
-  --color-primary: oklch(0.72 0.15 350);
-  --color-primary-foreground: oklch(0.1 0.005 0);
-  --color-brand: oklch(0.65 0.17 348);
+  --color-background: oklch(0.12 0.018 300);
+  --color-foreground: oklch(0.96 0.01 300);
+  --color-muted: oklch(0.21 0.03 298);
+  --color-muted-foreground: oklch(0.72 0.03 300);
+  --color-primary: oklch(0.74 0.15 355);
+  --color-primary-foreground: oklch(0.12 0.018 300);
+  --color-brand: oklch(0.74 0.15 355);
   --color-gold: oklch(0.75 0.12 85);
   --color-gold-dim: oklch(0.62 0.08 85);
-  --color-card: oklch(0.14 0.008 350);
-  --color-card-foreground: oklch(0.94 0.01 350);
-  --color-surface: oklch(0.11 0.006 350);
-  --color-border: oklch(0.32 0.01 350);
+  --color-card: oklch(0.16 0.025 300);
+  --color-card-foreground: oklch(0.96 0.01 300);
+  --color-surface: oklch(0.14 0.02 300);
+  --color-border: oklch(1 0 0 / 0.14);
   --color-crimson: oklch(0.55 0.25 10);
 
-  --color-primary-glow: oklch(0.72 0.15 350 / 0.2);
-  --color-brand-glow: oklch(0.65 0.17 348 / 0.5);
+  --color-primary-glow: oklch(0.74 0.15 355 / 0.3);
+  --color-brand-glow: oklch(0.74 0.15 355 / 0.5);
   --color-gold-glow: oklch(0.7 0.1 85 / 0.5);
-
-  /* Accent bases — reference via oklch(from ... / alpha) for per-use opacity */
-  --color-accent-pink: oklch(0.72 0.15 350);
-  --color-accent-brand: oklch(0.65 0.17 348);
-  --color-accent-discord: oklch(0.55 0.15 280);
-  --color-accent-gold: oklch(0.75 0.12 85);
-  --color-accent-gold-warm: oklch(0.55 0.08 85);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -38,171 +30,29 @@
   --radius-xl: 1.5rem;
 }
 
-@layer base {
-  /* Self-hosted fonts — DM Sans (latin + latin-ext, variable weight 400–700) */
-  @font-face {
-    font-family: 'DM Sans';
-    font-style: normal;
-    font-weight: 400 700;
-    font-display: swap;
-    src: url('/fonts/dm-sans-normal-latin-ext.woff2') format('woff2');
-    unicode-range:
-      U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-      U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-      U+A720-A7FF;
-  }
-  @font-face {
-    font-family: 'DM Sans';
-    font-style: normal;
-    font-weight: 400 700;
-    font-display: swap;
-    src: url('/fonts/dm-sans-normal-latin.woff2') format('woff2');
-    unicode-range:
-      U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-      U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  }
-  @font-face {
-    font-family: 'DM Sans';
-    font-style: italic;
-    font-weight: 400;
-    font-display: swap;
-    src: url('/fonts/dm-sans-400-italic-latin-ext.woff2') format('woff2');
-    unicode-range:
-      U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-      U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-      U+A720-A7FF;
-  }
-  @font-face {
-    font-family: 'DM Sans';
-    font-style: italic;
-    font-weight: 400;
-    font-display: swap;
-    src: url('/fonts/dm-sans-400-italic-latin.woff2') format('woff2');
-    unicode-range:
-      U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-      U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  }
+/* Theme variants (data-theme) */
+@import './themes.css';
 
-  /* Self-hosted fonts — Sora (latin + latin-ext, variable weight 600–800) */
-  @font-face {
-    font-family: 'Sora';
-    font-style: normal;
-    font-weight: 600 800;
-    font-display: swap;
-    src: url('/fonts/sora-latin-ext.woff2') format('woff2');
-    unicode-range:
-      U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-      U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-      U+A720-A7FF;
-  }
-  @font-face {
-    font-family: 'Sora';
-    font-style: normal;
-    font-weight: 600 800;
-    font-display: swap;
-    src: url('/fonts/sora-latin.woff2') format('woff2');
-    unicode-range:
-      U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-      U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  }
+/* Base resets, font vars, global element rules */
+@import './base/reset.css';
 
-  html {
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+/* Shared utilities (.atm, .grain, layering) */
+@import './utilities.css';
 
-  body {
-    font-family: var(--font-sans);
-    background: var(--color-background);
-    color: var(--color-foreground);
-  }
+/* Section styles */
+@import './sections/ticker.css';
+@import './sections/navbar.css';
+@import './sections/hero.css';
+@import './sections/chapter.css';
+@import './sections/features.css';
+@import './sections/anatomy.css';
+@import './sections/themes-picker.css';
+@import './sections/suite.css';
+@import './sections/changelog.css';
+@import './sections/mascot.css';
+@import './sections/download.css';
+@import './sections/faq.css';
+@import './sections/footer.css';
 
-  ::selection {
-    background: oklch(from var(--color-primary) l c h / 0.35);
-    color: white;
-  }
-
-  ::-webkit-scrollbar {
-    width: 5px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 3px;
-  }
-}
-
-@layer components {
-  .text-gradient-pink {
-    background: linear-gradient(135deg, oklch(0.78 0.13 350), oklch(0.65 0.17 348));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-gold {
-    background: linear-gradient(135deg, oklch(0.8 0.1 85), oklch(0.65 0.12 60));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .grain::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.02;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 128px;
-  }
-
-  .screenshot-frame {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow:
-      0 25px 60px -15px oklch(0 0 0 / 0.6),
-      0 0 0 1px oklch(1 0 0 / 0.05);
-  }
-}
-
-/* Animations outside layers */
-@keyframes drift-slow {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(20px, -30px) scale(1.05);
-  }
-  66% {
-    transform: translate(-15px, 15px) scale(0.97);
-  }
-}
-
-@keyframes float-gentle {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* Cross-cutting responsive rules (last so they override) */
+@import './responsive.css';
