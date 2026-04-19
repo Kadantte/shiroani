@@ -19,7 +19,11 @@ export function Themes() {
   const [active, setActive] = useState('plum');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', active);
+    const html = document.documentElement;
+    html.classList.add('theme-transitioning');
+    html.setAttribute('data-theme', active);
+    const t = window.setTimeout(() => html.classList.remove('theme-transitioning'), 500);
+    return () => window.clearTimeout(t);
   }, [active]);
 
   return (
