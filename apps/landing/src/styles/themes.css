@@ -4,6 +4,7 @@
    ======================================================== */
 :root,
 html[data-theme='plum'] {
+  color-scheme: dark;
   --bg: oklch(0.12 0.018 300);
   --bg-2: oklch(0.16 0.025 300);
   --bg-3: oklch(0.21 0.03 298);
@@ -18,6 +19,7 @@ html[data-theme='plum'] {
   --accent-glow: oklch(0.74 0.15 355 / 0.3);
 }
 html[data-theme='noir'] {
+  color-scheme: dark;
   --bg: oklch(0.1 0.005 280);
   --bg-2: oklch(0.14 0.008 280);
   --bg-3: oklch(0.19 0.012 280);
@@ -30,6 +32,7 @@ html[data-theme='noir'] {
   --accent-glow: oklch(0.88 0.01 280 / 0.2);
 }
 html[data-theme='matcha'] {
+  color-scheme: dark;
   --bg: oklch(0.13 0.018 160);
   --bg-2: oklch(0.17 0.025 160);
   --bg-3: oklch(0.22 0.03 160);
@@ -42,6 +45,7 @@ html[data-theme='matcha'] {
   --accent-glow: oklch(0.78 0.15 140 / 0.3);
 }
 html[data-theme='iced'] {
+  color-scheme: dark;
   --bg: oklch(0.13 0.022 240);
   --bg-2: oklch(0.17 0.028 240);
   --bg-3: oklch(0.22 0.035 238);
@@ -54,6 +58,7 @@ html[data-theme='iced'] {
   --accent-glow: oklch(0.8 0.13 210 / 0.3);
 }
 html[data-theme='ember'] {
+  color-scheme: dark;
   --bg: oklch(0.12 0.02 30);
   --bg-2: oklch(0.16 0.03 30);
   --bg-3: oklch(0.21 0.04 28);
@@ -66,6 +71,7 @@ html[data-theme='ember'] {
   --accent-glow: oklch(0.74 0.18 40 / 0.3);
 }
 html[data-theme='paper'] {
+  color-scheme: light;
   --bg: oklch(0.97 0.008 80);
   --bg-2: oklch(0.94 0.012 340);
   --bg-3: oklch(0.9 0.018 340);

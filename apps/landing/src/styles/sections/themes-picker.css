@@ -14,8 +14,8 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--hairline);
-  background: var(--th-bg, #000);
-  color: var(--th-text, #fff);
+  background: var(--th-bg, var(--bg));
+  color: var(--th-text, var(--text));
   padding: 20px;
   min-height: 180px;
   cursor: pointer;
