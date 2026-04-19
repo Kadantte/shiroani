@@ -11,7 +11,7 @@
 .divider .n {
   font-family: var(--font-mincho);
   font-weight: 800;
-  font-size: clamp(64px, 8vw, 120px);
+  font-size: var(--fs-display-xxl);
   line-height: 0.85;
   color: var(--accent);
   letter-spacing: -0.03em;
@@ -19,7 +19,7 @@
 .divider .t {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(28px, 3.4vw, 52px);
+  font-size: var(--fs-display-sm);
   line-height: 1.05;
   letter-spacing: -0.028em;
 }

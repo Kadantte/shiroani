@@ -2,6 +2,13 @@
    ShiroAni — monochromatic purple dark (default: "plum")
    Single pink-rose accent. Multiple swappable themes.
    ======================================================== */
+:root {
+  --fs-display-xxl: clamp(64px, 8vw, 120px);
+  --fs-display-xl: clamp(52px, 7vw, 104px);
+  --fs-display-lg: clamp(40px, 5.5vw, 72px);
+  --fs-display-md: clamp(36px, 4.8vw, 60px);
+  --fs-display-sm: clamp(26px, 3.4vw, 40px);
+}
 :root,
 html[data-theme='plum'] {
   color-scheme: dark;

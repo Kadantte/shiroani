@@ -43,7 +43,7 @@
 .mascot-l h2 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(36px, 4.8vw, 60px);
+  font-size: var(--fs-display-md);
   line-height: 1;
   letter-spacing: -0.028em;
 }

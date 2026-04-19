@@ -31,7 +31,7 @@
 .dl-l h2 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(40px, 5.5vw, 72px);
+  font-size: var(--fs-display-lg);
   line-height: 0.95;
   letter-spacing: -0.03em;
 }
