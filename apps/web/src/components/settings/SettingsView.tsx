@@ -284,7 +284,12 @@ export function SettingsView() {
 
           {/* Scrollable content fills the area above the watermark layer */}
           <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-            <div className="relative z-[1] px-7 pt-5 pb-24 max-w-[720px]">
+            <div
+              className={cn(
+                'relative z-[1] px-7 pt-5 pb-24',
+                activeSection === 'discord' ? 'max-w-[1040px]' : 'max-w-[720px]'
+              )}
+            >
               {activeSection === 'general' && <GeneralSection />}
               {activeSection === 'themes' && <ThemesSection />}
               {activeSection === 'background' && <BackgroundSettings />}

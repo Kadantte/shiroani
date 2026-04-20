@@ -11,6 +11,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import { MascotPreview } from '@/components/settings/MascotPreview';
+
+const MASCOT_MIN_SIZE = 48;
+const MASCOT_MAX_SIZE = 256;
 
 export function MascotSection() {
   const [enabled, setEnabled] = useState(true);
@@ -88,24 +92,26 @@ export function MascotSection() {
       >
         {enabled && (
           <>
+            <MascotPreview current={size} min={MASCOT_MIN_SIZE} max={MASCOT_MAX_SIZE} />
+
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-foreground">Rozmiar maskotki</span>
-                <span className="font-mono text-[11px] font-semibold text-primary tabular-nums">
+                <span className="font-mono text-[11px] font-semibold tabular-nums text-primary">
                   {size}px
                 </span>
               </div>
               <Slider
                 aria-label="Rozmiar maskotki"
                 value={[size]}
-                min={48}
-                max={256}
+                min={MASCOT_MIN_SIZE}
+                max={MASCOT_MAX_SIZE}
                 step={8}
                 onValueChange={handleSizeChange}
               />
-              <div className="flex justify-between mt-1 font-mono text-[9.5px] text-muted-foreground/70 tracking-[0.06em]">
-                <span>48px</span>
-                <span>256px</span>
+              <div className="mt-1 flex justify-between font-mono text-[9.5px] tracking-[0.06em] text-muted-foreground/70">
+                <span>{MASCOT_MIN_SIZE}px</span>
+                <span>{MASCOT_MAX_SIZE}px</span>
               </div>
             </div>
 
