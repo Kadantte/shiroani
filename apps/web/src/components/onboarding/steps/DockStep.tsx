@@ -8,7 +8,7 @@ import { DockStage } from '@/components/shared/DockStage';
 /**
  * Step 04 · Navigation dock.
  *
- * Wires edge (bottom/left/right), auto-hide, labels and drag toggles into
+ * Wires edge (bottom/top/left/right), auto-hide, labels and drag toggles into
  * the existing DockStore. Includes a stage preview so users see the selected
  * position before they commit to it.
  */
@@ -33,8 +33,8 @@ export function DockStep() {
       }
       description={
         <>
-          Pływająca pigułka z ikonami domyślnie siedzi na dole — ale jeśli preferujesz pion, są też
-          boki. Zobacz podgląd po prawej.
+          Pływająca pigułka z ikonami domyślnie siedzi na dole — ale możesz przyczepić ją do
+          dowolnej krawędzi. Zobacz podgląd po prawej.
         </>
       }
       stepMarker={
@@ -47,8 +47,9 @@ export function DockStep() {
     >
       <div className="space-y-3 rounded-2xl border border-border-glass bg-foreground/[0.02] p-4">
         <DockStage edge={edge} />
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5">
           <EdgePill edge="bottom" current={edge} onSelect={setEdge} label="Dół" />
+          <EdgePill edge="top" current={edge} onSelect={setEdge} label="Góra" />
           <EdgePill edge="left" current={edge} onSelect={setEdge} label="Lewo" />
           <EdgePill edge="right" current={edge} onSelect={setEdge} label="Prawo" />
         </div>
@@ -112,6 +113,9 @@ function EdgePill({
       >
         {edge === 'bottom' && (
           <span className="absolute bottom-0.5 left-1/2 block h-1 w-5 -translate-x-1/2 rounded-full bg-primary" />
+        )}
+        {edge === 'top' && (
+          <span className="absolute top-0.5 left-1/2 block h-1 w-5 -translate-x-1/2 rounded-full bg-primary" />
         )}
         {edge === 'left' && (
           <span className="absolute left-0.5 top-1/2 block h-4 w-1 -translate-y-1/2 rounded-full bg-primary" />
