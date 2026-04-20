@@ -1,0 +1,34 @@
+/* Sakura Theme — deep rose · pink · 桜 */
+
+:root.sakura {
+  --background: oklch(0.14 0.022 340);
+  --foreground: oklch(0.97 0.012 355);
+  --card: oklch(0.18 0.028 340);
+  --card-foreground: oklch(0.97 0.012 355);
+  --popover: oklch(0.11 0.022 340);
+  --popover-foreground: oklch(0.97 0.012 355);
+
+  --primary: oklch(0.82 0.18 355);
+  --primary-foreground: oklch(0.1 0.022 340);
+  --brand-600: oklch(from var(--primary) calc(l - 0.1) c h);
+
+  --secondary: oklch(0.18 0.028 340);
+  --secondary-foreground: oklch(0.97 0.012 355);
+  --muted: oklch(0.52 0.025 340);
+  --muted-foreground: oklch(0.74 0.03 340);
+  --accent: oklch(1 0 0 / 0.08);
+  --accent-foreground: oklch(0.97 0.012 355);
+
+  --border: oklch(1 0 0 / 0.08);
+  --border-glass: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.04);
+  --ring: oklch(0.82 0.18 355);
+
+  --sidebar: oklch(0.11 0.022 340);
+  --sidebar-foreground: oklch(0.97 0.012 355);
+
+  --glow-1: oklch(0.82 0.18 355 / 0.18);
+  --glow-2: oklch(0.55 0.15 310 / 0.15);
+
+  --kanji: '桜';
+}

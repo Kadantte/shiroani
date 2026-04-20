@@ -1,0 +1,46 @@
+/* Haiku Theme — warm parchment · green · 俳 (light) */
+
+:root.haiku {
+  --background: oklch(0.96 0.01 60);
+  --foreground: oklch(0.18 0.02 100);
+  --card: oklch(0.9 0.015 80);
+  --card-foreground: oklch(0.18 0.02 100);
+  --popover: oklch(0.93 0.012 65);
+  --popover-foreground: oklch(0.18 0.02 100);
+
+  --primary: oklch(0.6 0.12 150);
+  --primary-foreground: oklch(0.97 0.008 80);
+  --brand-600: oklch(from var(--primary) calc(l - 0.08) c h);
+
+  --secondary: oklch(0.9 0.015 80);
+  --secondary-foreground: oklch(0.18 0.02 100);
+  --muted: oklch(0.52 0.015 100);
+  --muted-foreground: oklch(0.38 0.02 100);
+  --accent: oklch(0 0 0 / 0.05);
+  --accent-foreground: oklch(0.18 0.02 100);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0 0 0 / 0.09);
+  --border-glass: oklch(0 0 0 / 0.09);
+  --input: oklch(0 0 0 / 0.04);
+  --ring: oklch(0.6 0.12 150);
+
+  --sidebar: oklch(0.93 0.012 65);
+  --sidebar-foreground: oklch(0.18 0.02 100);
+
+  --glow-1: oklch(0.6 0.12 150 / 0.1);
+  --glow-2: oklch(0.5 0.1 100 / 0.08);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(from var(--primary) l c h / 0.1),
+    0 0 0 1px oklch(from var(--primary) l c h / 0.2);
+
+  --kanji: '俳';
+}

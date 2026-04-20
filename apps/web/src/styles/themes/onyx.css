@@ -1,0 +1,34 @@
+/* Onyx Theme — neutral dark · warm gold · 黄 */
+
+:root.onyx {
+  --background: oklch(0.11 0.005 290);
+  --foreground: oklch(0.97 0.008 290);
+  --card: oklch(0.15 0.007 290);
+  --card-foreground: oklch(0.97 0.008 290);
+  --popover: oklch(0.09 0.005 290);
+  --popover-foreground: oklch(0.97 0.008 290);
+
+  --primary: oklch(0.78 0.14 50);
+  --primary-foreground: oklch(0.09 0.005 290);
+  --brand-600: oklch(from var(--primary) calc(l - 0.1) c h);
+
+  --secondary: oklch(0.15 0.007 290);
+  --secondary-foreground: oklch(0.97 0.008 290);
+  --muted: oklch(0.5 0.01 290);
+  --muted-foreground: oklch(0.72 0.015 290);
+  --accent: oklch(1 0 0 / 0.07);
+  --accent-foreground: oklch(0.97 0.008 290);
+
+  --border: oklch(1 0 0 / 0.07);
+  --border-glass: oklch(1 0 0 / 0.07);
+  --input: oklch(1 0 0 / 0.04);
+  --ring: oklch(0.78 0.14 50);
+
+  --sidebar: oklch(0.09 0.005 290);
+  --sidebar-foreground: oklch(0.97 0.008 290);
+
+  --glow-1: oklch(0.78 0.14 50 / 0.14);
+  --glow-2: oklch(0.55 0.1 30 / 0.1);
+
+  --kanji: '黄';
+}

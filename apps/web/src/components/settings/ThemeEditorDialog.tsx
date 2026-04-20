@@ -153,7 +153,7 @@ export function ThemeEditorDialog({
 
   const [name, setName] = useState('');
   const [isDark, setIsDark] = useState(true);
-  const [baseTheme, setBaseTheme] = useState<BuiltInTheme>('dark');
+  const [baseTheme, setBaseTheme] = useState<BuiltInTheme>('plum');
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [initialVariables, setInitialVariables] = useState<Record<string, string>>({});
 

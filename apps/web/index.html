@@ -3,8 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="theme-color" content="#1a1323" />
     <title>ShiroAni</title>
+
+    <!-- Typography: DM Sans (UI) · Shippori Mincho (display) · JetBrains Mono (metadata) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Shippori+Mincho:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
       /* Base style — overridden by inline theme script below */
       html {
@@ -13,15 +22,18 @@
     </style>
     <script>
       // Apply persisted theme class and background BEFORE React mounts to prevent flicker.
-      // The dark themes array below is injected at build time by themeInjectionPlugin
+      // The DARK_THEMES / LIGHT_THEMES arrays are injected at build time by themeInjectionPlugin
       // (vite.config.ts) from packages/shared/src/types/settings.ts (single source of truth).
       (function () {
         try {
-          var theme = localStorage.getItem('shiroani-theme') || 'dark';
+          var theme = localStorage.getItem('shiroani-theme') || 'plum';
           document.documentElement.classList.add(theme);
           var darkThemes = __DARK_THEMES__;
-          var isDark = darkThemes.indexOf(theme) !== -1;
-          document.documentElement.style.backgroundColor = isDark ? '#0a0a0f' : '#fafafa';
+          var lightThemes = __LIGHT_THEMES__;
+          var isLight = lightThemes.indexOf(theme) !== -1;
+          // Unknown themes (e.g. custom themes not yet loaded, or legacy IDs)
+          // fall through to the dark Plum background — React reconciles after mount.
+          document.documentElement.style.backgroundColor = isLight ? '#f4f1ea' : '#1a1323';
         } catch (e) {
           console.error('Failed to apply initial theme from localStorage:', e);
         }

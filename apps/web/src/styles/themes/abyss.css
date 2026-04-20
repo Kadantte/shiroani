@@ -1,0 +1,34 @@
+/* Abyss Theme — deep teal · cyan · 深 */
+
+:root.abyss {
+  --background: oklch(0.08 0.025 190);
+  --foreground: oklch(0.97 0.015 185);
+  --card: oklch(0.12 0.03 190);
+  --card-foreground: oklch(0.97 0.015 185);
+  --popover: oklch(0.06 0.025 190);
+  --popover-foreground: oklch(0.97 0.015 185);
+
+  --primary: oklch(0.75 0.2 185);
+  --primary-foreground: oklch(0.06 0.025 190);
+  --brand-600: oklch(from var(--primary) calc(l - 0.1) c h);
+
+  --secondary: oklch(0.12 0.03 190);
+  --secondary-foreground: oklch(0.97 0.015 185);
+  --muted: oklch(0.5 0.02 190);
+  --muted-foreground: oklch(0.72 0.03 188);
+  --accent: oklch(1 0 0 / 0.07);
+  --accent-foreground: oklch(0.97 0.015 185);
+
+  --border: oklch(1 0 0 / 0.07);
+  --border-glass: oklch(1 0 0 / 0.07);
+  --input: oklch(1 0 0 / 0.04);
+  --ring: oklch(0.75 0.2 185);
+
+  --sidebar: oklch(0.06 0.025 190);
+  --sidebar-foreground: oklch(0.97 0.015 185);
+
+  --glow-1: oklch(0.75 0.2 185 / 0.17);
+  --glow-2: oklch(0.45 0.15 200 / 0.15);
+
+  --kanji: '深';
+}

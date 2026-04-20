@@ -113,8 +113,8 @@ function applyThemeToDOM(theme: Theme) {
   }
 }
 
-// Default theme
-const DEFAULT_THEME: Theme = 'dark';
+// Default theme — matches DEFAULT_BUILT_IN_THEME in shared settings types
+const DEFAULT_THEME: Theme = 'plum';
 
 /**
  * Settings store using Zustand

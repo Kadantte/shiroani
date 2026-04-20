@@ -20,13 +20,14 @@ export function persistTheme(theme: string): void {
 
 /**
  * Read the persisted theme from localStorage.
- * Returns 'dark' as a safe fallback if nothing is stored or localStorage is unavailable.
+ * Returns 'plum' (the default built-in theme) as a safe fallback if nothing
+ * is stored or localStorage is unavailable.
  */
 export function getPersistedTheme(): string {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored && VALID_THEME_ID.test(stored) ? stored : 'dark';
+    return stored && VALID_THEME_ID.test(stored) ? stored : 'plum';
   } catch {
-    return 'dark';
+    return 'plum';
   }
 }

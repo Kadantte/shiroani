@@ -1,0 +1,47 @@
+/* Paper Theme — warm cream · rose · 紙 (light) */
+
+:root.paper {
+  --background: oklch(0.97 0.008 80);
+  --foreground: oklch(0.18 0.02 320);
+  --card: oklch(0.92 0.01 340);
+  --card-foreground: oklch(0.18 0.02 320);
+  --popover: oklch(0.94 0.01 80);
+  --popover-foreground: oklch(0.18 0.02 320);
+
+  --primary: oklch(0.56 0.2 355);
+  --primary-foreground: oklch(0.97 0.008 80);
+  --brand-600: oklch(from var(--primary) calc(l - 0.08) c h);
+
+  --secondary: oklch(0.92 0.01 340);
+  --secondary-foreground: oklch(0.18 0.02 320);
+  --muted: oklch(0.52 0.02 320);
+  --muted-foreground: oklch(0.38 0.02 320);
+  --accent: oklch(0 0 0 / 0.05);
+  --accent-foreground: oklch(0.18 0.02 320);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0 0 0 / 0.09);
+  --border-glass: oklch(0 0 0 / 0.09);
+  --input: oklch(0 0 0 / 0.04);
+  --ring: oklch(0.56 0.2 355);
+
+  --sidebar: oklch(0.94 0.01 80);
+  --sidebar-foreground: oklch(0.18 0.02 320);
+
+  --glow-1: oklch(0.56 0.2 355 / 0.08);
+  --glow-2: oklch(0.5 0.12 300 / 0.06);
+
+  /* Lighter shadow palette for light themes */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card-focused:
+    0 4px 16px -4px oklch(from var(--primary) l c h / 0.1),
+    0 0 0 1px oklch(from var(--primary) l c h / 0.2);
+
+  --kanji: '紙';
+}

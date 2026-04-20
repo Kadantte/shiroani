@@ -1,0 +1,36 @@
+/* Plum Theme — default · warm purple · 紫 */
+
+:root.plum {
+  --background: oklch(0.12 0.018 300);
+  --foreground: oklch(0.96 0.01 300);
+  --card: oklch(0.16 0.025 300);
+  --card-foreground: oklch(0.96 0.01 300);
+  --popover: oklch(0.1 0.018 300);
+  --popover-foreground: oklch(0.96 0.01 300);
+
+  --primary: oklch(0.74 0.15 355);
+  --primary-foreground: oklch(0.12 0.018 300);
+  --brand-600: oklch(from var(--primary) calc(l - 0.1) c h);
+
+  --secondary: oklch(0.16 0.025 300);
+  --secondary-foreground: oklch(0.96 0.01 300);
+  --muted: oklch(0.5 0.035 298);
+  --muted-foreground: oklch(0.72 0.03 300);
+  --accent: oklch(1 0 0 / 0.08);
+  --accent-foreground: oklch(0.96 0.01 300);
+
+  --border: oklch(1 0 0 / 0.08);
+  --border-glass: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.04);
+  --ring: oklch(0.74 0.15 355);
+
+  --sidebar: oklch(0.1 0.018 300);
+  --sidebar-foreground: oklch(0.96 0.01 300);
+
+  /* Decorative radial glows used by the app-shell background */
+  --glow-1: oklch(0.74 0.15 355 / 0.14);
+  --glow-2: oklch(0.5 0.15 280 / 0.18);
+
+  /* Kanji watermark accent */
+  --kanji: '紫';
+}
