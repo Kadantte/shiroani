@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { PillTag } from '@/components/ui/pill-tag';
+import { useFeedBookmarksStore } from '@/stores/useFeedBookmarksStore';
 import { CATEGORY_LABELS } from './feed-constants';
 
 interface FeedReaderModalProps {
@@ -106,6 +107,12 @@ export const FeedReaderModal = memo(function FeedReaderModal({
     [item?.description]
   );
 
+  const bookmarked = useFeedBookmarksStore(s => (item ? s.bookmarks.has(item.id) : false));
+  const toggleBookmark = useFeedBookmarksStore(s => s.toggle);
+  const handleToggleBookmark = useCallback(() => {
+    if (item) toggleBookmark(item);
+  }, [item, toggleBookmark]);
+
   if (!item) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -169,12 +176,12 @@ export const FeedReaderModal = memo(function FeedReaderModal({
             <TooltipButton
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
-              onClick={() => undefined}
-              tooltip="Zapisz na później"
-              disabled
+              className={cn('w-8 h-8', bookmarked && 'text-primary')}
+              onClick={handleToggleBookmark}
+              tooltip={bookmarked ? 'Usuń z zakładek' : 'Zapisz na później'}
+              aria-pressed={bookmarked}
             >
-              <Bookmark className="w-4 h-4" />
+              <Bookmark className={cn('w-4 h-4', bookmarked && 'fill-current')} />
             </TooltipButton>
             <TooltipButton
               variant="ghost"

@@ -6,6 +6,7 @@ import { TooltipButton } from '@/components/ui/tooltip-button';
 import { ViewHeader } from '@/components/shared/ViewHeader';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { useFeedStore, getFilteredItems } from '@/stores/useFeedStore';
+import { useFeedBookmarksStore } from '@/stores/useFeedBookmarksStore';
 import { useNavigateToBrowser } from '@/hooks/useNavigateToBrowser';
 import { pluralize } from '@shiroani/shared';
 import type { FeedCategory, FeedItem, FeedLanguage } from '@shiroani/shared';
@@ -80,15 +81,19 @@ export function FeedView() {
   const isRefreshing = useFeedStore(s => s.isRefreshing);
   const isBootstrapping = useFeedStore(s => s.isBootstrapping);
   const lastRefreshNewCount = useFeedStore(s => s.lastRefreshNewCount);
+  const readIds = useFeedStore(s => s.readIds);
+  const bookmarks = useFeedBookmarksStore(s => s.bookmarks);
   const hasTriggeredVisibleBootstrap = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [feedView, setFeedView] = useState<'all' | 'bookmarks'>('all');
   const [readerItem, setReaderItem] = useState<FeedItem | null>(null);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
 
   const navigateToBrowser = useNavigateToBrowser();
 
   const handleOpenInReader = useCallback((item: FeedItem) => {
+    useFeedStore.getState().markRead(item.id);
     setReaderItem(item);
     setIsReaderOpen(true);
   }, []);
@@ -164,8 +169,32 @@ export function FeedView() {
     });
   }, [items, searchQuery]);
 
-  const heroItem = searchedItems[0] ?? null;
-  const listItems = heroItem ? searchedItems.slice(1) : searchedItems;
+  // Bookmarks tab swaps the feed source for stored snapshots. Each snapshot is
+  // mapped into a `FeedItem`-shaped object so the existing list item component
+  // can render it without bespoke branching; fields the snapshot doesn't carry
+  // (sourceCategory, sourceLanguage, etc.) fall back to safe defaults.
+  const visibleItems = useMemo<FeedItem[]>(() => {
+    if (feedView !== 'bookmarks') return searchedItems;
+    return Array.from(bookmarks.values()).map(snap => ({
+      id: snap.id,
+      feedSourceId: 0,
+      sourceName: snap.sourceName,
+      sourceColor: snap.sourceColor,
+      sourceCategory: 'news',
+      sourceLanguage: 'en',
+      guid: '',
+      title: snap.title,
+      description: snap.description,
+      url: snap.url,
+      imageUrl: snap.imageUrl,
+      publishedAt: snap.publishedAt,
+      categories: [],
+      createdAt: new Date(snap.bookmarkedAt).toISOString(),
+    }));
+  }, [feedView, searchedItems, bookmarks]);
+
+  const heroItem = feedView === 'bookmarks' ? null : (visibleItems[0] ?? null);
+  const listItems = heroItem ? visibleItems.slice(1) : visibleItems;
 
   const subtitle = useMemo(() => {
     const sourceCount = sources.filter(s => s.enabled).length;
@@ -190,16 +219,6 @@ export function FeedView() {
   const handleCategoryFilterChange = useCallback((category: FeedCategory | 'all') => {
     setCategoryFilter(category);
   }, []);
-
-  // Mark the first 4 items as "unread" for the glow treatment — we don't yet
-  // persist a real read-state, so approximate with positional freshness.
-  const unreadIdSet = useMemo(() => {
-    const ids = new Set<number>();
-    for (let i = 0; i < Math.min(4, listItems.length); i += 1) {
-      ids.add(listItems[i].id);
-    }
-    return ids;
-  }, [listItems]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
@@ -282,9 +301,9 @@ export function FeedView() {
 
         <div className="absolute inset-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
           <div className="relative z-[1]">
-            {viewState === 'loading' ? (
+            {feedView === 'all' && viewState === 'loading' ? (
               <FeedLoadingAnimation />
-            ) : viewState === 'error' ? (
+            ) : feedView === 'all' && viewState === 'error' ? (
               <div className="flex-1 flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
                 <Rss className="w-10 h-10 text-destructive/60" />
                 <p className="text-sm text-center max-w-xs">{error}</p>
@@ -292,7 +311,7 @@ export function FeedView() {
                   Spróbuj ponownie
                 </Button>
               </div>
-            ) : viewState === 'empty' ? (
+            ) : feedView === 'all' && viewState === 'empty' ? (
               <div className="flex-1 flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground">
                 <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/40" />
@@ -326,7 +345,17 @@ export function FeedView() {
                 <div className="min-w-0 flex flex-col gap-3">
                   {heroItem && <FeedHero item={heroItem} onOpen={handleOpenInReader} />}
 
-                  {searchedItems.length === 0 && searchQuery ? (
+                  {feedView === 'bookmarks' && visibleItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                      <Inbox className="w-8 h-8 opacity-40" />
+                      <div className="text-center space-y-1">
+                        <p className="text-sm font-medium text-foreground/70">Brak zakładek</p>
+                        <p className="text-xs text-muted-foreground/50">
+                          Kliknij ikonę zakładki w czytniku artykułu.
+                        </p>
+                      </div>
+                    </div>
+                  ) : searchedItems.length === 0 && searchQuery && feedView === 'all' ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
                       <Inbox className="w-8 h-8 opacity-40" />
                       <div className="text-center space-y-1">
@@ -342,7 +371,7 @@ export function FeedView() {
                         <FeedListItem
                           key={item.id}
                           item={item}
-                          unread={unreadIdSet.has(item.id)}
+                          unread={feedView === 'all' && !readIds.has(item.id)}
                           onOpen={handleOpenInReader}
                           onOpenExternal={handleOpenExternal}
                         />
@@ -350,7 +379,7 @@ export function FeedView() {
                     </div>
                   )}
 
-                  {hasMore && !searchQuery && (
+                  {feedView === 'all' && hasMore && !searchQuery && (
                     <div className="flex justify-center pt-3 pb-1">
                       <Button
                         variant="outline"
@@ -384,6 +413,8 @@ export function FeedView() {
                     sourceFilter={sourceFilter}
                     onSetSourceFilter={setSourceFilter}
                     totalCount={total}
+                    feedView={feedView}
+                    onFeedViewChange={setFeedView}
                   />
                 </div>
               </div>

@@ -46,6 +46,8 @@ export interface FeedItem {
   publishedAt?: string;
   categories: string[];
   createdAt: string;
+  /** Epoch ms when the user opened this item in the reader. Client-only, never sent by the backend. */
+  readAt?: number;
 }
 
 // ============================================
