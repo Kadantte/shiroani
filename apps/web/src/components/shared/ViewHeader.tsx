@@ -25,6 +25,16 @@ interface ViewHeaderProps<T extends string = string> {
   onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
 
+/**
+ * ViewHeader — shell-aligned header used at the top of every main view.
+ *
+ * Mirrors the `.vh` pattern from the redesign mocks:
+ *   - 36×36 icon tile in primary/15 with a primary/30 border
+ *   - 20px DM Sans 800 title, -0.02em tracking, paired with a 10px
+ *     JetBrains Mono uppercase subtitle (tracking 0.15em, muted-foreground)
+ *   - Right-side action cluster (e.g. sort, import/export, view-mode toggles)
+ *   - Search + filter tabs retained underneath for the views that need them
+ */
 export function ViewHeader<T extends string = string>({
   icon: Icon,
   title,
@@ -40,31 +50,40 @@ export function ViewHeader<T extends string = string>({
   onViewModeChange,
 }: ViewHeaderProps<T>) {
   return (
-    <div className="shrink-0 px-5 pt-4 pb-3 space-y-3 border-b border-border/60 bg-card/20 backdrop-blur-sm">
-      {/* Title row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-primary" />
+    <div className="shrink-0 relative">
+      {/* Title row — matches .vh */}
+      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div
+            className={cn(
+              'size-9 rounded-[10px] grid place-items-center flex-shrink-0',
+              'bg-primary/15 border border-primary/30 text-primary'
+            )}
+          >
+            <Icon className="w-[18px] h-[18px]" />
           </div>
-          <div>
-            <h1 className="text-base font-semibold text-foreground leading-tight">{title}</h1>
+          <div className="min-w-0">
+            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
+              {title}
+            </h1>
             {subtitle && (
-              <p className="text-xs text-muted-foreground/70 leading-tight">{subtitle}</p>
+              <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
+                {subtitle}
+              </span>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           {actions}
           {onViewModeChange && (
             <>
-              <div className="w-px h-4 bg-border/50 mx-1" />
+              <div className="w-px h-4 bg-border-glass mx-1" />
               <TooltipButton
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="icon"
                 className={cn(
                   'w-8 h-8',
-                  viewMode === 'grid' && 'bg-primary/10 text-primary hover:bg-primary/15'
+                  viewMode === 'grid' && 'bg-primary/15 text-primary hover:bg-primary/15'
                 )}
                 onClick={() => onViewModeChange('grid')}
                 tooltip="Widok siatki"
@@ -76,7 +95,7 @@ export function ViewHeader<T extends string = string>({
                 size="icon"
                 className={cn(
                   'w-8 h-8',
-                  viewMode === 'list' && 'bg-primary/10 text-primary hover:bg-primary/15'
+                  viewMode === 'list' && 'bg-primary/15 text-primary hover:bg-primary/15'
                 )}
                 onClick={() => onViewModeChange('list')}
                 tooltip="Widok listy"
@@ -88,54 +107,56 @@ export function ViewHeader<T extends string = string>({
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="relative group/search">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
-        <Input
-          value={searchQuery}
-          onChange={e => onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="pl-8 h-8 text-sm bg-background/40 border-border-glass focus:bg-background/60 transition-colors"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => onSearchChange('')}
-            aria-label="Wyczyść wyszukiwanie"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
-          >
-            <SearchX className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter tabs */}
-      <div
-        role="tablist"
-        className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
-      >
-        {filters.map(tab => {
-          const isActive = activeFilter === tab.value;
-          return (
+      {/* Search + filter row — sits below the .vh bar with matching padding */}
+      <div className="px-7 pt-3 pb-3 space-y-3 border-b border-border-glass">
+        <div className="relative group/search">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
+          <Input
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="pl-8 h-8 text-sm"
+          />
+          {searchQuery && (
             <button
-              key={tab.value}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => onFilterChange(tab.value)}
-              className={cn(
-                'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-                'transition-all duration-200',
-                isActive
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
-              )}
+              onClick={() => onSearchChange('')}
+              aria-label="Wyczyść wyszukiwanie"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
             >
-              {tab.label}
-              {isActive && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
-              )}
+              <SearchX className="w-3.5 h-3.5" />
             </button>
-          );
-        })}
+          )}
+        </div>
+
+        {/* Filter tabs */}
+        <div
+          role="tablist"
+          className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
+        >
+          {filters.map(tab => {
+            const isActive = activeFilter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => onFilterChange(tab.value)}
+                className={cn(
+                  'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+                  'transition-all duration-200',
+                  isActive
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
+                )}
+              >
+                {tab.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

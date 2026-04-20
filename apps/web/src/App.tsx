@@ -22,6 +22,7 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useDockStore } from '@/stores/useDockStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { AppBackground } from '@/components/shared/AppBackground';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 import { ConnectionBanner } from '@/components/shared/ConnectionBanner';
 
@@ -97,6 +98,9 @@ function App() {
             IS_ELECTRON && 'rounded-t-[10px]'
           )}
         >
+          {/* Decorative radial glows + SVG noise — behind user wallpaper (if any) */}
+          {!isFullScreen && <AppBackground />}
+
           {/* Custom background overlay — covers entire window including sidebar */}
           {hasBg && !isFullScreen && <BackgroundOverlay />}
 

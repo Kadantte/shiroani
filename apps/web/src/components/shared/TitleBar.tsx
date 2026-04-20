@@ -2,11 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { Minus, Square, Copy, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON, IS_MAC } from '@/lib/platform';
-import { APP_LOGO_URL } from '@/lib/constants';
 
 /**
- * Custom title bar for the frameless Electron window.
- * Provides drag-to-move and window control buttons (minimize, maximize/restore, close).
+ * Custom title bar ("chrome") for the frameless Electron window.
+ *
+ * Visual language mirrors `.chrome` from the shiroani-design mocks:
+ *   - 28px tall, sidebar-toned surface with a 1px glass bottom border
+ *   - Three decorative 11px dots on the leading edge (macOS: reserve space for
+ *     the native traffic lights and skip our fake dots)
+ *   - Centered uppercase wordmark in JetBrains Mono at 10.5px with 0.12em tracking
+ *   - Window controls (minimize / maximize / close) ride the trailing edge on
+ *     non-macOS platforms — they remain real, keyboard-accessible buttons.
+ *
+ * Drag behaviour (`.drag` / `.no-drag`) is preserved so Electron's frameless
+ * window continues to move when the user grabs the bar.
  */
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -34,23 +43,48 @@ export function TitleBar() {
     window.electronAPI?.window.close();
   }, []);
 
-  // On macOS, the native traffic lights handle window controls
+  // Shared title element — centered wordmark in the chrome bar
+  const title = (
+    <span
+      className={cn(
+        'pointer-events-none absolute left-1/2 -translate-x-1/2 select-none',
+        'font-mono text-[10.5px] tracking-[0.12em] text-muted-foreground uppercase'
+      )}
+    >
+      SHIROANI
+    </span>
+  );
+
+  // On macOS, the native traffic lights handle window controls; we only render
+  // the chrome strip (with leading space reserved by Electron for the lights).
   if (IS_MAC) {
     return (
-      <div className="drag h-8 flex items-center px-3 bg-sidebar border-b border-border shrink-0">
-        <div className="flex-1" />
-        <span className="text-xs font-medium text-muted-foreground select-none">ShiroAni</span>
-        <div className="flex-1" />
+      <div
+        className={cn(
+          'drag relative h-7 shrink-0 flex items-center select-none',
+          'bg-sidebar border-b border-border-glass'
+        )}
+      >
+        {title}
       </div>
     );
   }
 
   return (
-    <div className="drag h-8 flex items-center bg-sidebar border-b border-border shrink-0 select-none">
-      <div className="no-drag flex items-center px-3 gap-1.5">
-        <img src={APP_LOGO_URL} alt="" className="w-4 h-4 object-contain" draggable={false} />
-        <span className="text-xs font-semibold text-foreground">ShiroAni</span>
+    <div
+      className={cn(
+        'drag relative h-7 shrink-0 flex items-center select-none',
+        'bg-sidebar border-b border-border-glass'
+      )}
+    >
+      {/* Leading decorative dots — mirror the three circles in .chrome .dots */}
+      <div className="flex items-center gap-1.5 pl-3" aria-hidden="true">
+        <span className="block size-[11px] rounded-full bg-muted/70" />
+        <span className="block size-[11px] rounded-full bg-muted/70" />
+        <span className="block size-[11px] rounded-full bg-muted/70" />
       </div>
+
+      {title}
 
       <div className="flex-1" />
 
@@ -58,8 +92,8 @@ export function TitleBar() {
         <button
           onClick={handleMinimize}
           className={cn(
-            'w-11 flex items-center justify-center',
-            'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            'w-10 flex items-center justify-center',
+            'text-muted-foreground hover:bg-accent hover:text-foreground',
             'transition-colors duration-150'
           )}
           aria-label="Minimalizuj"
@@ -69,8 +103,8 @@ export function TitleBar() {
         <button
           onClick={handleMaximize}
           className={cn(
-            'w-11 flex items-center justify-center',
-            'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            'w-10 flex items-center justify-center',
+            'text-muted-foreground hover:bg-accent hover:text-foreground',
             'transition-colors duration-150'
           )}
           aria-label={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
@@ -80,7 +114,7 @@ export function TitleBar() {
         <button
           onClick={handleClose}
           className={cn(
-            'w-11 flex items-center justify-center',
+            'w-10 flex items-center justify-center',
             'text-muted-foreground hover:bg-destructive hover:text-destructive-foreground',
             'transition-colors duration-150'
           )}
