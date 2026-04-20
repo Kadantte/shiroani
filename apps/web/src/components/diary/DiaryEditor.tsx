@@ -1,11 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { X, Pin, Check } from 'lucide-react';
+import { ArrowLeft, Check, Pin, X, FileText, Link as LinkIcon, Smile } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { PillTag } from '@/components/ui/pill-tag';
 import { EditorToolbar } from './EditorToolbar';
 import { BubbleMenuBar } from './BubbleMenuBar';
 import { GradientPicker } from './GradientPicker';
@@ -18,15 +19,36 @@ import type {
 } from '@shiroani/shared';
 import { DIARY_GRADIENTS, MOOD_OPTIONS } from '@/lib/diary-constants';
 
+const MOOD_EMOJI: Record<DiaryMood, string> = {
+  great: '✨',
+  good: '💗',
+  neutral: '😐',
+  bad: '😕',
+  terrible: '😡',
+};
+
+const MAX_CONTENT_LENGTH = 2000;
+
 interface DiaryEditorProps {
   entry: DiaryEntry | null;
-  open: boolean;
   onClose: () => void;
   onCreate: (payload: DiaryCreatePayload) => void;
   onUpdate: (payload: DiaryUpdatePayload) => void;
 }
 
-export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryEditorProps) {
+/**
+ * Inline diary editor — takes over the whole Diary view body when active
+ * (not a modal). Matches the mock's "EDYTOR" page layout: back button,
+ * editable title + action cluster up top, toolbar band, Tiptap body.
+ *
+ * Left rail: poster/gradient picker, anime link summary, mood + tag inputs,
+ * and the pin toggle. Right side: title input, Tiptap toolbar, editor body.
+ *
+ * All Tiptap extensions, content JSON and keyboard shortcuts are preserved
+ * exactly as before — this component only restyles the chrome around the
+ * editor engine.
+ */
+export function DiaryEditor({ entry, onClose, onCreate, onUpdate }: DiaryEditorProps) {
   const isEditing = !!entry;
   const [title, setTitle] = useState(entry?.title ?? '');
   const [coverGradient, setCoverGradient] = useState<DiaryGradient | undefined>(
@@ -37,15 +59,14 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(entry?.tags ?? []);
 
-  const initialContent = entry?.contentJson
-    ? (() => {
-        try {
-          return JSON.parse(entry.contentJson);
-        } catch {
-          return undefined;
-        }
-      })()
-    : undefined;
+  const initialContent = useMemo(() => {
+    if (!entry?.contentJson) return undefined;
+    try {
+      return JSON.parse(entry.contentJson);
+    } catch {
+      return undefined;
+    }
+  }, [entry?.contentJson]);
 
   const editor = useEditor({
     extensions: [
@@ -53,20 +74,22 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
         heading: { levels: [1, 2, 3] },
       }),
       Placeholder.configure({
-        placeholder: 'Zacznij pisać...',
+        placeholder: 'Zacznij pisać…',
       }),
     ],
     content: initialContent,
     editorProps: {
       attributes: {
-        class: 'min-h-[300px] px-5 py-4 focus:outline-none lined-paper',
+        class: cn(
+          'diary-prose min-h-full px-10 py-8 focus:outline-none',
+          'text-[14px] leading-[1.7] text-foreground/90'
+        ),
       },
     },
   });
 
   const handleSave = useCallback(() => {
     if (!editor) return;
-
     const contentJson = JSON.stringify(editor.getJSON());
 
     if (isEditing) {
@@ -104,136 +127,302 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
   ]);
 
   const handleTagAdd = useCallback(() => {
-    const tag = tagInput.trim();
+    const tag = tagInput.trim().replace(/^#/, '');
     if (tag && !tags.includes(tag)) {
       setTags(prev => [...prev, tag]);
       setTagInput('');
     }
   }, [tagInput, tags]);
 
-  const handleTagRemove = useCallback((tag: string) => {
-    setTags(prev => prev.filter(t => t !== tag));
-  }, []);
+  const handleTagRemove = useCallback(
+    (tag: string) => setTags(prev => prev.filter(t => t !== tag)),
+    []
+  );
 
-  if (!open) return null;
+  // Re-read on each render — `useEditor` subscribes and triggers re-renders
+  // on editor state changes, so this stays live without extra plumbing.
+  const textLength = editor?.getText().length ?? 0;
 
   const gradientCss = coverGradient
     ? DIARY_GRADIENTS[coverGradient]?.css
-    : 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)';
+    : 'linear-gradient(150deg, oklch(0.42 0.12 280), oklch(0.28 0.1 330))';
+
+  // Esc closes the editor — matches Radix Dialog's old behaviour so existing
+  // muscle memory still works now that we're inline instead of modal.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const target = e.target as HTMLElement | null;
+        // Let contentEditable / select fields swallow Escape before we close.
+        if (
+          target &&
+          (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        ) {
+          return;
+        }
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
-      onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
+      role="region"
+      aria-label={isEditing ? 'Edytor wpisu dziennika' : 'Nowy wpis dziennika'}
+      className="flex h-full w-full overflow-hidden animate-fade-in"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="diary-editor-title"
+      {/* ── Left rail ────────────────────────────────── */}
+      <aside
         className={cn(
-          'relative w-full sm:max-w-2xl mx-4 max-h-[85vh] flex flex-col',
-          'bg-card border border-border-glass rounded-2xl overflow-hidden',
-          'shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.05)]'
+          'flex w-[260px] shrink-0 flex-col gap-5 overflow-y-auto',
+          'border-r border-border-glass bg-foreground/[0.015] px-5 py-5'
         )}
       >
-        {/* Gradient header */}
-        <div className="relative h-16 shrink-0 paper-grain" style={{ background: gradientCss }}>
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            aria-label="Zamknij edytor"
-            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/20 text-white/80 hover:bg-black/30 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          {/* Pin toggle */}
-          <button
-            onClick={() => setIsPinned(!isPinned)}
-            aria-label={isPinned ? 'Odepnij wpis' : 'Przypnij wpis'}
+        {/* Cover preview */}
+        <div className="flex flex-col gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Okładka
+          </span>
+          <div
             className={cn(
-              'absolute top-2 left-2 p-1.5 rounded-lg transition-colors',
-              isPinned ? 'bg-white/25 text-white' : 'bg-black/20 text-white/60 hover:text-white/80'
+              'relative h-[104px] w-full overflow-hidden rounded-[10px] border border-white/10',
+              'shadow-[0_10px_28px_oklch(0_0_0/0.35)]'
             )}
+            style={{ background: gradientCss }}
           >
-            <Pin className={cn('w-4 h-4', isPinned && 'fill-current rotate-45')} />
-          </button>
-        </div>
-
-        {/* Gradient picker */}
-        <GradientPicker value={coverGradient} onChange={setCoverGradient} />
-
-        {/* Title input */}
-        <div className="px-5 pt-3">
-          <input
-            id="diary-editor-title"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Tytuł wpisu..."
-            aria-label="Tytuł wpisu"
-            autoFocus
-            className="w-full text-lg font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 text-foreground"
-          />
-        </div>
-
-        {/* Meta row: mood + tags */}
-        <div className="flex items-center gap-3 px-5 py-2">
-          {/* Mood picker */}
-          <div className="flex items-center gap-0.5">
-            <span className="text-2xs text-muted-foreground/60 mr-1">Nastrój:</span>
-            {MOOD_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setMood(mood === opt.value ? undefined : opt.value)}
-                title={opt.label}
-                aria-label={opt.label}
-                aria-pressed={mood === opt.value}
-                className={cn(
-                  'p-1 rounded-md transition-all',
-                  mood === opt.value
-                    ? 'bg-accent/60 scale-110'
-                    : 'hover:bg-accent/40 opacity-50 hover:opacity-100'
-                )}
-              >
-                <opt.Icon className={cn('w-3.5 h-3.5', opt.color)} />
-              </button>
-            ))}
+            {entry?.animeCoverImage && (
+              <img
+                src={entry.animeCoverImage}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                draggable={false}
+              />
+            )}
+            <span
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.22), transparent 55%)',
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setIsPinned(p => !p)}
+              aria-pressed={isPinned}
+              aria-label={isPinned ? 'Odepnij wpis' : 'Przypnij wpis'}
+              className={cn(
+                'absolute right-2 top-2 grid size-7 place-items-center rounded-[7px]',
+                'transition-colors',
+                isPinned
+                  ? 'bg-white/25 text-white'
+                  : 'bg-black/30 text-white/70 hover:bg-black/45 hover:text-white'
+              )}
+            >
+              <Pin className={cn('w-3.5 h-3.5', isPinned && 'fill-current rotate-45')} />
+            </button>
           </div>
+          <GradientPicker value={coverGradient} onChange={setCoverGradient} stacked />
+        </div>
 
-          {/* Tags */}
-          <div className="flex items-center gap-1 flex-1 min-w-0">
+        {/* Anime link (read-only summary when present) */}
+        {entry?.animeTitle && (
+          <div className="flex flex-col gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Powiązane anime
+            </span>
+            <div className="flex items-center gap-2 rounded-[8px] border border-border-glass bg-foreground/[0.03] px-3 py-2 text-[12px] text-foreground/85">
+              <LinkIcon className="w-3.5 h-3.5 shrink-0 text-primary" />
+              <span className="truncate">{entry.animeTitle}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mood picker */}
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Nastrój
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {MOOD_OPTIONS.map(opt => {
+              const active = mood === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMood(active ? undefined : opt.value)}
+                  title={opt.label}
+                  aria-pressed={active}
+                  aria-label={opt.label}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1',
+                    'text-[11px] transition-colors',
+                    active
+                      ? 'border-primary/40 bg-primary/15 text-primary'
+                      : 'border-border-glass bg-foreground/[0.03] text-foreground/80 hover:text-foreground'
+                  )}
+                >
+                  <span aria-hidden="true">{MOOD_EMOJI[opt.value]}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Tagi
+          </span>
+          <div className="flex flex-wrap gap-1.5">
             {tags.map(tag => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-2xs bg-primary/10 text-primary/80"
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-[4px] border border-primary/30 bg-primary/15',
+                  'px-2 py-[3px] font-mono text-[10px] font-semibold uppercase tracking-[0.04em] text-primary'
+                )}
               >
-                {tag}
-                <button onClick={() => handleTagRemove(tag)} aria-label={`Usuń tag ${tag}`} className="p-1 hover:text-primary ml-0.5">
+                #{tag}
+                <button
+                  type="button"
+                  onClick={() => handleTagRemove(tag)}
+                  aria-label={`Usuń tag ${tag}`}
+                  className="text-primary/70 hover:text-primary"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
+          </div>
+          <input
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                handleTagAdd();
+              }
+            }}
+            onBlur={handleTagAdd}
+            placeholder="+ Dodaj tag"
+            aria-label="Dodaj tag"
+            className={cn(
+              'w-full rounded-[6px] border border-dashed border-border-glass bg-transparent',
+              'px-2.5 py-1.5 text-[11px] text-foreground',
+              'placeholder:text-muted-foreground/60',
+              'focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/30'
+            )}
+          />
+        </div>
+      </aside>
+
+      {/* ── Main editor column ────────────────────────── */}
+      <section className="flex min-w-0 flex-1 flex-col">
+        {/* Header — mirrors the "POWRÓT DO DZIENNIKA" row from the mock */}
+        <header
+          className={cn(
+            'flex flex-shrink-0 items-start gap-4 border-b border-border-glass',
+            'px-7 py-4'
+          )}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Powrót do dziennika"
+            className={cn(
+              'flex shrink-0 items-center gap-1.5 rounded-[8px] border border-border-glass',
+              'bg-foreground/[0.03] px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em]',
+              'text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground'
+            )}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Powrót do dziennika</span>
+            <span className="md:hidden">Wstecz</span>
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="mb-1 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {isEditing ? (
+                <>
+                  <span className="text-primary">● edycja</span>
+                  {entry?.createdAt && (
+                    <span>
+                      ·{' '}
+                      {new Date(entry.createdAt).toLocaleDateString('pl-PL', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-primary">● nowy wpis</span>
+              )}
+            </div>
             <input
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleTagAdd();
-                }
-              }}
-              placeholder="+ Tag"
-              aria-label="Dodaj tag"
-              className="w-16 text-2xs bg-transparent border-none outline-none placeholder:text-muted-foreground/40 text-foreground"
+              id="diary-editor-title"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Tytuł wpisu…"
+              aria-label="Tytuł wpisu"
+              autoFocus
+              className={cn(
+                'w-full bg-transparent font-serif text-[22px] font-extrabold leading-tight tracking-[-0.02em]',
+                'text-foreground placeholder:text-muted-foreground/40 focus:outline-none'
+              )}
             />
           </div>
-        </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 gap-1.5 text-xs">
+              Anuluj
+            </Button>
+            <Button size="sm" onClick={handleSave} className="h-8 gap-1.5 text-xs">
+              <Check className="w-3.5 h-3.5" />
+              {isEditing ? 'Zapisz' : 'Utwórz'}
+            </Button>
+          </div>
+        </header>
 
-        {/* Toolbar */}
-        <EditorToolbar editor={editor} />
+        {/* Toolbar (Tiptap) */}
+        <EditorToolbar
+          editor={editor}
+          rightSlot={
+            <div className="flex items-center gap-2 pl-2">
+              <Smile className="w-3.5 h-3.5 text-muted-foreground/80" aria-hidden="true" />
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.15em] text-muted-foreground">
+                Nastrój
+              </span>
+              <div className="flex items-center gap-1">
+                {MOOD_OPTIONS.map(opt => {
+                  const active = mood === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setMood(active ? undefined : opt.value)}
+                      title={opt.label}
+                      aria-label={opt.label}
+                      aria-pressed={active}
+                      className={cn(
+                        'rounded-[6px] px-1.5 py-0.5 text-[14px] leading-none transition-all',
+                        active ? 'bg-primary/15 opacity-100' : 'opacity-40 hover:opacity-80'
+                      )}
+                    >
+                      {MOOD_EMOJI[opt.value]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          }
+        />
 
-        {/* Editor */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Editor body */}
+        <div className="relative flex-1 overflow-y-auto">
           {editor && (
             <BubbleMenu editor={editor}>
               <BubbleMenuBar editor={editor} />
@@ -243,16 +432,28 @@ export function DiaryEditor({ entry, open, onClose, onCreate, onUpdate }: DiaryE
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex items-center justify-end gap-2 px-4 py-3 border-t border-border/40 bg-card/30">
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
-            Anuluj
-          </Button>
-          <Button size="sm" onClick={handleSave} className="text-xs gap-1.5">
-            <Check className="w-3.5 h-3.5" />
-            {isEditing ? 'Zapisz' : 'Utwórz'}
-          </Button>
-        </div>
-      </div>
+        <footer
+          className={cn(
+            'flex flex-shrink-0 items-center gap-3 border-t border-border-glass',
+            'bg-foreground/[0.015] px-7 py-3'
+          )}
+        >
+          <PillTag variant="muted" className="flex items-center gap-1.5">
+            <FileText className="w-3 h-3" />
+            Markdown
+          </PillTag>
+          {isPinned && (
+            <PillTag variant="accent" className="flex items-center gap-1.5">
+              <Pin className="w-3 h-3 rotate-45 fill-current" />
+              Przypięte
+            </PillTag>
+          )}
+          <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            {textLength.toLocaleString('pl-PL')} / {MAX_CONTENT_LENGTH.toLocaleString('pl-PL')}{' '}
+            znaków
+          </span>
+        </footer>
+      </section>
     </div>
   );
 }

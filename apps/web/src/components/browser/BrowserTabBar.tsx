@@ -26,6 +26,14 @@ interface BrowserTabBarProps {
   onReorderTabs: (activeId: string, overId: string) => void;
 }
 
+/**
+ * Chromium-like tab strip matching Browser.html `.tabs`:
+ *  - Thin 34px bar with dark chrome background
+ *  - Rounded-top tabs (8px 8px 0 0) with favicon + title + close
+ *  - Active tab gains a primary-tinted bg and subtle top-border glow
+ *  - Close button appears on hover (and always on active)
+ */
+
 /** Presentational tab component used for the drag overlay */
 function TabContent({
   tab,
@@ -43,11 +51,17 @@ function TabContent({
   return (
     <div
       className={cn(
-        'group flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs',
-        'min-w-[100px] max-w-[200px] shrink-0',
+        'group relative flex items-center gap-2 h-[30px] px-3 text-[11.5px] font-medium',
+        'rounded-t-[9px] border-b-0 shrink-0 min-w-[120px] max-w-[220px]',
+        'transition-colors duration-150',
         isActive
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
+          ? [
+              'bg-card/90 text-foreground',
+              'border border-border-glass',
+              // Primary-tinted top glow
+              'shadow-[inset_0_1px_0_oklch(from_var(--primary)_l_c_h/0.35)]',
+            ].join(' ')
+          : 'text-muted-foreground/90 border border-transparent hover:bg-foreground/[0.04] hover:text-foreground/90',
         isDragOverlay && 'shadow-lg ring-1 ring-primary/30 opacity-90'
       )}
     >
@@ -57,11 +71,11 @@ function TabContent({
         <img
           src={tab.favicon}
           alt=""
-          className="w-3 h-3 shrink-0 rounded-sm"
+          className="w-3.5 h-3.5 shrink-0 rounded-[3px]"
           onError={() => setImgError(true)}
         />
       ) : (
-        <Globe className="w-3 h-3 shrink-0" />
+        <Globe className="w-3 h-3 shrink-0 opacity-70" />
       )}
       <span className="truncate flex-1">{tab.title || 'Nowa karta'}</span>
       {onClose && (
@@ -69,9 +83,10 @@ function TabContent({
           onClick={onClose}
           aria-label="Zamknij kartę"
           className={cn(
-            'w-4 h-4 flex items-center justify-center rounded-sm shrink-0',
-            'opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive',
-            'transition-opacity duration-150'
+            'grid size-4 place-items-center rounded-sm shrink-0',
+            'transition-opacity duration-150',
+            'hover:bg-destructive/20 hover:text-destructive',
+            isActive ? 'opacity-80 hover:opacity-100' : 'opacity-0 group-hover:opacity-80'
           )}
         >
           <X className="w-2.5 h-2.5" />
@@ -128,7 +143,10 @@ function SortableTab({
       style={style}
       {...attributes}
       {...listeners}
-      className={cn('cursor-pointer transition-all duration-150', isDragging && 'z-10')}
+      className={cn(
+        'cursor-pointer transition-all duration-150 flex items-end',
+        isDragging && 'z-10'
+      )}
       role="tab"
       aria-selected={isActive}
       tabIndex={isActive ? 0 : -1}
@@ -195,7 +213,12 @@ export function BrowserTabBar({
   const tabIds = tabs.map(t => t.id);
 
   return (
-    <div className="flex items-center h-9 bg-card/60 border-b border-border px-1 gap-0.5 shrink-0">
+    <div
+      className={cn(
+        'flex items-end gap-[2px] h-[38px] px-2 pt-2 shrink-0',
+        'bg-[oklch(from_var(--card)_l_c_h/0.6)] border-b border-border-glass'
+      )}
+    >
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -204,7 +227,10 @@ export function BrowserTabBar({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div role="tablist" className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+        <div
+          role="tablist"
+          className="flex items-end gap-[2px] flex-1 min-w-0 overflow-x-auto scrollbar-hide"
+        >
           <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
             {tabs.map(tab => (
               <SortableTab
@@ -221,11 +247,11 @@ export function BrowserTabBar({
             ))}
           </SortableContext>
 
-          {/* New tab button -- inline next to last tab */}
+          {/* New tab button — circle, sits inline next to last tab */}
           <TooltipButton
             variant="ghost"
             size="icon"
-            className="w-7 h-7 shrink-0"
+            className="size-7 rounded-full mb-[2px] shrink-0"
             onClick={onNewTab}
             tooltip="Nowa karta"
             tooltipSide="bottom"

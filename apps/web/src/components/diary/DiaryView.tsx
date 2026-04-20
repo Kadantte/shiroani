@@ -15,8 +15,11 @@ import { ExportDialog } from '@/components/shared/ExportDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { ViewHeader } from '@/components/shared/ViewHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { useDiaryStore, getFilteredDiaryEntries } from '@/stores/useDiaryStore';
 import { DiaryEntryGrid } from './DiaryEntryGrid';
+import { DiaryTimeline } from './DiaryTimeline';
+import { DiarySidebar } from './DiarySidebar';
 import { DiaryEditor } from './DiaryEditor';
 import { pluralize } from '@shiroani/shared';
 import type { DiaryEntry } from '@shiroani/shared';
@@ -49,6 +52,22 @@ const {
   cleanupListeners,
 } = useDiaryStore.getState();
 
+/**
+ * Diary view — editorial redesign (Phase 5).
+ *
+ * Layout matches `shiroani-design/Diary.html`:
+ *   - `ViewHeader` with `NotebookPen` icon, entry count subtitle, sort/import/export
+ *     actions and the "Nowy wpis" button.
+ *   - A two-column body: a vertical `<DiaryTimeline/>` on the left and a
+ *     stat/streak `<DiarySidebar/>` on the right (320px). Grid view (card
+ *     layout from `DiaryEntryGrid`) is still available via the view-mode
+ *     toggle.
+ *   - Decorative 録 kanji watermark sits behind the scroll area using the
+ *     clipped-layer pattern from `SettingsView`.
+ *
+ * Store wiring (pin, filter, sort, search, import/export, editor lifecycle)
+ * is preserved exactly as before the redesign.
+ */
 export function DiaryView() {
   const entries = useDiaryStore(s => s.entries);
   const activeFilter = useDiaryStore(s => s.activeFilter);
@@ -94,6 +113,24 @@ export function DiaryView() {
     entries.length > 0
       ? `${entries.length} ${pluralize(entries.length, 'wpis', 'wpisy', 'wpisów')}`
       : undefined;
+
+  const isEmpty = filteredEntries.length === 0;
+
+  // When the editor is open, it replaces the diary's body (and header) with
+  // an in-place "page" — no modal, no dialog. Back button inside the editor
+  // returns us here.
+  if (isEditorOpen) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <DiaryEditor
+          entry={selectedEntry}
+          onClose={closeEditor}
+          onCreate={createEntry}
+          onUpdate={updateEntry}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -163,60 +200,77 @@ export function DiaryView() {
         }
       />
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {filteredEntries.length === 0 ? (
-          searchQuery ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 py-16">
-              <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center border border-border-glass">
-                <SearchX className="w-7 h-7 opacity-40" />
-              </div>
-              <div className="text-center space-y-1.5">
-                <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
-                <p className="text-xs text-muted-foreground/60 max-w-[200px]">
-                  Spróbuj innych słów kluczowych lub zmień filtr
-                </p>
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              icon={NotebookPen}
-              title="Twój dziennik jest pusty"
-              subtitle="Zacznij zapisywać przemyślenia o anime, recenzje odcinków i notatki"
-              action={{
-                label: 'Napisz pierwszy wpis',
-                icon: Plus,
-                onClick: () => openEditor(),
-              }}
-            />
-          )
-        ) : (
-          <DiaryEntryGrid
-            entries={filteredEntries}
-            viewMode={viewMode}
-            onSelect={openEditor}
-            onRemove={setEntryToRemove}
-            onTogglePin={handleTogglePin}
-          />
-        )}
-      </div>
+      {/* Body — clipped layer hosts the 録 watermark so its offsets
+          don't leak into the scroll container. Main and sidebar scroll
+          independently so the sidebar stays visible while the entry list
+          scrolls (mock behaviour). */}
+      <div className="relative flex-1 overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <KanjiWatermark kanji="録" position="br" size={280} opacity={0.03} />
+        </div>
 
-      {/* Editor dialog */}
-      {isEditorOpen && (
-        <DiaryEditor
-          entry={selectedEntry}
-          open={isEditorOpen}
-          onClose={closeEditor}
-          onCreate={createEntry}
-          onUpdate={updateEntry}
-        />
-      )}
+        <div
+          className={cn('absolute inset-0 grid', 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]')}
+        >
+          {/* Main column — independent scroll */}
+          <div className="overflow-y-auto overflow-x-hidden">
+            <div className="min-w-0 px-7 pt-6 pb-24">
+              {isEmpty ? (
+                searchQuery ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-24 text-muted-foreground">
+                    <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center border border-border-glass">
+                      <SearchX className="w-7 h-7 opacity-40" />
+                    </div>
+                    <div className="text-center space-y-1.5">
+                      <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
+                      <p className="text-xs text-muted-foreground/60 max-w-[200px]">
+                        Spróbuj innych słów kluczowych lub zmień filtr
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={NotebookPen}
+                    title="Twój dziennik jest pusty"
+                    subtitle="Zacznij zapisywać przemyślenia o anime, recenzje odcinków i notatki"
+                    action={{
+                      label: 'Napisz pierwszy wpis',
+                      icon: Plus,
+                      onClick: () => openEditor(),
+                    }}
+                  />
+                )
+              ) : viewMode === 'grid' ? (
+                <DiaryEntryGrid
+                  entries={filteredEntries}
+                  viewMode="grid"
+                  onSelect={openEditor}
+                  onRemove={setEntryToRemove}
+                  onTogglePin={handleTogglePin}
+                />
+              ) : (
+                <DiaryTimeline
+                  entries={filteredEntries}
+                  onSelect={openEditor}
+                  onRemove={setEntryToRemove}
+                  onTogglePin={handleTogglePin}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar column — independent scroll, full-height, visible border */}
+          <div className="hidden lg:block overflow-y-auto overflow-x-hidden border-l border-border-glass bg-foreground/[0.015]">
+            <DiarySidebar entries={entries} />
+          </div>
+        </div>
+      </div>
 
       {/* Export/Import dialogs */}
       <ExportDialog open={isExportOpen} onOpenChange={setIsExportOpen} type="diary" />
       <ImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} type="diary" />
 
-      {/* Confirm removal dialog (single instance) */}
+      {/* Confirm removal dialog */}
       <ConfirmDialog
         open={!!entryToRemove}
         onOpenChange={open => {

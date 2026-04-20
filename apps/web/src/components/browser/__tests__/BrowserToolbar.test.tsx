@@ -33,12 +33,12 @@ function getDefaultProps() {
   };
 }
 
-// Button order in the toolbar:
+// Button order in the redesigned toolbar (Browser.html `.urlbar`):
 // 0: Back (Wstecz)
-// 1: Forward (Do przodu)
+// 1: Forward (Dalej)
 // 2: Reload (Odśwież)
-// 3: Add to library (Dodaj do biblioteki)
-// 4: Adblock toggle
+// 3: Adblock toggle — inline pill inside the URL field
+// 4: Add to library (Dodaj do biblioteki)
 // 5: Popup block mode toggle
 // 6: Home (Strona główna)
 
@@ -48,8 +48,8 @@ function getButtons() {
     back: buttons[0],
     forward: buttons[1],
     reload: buttons[2],
-    addToLibrary: buttons[3],
-    adblock: buttons[4],
+    adblock: buttons[3],
+    addToLibrary: buttons[4],
     popupBlock: buttons[5],
     home: buttons[6],
   };
