@@ -28,6 +28,7 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
       // Point to source for better dev experience and ESM compatibility
       '@shiroani/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
+      '@shiroani/changelog': resolve(__dirname, '../../packages/changelog/src/index.ts'),
     },
   },
   server: {
