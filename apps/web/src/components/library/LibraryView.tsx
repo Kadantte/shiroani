@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  Library as LibraryIcon,
   BookOpen,
   Globe,
   SearchX,
@@ -23,6 +24,7 @@ import { ExportDialog } from '@/components/shared/ExportDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { ViewHeader } from '@/components/shared/ViewHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { useLibraryStore, getFilteredEntries } from '@/stores/useLibraryStore';
 import { AnimeCard } from '@/components/library/AnimeCard';
 import { AnimeDetailModal } from '@/components/library/AnimeDetailModal';
@@ -34,7 +36,7 @@ import { useAppStore } from '@/stores/useAppStore';
 import { STATUS_FILTER_OPTIONS } from '@/lib/constants';
 import { useNextAiringMap } from '@/hooks/useNextAiringMap';
 import { pluralize } from '@shiroani/shared';
-import type { AnimeEntry } from '@shiroani/shared';
+import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
 
 const SORT_OPTIONS = [
   { value: 'title', label: 'Tytuł' },
@@ -107,22 +109,43 @@ export function LibraryView() {
     [entries, activeFilter, searchQuery, sortBy, sortOrder]
   );
 
+  // Per-status counts for the filter chips, matching mock "Wszystko · 184".
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: entries.length };
+    for (const e of entries) {
+      counts[e.status] = (counts[e.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [entries]);
+
+  const filtersWithCounts = useMemo(
+    () =>
+      STATUS_FILTER_OPTIONS.map(opt => {
+        const count = statusCounts[opt.value] ?? 0;
+        return {
+          value: opt.value as 'all' | AnimeStatus,
+          label: count > 0 ? `${opt.label} · ${count}` : opt.label,
+        };
+      }),
+    [statusCounts]
+  );
+
   const subtitle =
     entries.length > 0
       ? `${entries.length} ${pluralize(entries.length, 'pozycja', 'pozycje', 'pozycji')}`
       : undefined;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
       {/* Header */}
       <ViewHeader
-        icon={BookOpen}
-        title="Moja biblioteka"
+        icon={LibraryIcon}
+        title="Biblioteka"
         subtitle={subtitle}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Szukaj w bibliotece..."
-        filters={STATUS_FILTER_OPTIONS}
+        searchPlaceholder="Szukaj tytułów..."
+        filters={filtersWithCounts}
         activeFilter={activeFilter}
         onFilterChange={setFilter}
         viewMode={viewMode}
@@ -152,7 +175,7 @@ export function LibraryView() {
                 className={cn('w-4 h-4 transition-transform', sortOrder === 'asc' && 'rotate-180')}
               />
             </TooltipButton>
-            <div className="w-px h-4 bg-border/50 mx-1" />
+            <div className="w-px h-4 bg-border-glass mx-1" />
             <TooltipButton
               variant="ghost"
               size="icon"
@@ -171,7 +194,7 @@ export function LibraryView() {
             >
               <Upload className="w-4 h-4" />
             </TooltipButton>
-            <div className="w-px h-4 bg-border/50 mx-1" />
+            <div className="w-px h-4 bg-border-glass mx-1" />
             <TooltipButton
               variant="ghost"
               size="icon"
@@ -201,60 +224,75 @@ export function LibraryView() {
       {/* Stats dashboard */}
       {showStats && <LibraryStats />}
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {isLoading ? (
-          <LibrarySkeleton />
-        ) : filteredEntries.length === 0 ? (
-          searchQuery ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 py-16">
-              <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center border border-border-glass">
-                <SearchX className="w-7 h-7 opacity-40" />
+      {/* Content region: kanji watermark in a clipped layer, scroll container on top */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Decorative kanji watermark — 蔵 (kura: library / storehouse).
+            Clipped wrapper keeps the glyph's negative offsets from producing
+            scrollbars on either axis. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <KanjiWatermark kanji="蔵" position="br" size={300} opacity={0.03} />
+        </div>
+
+        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+          <div className="relative z-[1] px-7 pt-5 pb-24">
+            {isLoading ? (
+              <LibrarySkeleton />
+            ) : filteredEntries.length === 0 ? (
+              searchQuery ? (
+                <div className="flex flex-col items-center justify-center text-muted-foreground gap-4 py-24">
+                  <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center border border-border-glass">
+                    <SearchX className="w-7 h-7 opacity-40" />
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
+                    <p className="text-xs text-muted-foreground/60 max-w-[240px]">
+                      Spróbuj innych słów kluczowych lub zmień filtr statusu
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={BookOpen}
+                  title="Twoja biblioteka jest pusta"
+                  subtitle="Przejdź do przeglądarki i dodaj anime klikając ikonę zakładki na pasku"
+                  action={{
+                    label: 'Otwórz przeglądarkę',
+                    icon: Globe,
+                    onClick: () => navigateTo('browser'),
+                  }}
+                />
+              )
+            ) : viewMode === 'grid' ? (
+              <div className="grid gap-3.5 grid-cols-[repeat(auto-fill,minmax(130px,1fr))] xl:grid-cols-[repeat(auto-fill,minmax(140px,1fr))]">
+                {filteredEntries.map(entry => (
+                  <AnimeCard
+                    key={entry.id}
+                    entry={entry}
+                    nextAiring={
+                      entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null
+                    }
+                    onSelect={openDetail}
+                    onContinue={handleContinue}
+                    onRemove={setEntryToRemove}
+                  />
+                ))}
               </div>
-              <div className="text-center space-y-1.5">
-                <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
-                <p className="text-xs text-muted-foreground/60 max-w-[200px]">
-                  Spróbuj innych słów kluczowych lub zmień filtr statusu
-                </p>
+            ) : (
+              <div className="space-y-0.5">
+                {filteredEntries.map(entry => (
+                  <LibraryListItem
+                    key={entry.id}
+                    entry={entry}
+                    nextAiring={
+                      entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null
+                    }
+                    onClick={() => openDetail(entry)}
+                  />
+                ))}
               </div>
-            </div>
-          ) : (
-            <EmptyState
-              icon={BookOpen}
-              title="Twoja biblioteka jest pusta"
-              subtitle="Przejdź do przeglądarki i dodaj anime klikając ikonę zakładki na pasku"
-              action={{
-                label: 'Otwórz przeglądarkę',
-                icon: Globe,
-                onClick: () => navigateTo('browser'),
-              }}
-            />
-          )
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
-            {filteredEntries.map(entry => (
-              <AnimeCard
-                key={entry.id}
-                entry={entry}
-                nextAiring={entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null}
-                onSelect={openDetail}
-                onContinue={handleContinue}
-                onRemove={setEntryToRemove}
-              />
-            ))}
+            )}
           </div>
-        ) : (
-          <div className="space-y-0.5">
-            {filteredEntries.map(entry => (
-              <LibraryListItem
-                key={entry.id}
-                entry={entry}
-                nextAiring={entry.anilistId ? (nextAiringMap.get(entry.anilistId) ?? null) : null}
-                onClick={() => openDetail(entry)}
-              />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Detail modal */}

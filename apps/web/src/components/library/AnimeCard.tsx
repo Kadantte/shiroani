@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
-import { Play, Pencil, Trash2, Film } from 'lucide-react';
+import { Play, Pencil, Trash2, Film, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { PillTag } from '@/components/ui/pill-tag';
 import { CountdownBadge } from '@/components/library/CountdownBadge';
 import type { AnimeEntry } from '@shiroani/shared';
 import { STATUS_CONFIG } from '@/lib/constants';
@@ -36,31 +36,43 @@ const AnimeCard = memo(function AnimeCard({
     : `Odc. ${entry.currentEpisode}`;
 
   const progressPercent = entry.episodes
-    ? Math.round((entry.currentEpisode / entry.episodes) * 100)
+    ? Math.min(100, Math.round((entry.currentEpisode / entry.episodes) * 100))
     : 0;
+
+  const isCompleted = entry.status === 'completed';
+  const isWatching = entry.status === 'watching';
+  const showProgress = !!entry.episodes && entry.episodes > 0 && (isWatching || isCompleted);
+
+  // Status badge (top-left). completed -> green, watching -> accent, dropped/on_hold -> muted.
+  const statusLabel = STATUS_CONFIG[entry.status].label;
+  const statusVariant: 'accent' | 'green' | 'muted' = isCompleted
+    ? 'green'
+    : isWatching
+      ? 'accent'
+      : 'muted';
 
   return (
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${entry.title} — ${STATUS_CONFIG[entry.status].label}`}
+      aria-label={`${entry.title} — ${statusLabel}`}
       className={cn(
-        'group relative rounded-lg overflow-hidden cursor-pointer',
-        'bg-card/80 border border-border-glass',
-        'transition-shadow duration-200',
-        'hover:shadow-primary-glow focus-visible:shadow-primary-glow',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        'group relative rounded-[10px] overflow-hidden cursor-pointer',
+        'border border-border-glass bg-card/60',
+        'transition-transform duration-200 ease-out',
+        'hover:-translate-y-0.5 hover:shadow-primary-glow',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:-translate-y-0.5'
       )}
       onClick={() => onSelect(entry)}
       onKeyDown={handleKeyDown}
     >
-      {/* Cover image */}
-      <div className="relative aspect-[3/4] overflow-hidden">
+      {/* Cover image — 2:3 aspect per mock */}
+      <div className="relative aspect-[2/3] overflow-hidden">
         {entry.coverImage ? (
           <img
             src={entry.coverImage}
             alt={entry.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             loading="lazy"
           />
         ) : (
@@ -72,58 +84,80 @@ const AnimeCard = memo(function AnimeCard({
           </div>
         )}
 
-        {/* Status indicator */}
-        <div className="absolute top-2 left-2">
-          <div
-            className={cn('w-2.5 h-2.5 rounded-full', STATUS_CONFIG[entry.status].color)}
-            aria-label={STATUS_CONFIG[entry.status].label}
-            role="img"
-          />
+        {/* Top gradient sheen + bottom darkening — matches mock .cov::after */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.12), transparent 45%), linear-gradient(180deg, transparent 45%, oklch(0 0 0 / 0.68))',
+          }}
+        />
+
+        {/* Status pill — top-left */}
+        <div className="absolute top-2 left-2 z-[2]">
+          <PillTag variant={statusVariant} className="shadow-[0_1px_4px_oklch(0_0_0/0.5)]">
+            {statusLabel}
+          </PillTag>
         </div>
 
-        {/* Episode progress badge */}
-        <div className="absolute top-2 right-2">
-          <Badge variant="secondary" className="text-2xs bg-background/70 text-foreground border-0">
-            {progressText}
-          </Badge>
-        </div>
-
-        {/* Score badge */}
+        {/* Score — top-right, small mono chip with star */}
         {entry.score != null && entry.score > 0 && (
-          <div className="absolute bottom-12 right-2">
-            <Badge className="text-2xs bg-primary/90 border-0">{entry.score}/10</Badge>
+          <div
+            className={cn(
+              'absolute top-2 right-2 z-[2]',
+              'flex items-center gap-[3px] px-[6px] py-[3px] rounded-[3px]',
+              'bg-black/70 text-[10px] font-mono font-bold leading-none',
+              'text-[oklch(0.8_0.14_70)]'
+            )}
+          >
+            <Star className="w-3 h-3 fill-current" strokeWidth={0} />
+            <span className="tabular-nums">{entry.score}/10</span>
           </div>
         )}
 
-        {/* Next episode countdown badge */}
+        {/* Next-airing countdown — bottom-left, above title block */}
         {nextAiring && (
-          <div className="absolute bottom-12 left-2">
+          <div className="absolute bottom-14 left-2 z-[2]">
             <CountdownBadge airingAt={nextAiring.airingAt} episode={nextAiring.episode} />
           </div>
         )}
 
-        {/* Bottom gradient overlay with title */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent p-3 pt-8">
-          <h3 className="text-sm font-medium text-foreground truncate-2 leading-tight">
+        {/* Bottom title block — sits above the progress line */}
+        <div
+          className={cn(
+            'absolute inset-x-0 bottom-0 z-[1] px-[10px] pt-7 pb-[10px]',
+            showProgress ? 'pb-3' : 'pb-[10px]'
+          )}
+        >
+          <h3 className="text-[12px] font-bold leading-[1.2] text-white line-clamp-2 drop-shadow-[0_1px_3px_oklch(0_0_0/0.6)]">
             {entry.title}
           </h3>
-          <p className="text-2xs text-foreground/60 mt-0.5">{STATUS_CONFIG[entry.status].label}</p>
+          <p className="mt-[3px] font-mono text-[10px] uppercase tracking-[0.08em] text-white/80">
+            {progressText}
+          </p>
         </div>
 
-        {/* Progress bar at the very bottom */}
-        {entry.episodes && entry.episodes > 0 && (
-          <div className="absolute bottom-0 inset-x-0 h-1 bg-background/30">
+        {/* Thin progress bar, flush bottom */}
+        {showProgress && (
+          <div className="absolute left-0 right-0 bottom-0 z-[2] h-[3px] bg-white/12">
             <div
-              className="h-full bg-primary transition-all duration-300"
+              className={cn(
+                'h-full transition-[width] duration-300',
+                isCompleted
+                  ? 'bg-[oklch(0.78_0.15_140)] shadow-[0_0_6px_oklch(0.78_0.15_140/0.6)]'
+                  : 'bg-primary shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h/0.55)]'
+              )}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         )}
 
-        {/* Hover/focus overlay with action buttons */}
+        {/* Hover overlay with action buttons */}
         <div
           className={cn(
-            'absolute inset-0 bg-gradient-to-t from-background/60 via-background/30 to-background/10',
+            'absolute inset-0 z-[3]',
+            'bg-gradient-to-t from-background/60 via-background/25 to-background/5',
             'flex items-center justify-center gap-2.5',
             'transition-opacity duration-250',
             'opacity-0 pointer-events-none',
