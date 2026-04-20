@@ -1,14 +1,16 @@
 import { memo, useCallback } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useDiscoverStore, type DiscoverMedia } from '@/stores/useDiscoverStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
 import { RandomFiltersPanel } from './random/RandomFiltersPanel';
 import { RandomShowcaseCard } from './random/RandomShowcaseCard';
 import { RandomPeekChip } from './random/RandomPeekChip';
 import { RandomSkeleton } from './random/RandomSkeleton';
 import { useRandomCarousel } from './random/useRandomCarousel';
-import { buildShowcaseMeta } from './random/random-utils';
+import { buildShowcaseMeta, getTitle } from './random/random-utils';
 
 interface RandomDiscoveryPanelProps {
   libraryIds: Set<number>;
@@ -35,6 +37,32 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
 
   const handleGenresChange = useCallback((inc: string[], exc: string[]) => {
     useDiscoverStore.getState().setRandomGenres(inc, exc);
+  }, []);
+
+  const handleAddToLibrary = useCallback((media: DiscoverMedia) => {
+    const title = getTitle(media.title);
+    const entries = useLibraryStore.getState().entries;
+    const alreadyByAnilist = entries.some(e => e.anilistId === media.id);
+    const alreadyByTitle = entries.some(e => e.title.toLowerCase() === title.toLowerCase());
+    if (alreadyByAnilist || alreadyByTitle) {
+      toast.error('To anime jest już w bibliotece');
+      return;
+    }
+    try {
+      useLibraryStore.getState().addToLibrary({
+        anilistId: media.id,
+        title,
+        titleRomaji: media.title.romaji,
+        titleNative: media.title.native,
+        coverImage:
+          media.coverImage.large || media.coverImage.extraLarge || media.coverImage.medium,
+        episodes: media.episodes,
+        status: 'plan_to_watch',
+      });
+      toast.success('Dodano do biblioteki', { description: title });
+    } catch {
+      toast.error('Nie udało się dodać do biblioteki');
+    }
   }, []);
 
   if (error) {
@@ -68,8 +96,8 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
         />
       ) : current ? (
         <div className="relative">
-          {/* Banner backdrop */}
-          <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+          {/* Banner backdrop — banner image blurred + accent gradient overlay */}
+          <div className="absolute inset-0 -z-10 overflow-hidden rounded-[14px]">
             {(() => {
               const banner = buildShowcaseMeta(current).banner;
               return banner ? (
@@ -77,14 +105,23 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
                   src={banner}
                   alt=""
                   aria-hidden
-                  className="w-full h-full object-cover opacity-20 blur-xl scale-110"
+                  className="w-full h-full object-cover opacity-25 blur-2xl scale-110"
                 />
               ) : null;
             })()}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background/95" />
+            {/* News hero-style accent gradient + soft vignette */}
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(120deg, oklch(from var(--primary) l c h / 0.18), oklch(from var(--primary) l c h / 0.02) 60%), linear-gradient(180deg, transparent, oklch(0 0 0 / 0.35))',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/55 to-background/95" />
           </div>
 
-          <div className="relative rounded-3xl border border-border-glass bg-card/40 backdrop-blur-sm overflow-hidden">
+          <div className="relative rounded-[14px] border border-border-glass bg-card/40 backdrop-blur-sm overflow-hidden">
             <RandomShowcaseCard
               media={current}
               index={index}
@@ -95,6 +132,7 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
               onNext={next}
               onRefetch={handleRefetch}
               onOpenDetails={() => onCardClick(current)}
+              onAddToLibrary={() => handleAddToLibrary(current)}
             />
 
             {(peekPrev || peekNext) && (

@@ -454,23 +454,48 @@
     overflow: hidden;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  /*
+   * Custom scrollbar — theme-aware, subtle, floating-pill look.
+   *
+   * Track is transparent so the scrollbar reads as a decoration on top of the
+   * existing surface; the thumb uses an alpha-tinted foreground token so it
+   * works across every dark and light theme without per-theme overrides.
+   *
+   * The `border: 2px solid transparent; background-clip: content-box` trick
+   * keeps the visible thumb 6 px wide inside a 10 px scrollbar gutter, giving
+   * the "pill with breathing room" look from the mock.
+   */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(from var(--foreground) l c h / 0.18) transparent;
   }
 
-  ::-webkit-scrollbar-track {
-    background: var(--muted);
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--muted-foreground);
-    border-radius: 4px;
+    background-color: oklch(from var(--foreground) l c h / 0.15);
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    transition: background-color 150ms ease-out;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--foreground);
+    background-color: oklch(from var(--foreground) l c h / 0.3);
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-color: oklch(from var(--primary) l c h / 0.55);
+    background-clip: content-box;
   }
 
   /* Selection */

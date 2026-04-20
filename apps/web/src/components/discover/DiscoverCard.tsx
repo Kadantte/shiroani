@@ -1,7 +1,7 @@
 import { memo, useCallback, useState } from 'react';
-import { Check, Film } from 'lucide-react';
+import { Check, Film, Plus, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { PillTag } from '@/components/ui/pill-tag';
 import { formatScore } from '@/lib/anime-utils';
 import { ANILIST_FORMAT_LABELS, ANILIST_STATUS_LABELS } from '@/lib/constants';
 import type { DiscoverMedia } from '@/stores/useDiscoverStore';
@@ -10,13 +10,19 @@ interface DiscoverCardProps {
   media: DiscoverMedia;
   inLibrary?: boolean;
   onClick?: () => void;
+  onAddToLibrary?: (media: DiscoverMedia) => void;
 }
 
 function getTitle(title: DiscoverMedia['title']): string {
   return title.english || title.romaji || title.native || '?';
 }
 
-const DiscoverCard = memo(function DiscoverCard({ media, inLibrary, onClick }: DiscoverCardProps) {
+const DiscoverCard = memo(function DiscoverCard({
+  media,
+  inLibrary,
+  onClick,
+  onAddToLibrary,
+}: DiscoverCardProps) {
   const [imgError, setImgError] = useState(false);
 
   const handleKeyDown = useCallback(
@@ -30,6 +36,14 @@ const DiscoverCard = memo(function DiscoverCard({ media, inLibrary, onClick }: D
   );
 
   const handleImageError = useCallback(() => setImgError(true), []);
+
+  const handleAddClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!inLibrary) onAddToLibrary?.(media);
+    },
+    [inLibrary, onAddToLibrary, media]
+  );
 
   const coverUrl = media.coverImage.large || media.coverImage.extraLarge || media.coverImage.medium;
   const title = getTitle(media.title);
@@ -45,21 +59,22 @@ const DiscoverCard = memo(function DiscoverCard({ media, inLibrary, onClick }: D
       tabIndex={0}
       aria-label={title}
       className={cn(
-        'group relative rounded-lg overflow-hidden cursor-pointer',
-        'bg-card/80 border border-border-glass',
-        'transition-shadow duration-200',
-        'hover:shadow-primary-glow focus-visible:shadow-primary-glow',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        'group relative rounded-[10px] overflow-hidden cursor-pointer',
+        'border border-border-glass bg-card/60',
+        'transition-transform duration-200 ease-out',
+        'hover:-translate-y-0.5 hover:shadow-primary-glow',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:-translate-y-0.5'
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
-      <div className="relative aspect-[3/4] overflow-hidden">
+      {/* Cover — 2:3 aspect, matching Library card vocabulary */}
+      <div className="relative aspect-[2/3] overflow-hidden">
         {coverUrl && !imgError ? (
           <img
             src={coverUrl}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             loading="lazy"
             onError={handleImageError}
           />
@@ -72,41 +87,101 @@ const DiscoverCard = memo(function DiscoverCard({ media, inLibrary, onClick }: D
           </div>
         )}
 
-        {/* Format badge — top-left */}
+        {/* Top sheen + bottom darkening — matches Library .cov::after */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.12), transparent 45%), linear-gradient(180deg, transparent 45%, oklch(0 0 0 / 0.68))',
+          }}
+        />
+
+        {/* Format pill — top-left */}
         {formatLabel && (
-          <div className="absolute top-2 left-2">
-            <Badge
-              variant="secondary"
-              className="text-2xs bg-background/70 text-foreground/80 border-0 px-1.5 py-0"
-            >
+          <div className="absolute top-2 left-2 z-[2]">
+            <PillTag variant="muted" className="shadow-[0_1px_4px_oklch(0_0_0/0.5)]">
               {formatLabel}
-            </Badge>
+            </PillTag>
           </div>
         )}
 
-        {/* Score badge — top-right */}
+        {/* Score chip — top-right, mono with star */}
         {media.averageScore != null && media.averageScore > 0 && (
-          <div className="absolute top-2 right-2">
-            <Badge className="text-2xs bg-primary/90 border-0 px-1.5 py-0">
-              {formatScore(media.averageScore)}
-            </Badge>
+          <div
+            className={cn(
+              'absolute top-2 right-2 z-[2]',
+              'flex items-center gap-[3px] px-[6px] py-[3px] rounded-[3px]',
+              'bg-black/70 text-[10px] font-mono font-bold leading-none',
+              'text-[oklch(0.8_0.14_70)]'
+            )}
+          >
+            <Star className="w-3 h-3 fill-current" strokeWidth={0} />
+            <span className="tabular-nums">{formatScore(media.averageScore)}</span>
           </div>
         )}
 
-        {/* In-library indicator */}
+        {/* In-library indicator — bottom-right above title */}
         {inLibrary && (
-          <div className="absolute bottom-12 right-2">
-            <div className="w-5 h-5 rounded-full bg-status-success flex items-center justify-center">
+          <div className="absolute bottom-[58px] right-2 z-[2]">
+            <div className="w-5 h-5 rounded-full bg-status-success flex items-center justify-center shadow-[0_1px_4px_oklch(0_0_0/0.5)]">
               <Check className="w-3 h-3 text-white" />
             </div>
           </div>
         )}
 
-        {/* Bottom gradient overlay with title */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent p-3 pt-8">
-          <h3 className="text-sm font-medium text-foreground truncate-2 leading-tight">{title}</h3>
-          {subtitle && <p className="text-2xs text-foreground/60 mt-0.5 truncate">{subtitle}</p>}
+        {/* Bottom title block */}
+        <div className="absolute inset-x-0 bottom-0 z-[1] px-[10px] pt-7 pb-[10px]">
+          <h3 className="text-[12px] font-bold leading-[1.2] text-white line-clamp-2 drop-shadow-[0_1px_3px_oklch(0_0_0/0.6)]">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="mt-[3px] font-mono text-[10px] uppercase tracking-[0.08em] text-white/80 truncate">
+              {subtitle}
+            </p>
+          )}
         </div>
+
+        {/* Hover overlay — Add to library primary action */}
+        {onAddToLibrary && (
+          <div
+            className={cn(
+              'absolute inset-0 z-[3]',
+              'bg-gradient-to-t from-background/70 via-background/30 to-background/5',
+              'flex items-center justify-center',
+              'transition-opacity duration-200',
+              'opacity-0 pointer-events-none',
+              'group-hover:opacity-100 group-hover:pointer-events-auto',
+              'group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
+            )}
+          >
+            <button
+              type="button"
+              onClick={handleAddClick}
+              disabled={inLibrary}
+              aria-label={inLibrary ? 'W bibliotece' : 'Dodaj do biblioteki'}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px]',
+                'text-[11.5px] font-bold shadow-[0_6px_16px_-6px_oklch(0_0_0/0.7)]',
+                'transition-colors duration-150 active:scale-[0.97]',
+                inLibrary
+                  ? 'bg-status-success/90 text-white cursor-default'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              )}
+            >
+              {inLibrary ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />W bibliotece
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5" />
+                  Dodaj
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

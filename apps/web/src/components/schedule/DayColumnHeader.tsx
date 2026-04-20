@@ -7,38 +7,42 @@ export interface DayColumnHeaderProps {
   entryCount: number;
 }
 
-/** Shared day column header used by WeeklyView and TimetableView */
+/**
+ * Editorial day-column header. Mono uppercase label above a large serif
+ * date, with an optional count badge below. Today's column lights up in
+ * the accent colour.
+ */
 export function DayColumnHeader({ day, label, entryCount }: DayColumnHeaderProps) {
   const isTodayDay = isToday(day);
 
   return (
     <div
       className={cn(
-        'sticky top-0 z-10 shrink-0 px-3 py-2.5 text-center border-b border-border/60 backdrop-blur-sm',
+        'sticky top-0 z-10 shrink-0 px-3 py-3 text-center border-b border-border-glass backdrop-blur-sm',
         isTodayDay ? 'bg-primary/10' : 'bg-card/20'
       )}
     >
       <span
         className={cn(
-          'text-xs font-semibold uppercase tracking-wide',
-          isTodayDay ? 'text-primary' : 'text-muted-foreground/70'
+          'block font-mono text-[10px] uppercase tracking-[0.2em]',
+          isTodayDay ? 'text-primary font-bold' : 'text-muted-foreground'
         )}
       >
-        {label}
+        {isTodayDay ? `${label} · dziś` : label}
       </span>
-      <div className="flex items-center justify-center gap-1.5 mt-0.5">
-        <span
-          className={cn(
-            'flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold tabular-nums',
-            isTodayDay ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
-          )}
-        >
-          {getDayNumber(day)}
-        </span>
-        {entryCount > 0 && (
-          <span className="text-2xs text-muted-foreground/50 font-medium">({entryCount})</span>
+      <div
+        className={cn(
+          'mt-1 font-serif text-[24px] font-extrabold leading-none tabular-nums',
+          isTodayDay ? 'text-primary' : 'text-foreground'
         )}
+      >
+        {getDayNumber(day)}
       </div>
+      {entryCount > 0 && (
+        <div className="mt-[3px] text-[10px] font-mono tracking-[0.04em] text-muted-foreground/70">
+          {entryCount} {entryCount === 1 ? 'odc.' : 'odc.'}
+        </div>
+      )}
     </div>
   );
 }

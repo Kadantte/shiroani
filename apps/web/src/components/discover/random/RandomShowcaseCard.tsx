@@ -5,15 +5,14 @@ import {
   ChevronRight,
   RefreshCw,
   Star,
-  Tv,
-  Calendar,
   Check,
   Film,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
-import { Badge } from '@/components/ui/badge';
+import { PillTag } from '@/components/ui/pill-tag';
 import { formatScore } from '@/lib/anime-utils';
 import type { DiscoverMedia } from '@/stores/useDiscoverStore';
 import { buildShowcaseMeta } from './random-utils';
@@ -28,8 +27,14 @@ interface RandomShowcaseCardProps {
   onNext: () => void;
   onRefetch: () => void;
   onOpenDetails: () => void;
+  onAddToLibrary?: () => void;
 }
 
+/**
+ * Hero showcase card for the Random tab — borrows the News.html `.feature`
+ * anatomy (gradient background, top-right kanji watermark, big serif title,
+ * meta row) and pairs it with a poster column on the left.
+ */
 export const RandomShowcaseCard = memo(function RandomShowcaseCard({
   media,
   index,
@@ -40,6 +45,7 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
   onNext,
   onRefetch,
   onOpenDetails,
+  onAddToLibrary,
 }: RandomShowcaseCardProps) {
   const meta = buildShowcaseMeta(media);
   const showRomaji = media.title.romaji && media.title.romaji !== meta.title;
@@ -53,9 +59,18 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
   const lqip = media.coverImage.medium;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 p-5 md:p-6">
-      {/* Poster column with mobile nav */}
-      <div className="flex items-center justify-center gap-2 md:flex-col md:items-stretch">
+    <div className="relative grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 p-5 md:p-7">
+      {/* Editorial kanji watermark — top-right, News-hero style */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute top-[-18px] right-[-10px] font-serif font-extrabold leading-none tracking-[-0.05em] text-foreground/[0.07] select-none"
+        style={{ fontSize: '160px' }}
+      >
+        籤
+      </span>
+
+      {/* ── Poster column ─────────────────────────────────────────── */}
+      <div className="relative z-[1] flex items-center justify-center gap-2 md:flex-col md:items-stretch">
         <button
           type="button"
           onClick={onPrev}
@@ -76,9 +91,9 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
             }
           }}
           className={cn(
-            'group relative aspect-[3/4] w-full max-w-[220px] mx-auto md:max-w-none',
-            'rounded-2xl overflow-hidden cursor-pointer',
-            'border border-border-glass shadow-lg',
+            'group relative aspect-[2/3] w-full max-w-[220px] mx-auto md:max-w-none',
+            'rounded-[12px] overflow-hidden cursor-pointer',
+            'border border-border-glass shadow-[0_8px_28px_oklch(0_0_0/0.5)]',
             'transition-all duration-300',
             'hover:shadow-primary-glow hover:scale-[1.02]',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
@@ -113,6 +128,15 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
                   imgLoaded ? 'opacity-100' : 'opacity-0'
                 )}
               />
+              {/* Sheen overlay matching Library cov::after */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.18), transparent 55%)',
+                }}
+              />
             </>
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -120,16 +144,21 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
             </div>
           )}
           {inLibrary && (
-            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-status-success flex items-center justify-center shadow-md">
+            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-status-success flex items-center justify-center shadow-[0_1px_6px_oklch(0_0_0/0.5)]">
               <Check className="w-3.5 h-3.5 text-white" />
             </div>
           )}
           {media.averageScore != null && media.averageScore > 0 && (
-            <div className="absolute bottom-2 left-2">
-              <Badge className="text-2xs bg-primary/90 border-0 px-1.5 py-0 gap-1">
-                <Star className="w-3 h-3 fill-current" />
-                {formatScore(media.averageScore)}
-              </Badge>
+            <div
+              className={cn(
+                'absolute bottom-2 left-2',
+                'flex items-center gap-[3px] px-[6px] py-[3px] rounded-[3px]',
+                'bg-black/70 text-[10px] font-mono font-bold leading-none',
+                'text-[oklch(0.8_0.14_70)]'
+              )}
+            >
+              <Star className="w-3 h-3 fill-current" strokeWidth={0} />
+              <span className="tabular-nums">{formatScore(media.averageScore)}</span>
             </div>
           )}
         </div>
@@ -144,28 +173,100 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
         </button>
       </div>
 
-      {/* Info column */}
-      <div className="flex flex-col min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-2xs font-medium text-primary/80 uppercase tracking-wider mb-1">
-              Losowanie {index + 1} / {total}
-            </p>
-            <h2
-              className="text-xl md:text-2xl font-bold leading-tight text-foreground line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-              onClick={onOpenDetails}
-            >
-              {meta.title}
-            </h2>
-            {showRomaji && (
-              <p className="text-2xs text-muted-foreground/70 mt-0.5 truncate">
-                {media.title.romaji}
-              </p>
-            )}
-          </div>
+      {/* ── Info column — News hero anatomy ──────────────────────── */}
+      <div className="relative z-[1] flex flex-col min-w-0">
+        {/* Tag row — FEATURE + library + format/year */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <PillTag variant="accent">Losowe</PillTag>
+          {inLibrary && <PillTag variant="green">W bibliotece</PillTag>}
+          {meta.formatLabel && <PillTag variant="muted">{meta.formatLabel}</PillTag>}
+          {meta.yearLabel && <PillTag variant="muted">{meta.yearLabel}</PillTag>}
+        </div>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1 shrink-0">
+        {/* Title — Shippori Mincho serif, matches News .feature h2 */}
+        <h2
+          className={cn(
+            'mt-3 font-serif font-extrabold text-foreground',
+            'text-[22px] md:text-[26px] leading-[1.15] tracking-[-0.02em]',
+            'line-clamp-2 cursor-pointer hover:text-primary transition-colors'
+          )}
+          onClick={onOpenDetails}
+        >
+          {meta.title}
+        </h2>
+        {showRomaji && (
+          <p className="mt-1 font-serif text-[12.5px] text-muted-foreground/80 truncate tracking-[0.02em]">
+            {media.title.romaji}
+          </p>
+        )}
+
+        {/* Meta row — mono, News-hero style */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="text-primary/90 font-semibold">
+            {index + 1} / {total}
+          </span>
+          {media.episodes && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{media.episodes} odc.</span>
+            </>
+          )}
+          {meta.statusLabel && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{meta.statusLabel}</span>
+            </>
+          )}
+        </div>
+
+        {/* Genres */}
+        {media.genres && media.genres.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1">
+            {media.genres.slice(0, 6).map(g => (
+              <span
+                key={g}
+                className="inline-flex items-center px-2 py-[3px] rounded-full text-[10px] font-medium bg-primary/10 text-primary/90 border border-primary/20"
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Synopsis */}
+        {meta.synopsis && (
+          <p className="mt-3 text-[12.5px] leading-[1.65] text-foreground/75 line-clamp-5">
+            {meta.synopsis}
+          </p>
+        )}
+
+        {/* Action row */}
+        <div className="mt-auto pt-5 flex items-center flex-wrap gap-2">
+          <Button size="sm" onClick={onNext} disabled={isLoading} className="gap-1.5">
+            <Shuffle className="w-3.5 h-3.5" />
+            Zatasuj
+          </Button>
+          {onAddToLibrary && !inLibrary && (
+            <Button size="sm" variant="outline" onClick={onAddToLibrary} className="gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              Dodaj do biblioteki
+            </Button>
+          )}
+          <TooltipButton
+            size="sm"
+            variant="outline"
+            onClick={onRefetch}
+            disabled={isLoading}
+            tooltip="Odśwież propozycje z AniList"
+            tooltipSide="top"
+            className="px-2"
+            aria-label="Odśwież propozycje"
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
+          </TooltipButton>
+
+          {/* Desktop nav arrows */}
+          <div className="hidden md:flex items-center gap-1 ml-auto">
             <button
               type="button"
               onClick={onPrev}
@@ -184,76 +285,9 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
             </button>
           </div>
         </div>
-
-        {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-2xs text-muted-foreground">
-          {meta.formatLabel && (
-            <span className="inline-flex items-center gap-1">
-              <Tv className="w-3 h-3" />
-              {meta.formatLabel}
-            </span>
-          )}
-          {media.episodes && <span>{media.episodes} odc.</span>}
-          {meta.statusLabel && <span>{meta.statusLabel}</span>}
-          {meta.yearLabel && (
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {meta.yearLabel}
-            </span>
-          )}
-        </div>
-
-        {/* Genres */}
-        {media.genres && media.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {media.genres.slice(0, 6).map(g => (
-              <Badge
-                key={g}
-                variant="secondary"
-                className="text-2xs bg-primary/10 text-primary/90 border-0 px-1.5 py-0"
-              >
-                {g}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        {/* Synopsis */}
-        {meta.synopsis && (
-          <p className="text-xs leading-relaxed text-foreground/75 mt-3 line-clamp-5">
-            {meta.synopsis}
-          </p>
-        )}
-
-        {/* Action row */}
-        <div className="mt-auto pt-4 flex items-center gap-2">
-          <Button size="sm" onClick={onNext} disabled={isLoading} className="gap-1.5 text-xs">
-            <Shuffle className="w-3.5 h-3.5" />
-            Wylosuj ponownie
-          </Button>
-          <TooltipButton
-            size="sm"
-            variant="outline"
-            onClick={onRefetch}
-            disabled={isLoading}
-            tooltip="Odśwież propozycje z AniList"
-            tooltipSide="top"
-            className="px-2"
-            aria-label="Odśwież propozycje"
-          >
-            <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
-          </TooltipButton>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onOpenDetails}
-            className="gap-1.5 text-xs ml-auto"
-          >
-            Szczegóły
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-        <p className="text-2xs text-muted-foreground/50 mt-2 hidden sm:block">← → aby przeglądać</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50 hidden sm:block">
+          ← → aby przeglądać
+        </p>
       </div>
     </div>
   );

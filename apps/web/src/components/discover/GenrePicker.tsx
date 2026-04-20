@@ -70,12 +70,13 @@ const GenrePicker = memo(function GenrePicker({
               state === 'included' ? 'wybrane' : state === 'excluded' ? 'wykluczone' : 'neutralne'
             }`}
             className={cn(
-              'group inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-medium',
+              'group inline-flex items-center gap-1 px-2.5 py-[5px] rounded-full',
+              'font-mono text-[10px] uppercase tracking-[0.08em] font-semibold',
               'border transition-all duration-150 select-none',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               disabled && 'opacity-50 pointer-events-none',
               state === 'neutral' &&
-                'bg-background/30 border-border-glass text-muted-foreground hover:border-primary/40 hover:text-foreground/80',
+                'bg-foreground/[0.04] border-border-glass text-muted-foreground hover:border-primary/40 hover:text-foreground/80',
               state === 'included' &&
                 'bg-primary/15 border-primary/40 text-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]',
               state === 'excluded' &&
