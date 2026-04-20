@@ -50,6 +50,8 @@ interface FeedState extends SocketStoreSlice {
   isRefreshing: boolean;
   isBootstrapping: boolean;
   lastRefreshNewCount: number | null;
+  /** Epoch ms of the last time the user opened the Feed view. Items published after this are "unread" from the newtab greeting's perspective. */
+  lastVisitedAt: number;
 }
 
 /**
@@ -63,8 +65,31 @@ interface FeedActions {
   setLanguageFilter: (language: FeedLanguage | 'all') => void;
   setSourceFilter: (sourceId: number | null) => void;
   toggleSource: (id: number, enabled: boolean) => void;
+  /** Stamp `lastVisitedAt` to now — resets the newtab unread count. */
+  markAllSeen: () => void;
   initListeners: () => void;
   cleanupListeners: () => void;
+}
+
+const LAST_VISITED_STORAGE_KEY = 'shiroani:feedLastVisitedAt';
+
+function getPersistedLastVisitedAt(): number {
+  try {
+    const raw = localStorage.getItem(LAST_VISITED_STORAGE_KEY);
+    if (!raw) return 0;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function persistLastVisitedAt(ts: number) {
+  try {
+    localStorage.setItem(LAST_VISITED_STORAGE_KEY, String(ts));
+  } catch {
+    // storage unavailable — in-memory is authoritative
+  }
 }
 
 type FeedStore = FeedState & FeedActions;
@@ -142,6 +167,7 @@ export const useFeedStore = create<FeedStore>()(
         isRefreshing: false,
         isBootstrapping: false,
         lastRefreshNewCount: null,
+        lastVisitedAt: getPersistedLastVisitedAt(),
 
         // Socket actions
         ...socketActions,
@@ -296,6 +322,13 @@ export const useFeedStore = create<FeedStore>()(
             'feed/setSourceFilter'
           );
           setTimeout(() => get().fetchItems(), 0);
+        },
+
+        markAllSeen: () => {
+          const now = Date.now();
+          if (get().lastVisitedAt === now) return;
+          set({ lastVisitedAt: now }, undefined, 'feed/markAllSeen');
+          persistLastVisitedAt(now);
         },
 
         toggleSource: (id: number, enabled: boolean) => {

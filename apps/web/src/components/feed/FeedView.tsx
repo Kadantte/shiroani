@@ -17,8 +17,14 @@ import { FeedLoadingAnimation } from './FeedLoadingAnimation';
 import { CATEGORY_LABELS, LANGUAGE_LABELS } from './feed-constants';
 
 // Extract stable action references outside the component
-const { fetchItems, refreshFeeds, setCategoryFilter, setLanguageFilter, setSourceFilter } =
-  useFeedStore.getState();
+const {
+  fetchItems,
+  refreshFeeds,
+  setCategoryFilter,
+  setLanguageFilter,
+  setSourceFilter,
+  markAllSeen,
+} = useFeedStore.getState();
 
 type FeedViewState = 'loading' | 'error' | 'empty' | 'content';
 
@@ -107,6 +113,12 @@ export function FeedView() {
       return () => clearTimeout(timer);
     }
   }, [lastRefreshNewCount]);
+
+  // Entering the Feed view counts as "caught up" — clears the newtab greeting's
+  // unread subscription counter. Fires once per mount.
+  useEffect(() => {
+    markAllSeen();
+  }, []);
 
   useEffect(() => {
     const canBootstrapVisibleFeed =

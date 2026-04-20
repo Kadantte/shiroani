@@ -10,6 +10,8 @@ import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useAppStore } from '@/stores/useAppStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useFeedStore } from '@/stores/useFeedStore';
+import { useEpisodesWaitingCount } from '@/hooks/useEpisodesWaiting';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@/lib/utils';
@@ -313,7 +315,7 @@ const MAX_AIRING_CARDS = 12;
  *   - Left:  chibi mascot avatar inside a soft primary-tinted circle.
  *   - Right: Shippori Mincho greeting ("Dzień dobry" / "Dobry wieczór") plus
  *            the viewer's display name, with a muted subtitle that
- *            summarises today's schedule teaser.
+ *            summarises what the user can act on right now.
  *
  * Name fallback chain:
  *   1. User's display name from settings (set during onboarding / Settings → Profil)
@@ -321,9 +323,11 @@ const MAX_AIRING_CARDS = 12;
  *   3. The username the user typed when syncing AniList
  *   4. (none) — greeting renders solo, no trailing comma
  *
- * Stats shown in the subtitle are best-effort with the data wired today.
- * Follow-ups for fuller parity with the mock ("Czeka na Ciebie 1 odcinek ·
- * 3 nowości w subskrypcjach") are listed in the TODO comment below.
+ * Subtitle priority (first match wins):
+ *   1. Episodes waiting across watching-status library titles (B1)
+ *      + unread feed items since last Feed visit (B2)
+ *   2. Today's schedule teaser
+ *   3. "Miłego oglądania." fallback
  */
 function GreetingBanner() {
   const profile = useProfileStore(s => s.profile);
@@ -336,6 +340,18 @@ function GreetingBanner() {
   const todayKey = useMemo(() => toLocalDate(new Date()), []);
   const todayEntries = useScheduleStore(s => s.schedule[todayKey]);
   const todayCount = todayEntries?.length ?? 0;
+
+  const episodesWaiting = useEpisodesWaitingCount();
+  const feedItems = useFeedStore(s => s.items);
+  const feedLastVisitedAt = useFeedStore(s => s.lastVisitedAt);
+  const unreadFeedCount = useMemo(() => {
+    if (!feedItems.length) return 0;
+    return feedItems.reduce((n, item) => {
+      if (!item.publishedAt) return n;
+      const ts = new Date(item.publishedAt).getTime();
+      return Number.isFinite(ts) && ts > feedLastVisitedAt ? n + 1 : n;
+    }, 0);
+  }, [feedItems, feedLastVisitedAt]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -365,20 +381,63 @@ function GreetingBanner() {
             </>
           )}
         </h1>
-        {todayCount > 0 ? (
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            Dzisiaj w harmonogramie{' '}
-            <b className="font-semibold text-foreground">
-              {pluralize(todayCount, 'odcinek', 'odcinki', 'odcinków')}
-            </b>
-            .
-          </p>
-        ) : (
-          <p className="mt-1 text-[13px] text-muted-foreground">Miłego oglądania.</p>
-        )}
+        <GreetingSubtitle
+          episodesWaiting={episodesWaiting}
+          unreadFeedCount={unreadFeedCount}
+          todayCount={todayCount}
+        />
       </div>
     </header>
   );
+}
+
+interface GreetingSubtitleProps {
+  episodesWaiting: number;
+  unreadFeedCount: number;
+  todayCount: number;
+}
+
+function GreetingSubtitle({ episodesWaiting, unreadFeedCount, todayCount }: GreetingSubtitleProps) {
+  const hasActionableNews = episodesWaiting > 0 || unreadFeedCount > 0;
+
+  if (hasActionableNews) {
+    return (
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        {episodesWaiting > 0 && (
+          <>
+            Czeka na Ciebie{' '}
+            <b className="font-semibold text-foreground">
+              {episodesWaiting} {pluralize(episodesWaiting, 'odcinek', 'odcinki', 'odcinków')}
+            </b>
+          </>
+        )}
+        {episodesWaiting > 0 && unreadFeedCount > 0 && ' · '}
+        {unreadFeedCount > 0 && (
+          <>
+            <b className="font-semibold text-foreground">
+              {unreadFeedCount} {pluralize(unreadFeedCount, 'nowość', 'nowości', 'nowości')}
+            </b>{' '}
+            w subskrypcjach
+          </>
+        )}
+        .
+      </p>
+    );
+  }
+
+  if (todayCount > 0) {
+    return (
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        Dzisiaj w harmonogramie{' '}
+        <b className="font-semibold text-foreground">
+          {pluralize(todayCount, 'odcinek', 'odcinki', 'odcinków')}
+        </b>
+        .
+      </p>
+    );
+  }
+
+  return <p className="mt-1 text-[13px] text-muted-foreground">Miłego oglądania.</p>;
 }
 
 /** Airing Today section — horizontal scrolling poster cards */
