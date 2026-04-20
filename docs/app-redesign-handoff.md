@@ -299,6 +299,39 @@ ever shipped, add a separate `uiLocale` setting + i18next (or similar).
 the theme store. Decide: either (a) add `--primary-override` CSS var that
 overlays the active theme's primary, or (b) cut the step entirely.
 
+### L. Browser — adblock & popup customization (added session 2)
+
+> Onboarding's AdblockStep promises **"listę wyjątków zbudujesz potem w
+> ustawieniach przeglądarki"** but no such UI exists. Adblock + popup
+> controls currently live as two small icons in the browser toolbar,
+> which is inconsistent with every other toggleable feature (themes,
+> dock, mascot — all settings-driven).
+
+**Goal.** Move adblock + popup-blocker toggles off the browser toolbar
+and into Settings → Przeglądarka, with a per-domain whitelist so users
+can disable adblock on specific sites they visit.
+
+1. Extend `useBrowserStore` with `adblockWhitelist: string[]` +
+   `toggleAdblockDomain(domain)` (persisted — mirror the existing
+   store's pattern).
+2. Main-process `apps/desktop/src/main/browser/browser-manager.ts`:
+   respect the whitelist when applying `@ghostery/adblocker-electron`
+   to a webContents — skip the adblocker injection (or temporarily
+   disable) for whitelisted hosts.
+3. Settings → Przeglądarka (`BrowserSection.tsx`): add a "Blokowanie
+   reklam" card with:
+   - Master toggle (the current toolbar icon's state).
+   - Per-domain whitelist list with add/remove controls.
+   - Same for popup-blocker if its behaviour differs.
+4. Remove the adblock + popup icons from `BrowserToolbar.tsx`. Update
+   `BrowserToolbar.test.tsx` button-index map accordingly.
+5. Backward-compat: on first launch after the change, seed the
+   whitelist from any per-site state the old toggles exposed (if any).
+
+**Scope note.** Non-trivial — touches main process, renderer store,
+settings UI, and removes toolbar surface area. Good fit for its own
+dedicated slice, not bundled with other polish.
+
 ### K. QA / release
 
 Before cutting a release:
