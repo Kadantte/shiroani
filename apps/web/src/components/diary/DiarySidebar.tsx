@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Flame,
   CalendarDays,
@@ -15,6 +15,8 @@ import { ComingSoonPlaceholder } from '@/components/shared/ComingSoonPlaceholder
 import { GenreBreakdown } from '@/components/profile/GenreBreakdown';
 import { StudioBreakdown } from '@/components/profile/StudioBreakdown';
 import { useDiaryBreakdowns } from '@/hooks/useDiaryBreakdowns';
+import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useAnimeDetailStore } from '@/stores/useAnimeDetailStore';
 import type { DiaryEntry } from '@shiroani/shared';
 
 interface DiarySidebarProps {
@@ -148,7 +150,34 @@ function nextStreakMilestone(streak: number): { target: number; progress: number
 export function DiarySidebar({ entries }: DiarySidebarProps) {
   const stats = useMemo(() => computeStats(entries), [entries]);
   const milestone = nextStreakMilestone(stats.currentStreak);
-  const { genres, studios } = useDiaryBreakdowns(entries);
+
+  // Prime the AniList-detail cache so the genre/studio breakdowns can populate.
+  // Walks diary entries → library entries → anilistIds once, fires parallel
+  // GET_DETAILS for anything not already cached / in-flight / known-failed.
+  const libraryEntries = useLibraryStore(s => s.entries);
+  const ensureDetails = useAnimeDetailStore(s => s.ensureDetails);
+  const animeDetails = useAnimeDetailStore(s => s.details);
+
+  const relevantAnilistIds = useMemo(() => {
+    if (entries.length === 0) return [] as number[];
+    const libraryById = new Map<number, number>();
+    for (const entry of libraryEntries) {
+      if (entry.anilistId != null) libraryById.set(entry.id, entry.anilistId);
+    }
+    const ids = new Set<number>();
+    for (const diary of entries) {
+      if (diary.animeId == null) continue;
+      const anilistId = libraryById.get(diary.animeId);
+      if (anilistId) ids.add(anilistId);
+    }
+    return Array.from(ids);
+  }, [entries, libraryEntries]);
+
+  useEffect(() => {
+    if (relevantAnilistIds.length > 0) ensureDetails(relevantAnilistIds);
+  }, [relevantAnilistIds, ensureDetails]);
+
+  const { genres, studios } = useDiaryBreakdowns(entries, animeDetails);
 
   return (
     <aside
