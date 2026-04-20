@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Palette,
+  Image as ImageIcon,
+  LayoutGrid,
+  Eye,
   Globe,
   Download,
   Info,
@@ -14,7 +17,10 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_WINDOWS, IS_MAC, IS_ELECTRON } from '@/lib/platform';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
-import { AppearanceSection } from '@/components/settings/AppearanceSection';
+import { ThemesSection } from '@/components/settings/ThemesSection';
+import { BackgroundSettings } from '@/components/settings/BackgroundSettings';
+import { DockSection } from '@/components/settings/DockSection';
+import { ViewsSection } from '@/components/settings/ViewsSection';
 import { BrowserSection } from '@/components/settings/BrowserSection';
 import { UpdatesSection } from '@/components/settings/UpdatesSection';
 import { AboutSection } from '@/components/settings/AboutSection';
@@ -26,7 +32,10 @@ import { GeneralSection } from '@/components/settings/GeneralSection';
 
 type SettingsSection =
   | 'general'
-  | 'appearance'
+  | 'themes'
+  | 'background'
+  | 'dock'
+  | 'views'
   | 'browser'
   | 'notifications'
   | 'discord'
@@ -35,7 +44,7 @@ type SettingsSection =
   | 'updates'
   | 'about';
 
-type SectionGroup = 'app' | 'integrations' | 'data';
+type SectionGroup = 'app' | 'appearance' | 'integrations' | 'data';
 
 interface SectionDef {
   id: SettingsSection;
@@ -54,13 +63,6 @@ const ALL_SECTIONS: SectionDef[] = [
     Icon: Settings,
   },
   {
-    id: 'appearance',
-    label: 'Wygląd',
-    subtitle: 'Motyw, dock, widoki, tło',
-    group: 'app',
-    Icon: Palette,
-  },
-  {
     id: 'browser',
     label: 'Przeglądarka',
     subtitle: 'Ustawienia wbudowanej przeglądarki',
@@ -73,6 +75,34 @@ const ALL_SECTIONS: SectionDef[] = [
     subtitle: 'Nowe odcinki i harmonogram emisji',
     group: 'app',
     Icon: Bell,
+  },
+  {
+    id: 'themes',
+    label: 'Motywy',
+    subtitle: 'Paleta kolorów i skala czytelności',
+    group: 'appearance',
+    Icon: Palette,
+  },
+  {
+    id: 'background',
+    label: 'Tło',
+    subtitle: 'Własny obraz tła z regulacją rozmycia',
+    group: 'appearance',
+    Icon: ImageIcon,
+  },
+  {
+    id: 'dock',
+    label: 'Dock',
+    subtitle: 'Pozycja i zachowanie paska nawigacji',
+    group: 'appearance',
+    Icon: LayoutGrid,
+  },
+  {
+    id: 'views',
+    label: 'Widoki',
+    subtitle: 'Widoczność sekcji w docku',
+    group: 'appearance',
+    Icon: Eye,
   },
   {
     id: 'discord',
@@ -113,15 +143,16 @@ const ALL_SECTIONS: SectionDef[] = [
 
 const GROUP_LABELS: Record<SectionGroup, string> = {
   app: 'Aplikacja',
+  appearance: 'Wygląd',
   integrations: 'Integracje',
   data: 'Dane',
 };
 
-const GROUP_ORDER: SectionGroup[] = ['app', 'integrations', 'data'];
+const GROUP_ORDER: SectionGroup[] = ['app', 'appearance', 'integrations', 'data'];
 
 export function SettingsView() {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
-    IS_ELECTRON ? 'general' : 'appearance'
+    IS_ELECTRON ? 'general' : 'themes'
   );
   const [version, setVersion] = useState('');
 
@@ -140,6 +171,7 @@ export function SettingsView() {
   const grouped = useMemo(() => {
     const buckets: Record<SectionGroup, SectionDef[]> = {
       app: [],
+      appearance: [],
       integrations: [],
       data: [],
     };
@@ -254,7 +286,10 @@ export function SettingsView() {
           <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
             <div className="relative z-[1] px-7 pt-5 pb-24 max-w-[720px]">
               {activeSection === 'general' && <GeneralSection />}
-              {activeSection === 'appearance' && <AppearanceSection />}
+              {activeSection === 'themes' && <ThemesSection />}
+              {activeSection === 'background' && <BackgroundSettings />}
+              {activeSection === 'dock' && <DockSection />}
+              {activeSection === 'views' && <ViewsSection />}
               {activeSection === 'browser' && <BrowserSection />}
               {activeSection === 'notifications' && <NotificationsSection />}
               {activeSection === 'discord' && <DiscordSection />}
