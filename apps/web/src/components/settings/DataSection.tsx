@@ -36,12 +36,12 @@ export function DataSection() {
           <ExportScopeTile
             icon={Book}
             label="Biblioteka"
-            value={`${libraryCount} ${pluralize(libraryCount, 'tytuł', 'tytuły', 'tytułów')}`}
+            value={pluralize(libraryCount, 'tytuł', 'tytuły', 'tytułów')}
           />
           <ExportScopeTile
             icon={Pencil}
             label="Pamiętnik"
-            value={`${diaryCount} ${pluralize(diaryCount, 'wpis', 'wpisy', 'wpisów')}`}
+            value={pluralize(diaryCount, 'wpis', 'wpisy', 'wpisów')}
           />
           <ExportScopeTile icon={SettingsIcon} label="Ustawienia" value="Wszystkie" />
         </div>
