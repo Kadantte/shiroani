@@ -57,7 +57,7 @@ export function SummaryStep() {
       }
       description={
         <>
-          Sześć ustawień za nami. Twoja konfiguracja jest zapisana lokalnie.{' '}
+          Siedem ustawień za nami. Twoja konfiguracja jest zapisana lokalnie.{' '}
           <b className="font-semibold text-foreground">Shiro-chan</b> będzie na dole ekranu, gdybyś
           jej potrzebowała.
         </>

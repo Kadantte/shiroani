@@ -7,6 +7,7 @@ import { TitleBar } from '@/components/shared/TitleBar';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 
 import { LanguageStep } from './steps/LanguageStep';
+import { NameStep } from './steps/NameStep';
 import { ThemeStep } from './steps/ThemeStep';
 import { BackgroundStep } from './steps/BackgroundStep';
 import { DockStep } from './steps/DockStep';
@@ -20,7 +21,7 @@ interface OnboardingWizardProps {
 
 type StepDef = {
   id: string;
-  /** Top-of-left-pane label ("Witaj · krok 1 z 6" / "Krok 2 z 6" / "Gotowe · 6 z 6") */
+  /** Top-of-left-pane label ("Witaj · krok 1 z 7" / "Krok 2 z 7" / "Gotowe · 7 z 7") */
   chip: string;
   /** Step component */
   Component: () => ReactNode;
@@ -29,13 +30,14 @@ type StepDef = {
 };
 
 const STEPS: StepDef[] = [
-  { id: 'language', chip: 'Witaj · krok 1 z 6', Component: LanguageStep, numbered: true },
-  { id: 'theme', chip: 'Krok 2 z 6', Component: ThemeStep, numbered: true },
-  { id: 'background', chip: 'Krok 3 z 6', Component: BackgroundStep, numbered: true },
-  { id: 'dock', chip: 'Krok 4 z 6', Component: DockStep, numbered: true },
-  { id: 'discord', chip: 'Krok 5 z 6', Component: DiscordStep, numbered: true },
-  { id: 'adblock', chip: 'Krok 6 z 6', Component: AdblockStep, numbered: true },
-  { id: 'summary', chip: 'Gotowe · 6 z 6', Component: SummaryStep, numbered: false },
+  { id: 'language', chip: 'Witaj · krok 1 z 7', Component: LanguageStep, numbered: true },
+  { id: 'name', chip: 'Krok 2 z 7', Component: NameStep, numbered: true },
+  { id: 'theme', chip: 'Krok 3 z 7', Component: ThemeStep, numbered: true },
+  { id: 'background', chip: 'Krok 4 z 7', Component: BackgroundStep, numbered: true },
+  { id: 'dock', chip: 'Krok 5 z 7', Component: DockStep, numbered: true },
+  { id: 'discord', chip: 'Krok 6 z 7', Component: DiscordStep, numbered: true },
+  { id: 'adblock', chip: 'Krok 7 z 7', Component: AdblockStep, numbered: true },
+  { id: 'summary', chip: 'Gotowe · 7 z 7', Component: SummaryStep, numbered: false },
 ];
 
 const TOTAL_SLOTS = STEPS.length;

@@ -61,7 +61,7 @@ export function DiscordStep() {
       }
       stepMarker={
         <>
-          Krok <b className="font-bold text-primary">05 · Integracje</b> · Discord RPC
+          Krok <b className="font-bold text-primary">06 · Integracje</b> · Discord RPC
         </>
       }
       stepIcon={<MessageCircle className="h-5 w-5" />}

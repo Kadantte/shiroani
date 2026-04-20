@@ -38,7 +38,7 @@ export function DockStep() {
       }
       stepMarker={
         <>
-          Krok <b className="font-bold text-primary">04 · Układ</b> · dock nawigacyjny
+          Krok <b className="font-bold text-primary">05 · Układ</b> · dock nawigacyjny
         </>
       }
       stepIcon={<LayoutGrid className="h-5 w-5" />}

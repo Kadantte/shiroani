@@ -9,6 +9,7 @@ import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useAppStore } from '@/stores/useAppStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@/lib/utils';
@@ -315,9 +316,10 @@ const MAX_AIRING_CARDS = 12;
  *            summarises today's schedule teaser.
  *
  * Name fallback chain:
- *   1. Connected AniList profile's display name (`profile.name`)
- *   2. The username the user typed when syncing AniList
- *   3. (none) — greeting renders solo, no trailing comma
+ *   1. User's display name from settings (set during onboarding / Settings → Profil)
+ *   2. Connected AniList profile's display name (`profile.name`)
+ *   3. The username the user typed when syncing AniList
+ *   4. (none) — greeting renders solo, no trailing comma
  *
  * Stats shown in the subtitle are best-effort with the data wired today.
  * Follow-ups for fuller parity with the mock ("Czeka na Ciebie 1 odcinek ·
@@ -326,10 +328,10 @@ const MAX_AIRING_CARDS = 12;
 function GreetingBanner() {
   const profile = useProfileStore(s => s.profile);
   const storedUsername = useProfileStore(s => s.username);
+  const settingsDisplayName = useSettingsStore(s => s.displayName);
 
-  // Favor the AniList-resolved display name; fall back to whatever the user
-  // entered in settings. If neither, render the greeting without a name.
-  const displayName = (profile?.name || storedUsername || '').trim();
+  // The user's own name wins — then whatever AniList surfaces as a fallback.
+  const displayName = (settingsDisplayName || profile?.name || storedUsername || '').trim();
 
   const todayKey = useMemo(() => toLocalDate(new Date()), []);
   const todayEntries = useScheduleStore(s => s.schedule[todayKey]);

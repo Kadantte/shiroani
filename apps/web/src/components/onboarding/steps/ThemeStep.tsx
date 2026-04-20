@@ -37,7 +37,7 @@ export function ThemeStep() {
       }
       stepMarker={
         <>
-          Krok <b className="font-bold text-primary">02 · Wygląd</b> · paleta
+          Krok <b className="font-bold text-primary">03 · Wygląd</b> · paleta
         </>
       }
       stepIcon={<Palette className="h-5 w-5" />}

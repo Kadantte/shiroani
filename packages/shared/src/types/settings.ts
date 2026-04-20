@@ -120,6 +120,16 @@ export const DEFAULT_FEED_STARTUP_REFRESH = false;
  */
 export const UI_FONT_SCALE_SETTING_KEY = 'settings.uiFontScale';
 
+/**
+ * Local display name used in the newtab greeting and anywhere else the app
+ * addresses the user directly. Falls back to the AniList profile name when
+ * unset. Stored in electron-store.
+ */
+export const DISPLAY_NAME_SETTING_KEY = 'settings.displayName';
+
+/** Maximum length accepted for the user's display name input. */
+export const DISPLAY_NAME_MAX_LENGTH = 32;
+
 /** Default UI font scale */
 export const DEFAULT_UI_FONT_SCALE = 1;
 

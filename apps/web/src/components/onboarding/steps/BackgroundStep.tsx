@@ -40,7 +40,7 @@ export function BackgroundStep() {
       }
       stepMarker={
         <>
-          Krok <b className="font-bold text-primary">03 · Atmosfera</b> · tło aplikacji
+          Krok <b className="font-bold text-primary">04 · Atmosfera</b> · tło aplikacji
         </>
       }
       stepIcon={<Sparkles className="h-5 w-5" />}

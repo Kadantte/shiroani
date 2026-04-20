@@ -43,7 +43,7 @@ export function AdblockStep() {
       }
       stepMarker={
         <>
-          Krok <b className="font-bold text-primary">06 · Finisz</b> · blokowanie reklam
+          Krok <b className="font-bold text-primary">07 · Finisz</b> · blokowanie reklam
         </>
       }
       stepIcon={<Shield className="h-5 w-5" />}
