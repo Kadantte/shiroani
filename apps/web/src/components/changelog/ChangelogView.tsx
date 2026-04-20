@@ -20,7 +20,7 @@ interface FilterChip {
 }
 
 interface ChangelogViewProps {
-  /** When true, skip outer chrome (kanji watermark, outer scroll) — used inside Dialog. */
+  /** When true, skip outer chrome (kanji watermark, tall header padding) — used when the view is embedded inside a narrower container. */
   compact?: boolean;
   /** Optional className for the root. */
   className?: string;
@@ -35,11 +35,12 @@ interface ChangelogViewProps {
  *   - Vertical timeline with version tag, "Najnowsza" badge on the latest entry,
  *     and color-coded `PillTag` category lists inside each release card.
  *
- * The entry data lives in `@/lib/changelog-entries` — edit that file when
- * shipping a new version.
+ * The entry data lives in `@/lib/changelog-entries` — a thin adapter over the
+ * shared `@shiroani/changelog` package. Edit the package when shipping a new
+ * release; both the landing page and this view pick up the change.
  *
- * Routing note: not wired into `App.tsx` yet. Ship as a full view if the dock
- * gets a "Co nowego?" slot; otherwise keep exposing it via `ChangelogDialog`.
+ * Routing: rendered as a full dockable view via `App.tsx` (`activeView ===
+ * 'changelog'`) and reachable from the dock or from Settings → About.
  */
 export function ChangelogView({ compact = false, className }: ChangelogViewProps) {
   const [filter, setFilter] = useState<FilterValue>('all');

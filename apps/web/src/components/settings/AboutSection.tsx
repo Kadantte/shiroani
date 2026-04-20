@@ -1,8 +1,9 @@
-import { FolderOpen, Globe, Heart, Sparkles } from 'lucide-react';
+import { FolderOpen, Globe, Heart, History, Sparkles } from 'lucide-react';
 import { APP_NAME } from '@shiroani/shared';
 import { APP_LOGO_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { PillTag } from '@/components/ui/pill-tag';
+import { useAppStore } from '@/stores/useAppStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
@@ -51,6 +52,15 @@ export function AboutSection({ version }: AboutSectionProps) {
           >
             <Globe className="w-3.5 h-3.5" />
             GitHub
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border-glass"
+            onClick={() => useAppStore.getState().navigateTo('changelog')}
+          >
+            <History className="w-3.5 h-3.5" />
+            Zobacz historię zmian
           </Button>
         </div>
         <p className="text-[11.5px] text-muted-foreground/80 leading-relaxed">

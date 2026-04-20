@@ -13,6 +13,7 @@ export type ActiveView =
   | 'schedule'
   | 'feed'
   | 'profile'
+  | 'changelog'
   | 'settings';
 
 interface AppState {
