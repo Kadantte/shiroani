@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
-import { Rss, RefreshCw, Inbox } from 'lucide-react';
+import { Rss, RefreshCw, Inbox, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -25,6 +25,7 @@ const {
   setLanguageFilter,
   setSourceFilter,
   markAllSeen,
+  markAllRead,
 } = useFeedStore.getState();
 
 type FeedViewState = 'loading' | 'error' | 'empty' | 'content';
@@ -260,6 +261,17 @@ export function FeedView() {
             </div>
 
             <div className="w-px h-4 bg-border-glass mx-1" />
+
+            <TooltipButton
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={() => markAllRead()}
+              disabled={feedView === 'bookmarks' || visibleItems.length === 0}
+              tooltip="Oznacz wszystkie jako przeczytane"
+            >
+              <CheckCheck className="w-4 h-4" />
+            </TooltipButton>
 
             <TooltipButton
               variant="ghost"
