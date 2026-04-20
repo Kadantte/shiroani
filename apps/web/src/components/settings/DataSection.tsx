@@ -1,13 +1,28 @@
 import { useState } from 'react';
-import { AlertTriangle, Download, Info, Upload } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  Book,
+  Download,
+  Info,
+  Pencil,
+  Settings as SettingsIcon,
+  Upload,
+} from 'lucide-react';
+import { pluralize } from '@shiroani/shared';
 import { Button } from '@/components/ui/button';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { ExportDialog } from '@/components/shared/ExportDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
+import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useDiaryStore } from '@/stores/useDiaryStore';
 
 export function DataSection() {
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+
+  const libraryCount = useLibraryStore(s => s.entries.length);
+  const diaryCount = useDiaryStore(s => s.entries.length);
 
   return (
     <div className="space-y-4">
@@ -17,12 +32,21 @@ export function DataSection() {
         subtitle="Zapisz wszystkie dane z aplikacji do pliku JSON."
         tone="green"
       >
-        <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
-          Eksport obejmuje bibliotekę, wpisy pamiętnika, subskrypcje powiadomień oraz wszystkie
-          ustawienia aplikacji.
-        </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <ExportScopeTile
+            icon={Book}
+            label="Biblioteka"
+            value={`${libraryCount} ${pluralize(libraryCount, 'tytuł', 'tytuły', 'tytułów')}`}
+          />
+          <ExportScopeTile
+            icon={Pencil}
+            label="Pamiętnik"
+            value={`${diaryCount} ${pluralize(diaryCount, 'wpis', 'wpisy', 'wpisów')}`}
+          />
+          <ExportScopeTile icon={SettingsIcon} label="Ustawienia" value="Wszystkie" />
+        </div>
         <Button variant="default" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4" />
           Eksportuj wszystko
         </Button>
       </SettingsCard>
@@ -81,6 +105,26 @@ export function DataSection() {
 
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} type="all" />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} type="all" />
+    </div>
+  );
+}
+
+interface ExportScopeTileProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}
+
+function ExportScopeTile({ icon: Icon, label, value }: ExportScopeTileProps) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border-glass bg-background/30 px-3 py-2.5">
+      <span className="grid size-9 flex-shrink-0 place-items-center rounded-md border border-primary/25 bg-primary/12 text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold text-foreground">{label}</div>
+        <div className="truncate text-[11px] text-muted-foreground">{value}</div>
+      </div>
     </div>
   );
 }
