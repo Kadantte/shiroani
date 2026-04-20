@@ -367,7 +367,7 @@ function GreetingBanner() {
           <p className="mt-1 text-[13px] text-muted-foreground">
             Dzisiaj w harmonogramie{' '}
             <b className="font-semibold text-foreground">
-              {todayCount} {pluralize(todayCount, 'odcinek', 'odcinki', 'odcinków')}
+              {pluralize(todayCount, 'odcinek', 'odcinki', 'odcinków')}
             </b>
             .
           </p>
