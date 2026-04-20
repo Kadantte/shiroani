@@ -3,6 +3,12 @@ import { cn } from '@/lib/utils';
 import type { ThemeOption } from '@/lib/theme';
 import type { Theme } from '@shiroani/shared';
 
+/**
+ * Theme swatch rendered as a gradient tile with a mono name label baked in.
+ * Matches the `.th-sw` pattern from the redesign mock: an aspect-square tile
+ * with the theme's primary color on a dark/light background, an active ring,
+ * and the name anchored to the bottom.
+ */
 export function ThemeSwatch({
   option,
   isActive,
@@ -16,39 +22,53 @@ export function ThemeSwatch({
   onPreview: (theme: Theme) => void;
   onPreviewEnd: () => void;
 }) {
+  const bg = option.isDark ? 'oklch(0.12 0.018 300)' : 'oklch(0.97 0.008 80)';
+  const labelColor = option.isDark ? 'rgba(255,255,255,0.92)' : 'rgba(20, 14, 30, 0.85)';
+
   return (
     <button
+      data-testid={option.testId}
       onClick={() => onSelect(option.value)}
       onMouseEnter={() => onPreview(option.value)}
       onMouseLeave={onPreviewEnd}
+      onFocus={() => onPreview(option.value)}
+      onBlur={onPreviewEnd}
+      aria-pressed={isActive}
+      aria-label={option.label}
       className={cn(
-        'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
-        'transition-all duration-200',
-        'hover:bg-accent/40',
-        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        isActive && 'ring-2 ring-primary/70 bg-primary/10'
+        'group relative aspect-square w-full overflow-hidden rounded-[10px] border border-border-glass',
+        'transition-[transform,box-shadow,outline] duration-200',
+        'hover:-translate-y-0.5 hover:shadow-lg',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        isActive && 'outline outline-2 outline-offset-2 outline-primary'
       )}
+      style={{
+        background: `linear-gradient(135deg, ${bg}, ${option.color})`,
+      }}
     >
-      <div
-        className={cn(
-          'w-10 h-10 rounded-full border-2 shadow-sm transition-all duration-200',
-          isActive ? 'border-primary/70 scale-110' : 'border-border-glass'
-        )}
-        style={{ backgroundColor: option.color }}
-      >
-        {isActive && (
-          <div className="w-full h-full flex items-center justify-center">
-            <Check
-              className={cn('w-4 h-4 drop-shadow', option.isDark ? 'text-white' : 'text-gray-800')}
-            />
-          </div>
-        )}
-      </div>
+      {/* Soft top glow for presence */}
       <span
-        className={cn(
-          'text-xs truncate max-w-[70px] transition-colors',
-          isActive ? 'text-primary font-medium' : 'text-muted-foreground'
-        )}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-60 mix-blend-screen"
+        style={{
+          background: `radial-gradient(ellipse 50% 40% at 75% 25%, ${option.color}33, transparent 65%)`,
+        }}
+      />
+
+      {/* Active check badge */}
+      {isActive && (
+        <span
+          aria-hidden
+          className="absolute top-1.5 left-1.5 grid place-items-center rounded-full bg-background/80 backdrop-blur-sm size-5 border border-border-glass shadow"
+        >
+          <Check className="w-3 h-3 text-primary" />
+        </span>
+      )}
+
+      {/* Name label along the bottom, mono-cased */}
+      <span
+        className="absolute bottom-1.5 inset-x-1 text-center font-mono text-[8.5px] uppercase tracking-[0.08em] leading-none truncate"
+        style={{ color: labelColor, textShadow: '0 1px 2px rgba(0,0,0,0.35)' }}
       >
         {option.label}
       </span>

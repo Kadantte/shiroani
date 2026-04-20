@@ -10,8 +10,10 @@ import {
   MessageCircle,
   Settings,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { IS_WINDOWS, IS_MAC } from '@/lib/platform';
+import { IS_WINDOWS, IS_MAC, IS_ELECTRON } from '@/lib/platform';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { BrowserSection } from '@/components/settings/BrowserSection';
 import { UpdatesSection } from '@/components/settings/UpdatesSection';
@@ -21,7 +23,6 @@ import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
 import { DiscordSection } from '@/components/settings/DiscordSection';
 import { GeneralSection } from '@/components/settings/GeneralSection';
-import { IS_ELECTRON } from '@/lib/platform';
 
 type SettingsSection =
   | 'general'
@@ -34,17 +35,89 @@ type SettingsSection =
   | 'updates'
   | 'about';
 
-const ALL_SECTIONS: { id: SettingsSection; label: string; Icon: typeof Palette }[] = [
-  { id: 'general', label: 'Ogólne', Icon: Settings },
-  { id: 'appearance', label: 'Wygląd', Icon: Palette },
-  { id: 'browser', label: 'Przeglądarka', Icon: Globe },
-  { id: 'notifications', label: 'Powiadomienia', Icon: Bell },
-  { id: 'discord', label: 'Discord', Icon: MessageCircle },
-  { id: 'mascot', label: 'Maskotka', Icon: Cat },
-  { id: 'data', label: 'Dane', Icon: Database },
-  { id: 'updates', label: 'Aktualizacje', Icon: Download },
-  { id: 'about', label: 'O aplikacji', Icon: Info },
+type SectionGroup = 'app' | 'integrations' | 'data';
+
+interface SectionDef {
+  id: SettingsSection;
+  label: string;
+  subtitle: string;
+  group: SectionGroup;
+  Icon: LucideIcon;
+}
+
+const ALL_SECTIONS: SectionDef[] = [
+  {
+    id: 'general',
+    label: 'Ogólne',
+    subtitle: 'Podstawowe ustawienia aplikacji',
+    group: 'app',
+    Icon: Settings,
+  },
+  {
+    id: 'appearance',
+    label: 'Wygląd',
+    subtitle: 'Motyw, dock, widoki, tło',
+    group: 'app',
+    Icon: Palette,
+  },
+  {
+    id: 'browser',
+    label: 'Przeglądarka',
+    subtitle: 'Ustawienia wbudowanej przeglądarki',
+    group: 'app',
+    Icon: Globe,
+  },
+  {
+    id: 'notifications',
+    label: 'Powiadomienia',
+    subtitle: 'Nowe odcinki i harmonogram emisji',
+    group: 'app',
+    Icon: Bell,
+  },
+  {
+    id: 'discord',
+    label: 'Discord',
+    subtitle: 'Rich Presence — pokaż znajomym co oglądasz',
+    group: 'integrations',
+    Icon: MessageCircle,
+  },
+  {
+    id: 'mascot',
+    label: 'Maskotka',
+    subtitle: 'Animowana maskotka chibi na pulpicie',
+    group: 'integrations',
+    Icon: Cat,
+  },
+  {
+    id: 'data',
+    label: 'Dane',
+    subtitle: 'Eksport i import danych aplikacji',
+    group: 'data',
+    Icon: Database,
+  },
+  {
+    id: 'updates',
+    label: 'Aktualizacje',
+    subtitle: 'Wersja i kanał aktualizacji',
+    group: 'data',
+    Icon: Download,
+  },
+  {
+    id: 'about',
+    label: 'O aplikacji',
+    subtitle: 'Historia, wersja i logi',
+    group: 'data',
+    Icon: Info,
+  },
 ];
+
+const GROUP_LABELS: Record<SectionGroup, string> = {
+  app: 'Aplikacja',
+  integrations: 'Integracje',
+  data: 'Dane',
+};
+
+const GROUP_ORDER: SectionGroup[] = ['app', 'integrations', 'data'];
 
 export function SettingsView() {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -53,7 +126,7 @@ export function SettingsView() {
   const [version, setVersion] = useState('');
 
   // Filter platform-specific sections
-  const SECTIONS = useMemo(
+  const sections = useMemo(
     () =>
       ALL_SECTIONS.filter(s => {
         if (s.id === 'mascot') return IS_WINDOWS || IS_MAC;
@@ -62,6 +135,17 @@ export function SettingsView() {
       }),
     []
   );
+
+  // Bucket sections by group while preserving the ALL_SECTIONS order
+  const grouped = useMemo(() => {
+    const buckets: Record<SectionGroup, SectionDef[]> = {
+      app: [],
+      integrations: [],
+      data: [],
+    };
+    for (const s of sections) buckets[s.group].push(s);
+    return buckets;
+  }, [sections]);
 
   // Fetch app version once for both UpdatesSection and AboutSection
   useEffect(() => {
@@ -75,51 +159,111 @@ export function SettingsView() {
     };
   }, []);
 
+  const currentSection = sections.find(s => s.id === activeSection) ?? sections[0];
+  const HeaderIcon = currentSection.Icon;
+
   return (
-    <div className="flex-1 flex overflow-hidden animate-fade-in">
-      {/* Section navigation */}
-      <div
-        className="w-44 shrink-0 border-r border-border/40 p-3 space-y-0.5"
-        role="tablist"
-        aria-label="Sekcje ustawień"
-      >
-        {SECTIONS.map(section => (
-          <button
-            key={section.id}
-            role="tab"
-            aria-selected={activeSection === section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={cn(
-              'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm',
-              'transition-all duration-150',
-              'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-              activeSection === section.id
-                ? 'bg-primary/15 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
-            )}
-          >
-            <section.Icon className="w-4 h-4 shrink-0" />
-            {section.label}
-          </button>
-        ))}
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
+      {/* ── Editorial view header (matches .vh) ─────────────────────── */}
+      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4 shrink-0">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="size-9 rounded-[10px] grid place-items-center flex-shrink-0 bg-primary/15 border border-primary/30 text-primary">
+            <HeaderIcon className="w-[18px] h-[18px]" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
+              {currentSection.label}
+            </h1>
+            <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
+              {currentSection.subtitle}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Section content */}
-      <div
-        className="flex-1 overflow-y-auto p-6 pb-20"
-        role="tabpanel"
-        aria-label={SECTIONS.find(s => s.id === activeSection)?.label}
-      >
-        <div className="max-w-xl">
-          {activeSection === 'general' && <GeneralSection />}
-          {activeSection === 'appearance' && <AppearanceSection />}
-          {activeSection === 'browser' && <BrowserSection />}
-          {activeSection === 'notifications' && <NotificationsSection />}
-          {activeSection === 'discord' && <DiscordSection />}
-          {activeSection === 'mascot' && <MascotSection />}
-          {activeSection === 'data' && <DataSection />}
-          {activeSection === 'updates' && <UpdatesSection version={version} />}
-          {activeSection === 'about' && <AboutSection version={version} />}
+      {/* ── Body: sidebar + main scroll area ────────────────────────── */}
+      <div className="flex-1 flex min-h-0">
+        {/* Sidebar navigation */}
+        <aside
+          className="w-[220px] shrink-0 border-r border-border-glass overflow-y-auto pt-4 pb-20 px-3"
+          role="tablist"
+          aria-label="Sekcje ustawień"
+        >
+          {GROUP_ORDER.map(group => {
+            const items = grouped[group];
+            if (!items.length) return null;
+            return (
+              <div key={group} className="mb-1.5">
+                <div className="px-2.5 pt-2 pb-1 font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/80">
+                  {GROUP_LABELS[group]}
+                </div>
+                {items.map(section => {
+                  const Icon = section.Icon;
+                  const isActive = activeSection === section.id;
+                  return (
+                    <button
+                      key={section.id}
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setActiveSection(section.id)}
+                      className={cn(
+                        'relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg',
+                        'text-[12.5px] font-medium text-left',
+                        'transition-colors duration-150',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                        isActive
+                          ? 'bg-primary/15 text-primary'
+                          : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground/90'
+                      )}
+                    >
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary"
+                        />
+                      )}
+                      <Icon
+                        className={cn(
+                          'w-[15px] h-[15px] shrink-0',
+                          isActive ? 'opacity-100' : 'opacity-85'
+                        )}
+                      />
+                      <span className="truncate">{section.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </aside>
+
+        {/* Main section content */}
+        <div
+          className="flex-1 relative overflow-hidden"
+          role="tabpanel"
+          aria-label={currentSection.label}
+        >
+          {/* Decorative kanji watermark — 設 (setsu: settings/establish).
+              Lives outside the scroll container so its negative offsets don't
+              contribute to scrollbars on either axis. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <KanjiWatermark kanji="設" position="br" size={280} opacity={0.03} />
+          </div>
+
+          {/* Scrollable content fills the area above the watermark layer */}
+          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+            <div className="relative z-[1] px-7 pt-5 pb-24 max-w-[720px]">
+              {activeSection === 'general' && <GeneralSection />}
+              {activeSection === 'appearance' && <AppearanceSection />}
+              {activeSection === 'browser' && <BrowserSection />}
+              {activeSection === 'notifications' && <NotificationsSection />}
+              {activeSection === 'discord' && <DiscordSection />}
+              {activeSection === 'mascot' && <MascotSection />}
+              {activeSection === 'data' && <DataSection />}
+              {activeSection === 'updates' && <UpdatesSection version={version} />}
+              {activeSection === 'about' && <AboutSection version={version} />}
+            </div>
+          </div>
         </div>
       </div>
     </div>

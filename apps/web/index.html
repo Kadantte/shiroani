@@ -6,13 +6,9 @@
     <meta name="theme-color" content="#1a1323" />
     <title>ShiroAni</title>
 
-    <!-- Typography: DM Sans (UI) · Shippori Mincho (display) · JetBrains Mono (metadata) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Shippori+Mincho:wght@700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Typography is bundled via @fontsource packages imported in main.tsx.
+         This avoids CSP constraints against fonts.googleapis.com / gstatic.com
+         and lets the app render correctly offline. -->
 
     <style>
       /* Base style — overridden by inline theme script below */

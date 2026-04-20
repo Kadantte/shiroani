@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Settings, Power, Rss } from 'lucide-react';
+import { Settings, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
 import { DEFAULT_FEED_STARTUP_REFRESH, FEED_STARTUP_REFRESH_SETTING_KEY } from '@shiroani/shared';
 
 export function GeneralSection() {
@@ -42,49 +42,46 @@ export function GeneralSection() {
 
   return (
     <div className="space-y-4">
-      <SettingsCard icon={Settings} title="Ogólne" subtitle="Podstawowe ustawienia aplikacji">
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-2.5">
-            <Power className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm text-foreground" id="auto-launch-label">
-                Uruchamiaj przy starcie systemu
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                Automatycznie otwieraj ShiroAni po zalogowaniu do systemu
-              </p>
-            </div>
-          </div>
+      <SettingsCard
+        icon={Settings}
+        title="Ogólne ustawienia aplikacji"
+        subtitle="Zachowanie aplikacji przy starcie systemu i odświeżaniu danych."
+      >
+        <SettingsRow>
+          <SettingsRowLabel
+            id="auto-launch-label"
+            title="Uruchamiaj przy starcie systemu"
+            description="Automatycznie otwiera ShiroAni po zalogowaniu do systemu"
+          />
           <Switch
             checked={autoLaunch}
             onCheckedChange={handleAutoLaunchChange}
             aria-labelledby="auto-launch-label"
           />
-        </div>
+        </SettingsRow>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-2.5">
-            <Rss className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm text-foreground" id="feed-startup-refresh-label">
-                Odświeżaj RSS przy starcie aplikacji
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku
-                Aktualności lub po ręcznym odświeżeniu
-              </p>
-              <p className="text-xs text-muted-foreground/55 mt-1">
-                Zmiana zacznie działać od następnego uruchomienia aplikacji
-              </p>
-            </div>
-          </div>
+        <SettingsRow divider>
+          <SettingsRowLabel
+            id="feed-startup-refresh-label"
+            title="Odświeżaj RSS przy starcie aplikacji"
+            description="Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku Aktualności lub po ręcznym odświeżeniu. Zmiana zacznie działać od następnego uruchomienia."
+          />
           <Switch
             checked={feedRefreshOnStartup}
             onCheckedChange={handleFeedRefreshOnStartupChange}
             aria-labelledby="feed-startup-refresh-label"
           />
-        </div>
+        </SettingsRow>
       </SettingsCard>
+
+      {/* Info callout matching the mock's .info-box */}
+      <div className="flex items-center gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <Sparkles className="w-[18px] h-[18px] flex-shrink-0 text-[oklch(0.8_0.14_70)]" />
+        <span>
+          Niektóre zmiany systemowe wymagają restartu aplikacji.{' '}
+          <b className="font-semibold text-foreground">Dane nie zostaną utracone.</b>
+        </span>
+      </div>
     </div>
   );
 }

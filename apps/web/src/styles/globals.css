@@ -72,9 +72,11 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --font-sans: 'DM Sans', system-ui, sans-serif;
+  /* Bundled variants: '*Variable' comes from @fontsource-variable, static
+     fallback covers Shippori Mincho and any older cached system fonts. */
+  --font-sans: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
   --font-serif: 'Shippori Mincho', serif;
-  --font-mono: 'JetBrains Mono', Consolas, monospace;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', Consolas, monospace;
 
   --text-2xs: 0.625rem;
   --text-2xs--line-height: 0.75rem;
@@ -439,7 +441,7 @@
   }
 
   html {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
     font-size: calc(16px * var(--app-font-scale));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

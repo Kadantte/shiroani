@@ -15,17 +15,17 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
-import { useDockStore } from '@/stores/useDockStore';
+import { useDockStore, type DockEdge } from '@/stores/useDockStore';
 import { darkThemes, lightThemes, getAllThemeOptions } from '@/lib/theme';
 import { removeCustomThemeCSS } from '@/lib/custom-theme-css';
 import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
 import { BackgroundSettings } from '@/components/settings/BackgroundSettings';
 import { ThemeGrid } from '@/components/settings/ThemeGrid';
+import { PillTag } from '@/components/ui/pill-tag';
 import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
 import { UI_FONT_SCALE_PRESETS, type Theme } from '@shiroani/shared';
@@ -85,19 +85,29 @@ export function AppearanceSection() {
   const setDockDraggable = useDockStore(s => s.setDraggable);
   const dockShowLabels = useDockStore(s => s.showLabels);
   const setDockShowLabels = useDockStore(s => s.setShowLabels);
+  const dockEdge = useDockStore(s => s.edge);
+  const setDockEdge = useDockStore(s => s.setEdge);
   const resetDockPosition = useDockStore(s => s.resetPosition);
   const hiddenViews = useDockStore(s => s.hiddenViews);
   const toggleViewVisibility = useDockStore(s => s.toggleViewVisibility);
 
+  const DOCK_EDGES: ReadonlyArray<{ value: DockEdge; label: string }> = [
+    { value: 'bottom', label: 'Dół' },
+    { value: 'top', label: 'Góra' },
+    { value: 'left', label: 'Lewo' },
+    { value: 'right', label: 'Prawo' },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Readability / UI font scale — segmented buttons match .seg-btns */}
       <SettingsCard
         icon={Type}
         title="Czytelność"
-        subtitle="Dopasuj rozmiar tekstu i skalę interfejsu do swojego ekranu"
+        subtitle="Skalowanie tekstu i interfejsu do Twojego ekranu."
       >
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1">
             {UI_FONT_SCALE_PRESETS.map(scale => {
               const isActive = uiFontScale === scale;
               return (
@@ -107,10 +117,10 @@ export function AppearanceSection() {
                   aria-pressed={isActive}
                   onClick={() => setUIFontScale(scale)}
                   className={cn(
-                    'min-w-[64px] rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+                    'rounded-lg border px-3 py-[6px] text-[12px] font-medium transition-colors',
                     'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                     isActive
-                      ? 'border-primary/40 bg-primary/15 text-primary'
+                      ? 'border-primary/35 bg-primary/18 text-primary font-semibold'
                       : 'border-border-glass bg-background/30 text-muted-foreground hover:bg-accent/40 hover:text-foreground'
                   )}
                 >
@@ -119,110 +129,131 @@ export function AppearanceSection() {
               );
             })}
           </div>
-
-          <div className="rounded-xl border border-border-glass bg-background/30 p-3 space-y-1.5">
-            <p className="text-sm font-medium text-foreground">Podgląd czytelności interfejsu</p>
-            <p className="text-xs text-muted-foreground">
-              Pomocnicze opisy, etykiety i metadane będą łatwiejsze do przeczytania.
-            </p>
-            <p className="text-xs text-muted-foreground/75">
-              Aktualna skala: {Math.round(uiFontScale * 100)}%
-            </p>
-          </div>
-
-          {IS_MAC && (
-            <p className="text-xs text-muted-foreground/80">
-              Na macOS często najlepiej sprawdza się zakres 105-110%, zwłaszcza na ekranach Retina.
-            </p>
-          )}
+          <PillTag variant="accent">Aktualna skala: {Math.round(uiFontScale * 100)}%</PillTag>
         </div>
+
+        {IS_MAC && (
+          <p className="text-[11.5px] text-muted-foreground/80 leading-relaxed">
+            Na macOS często najlepiej sprawdza się zakres 105-110%, zwłaszcza na ekranach Retina.
+          </p>
+        )}
       </SettingsCard>
 
       {/* Dock settings */}
       <SettingsCard
         icon={GripHorizontal}
         title="Dock nawigacyjny"
-        subtitle="Pozycja i zachowanie paska nawigacji"
+        subtitle="Pozycja i zachowanie paska nawigacji."
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground" id="dock-autohide-label">
-              Automatyczne ukrywanie
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Dock chowa się do ikony i rozwija po najechaniu kursorem
-            </p>
-          </div>
+        <SettingsRow>
+          <SettingsRowLabel
+            id="dock-autohide-label"
+            title="Automatyczne ukrywanie"
+            description="Dock chowa się do ikony i rozwija po najechaniu kursorem"
+          />
           <Switch
             checked={dockAutoHide}
             onCheckedChange={setDockAutoHide}
             aria-labelledby="dock-autohide-label"
           />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground" id="dock-labels-label">
-              Pokaż etykiety
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Wyświetlaj nazwy pod ikonami nawigacji
-            </p>
-          </div>
+        </SettingsRow>
+        <SettingsRow divider>
+          <SettingsRowLabel
+            id="dock-labels-label"
+            title="Pokaż etykiety"
+            description="Wyświetlaj nazwy pod ikonami nawigacji"
+          />
           <Switch
             checked={dockShowLabels}
             onCheckedChange={setDockShowLabels}
             aria-labelledby="dock-labels-label"
           />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground" id="dock-draggable-label">
-              Przeciąganie
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Pozwól na zmianę pozycji docka przeciąganiem
-            </p>
-          </div>
+        </SettingsRow>
+        <SettingsRow divider>
+          <SettingsRowLabel
+            id="dock-draggable-label"
+            title="Przeciąganie"
+            description="Pozwól na zmianę pozycji docka przeciąganiem"
+          />
           <Switch
             checked={dockDraggable}
             onCheckedChange={setDockDraggable}
             aria-labelledby="dock-draggable-label"
           />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground">Pozycja docka</p>
-            <p className="text-xs text-muted-foreground/70">
-              Przywróć domyślną pozycję na dole ekranu
-            </p>
+        </SettingsRow>
+        <SettingsRow divider stacked>
+          <SettingsRowLabel
+            title="Krawędź docka"
+            description="Na której krawędzi ekranu przyczepić dock"
+          />
+          <div
+            role="radiogroup"
+            aria-label="Krawędź docka"
+            className="flex flex-wrap items-center gap-1"
+          >
+            {DOCK_EDGES.map(({ value, label }) => {
+              const isActive = dockEdge === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={isActive}
+                  onClick={() => setDockEdge(value)}
+                  className={cn(
+                    'rounded-lg border px-3 py-[6px] text-[12px] font-medium transition-colors',
+                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                    isActive
+                      ? 'border-primary/35 bg-primary/18 text-primary font-semibold'
+                      : 'border-border-glass bg-background/30 text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={resetDockPosition}>
+        </SettingsRow>
+        <SettingsRow divider>
+          <SettingsRowLabel
+            title="Pozycja docka"
+            description="Przywróć domyślną pozycję na dole ekranu"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs border-border-glass"
+            onClick={resetDockPosition}
+          >
             Przywróć pozycję
           </Button>
-        </div>
+        </SettingsRow>
       </SettingsCard>
 
-      {/* View visibility toggles */}
+      {/* View visibility toggles — grid of compact rows */}
       <SettingsCard
         icon={Eye}
         title="Widoczność widoków"
-        subtitle="Ukryj sekcje, których nie używasz — Ustawienia są zawsze dostępne"
+        subtitle="Ukryj sekcje, których nie używasz — Ustawienia są zawsze dostępne."
       >
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {ALL_NAV_ITEMS.map(item => {
             const alwaysOn = ALWAYS_VISIBLE_VIEWS.has(item.id);
             const visible = alwaysOn || !hiddenViews.includes(item.id);
             const labelId = `view-visibility-${item.id}`;
             return (
-              <div key={item.id} className="flex items-center justify-between">
-                <p className="text-sm text-foreground" id={labelId}>
+              <div
+                key={item.id}
+                className="flex items-center justify-between rounded-lg border border-border-glass/70 bg-background/30 px-3 py-2"
+              >
+                <span className="text-[12px] font-medium text-foreground" id={labelId}>
                   {item.label}
                   {alwaysOn && (
-                    <span className="ml-2 text-2xs text-muted-foreground/70">
-                      (zawsze widoczne)
+                    <span className="ml-2 text-2xs text-muted-foreground/70 font-normal">
+                      (zawsze)
                     </span>
                   )}
-                </p>
+                </span>
                 <Switch
                   checked={visible}
                   disabled={alwaysOn}
@@ -239,60 +270,64 @@ export function AppearanceSection() {
       <BackgroundSettings />
 
       {/* Theme picker */}
-      <SettingsCard icon={Palette} title="Motyw" subtitle="Wybierz motyw kolorystyczny aplikacji">
+      <SettingsCard
+        icon={Palette}
+        title="Motyw kolorystyczny"
+        subtitle="Wybierz paletę — własną lub z biblioteki."
+        headerAccessory={
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-[11px] border-border-glass"
+            onClick={() => importTheme()}
+          >
+            <Upload className="w-3 h-3" />
+            Importuj
+          </Button>
+        }
+      >
         {/* Custom themes section */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-medium text-primary flex items-center gap-1.5">
-              <Palette className="w-3 h-3" />
-              Własne
-            </h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => importTheme()}
-            >
-              <Upload className="w-3 h-3" />
-              Importuj
-            </Button>
+        {customThemeOptions.length > 0 && (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] font-semibold">
+                <Palette className="w-3 h-3" />
+                Własne
+                <span className="tabular-nums text-muted-foreground/60">
+                  · {customThemeOptions.length}
+                </span>
+              </span>
+              <span className="flex-1 h-px bg-border-glass" />
+            </div>
+            <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
+              {customThemeOptions.map(opt => (
+                <CustomThemeSwatchWrapper
+                  key={opt.value}
+                  option={opt}
+                  isActive={theme === opt.value}
+                  onSelect={setTheme}
+                  onPreview={setPreviewTheme}
+                  onPreviewEnd={clearPreview}
+                  onEdit={() => handleEditTheme(opt.value)}
+                  onDelete={() => handleDeleteTheme(opt.value)}
+                  onExport={() => exportTheme(opt.value)}
+                />
+              ))}
+              <button
+                onClick={handleCreateNew}
+                aria-label="Nowy motyw"
+                className={cn(
+                  'relative aspect-square w-full rounded-[10px] border border-dashed border-border-glass',
+                  'grid place-items-center text-muted-foreground',
+                  'transition-colors hover:bg-accent/30 hover:text-foreground',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
+                )}
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-1.5">
-            {customThemeOptions.map(opt => (
-              <CustomThemeSwatchWrapper
-                key={opt.value}
-                option={opt}
-                isActive={theme === opt.value}
-                onSelect={setTheme}
-                onPreview={setPreviewTheme}
-                onPreviewEnd={clearPreview}
-                onEdit={() => handleEditTheme(opt.value)}
-                onDelete={() => handleDeleteTheme(opt.value)}
-                onExport={() => exportTheme(opt.value)}
-              />
-            ))}
-
-            {/* Add new theme button */}
-            <button
-              onClick={handleCreateNew}
-              className={cn(
-                'relative flex flex-col items-center gap-2 p-2.5 rounded-xl',
-                'transition-all duration-200',
-                'hover:bg-accent/40 hover:scale-105',
-                'border border-dashed border-border-glass',
-                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
-              )}
-            >
-              <div className="w-10 h-10 rounded-full border-2 border-border-glass flex items-center justify-center">
-                <Plus className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <span className="text-xs text-muted-foreground">Nowy motyw</span>
-            </button>
-          </div>
-        </div>
-
-        <Separator className="bg-border/50" />
+        )}
 
         {/* Dark themes */}
         <ThemeGrid
@@ -317,6 +352,21 @@ export function AppearanceSection() {
           onPreviewEnd={clearPreview}
           onClone={handleCloneTheme}
         />
+
+        {/* Add new theme (shown when no custom themes exist so the primary CTA is visible) */}
+        {customThemeOptions.length === 0 && (
+          <div className="pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-dashed border-border-glass text-muted-foreground"
+              onClick={handleCreateNew}
+            >
+              <Plus className="w-4 h-4" />
+              Nowy motyw
+            </Button>
+          </div>
+        )}
       </SettingsCard>
 
       {/* Theme editor dialog */}
@@ -374,7 +424,7 @@ function CustomThemeSwatchWrapper({
             e.stopPropagation();
             onEdit();
           }}
-          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+          className="w-6 h-6 rounded bg-background/85 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Edytuj motyw"
         >
           <Pencil className="w-3 h-3 text-foreground" />
@@ -384,7 +434,7 @@ function CustomThemeSwatchWrapper({
             e.stopPropagation();
             onExport();
           }}
-          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+          className="w-6 h-6 rounded bg-background/85 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Eksportuj motyw"
         >
           <Download className="w-3 h-3 text-foreground" />
@@ -394,7 +444,7 @@ function CustomThemeSwatchWrapper({
             e.stopPropagation();
             if (window.confirm('Czy na pewno chcesz usunąć ten motyw?')) onDelete();
           }}
-          className="w-7 h-7 rounded bg-background/80 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+          className="w-6 h-6 rounded bg-background/85 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           aria-label="Usuń motyw"
         >
           <Trash2 className="w-3 h-3 text-destructive" />

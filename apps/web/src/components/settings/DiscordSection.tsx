@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MessageCircle, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
 import { DiscordPreview } from '@/components/settings/DiscordPreview';
 import { DiscordTemplateEditor } from '@/components/settings/DiscordTemplateEditor';
 import { substitutePreview } from '@/lib/discord-utils';
@@ -93,89 +92,66 @@ export function DiscordSection() {
 
   return (
     <div className="space-y-4">
-      {/* Card 1: Main toggle */}
+      {/* Main Discord toggles */}
       <SettingsCard
         icon={MessageCircle}
-        title="Status na Discordzie"
-        subtitle="Pokaż swoją aktywność na Discordzie"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="discord-enabled-label" className="text-sm font-medium">
-              Włącz integrację
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Pokaż swoją aktywność w ShiroAni na Discordzie
-            </p>
-          </div>
+        title="Discord Rich Presence"
+        subtitle="Pokaż swoją aktywność na Discordzie."
+        headerAccessory={
           <Switch
-            aria-labelledby="discord-enabled-label"
+            aria-label="Włącz Discord Rich Presence"
             checked={settings.enabled}
             onCheckedChange={v => updateField('enabled', v)}
           />
-        </div>
-
-        <Separator className="bg-border/50" />
-
-        {/* Legacy toggles — shown when custom templates are off */}
+        }
+      >
         {!settings.useCustomTemplates && (
           <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 id="discord-details-label" className="text-sm font-medium">
-                  Pokaż tytuły anime
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Wyświetlaj tytuł oglądanego anime na Discordzie
-                </p>
-              </div>
+            <SettingsRow>
+              <SettingsRowLabel
+                id="discord-details-label"
+                title="Pokaż tytuły anime"
+                description="Wyświetlaj tytuł oglądanego anime na Discordzie"
+              />
               <Switch
                 aria-labelledby="discord-details-label"
                 checked={settings.showAnimeDetails}
                 onCheckedChange={v => updateField('showAnimeDetails', v)}
                 disabled={!settings.enabled}
               />
-            </div>
+            </SettingsRow>
 
-            <Separator className="bg-border/50" />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 id="discord-time-label" className="text-sm font-medium">
-                  Pokaż czas
-                </h4>
-                <p className="text-xs text-muted-foreground">Wyświetlaj czas trwania aktywności</p>
-              </div>
+            <SettingsRow divider>
+              <SettingsRowLabel
+                id="discord-time-label"
+                title="Pokaż czas"
+                description="Wyświetlaj czas trwania aktywności"
+              />
               <Switch
                 aria-labelledby="discord-time-label"
                 checked={settings.showElapsedTime}
                 onCheckedChange={v => updateField('showElapsedTime', v)}
                 disabled={!settings.enabled}
               />
-            </div>
-
-            <Separator className="bg-border/50" />
+            </SettingsRow>
           </>
         )}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="discord-templates-label" className="text-sm font-medium">
-              Własne szablony
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Dostosuj tekst statusu dla każdej aktywności
-            </p>
-          </div>
+        <SettingsRow divider={!settings.useCustomTemplates}>
+          <SettingsRowLabel
+            id="discord-templates-label"
+            title="Własne szablony"
+            description="Dostosuj tekst statusu dla każdej aktywności"
+          />
           <Switch
             aria-labelledby="discord-templates-label"
             checked={settings.useCustomTemplates}
             onCheckedChange={v => updateField('useCustomTemplates', v)}
             disabled={!settings.enabled}
           />
-        </div>
+        </SettingsRow>
 
-        <div className="pt-2 border-t border-border/30">
+        <div>
           <Button size="sm" onClick={handleSave}>
             {saved ? <Check className="w-4 h-4" /> : null}
             {saved ? 'Zapisano' : 'Zapisz'}
@@ -183,7 +159,7 @@ export function DiscordSection() {
         </div>
       </SettingsCard>
 
-      {/* Card 2: Template editor */}
+      {/* Template editor */}
       {settings.enabled && settings.useCustomTemplates && (
         <DiscordTemplateEditor
           selectedActivity={selectedActivity}
@@ -194,12 +170,13 @@ export function DiscordSection() {
         />
       )}
 
-      {/* Card 3: Live preview */}
+      {/* Live preview */}
       {settings.enabled && settings.useCustomTemplates && (
         <SettingsCard
           icon={MessageCircle}
           title="Podgląd"
-          subtitle="Tak będzie wyglądał Twój status na Discordzie"
+          subtitle="Tak będzie wyglądał Twój status na Discordzie."
+          tone="blue"
         >
           <DiscordPreview
             details={previewDetails}
@@ -213,15 +190,13 @@ export function DiscordSection() {
       )}
 
       {/* Info callout */}
-      <SettingsCard>
-        <div className="flex items-start gap-2.5">
-          <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
-          <p className="text-xs font-medium text-muted-foreground/80">
-            Status na Discordzie wymaga uruchomionego klienta Discord na komputerze. Inni
-            użytkownicy zobaczą na Twoim profilu Discord, co robisz w ShiroAni.
-          </p>
-        </div>
-      </SettingsCard>
+      <div className="flex items-start gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <Info className="w-4 h-4 text-muted-foreground/80 mt-0.5 shrink-0" />
+        <p>
+          Status na Discordzie wymaga uruchomionego klienta Discord na komputerze. Inni użytkownicy
+          zobaczą na Twoim profilu Discord, co robisz w ShiroAni.
+        </p>
+      </div>
     </div>
   );
 }
