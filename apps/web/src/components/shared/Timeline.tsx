@@ -56,8 +56,10 @@ export interface TimelineProps {
  * entries may override the dot via the `marker` slot.
  */
 export function Timeline({ entries, className, sideWidth = 76, gap = 48 }: TimelineProps) {
-  // The vertical line sits at `sideWidth + 6` (centre of the dot).
-  const linePosition = sideWidth + 6;
+  // The vertical line sits a comfortable 20px right of the label column so
+  // the marker's 4px background halo never bleeds into the title text. Must
+  // stay smaller than `gap` so the content column still clears the dot.
+  const linePosition = sideWidth + 20;
   const contentPadding = sideWidth + gap;
 
   return (
