@@ -1,10 +1,20 @@
 import { useMemo } from 'react';
-import { Flame, CalendarDays, Tag as TagIcon, Sparkles } from 'lucide-react';
+import {
+  Flame,
+  CalendarDays,
+  Tag as TagIcon,
+  Sparkles,
+  Clapperboard,
+  Building2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StatCell } from '@/components/shared/StatCell';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { PillTag } from '@/components/ui/pill-tag';
 import { ComingSoonPlaceholder } from '@/components/shared/ComingSoonPlaceholder';
+import { GenreBreakdown } from '@/components/profile/GenreBreakdown';
+import { StudioBreakdown } from '@/components/profile/StudioBreakdown';
+import { useDiaryBreakdowns } from '@/hooks/useDiaryBreakdowns';
 import type { DiaryEntry } from '@shiroani/shared';
 
 interface DiarySidebarProps {
@@ -138,6 +148,7 @@ function nextStreakMilestone(streak: number): { target: number; progress: number
 export function DiarySidebar({ entries }: DiarySidebarProps) {
   const stats = useMemo(() => computeStats(entries), [entries]);
   const milestone = nextStreakMilestone(stats.currentStreak);
+  const { genres, studios } = useDiaryBreakdowns(entries);
 
   return (
     <aside
@@ -173,6 +184,16 @@ export function DiarySidebar({ entries }: DiarySidebarProps) {
       />
 
       <TopTagsBlock tags={stats.topTags} />
+
+      <SidebarSection>
+        <SidebarLabel icon={Clapperboard}>Gatunki</SidebarLabel>
+        <GenreBreakdown genres={genres} />
+      </SidebarSection>
+
+      <SidebarSection>
+        <SidebarLabel icon={Building2}>Studia</SidebarLabel>
+        <StudioBreakdown studios={studios} />
+      </SidebarSection>
     </aside>
   );
 }

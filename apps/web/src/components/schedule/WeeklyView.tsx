@@ -22,7 +22,22 @@ export interface WeeklyViewProps {
   /** Raw schedule object passed through so useMemo detects changes */
   schedule: Record<string, AiringAnime[]>;
   onAnimeClick?: (anime: AiringAnime) => void;
+  /**
+   * AniList ids of anime present in the user's library. Cards matching one of
+   * these get a primary-colour top edge + subtle wash. Library membership
+   * takes precedence over subscription.
+   */
+  libraryAnilistIds?: ReadonlySet<number>;
+  /**
+   * AniList ids of anime the user has subscribed to notifications for.
+   * Cards matching (and NOT in library) get a gold top edge + soft wash.
+   */
+  subscribedAnilistIds?: ReadonlySet<number>;
 }
+
+type MembershipKind = 'library' | 'subscribed' | 'none';
+
+const EMPTY_IDS: ReadonlySet<number> = new Set<number>();
 
 /**
  * Compact 7-column week grid — one column per weekday, event cards stacked
@@ -34,6 +49,8 @@ export function WeeklyView({
   getEntriesForDay,
   schedule,
   onAnimeClick,
+  libraryAnilistIds = EMPTY_IDS,
+  subscribedAnilistIds = EMPTY_IDS,
 }: WeeklyViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
@@ -65,11 +82,18 @@ export function WeeklyView({
               <div className="flex-1 overflow-y-auto p-2 pb-20 space-y-1.5">
                 {dayEntries.map(anime => {
                   const status = getSlotStatus(anime.airingAt, now);
+                  const mediaId = anime.media.id;
+                  const membership: MembershipKind = libraryAnilistIds.has(mediaId)
+                    ? 'library'
+                    : subscribedAnilistIds.has(mediaId)
+                      ? 'subscribed'
+                      : 'none';
                   return (
                     <WeekEventCard
                       key={`${anime.id}-${anime.episode}`}
                       anime={anime}
                       status={status}
+                      membership={membership}
                       onClick={onAnimeClick}
                     />
                   );
@@ -96,10 +120,11 @@ export function WeeklyView({
 interface WeekEventCardProps {
   anime: AiringAnime;
   status: SlotStatus;
+  membership: MembershipKind;
   onClick?: (anime: AiringAnime) => void;
 }
 
-function WeekEventCard({ anime, status, onClick }: WeekEventCardProps) {
+function WeekEventCard({ anime, status, membership, onClick }: WeekEventCardProps) {
   const title = getAnimeTitle(anime.media);
   const coverUrl = getCoverUrl(anime.media);
   const isLive = status === 'live';
@@ -110,6 +135,17 @@ function WeekEventCard({ anime, status, onClick }: WeekEventCardProps) {
     : isDone
       ? 'border-l-muted-foreground/30'
       : 'border-l-[oklch(0.5_0.15_280)]';
+
+  // Top edge + subtle wash encodes library / subscription membership.
+  // Library wins when both are true. Kept as a separate axis from the
+  // status-driven left border (live/done/upcoming) so users can read both
+  // signals at a glance.
+  const membershipTint =
+    membership === 'library'
+      ? 'border-t-[3px] border-t-primary bg-primary/[0.06]'
+      : membership === 'subscribed'
+        ? 'border-t-[3px] border-t-[oklch(0.8_0.14_70)] bg-[oklch(0.8_0.14_70/0.06)]'
+        : '';
 
   return (
     <div
@@ -134,7 +170,8 @@ function WeekEventCard({ anime, status, onClick }: WeekEventCardProps) {
         isLive && 'bg-primary/10 border-primary/30',
         isDone && 'opacity-55',
         onClick && 'cursor-pointer hover:bg-card/60',
-        isLive && onClick && 'hover:bg-primary/15'
+        isLive && onClick && 'hover:bg-primary/15',
+        membershipTint
       )}
     >
       <div className="flex gap-2">

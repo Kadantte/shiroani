@@ -16,6 +16,7 @@ import { TooltipButton } from '@/components/ui/tooltip-button';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
 import { DailyViewSkeleton, WeeklyViewSkeleton, TimetableViewSkeleton } from './ScheduleSkeletons';
 import { addDays, formatDayHeading, formatWeekRange, isToday } from './schedule-utils';
 import { DailyView } from './DailyView';
@@ -104,6 +105,18 @@ export function ScheduleView() {
   useEffect(() => {
     if (!notifLoaded) loadSubscriptions();
   }, [notifLoaded, loadSubscriptions]);
+
+  // Membership sets — used by WeeklyView to tint cards for library /
+  // subscribed-only shows. Keyed by AniList id (matches `anime.media.id`).
+  const subscribedAnilistIds = useNotificationStore(s => s.subscribedIds);
+  const libraryEntries = useLibraryStore(s => s.entries);
+  const libraryAnilistIds = useMemo(
+    () =>
+      new Set(
+        libraryEntries.map(e => e.anilistId).filter((x): x is number => typeof x === 'number')
+      ),
+    [libraryEntries]
+  );
 
   const headingTitle =
     viewMode === 'daily'
@@ -244,6 +257,8 @@ export function ScheduleView() {
               getEntriesForDay={getEntriesForDay}
               schedule={schedule}
               onAnimeClick={handleAnimeClick}
+              libraryAnilistIds={libraryAnilistIds}
+              subscribedAnilistIds={subscribedAnilistIds}
             />
           ) : (
             <TimetableView
