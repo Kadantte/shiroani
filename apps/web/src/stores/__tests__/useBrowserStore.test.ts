@@ -28,6 +28,7 @@ describe('useBrowserStore', () => {
       adblockEnabled: true,
       popupBlockEnabled: true,
       adblockWhitelist: [],
+      restoreTabsOnStartup: true,
       isFullScreen: false,
     });
     uuidCounter = 0;

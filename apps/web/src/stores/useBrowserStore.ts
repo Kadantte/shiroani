@@ -17,6 +17,8 @@ interface BrowserState {
   popupBlockEnabled: boolean;
   /** Top-frame hostnames where adblock network filtering is disabled. */
   adblockWhitelist: string[];
+  /** Whether to restore the previous session's tabs on app start. */
+  restoreTabsOnStartup: boolean;
   isFullScreen: boolean;
 }
 
@@ -37,6 +39,7 @@ interface BrowserActions {
   togglePopupBlock: () => void;
   addAdblockDomain: (host: string) => void;
   removeAdblockDomain: (host: string) => void;
+  setRestoreTabsOnStartup: (enabled: boolean) => void;
   persistTabs: () => void;
   restoreTabs: () => Promise<void>;
 }
@@ -83,6 +86,7 @@ async function persistBrowserSettings(updates: {
   adblockEnabled?: boolean;
   popupBlockEnabled?: boolean;
   adblockWhitelist?: string[];
+  restoreTabsOnStartup?: boolean;
 }): Promise<void> {
   const existing = (await electronStoreGet<Record<string, unknown>>('browser-settings')) ?? {};
   await electronStoreSet('browser-settings', { ...existing, ...updates });
@@ -98,6 +102,7 @@ export const useBrowserStore = create<BrowserStore>()(
       adblockEnabled: true,
       popupBlockEnabled: true,
       adblockWhitelist: [],
+      restoreTabsOnStartup: true,
       isFullScreen: false,
 
       // ── Tab CRUD (all local now) ────────────────────────────────
@@ -267,6 +272,25 @@ export const useBrowserStore = create<BrowserStore>()(
         void persistBrowserSettings({ adblockWhitelist: next });
       },
 
+      setRestoreTabsOnStartup: async (enabled: boolean) => {
+        const previous = get().restoreTabsOnStartup;
+        set({ restoreTabsOnStartup: enabled }, undefined, 'browser/setRestoreTabsOnStartup');
+        try {
+          await persistBrowserSettings({ restoreTabsOnStartup: enabled });
+          // When turning off, drop any stored tabs so toggling back on
+          // doesn't resurrect a stale session the user can't see anymore.
+          if (!enabled) {
+            electronStoreDelete('browser-tabs');
+          }
+        } catch {
+          set(
+            { restoreTabsOnStartup: previous },
+            undefined,
+            'browser/setRestoreTabsOnStartup:revert'
+          );
+        }
+      },
+
       removeAdblockDomain: (host: string) => {
         const normalized = normalizeWhitelistHost(host);
         if (!normalized) return;
@@ -283,6 +307,10 @@ export const useBrowserStore = create<BrowserStore>()(
       // ── Persistence ─────────────────────────────────────────────
 
       persistTabs: () => {
+        // Gated by the "Przywróć karty po restarcie" toggle — when off we
+        // drop writes entirely so nothing lingers under the store key.
+        if (!get().restoreTabsOnStartup) return;
+
         if (persistTimer) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
           const { tabs, activeTabId } = get();
@@ -313,6 +341,7 @@ export const useBrowserStore = create<BrowserStore>()(
           popupBlockEnabled?: boolean;
           popupBlockMode?: string;
           adblockWhitelist?: unknown;
+          restoreTabsOnStartup?: boolean;
         }>('browser-settings');
 
         if (settings) {
@@ -336,6 +365,10 @@ export const useBrowserStore = create<BrowserStore>()(
             void persistBrowserSettings({ popupBlockEnabled: popupEnabled });
           }
 
+          if (typeof settings.restoreTabsOnStartup === 'boolean') {
+            set({ restoreTabsOnStartup: settings.restoreTabsOnStartup });
+          }
+
           // Restore + push whitelist to main
           if (Array.isArray(settings.adblockWhitelist)) {
             const cleaned = Array.from(
@@ -351,7 +384,9 @@ export const useBrowserStore = create<BrowserStore>()(
           }
         }
 
-        // Restore tabs
+        // Restore tabs (unless the user disabled session restore)
+        if (!get().restoreTabsOnStartup) return;
+
         const saved = await electronStoreGet<{
           tabs: Array<{ url: string; title: string }>;
           activeIndex: number;

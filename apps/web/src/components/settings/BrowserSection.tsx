@@ -1,10 +1,11 @@
 import { useCallback, useState, type KeyboardEvent } from 'react';
-import { Globe, Shield, X, AppWindow } from 'lucide-react';
+import { Globe, Shield, X, AppWindow, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { PillTag } from '@/components/ui/pill-tag';
 import { useBrowserStore } from '@/stores/useBrowserStore';
+import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,10 @@ export function BrowserSection() {
   const adblockWhitelist = useBrowserStore(state => state.adblockWhitelist);
   const addAdblockDomain = useBrowserStore(state => state.addAdblockDomain);
   const removeAdblockDomain = useBrowserStore(state => state.removeAdblockDomain);
+  const restoreTabsOnStartup = useBrowserStore(state => state.restoreTabsOnStartup);
+  const setRestoreTabsOnStartup = useBrowserStore(state => state.setRestoreTabsOnStartup);
+  const trackFrequentSites = useQuickAccessStore(state => state.trackFrequentSites);
+  const setTrackFrequentSites = useQuickAccessStore(state => state.setTrackFrequentSites);
 
   const [whitelistInput, setWhitelistInput] = useState('');
 
@@ -163,10 +168,43 @@ export function BrowserSection() {
       </SettingsCard>
 
       <SettingsCard
+        icon={Copy}
+        title="Zachowanie kart"
+        subtitle="Zarządzanie kartami i historią przeglądania"
+        tone="blue"
+      >
+        <SettingsRow>
+          <SettingsRowLabel
+            id="browser-restore-tabs-label"
+            title="Przywróć karty po restarcie"
+            description="Zapamiętuje otwarte karty między sesjami."
+          />
+          <Switch
+            aria-labelledby="browser-restore-tabs-label"
+            checked={restoreTabsOnStartup}
+            onCheckedChange={setRestoreTabsOnStartup}
+          />
+        </SettingsRow>
+
+        <SettingsRow>
+          <SettingsRowLabel
+            id="browser-track-frequent-label"
+            title="Zapisz historię przeglądania"
+            description="Lokalna historia — nie jest nigdzie wysyłana."
+          />
+          <Switch
+            aria-labelledby="browser-track-frequent-label"
+            checked={trackFrequentSites}
+            onCheckedChange={setTrackFrequentSites}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      <SettingsCard
         icon={Globe}
         title="Przeglądarka internetowa"
         subtitle="Ogólne zachowanie wbudowanej przeglądarki"
-        tone="blue"
+        tone="muted"
       >
         <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
           ShiroAni używa wbudowanego Chromium. Dane przeglądania zapisywane są lokalnie — nigdy nie
