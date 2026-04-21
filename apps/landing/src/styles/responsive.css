@@ -20,6 +20,16 @@
   .nav-links {
     display: none;
   }
+  .nav-inner {
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav-burger {
+    display: flex;
+  }
+  .nav-mobile:not([hidden]) {
+    display: flex;
+  }
   .themes-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -70,6 +80,16 @@
   }
 }
 @media (max-width: 640px) {
+  .nav-inner {
+    padding: 14px 18px;
+    gap: 1rem;
+  }
+  .nav-gh {
+    display: none;
+  }
+  .logo .name small {
+    display: none;
+  }
   .hero {
     padding: 32px 18px 48px;
   }

@@ -37,6 +37,40 @@ const links = [
         </svg>
       </a>
       <a class="nav-cta" href="/download">Pobierz <span>↗</span></a>
+      <button class="nav-burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-mobile">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
     </div>
   </div>
+  <div class="nav-mobile" id="nav-mobile" hidden>
+    {links.map((l) => (
+      <a href={l.href} class={activeHref === l.href ? 'on' : undefined}>
+        <span class="num">{l.num}</span>{l.label}
+      </a>
+    ))}
+  </div>
 </nav>
+
+<script>
+  const burger = document.querySelector<HTMLButtonElement>('.nav-burger');
+  const menu = document.getElementById('nav-mobile');
+  if (burger && menu) {
+    const setOpen = (open: boolean) => {
+      burger.setAttribute('aria-expanded', String(open));
+      menu.toggleAttribute('hidden', !open);
+      document.documentElement.classList.toggle('nav-open', open);
+    };
+    burger.addEventListener('click', () => {
+      setOpen(burger.getAttribute('aria-expanded') !== 'true');
+    });
+    menu.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('a')) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
+</script>
