@@ -8,7 +8,9 @@
     "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shiroani/changelog": ["../../packages/changelog/src"],
+      "@shiroani/changelog/*": ["../../packages/changelog/src/*"]
     }
   }
 }
