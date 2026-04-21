@@ -8,6 +8,7 @@ import {
   Download,
   Info,
   Bell,
+  Boxes,
   Cat,
   Database,
   MessageCircle,
@@ -31,6 +32,7 @@ import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
 import { DiscordSection } from '@/components/settings/DiscordSection';
 import { GeneralSection } from '@/components/settings/GeneralSection';
+import { SuiteSection } from '@/components/settings/SuiteSection';
 import { DeveloperSection } from '@/components/settings/DeveloperSection';
 
 type SettingsSection =
@@ -45,6 +47,7 @@ type SettingsSection =
   | 'mascot'
   | 'data'
   | 'updates'
+  | 'suite'
   | 'about'
   | 'developer';
 
@@ -135,6 +138,13 @@ const ALL_SECTIONS: SectionDef[] = [
     subtitle: 'Wersja i kanał aktualizacji',
     group: 'data',
     Icon: Download,
+  },
+  {
+    id: 'suite',
+    label: 'Rodzina',
+    subtitle: 'Inne aplikacje, które warto sprawdzić',
+    group: 'data',
+    Icon: Boxes,
   },
   {
     id: 'about',
@@ -302,6 +312,7 @@ export function SettingsView() {
               {activeSection === 'mascot' && <MascotSection />}
               {activeSection === 'data' && <DataSection />}
               {activeSection === 'updates' && <UpdatesSection version={version} />}
+              {activeSection === 'suite' && <SuiteSection />}
               {activeSection === 'about' && <AboutSection version={version} />}
               {activeSection === 'developer' && <DeveloperSection />}
             </div>
