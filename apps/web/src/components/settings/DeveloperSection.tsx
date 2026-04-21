@@ -24,13 +24,13 @@ export function DeveloperSection() {
       <SettingsCard
         icon={Terminal}
         title="Tryb deweloperski"
-        subtitle="Narzędzia debugowania — pomocne, gdy chcesz zgłosić błąd lub zajrzeć pod maskę."
+        subtitle="Narzędzia debugowania. Przydają się, kiedy chcesz zgłosić błąd lub zajrzeć pod maskę."
         tone="muted"
       >
         <SettingsToggleRow
           id="dev-mode-label"
           title="Włącz tryb deweloperski"
-          description="Udostępnia narzędzia deweloperskie, podgląd logów i kopię diagnostyki."
+          description="Włącza DevTools, podgląd logów i eksport diagnostyki."
           checked={devModeEnabled}
           onCheckedChange={setDevModeEnabled}
         />

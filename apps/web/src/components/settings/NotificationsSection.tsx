@@ -12,7 +12,7 @@ import { IS_WINDOWS } from '@/lib/platform';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
-  { value: '0', label: 'W momencie emisji' },
+  { value: '0', label: 'Dokładnie o godzinie emisji' },
   { value: '5', label: '5 minut' },
   { value: '15', label: '15 minut' },
   { value: '30', label: '30 minut' },
@@ -120,7 +120,7 @@ export function NotificationsSection() {
         <SettingsToggleRow
           id="notif-enabled-label"
           title="Powiadomienia o odcinkach"
-          description="Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany"
+          description="Wysyłaj powiadomienie, gdy leci nowy odcinek śledzonego anime."
           checked={data.enabled}
           onCheckedChange={v => updateAndSave({ enabled: v })}
         />
@@ -178,7 +178,7 @@ export function NotificationsSection() {
           divider
           id="notif-sound-label"
           title="Dźwięk systemowy"
-          description="Odtwórz dźwięk przy wyświetlaniu powiadomienia"
+          description="Dźwięk przy nowym powiadomieniu."
           checked={data.useSystemSound}
           onCheckedChange={v => updateAndSave({ useSystemSound: v })}
           disabled={!data.enabled}
@@ -190,11 +190,9 @@ export function NotificationsSection() {
         <div className="flex items-start gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
           <Info className="w-4 h-4 text-muted-foreground/80 mt-0.5 shrink-0" />
           <p>
-            Na systemie Windows po zamknięciu aplikacji nadchodzące powiadomienia są planowane za
-            pomocą polecenia PowerShell uruchamianego w tle.{' '}
-            <b className="font-semibold text-foreground">
-              Nie wymaga to żadnej interakcji z Twojej strony.
-            </b>
+            Na Windowsie po zamknięciu aplikacji nadchodzące powiadomienia planowane są przez
+            polecenie PowerShell w tle.{' '}
+            <b className="font-semibold text-foreground">Nic nie musisz robić.</b>
           </p>
         </div>
       )}
@@ -208,7 +206,7 @@ export function NotificationsSection() {
       >
         {subscriptions.length === 0 ? (
           <div className="rounded-lg border border-border-glass bg-background/30 px-4 py-3 text-center text-[12px] text-muted-foreground">
-            Brak subskrypcji. Dodaj anime z harmonogramu — kliknij ikonę dzwonka.
+            Brak subskrypcji. Dodaj anime z harmonogramu, klikając ikonę dzwonka.
           </div>
         ) : (
           <div className="space-y-2">

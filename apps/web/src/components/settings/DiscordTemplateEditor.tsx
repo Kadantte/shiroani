@@ -134,7 +134,7 @@ export function DiscordTemplateEditor({
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {DISCORD_TEMPLATE_VARIABLES.map(v => (
             <span key={v.key} className="text-xs text-muted-foreground">
-              <code className="text-primary/80 bg-primary/5 px-1 rounded text-2xs">{v.key}</code> —{' '}
+              <code className="text-primary/80 bg-primary/5 px-1 rounded text-2xs">{v.key}</code> ·{' '}
               {v.description}
             </span>
           ))}

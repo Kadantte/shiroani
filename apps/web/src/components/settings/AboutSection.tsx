@@ -63,30 +63,33 @@ export function AboutSection({ version }: AboutSectionProps) {
           </Button>
         </div>
         <p className="text-[11.5px] text-muted-foreground/80 leading-relaxed">
-          Po kliknięciu kreator uruchomi się od razu — Shiro-chan przeprowadzi Cię jeszcze raz!
+          Po kliknięciu kreator uruchomi się od razu, a Shiro-chan przeprowadzi Cię jeszcze raz!
         </p>
       </SettingsCard>
 
       {/* Story */}
-      <SettingsCard icon={Heart} title="Historia" subtitle="Stworzone z potrzeby. Od autora.">
+      <SettingsCard
+        icon={Heart}
+        title="Historia"
+        subtitle="Od autora. Po prostu chciałem takiej aplikacji."
+      >
         <div className="space-y-2.5 text-[13px] leading-[1.7] text-foreground/85">
           <p>
-            ShiroAni powstało z prawdziwej potrzeby — chciałem mieć wszystko czego potrzebuję do
-            oglądania anime w jednym miejscu.{' '}
+            ShiroAni zrobiłem, bo chciałem mieć wszystko do oglądania anime w jednym miejscu.{' '}
             <b className="font-bold text-primary">
               Przeglądarka, biblioteka, harmonogram, pamiętnik
-            </b>{' '}
-            — po prostu jedno przytulne miejsce.
+            </b>
+            , po prostu jedno przytulne miejsce.
           </p>
           <p>
             Z czasem zacząłem dodawać coraz więcej rzeczy: maskotki, motywy, powiadomienia i po
-            prostu świetnie się przy tym bawiłem. W pewnym momencie pomyślałem — czemu nie
-            udostępnić tego innym?
+            prostu świetnie się przy tym bawiłem. W pewnym momencie pomyślałem: czemu nie udostępnić
+            tego innym?
           </p>
           <p>
-            Głównym celem ShiroAni jest to, żeby każdy mógł mieć swoje unikalne, fajne doświadczenie
-            z anime. A przy okazji zbudować <b className="font-bold text-primary">społeczność</b>{' '}
-            osób, z którymi można pogadać o ulubionych seriach.
+            Chodzi o to, żeby każdy miał swój własny, fajny sposób oglądania anime. I żeby dało się
+            przy okazji pogadać o ulubionych seriach z innymi osobami, w dobrej{' '}
+            <b className="font-bold text-primary">społeczności</b>.
           </p>
         </div>
       </SettingsCard>

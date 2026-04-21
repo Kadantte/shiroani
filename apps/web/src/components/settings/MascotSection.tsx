@@ -14,7 +14,7 @@ import { MascotPreview } from '@/components/settings/MascotPreview';
 
 const VISIBILITY_OPTIONS = [
   { value: 'always', label: 'Zawsze widoczna' },
-  { value: 'tray-only', label: 'Tylko przy zminimalizowanej' },
+  { value: 'tray-only', label: 'Tylko gdy okno jest zminimalizowane' },
 ];
 
 const MASCOT_MIN_SIZE = 48;
@@ -89,7 +89,7 @@ export function MascotSection() {
       <SettingsCard
         icon={Cat}
         title="Maskotka na pulpicie"
-        subtitle="Wyświetl animowaną maskotkę chibi z ikonką w zasobniku systemowym."
+        subtitle="Animowana maskotka chibi na pulpicie z ikonką w zasobniku systemowym."
         headerAccessory={
           <Switch aria-label="Włącz maskotkę" checked={enabled} onCheckedChange={handleToggle} />
         }

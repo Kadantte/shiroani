@@ -62,7 +62,7 @@ export function ThemesSection() {
       }
       removeCustomThemeCSS(themeId);
       deleteTheme(themeId);
-      toast.success('Motyw usunięty');
+      toast.success('Usunięto motyw');
     },
     [theme, setTheme, deleteTheme]
   );
@@ -94,7 +94,7 @@ export function ThemesSection() {
       <SettingsCard
         icon={Type}
         title="Czytelność"
-        subtitle="Skalowanie tekstu i interfejsu do Twojego ekranu."
+        subtitle="Dopasuj skalę tekstu i interfejsu do swojego ekranu."
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1">
@@ -132,7 +132,7 @@ export function ThemesSection() {
       <SettingsCard
         icon={Palette}
         title="Motyw kolorystyczny"
-        subtitle="Wybierz paletę — własną lub z biblioteki."
+        subtitle="Wybierz paletę: własną lub z biblioteki."
         headerAccessory={
           <Button
             variant="outline"

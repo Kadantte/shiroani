@@ -60,8 +60,8 @@ export function DataSection() {
         <div className="flex items-start gap-3 rounded-lg border border-border-glass bg-background/30 px-3 py-2.5 text-[11.5px] text-muted-foreground leading-relaxed">
           <Info className="w-4 h-4 text-muted-foreground/80 mt-0.5 shrink-0" />
           <p>
-            <b className="font-semibold text-foreground">Uwaga:</b> Import nadpisuje istniejące
-            dane. Zalecamy najpierw wykonać eksport jako kopię zapasową.
+            <b className="font-semibold text-foreground">Uwaga:</b> import nadpisze istniejące dane.
+            Najlepiej najpierw zrób eksport jako kopię zapasową.
           </p>
         </div>
         <Button
@@ -80,10 +80,10 @@ export function DataSection() {
         icon={AlertTriangle}
         tone="destructive"
         title="Usuń wszystkie dane"
-        subtitle="Nieodwracalne usunięcie danych aplikacji."
+        subtitle="Usuwa wszystkie dane bez możliwości cofnięcia."
       >
         <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
-          Operacja usunie bibliotekę, pamiętnik, subskrypcje i ustawienia. Nie można jej cofnąć.
+          Usuniesz bibliotekę, pamiętnik, subskrypcje i ustawienia. Tego nie można cofnąć.
         </p>
         <Button
           variant="outline"

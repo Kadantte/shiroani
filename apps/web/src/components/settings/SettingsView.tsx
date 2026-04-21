@@ -90,7 +90,7 @@ const ALL_SECTIONS: SectionDef[] = [
   {
     id: 'background',
     label: 'Tło',
-    subtitle: 'Własny obraz tła z regulacją rozmycia',
+    subtitle: 'Własny obraz tła i regulacja rozmycia',
     group: 'appearance',
     Icon: ImageIcon,
   },
@@ -111,7 +111,7 @@ const ALL_SECTIONS: SectionDef[] = [
   {
     id: 'discord',
     label: 'Discord',
-    subtitle: 'Rich Presence — pokaż znajomym co oglądasz',
+    subtitle: 'Rich Presence: pokaż znajomym, co oglądasz',
     group: 'integrations',
     Icon: MessageCircle,
   },

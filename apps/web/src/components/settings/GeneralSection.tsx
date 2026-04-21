@@ -57,13 +57,13 @@ export function GeneralSection() {
       <SettingsCard
         icon={UserRound}
         title="Profil"
-        subtitle="Imię używane w powitaniu na nowej karcie. Zostaje tylko na tym urządzeniu."
+        subtitle="Imię używane w powitaniu na nowej karcie. Zostaje na tym urządzeniu."
       >
         <SettingsRow stacked>
           <SettingsRowLabel
             id="display-name-label"
             title="Twoje imię"
-            description="Puste pole = Shiro użyje nicku z AniList (jeśli podłączony)."
+            description="Zostaw puste, a Shiro użyje nicku z AniList (jeśli masz połączone konto)."
           />
           <Input
             id="display-name-input"
@@ -94,7 +94,7 @@ export function GeneralSection() {
           divider
           id="feed-startup-refresh-label"
           title="Odświeżaj RSS przy starcie aplikacji"
-          description="Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku Aktualności lub po ręcznym odświeżeniu. Zmiana zacznie działać od następnego uruchomienia."
+          description="Gdy wyłączone, aktualności pobiorą się dopiero po wejściu do widoku Aktualności lub po ręcznym odświeżeniu. Zmiana zadziała od następnego uruchomienia."
           checked={feedRefreshOnStartup}
           onCheckedChange={handleFeedRefreshOnStartupChange}
         />
@@ -104,8 +104,8 @@ export function GeneralSection() {
       <div className="flex items-center gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
         <Sparkles className="w-[18px] h-[18px] flex-shrink-0 text-[oklch(0.8_0.14_70)]" />
         <span>
-          Niektóre zmiany systemowe wymagają restartu aplikacji.{' '}
-          <b className="font-semibold text-foreground">Dane nie zostaną utracone.</b>
+          Niektóre zmiany systemowe wymagają ponownego uruchomienia aplikacji.{' '}
+          <b className="font-semibold text-foreground">Twoje dane są bezpieczne.</b>
         </span>
       </div>
     </div>

@@ -122,7 +122,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
               </ChannelButton>
             </div>
             <p className="mt-2 text-[11.5px] text-muted-foreground/80 leading-relaxed">
-              Kanał stabilny otrzymuje aktualizacje po pełnym przetestowaniu. Beta może zawierać
+              Kanał stabilny dostaje aktualizacje dopiero po przetestowaniu. Beta może zawierać
               błędy.
             </p>
           </div>
@@ -132,8 +132,8 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
         {isMac ? (
           <div className="space-y-3">
             <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
-              Automatyczne aktualizacje nie są na razie dostępne na macOS ze względu na brak podpisu
-              cyfrowego. Pobierz najnowszą wersję ręcznie z GitHub Releases lub Discorda.
+              Na macOS automatyczne aktualizacje na razie nie działają, bo aplikacja nie jest
+              podpisana cyfrowo. Najnowszą wersję pobierz ręcznie z GitHub Releases lub Discorda.
             </p>
             <Button size="sm" variant="outline" onClick={openReleasesPage}>
               <ExternalLink className="w-4 h-4" />

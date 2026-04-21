@@ -51,12 +51,12 @@ export function BrowserSection() {
       <SettingsCard
         icon={Shield}
         title="Blokowanie reklam"
-        subtitle="Wbudowana ochrona prywatności w przeglądarce ShiroAni"
+        subtitle="Wbudowany blokader reklam w przeglądarce ShiroAni."
       >
         <SettingsToggleRow
           id="browser-adblock-label"
           title="Blokowanie reklam"
-          description="Blokuj reklamy w wbudowanej przeglądarce (EasyList + EasyPrivacy)"
+          description="Blokuj reklamy we wbudowanej przeglądarce (EasyList + EasyPrivacy)"
           checked={adblockEnabled}
           onCheckedChange={setAdblockEnabled}
         />
@@ -104,7 +104,7 @@ export function BrowserSection() {
 
           {adblockWhitelist.length === 0 ? (
             <p className="font-mono text-[11px] text-muted-foreground/80 leading-snug">
-              Brak wyjątków — reklamy są blokowane na wszystkich stronach.
+              Brak wyjątków. Reklamy są blokowane na wszystkich stronach.
             </p>
           ) : (
             <ul className="flex flex-wrap gap-1.5" aria-label="Lista zwolnionych z blokady domen">
@@ -137,7 +137,7 @@ export function BrowserSection() {
           )}
 
           <p className="text-[11.5px] text-muted-foreground/85 leading-relaxed">
-            Adblock nie będzie aktywny dla dodanych tu domen. Filtry kosmetyczne pozostają aktywne.
+            Na dodanych tu domenach adblock jest wyłączony. Filtry kosmetyczne nadal działają.
           </p>
         </div>
       </SettingsCard>
@@ -145,7 +145,7 @@ export function BrowserSection() {
       <SettingsCard
         icon={AppWindow}
         title="Wyskakujące okna"
-        subtitle="Kontrola nad popup-ami otwieranymi przez strony"
+        subtitle="Kontroluj wyskakujące okna otwierane przez strony."
         tone="gold"
       >
         <SettingsToggleRow
@@ -160,7 +160,7 @@ export function BrowserSection() {
       <SettingsCard
         icon={Copy}
         title="Zachowanie kart"
-        subtitle="Zarządzanie kartami i historią przeglądania"
+        subtitle="Zarządzaj kartami i historią przeglądania."
         tone="blue"
       >
         <SettingsToggleRow
@@ -174,7 +174,7 @@ export function BrowserSection() {
         <SettingsToggleRow
           id="browser-track-frequent-label"
           title="Zapisz historię przeglądania"
-          description="Lokalna historia — nie jest nigdzie wysyłana."
+          description="Lokalna historia. Nigdzie nie jest wysyłana."
           checked={trackFrequentSites}
           onCheckedChange={setTrackFrequentSites}
         />
@@ -187,8 +187,8 @@ export function BrowserSection() {
         tone="muted"
       >
         <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
-          ShiroAni używa wbudowanego Chromium. Dane przeglądania zapisywane są lokalnie — nigdy nie
-          są wysyłane poza Twoje urządzenie.
+          ShiroAni używa wbudowanego Chromium. Dane przeglądania są zapisywane lokalnie i nigdy nie
+          opuszczają Twojego urządzenia.
         </p>
       </SettingsCard>
     </div>

@@ -33,14 +33,14 @@ export function DockSection() {
       <SettingsCard
         icon={LayoutGrid}
         title="Pozycja docka"
-        subtitle="Wybierz krawędź ekranu — podgląd po prawej reaguje na zmianę."
+        subtitle="Wybierz krawędź ekranu. Podgląd po prawej reaguje na zmianę."
       >
         <DockStage edge={dockEdge} height={160} />
 
         <SettingsRow stacked>
           <SettingsRowLabel
             title="Krawędź"
-            description="Na której krawędzi ekranu przyczepić dock"
+            description="Do której krawędzi ekranu przypiąć dock."
           />
           <div
             role="radiogroup"
@@ -74,7 +74,7 @@ export function DockSection() {
         <SettingsRow divider>
           <SettingsRowLabel
             title="Pozycja na krawędzi"
-            description="Przywróć środek krawędzi, jeśli przesunąłeś dock przeciąganiem"
+            description="Przywróć dock na środek krawędzi, jeśli przeciągnąłeś go w inne miejsce."
           />
           <Button
             variant="outline"

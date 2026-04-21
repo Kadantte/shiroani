@@ -120,7 +120,7 @@ export function DiscordSection() {
             divider
             id="discord-time-label"
             title="Pokaż czas"
-            description="Wyświetlaj czas trwania aktywności"
+            description="Pokazuj, od ilu minut coś oglądasz."
             checked={settings.showElapsedTime}
             onCheckedChange={v => updateField('showElapsedTime', v)}
             disabled={!settings.enabled}
@@ -151,7 +151,7 @@ export function DiscordSection() {
     <SettingsCard
       icon={MessageCircle}
       title="Podgląd"
-      subtitle="Tak Twój status wygląda na Discordzie."
+      subtitle="Tak będzie wyglądał Twój status na Discordzie."
       tone="blue"
     >
       <DiscordPreview
@@ -179,8 +179,8 @@ export function DiscordSection() {
     <div className="flex items-start gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
       <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/80" />
       <p>
-        Status na Discordzie wymaga uruchomionego klienta Discord na komputerze. Inni użytkownicy
-        zobaczą na Twoim profilu Discord, co robisz w ShiroAni.
+        Status na Discordzie działa tylko, gdy klient Discord jest uruchomiony na komputerze. Na
+        Twoim profilu Discord znajomi zobaczą, co robisz w ShiroAni.
       </p>
     </div>
   );
