@@ -1,9 +1,8 @@
 import { memo, useMemo } from 'react';
-import { Rss, Flame, Bookmark } from 'lucide-react';
+import { Rss, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FeedItem, FeedSource } from '@shiroani/shared';
 import { ProgressBar } from '@/components/shared/ProgressBar';
-import { useFeedBookmarksStore } from '@/stores/useFeedBookmarksStore';
 
 interface FeedSidebarProps {
   sources: FeedSource[];
@@ -11,14 +10,9 @@ interface FeedSidebarProps {
   sourceFilter: number | null;
   onSetSourceFilter: (id: number | null) => void;
   totalCount: number;
-  feedView: 'all' | 'bookmarks';
-  onFeedViewChange: (view: 'all' | 'bookmarks') => void;
+  /** When true, non-source cards dim because bookmarks view doesn't compose with filters. */
+  isBookmarksView: boolean;
 }
-
-const FEED_VIEW_OPTIONS: { value: 'all' | 'bookmarks'; label: string }[] = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'bookmarks', label: 'Zakładki' },
-];
 
 /**
  * Right-hand rail for the news feed.
@@ -27,6 +21,11 @@ const FEED_VIEW_OPTIONS: { value: 'all' | 'bookmarks'; label: string }[] = [
  *   - "Najczęściej wspominane" card surfaces the most frequent source names
  *     across currently loaded items as a cheap trending proxy — the store
  *     doesn't expose per-title mention counts, so we fall back to sources.
+ *
+ * The primary Wszystkie/Zakładki view toggle lives in the parent's ViewHeader
+ * so it's discoverable regardless of viewport (this sidebar only renders at
+ * xl breakpoints). This component just dims its cards when the parent is in
+ * bookmarks mode.
  */
 export const FeedSidebar = memo(function FeedSidebar({
   sources,
@@ -34,11 +33,8 @@ export const FeedSidebar = memo(function FeedSidebar({
   sourceFilter,
   onSetSourceFilter,
   totalCount,
-  feedView,
-  onFeedViewChange,
+  isBookmarksView,
 }: FeedSidebarProps) {
-  const bookmarksCount = useFeedBookmarksStore(s => s.bookmarks.size);
-  const isBookmarksView = feedView === 'bookmarks';
   // Count items per source from the currently-loaded set for "live" counters
   const perSourceCount = useMemo(() => {
     const map = new Map<number, number>();
@@ -72,46 +68,6 @@ export const FeedSidebar = memo(function FeedSidebar({
 
   return (
     <aside className="flex flex-col gap-2.5 min-w-0">
-      {/* Feed view segmented control — mirrors the language pill pattern in
-          FeedView's sub-header. "Zakładki" swaps the list for saved snapshots. */}
-      <div
-        className="flex items-center gap-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06] p-0.5"
-        role="group"
-        aria-label="Widok"
-      >
-        {FEED_VIEW_OPTIONS.map(({ value, label }) => {
-          const active = feedView === value;
-          const showCount = value === 'bookmarks';
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onFeedViewChange(value)}
-              aria-pressed={active}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1 px-2.5 h-7 rounded-md text-[11px] font-medium transition-colors duration-150',
-                active
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-muted-foreground/80 hover:text-foreground'
-              )}
-            >
-              {value === 'bookmarks' && <Bookmark className="w-3 h-3" />}
-              <span>{label}</span>
-              {showCount && (
-                <span
-                  className={cn(
-                    'font-mono text-[9.5px]',
-                    active ? 'text-primary/80' : 'text-muted-foreground/60'
-                  )}
-                >
-                  · {bookmarksCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Sources card */}
       <div
         className={cn(

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
-import { Rss, RefreshCw, Inbox, CheckCheck } from 'lucide-react';
+import { Rss, RefreshCw, Inbox, CheckCheck, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
@@ -236,6 +236,55 @@ export function FeedView() {
         onFilterChange={handleCategoryFilterChange}
         actions={
           <>
+            {/* Primary view toggle — Wszystkie vs Zakładki. Sits at the front of
+                the header actions so it's always reachable, regardless of
+                viewport (sidebar hides below xl). */}
+            <div
+              className="flex items-center gap-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06] p-0.5"
+              role="group"
+              aria-label="Widok"
+            >
+              <button
+                type="button"
+                onClick={() => setFeedView('all')}
+                aria-pressed={feedView === 'all'}
+                className={cn(
+                  'px-2.5 h-6 rounded-md text-[11px] font-medium transition-colors duration-150',
+                  feedView === 'all'
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-muted-foreground/80 hover:text-foreground'
+                )}
+              >
+                Wszystkie
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedView('bookmarks')}
+                aria-pressed={feedView === 'bookmarks'}
+                className={cn(
+                  'flex items-center gap-1 px-2.5 h-6 rounded-md text-[11px] font-medium transition-colors duration-150',
+                  feedView === 'bookmarks'
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-muted-foreground/80 hover:text-foreground'
+                )}
+              >
+                <Bookmark className="w-3 h-3" />
+                <span>Zakładki</span>
+                {bookmarks.size > 0 && (
+                  <span
+                    className={cn(
+                      'font-mono text-[9.5px]',
+                      feedView === 'bookmarks' ? 'text-primary/80' : 'text-muted-foreground/60'
+                    )}
+                  >
+                    · {bookmarks.size}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="w-px h-4 bg-border-glass mx-1" />
+
             {/* Language pill toggle — mirrors mock sub-header */}
             <div
               className="flex items-center gap-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06] p-0.5"
@@ -425,8 +474,7 @@ export function FeedView() {
                     sourceFilter={sourceFilter}
                     onSetSourceFilter={setSourceFilter}
                     totalCount={total}
-                    feedView={feedView}
-                    onFeedViewChange={setFeedView}
+                    isBookmarksView={feedView === 'bookmarks'}
                   />
                 </div>
               </div>
