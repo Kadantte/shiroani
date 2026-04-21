@@ -1,0 +1,156 @@
+---
+import { BUILT_IN_THEME_METADATA, type BuiltInThemeMeta } from '@shiroani/shared';
+
+type Feature = {
+  cls: string;
+  no: string;
+  tag?: string;
+  tagOn?: boolean;
+  title: string;
+  desc: string;
+  img?: string;
+  alt?: string;
+  w?: number;
+  h?: number;
+  themes?: readonly BuiltInThemeMeta[];
+};
+
+const SHOT = { w: 3420, h: 2214 };
+const RPC = { w: 1116, h: 378 };
+
+const features: Feature[] = [
+  {
+    cls: 'col-7 hl',
+    no: '№ 01 · BROWSER',
+    tag: 'AD-BLOCK · GHOSTERY',
+    tagOn: true,
+    title: 'Wbudowana przeglądarka bez reklam.',
+    desc: 'Karty, sesje, zakładki i blokada reklam Ghostery — wszystko w tym samym oknie, w którym oglądasz. Żadnych pop-upów ani przekierowań.',
+    img: '/assets/browser_view.webp',
+    alt: 'Wbudowana przeglądarka',
+    ...SHOT,
+  },
+  {
+    cls: 'col-5 hl',
+    no: '№ 02 · LIBRARY',
+    tag: '5 STATUSÓW',
+    title: 'Biblioteka po Twojemu.',
+    desc: 'Oglądane, ukończone, planowane, wstrzymane, porzucone. Filtry, notatki, odcinki.',
+    img: '/assets/library_view.webp',
+    alt: 'Biblioteka anime',
+    ...SHOT,
+  },
+  {
+    cls: 'col-8 hl',
+    no: '№ 03 · SCHEDULE',
+    tag: 'ANILIST · LIVE',
+    tagOn: true,
+    title: 'Harmonogram emisji z odliczaniem do premiery.',
+    desc: 'Widok tygodniowy, dzienny i tabelaryczny. Dane prosto z AniList. Powiadomienie, gdy wchodzi nowy odcinek.',
+    img: '/assets/schedule_view.webp',
+    alt: 'Harmonogram emisji',
+    ...SHOT,
+  },
+  {
+    cls: 'col-4',
+    no: '№ 04 · DIARY',
+    tag: 'TIPTAP',
+    title: 'Pamiętnik z formatowaniem.',
+    desc: 'Zapisuj wrażenia po każdym odcinku: tekst z formatowaniem, obrazki, nagłówki — wszystko lokalnie.',
+    img: '/assets/diary_view.webp',
+    alt: 'Pamiętnik',
+    ...SHOT,
+  },
+  {
+    cls: 'col-4',
+    no: '№ 05 · DISCORD RPC',
+    tag: 'TEMPLATE EDITOR',
+    title: 'Pokaż znajomym, co oglądasz.',
+    desc: 'Rich Presence z własnym szablonem. Podgląd na żywo w ustawieniach. Edytujesz tekst, obrazki, akcje.',
+    img: '/assets/discord_rpc.webp',
+    alt: 'Discord Rich Presence',
+    ...RPC,
+  },
+  {
+    cls: 'col-4',
+    no: '№ 06 · NEW TAB',
+    title: 'Ulubione strony pod jednym kliknięciem.',
+    desc: 'Kafelki szybkiego dostępu. Raz skonfigurujesz, masz na zawsze.',
+    img: '/assets/onboarding.webp',
+    alt: 'Nowa karta',
+    ...SHOT,
+  },
+  {
+    cls: 'col-4 ft-themes',
+    no: '№ 07 · THEMES',
+    title: '17 motywów plus edytor własnych.',
+    desc: '15 ciemnych, 2 jasne, większość inspirowana anime. Wizualny edytor palety, czcionek i tła.',
+    themes: BUILT_IN_THEME_METADATA,
+  },
+  {
+    cls: 'col-4',
+    no: '№ 08 · NOTIFICATIONS',
+    title: 'Nowy odcinek? Jesteś pierwszy.',
+    desc: 'Powiadomienia systemowe, gdy tylko któraś seria z biblioteki dostaje nowy odcinek.',
+  },
+  {
+    cls: 'col-4',
+    no: '№ 09 · IMPORT / EXPORT',
+    title: 'Twoje dane należą do Ciebie.',
+    desc: 'Lokalne SQLite. Import i eksport biblioteki i pamiętnika jednym kliknięciem. Bez chmury, bez konta.',
+  },
+];
+---
+
+<section class="features">
+  <div class="fgrid">
+    {features.map((f) => (
+      <article class={`fc ${f.cls}`}>
+        <div class="fc-head">
+          <span class="no">{f.no}</span>
+          {f.tag && <span class={`tag ${f.tagOn ? 'on' : ''}`}>{f.tag}</span>}
+        </div>
+        <h3>{f.title}</h3>
+        <p>{f.desc}</p>
+        {f.img && (
+          <div class="fimg">
+            <img
+              src={f.img}
+              alt={f.alt}
+              loading="lazy"
+              decoding="async"
+              width={f.w}
+              height={f.h}
+            />
+          </div>
+        )}
+        {f.themes && (
+          <div class="fthemes" aria-hidden="true">
+            <div class="fthemes-row" data-group="dark">
+              {f.themes.filter((t) => t.isDark).map((t) => (
+                <div
+                  class="fthemes-sw"
+                  title={t.label}
+                  style={`--sw-bg: oklch(0.12 0.018 300); --sw-fg: ${t.color};`}
+                >
+                  <span class="fthemes-lbl">{t.label}</span>
+                </div>
+              ))}
+            </div>
+            <div class="fthemes-row" data-group="light">
+              {f.themes.filter((t) => !t.isDark).map((t) => (
+                <div
+                  class="fthemes-sw is-light"
+                  title={t.label}
+                  style={`--sw-bg: oklch(0.97 0.008 80); --sw-fg: ${t.color};`}
+                >
+                  <span class="fthemes-lbl">{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+    ))}
+  </div>
+</section>

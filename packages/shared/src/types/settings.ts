@@ -66,30 +66,56 @@ export interface CustomThemeDefinition {
 }
 
 /**
+ * Display metadata for a built-in theme. Shared by the desktop/web theme
+ * picker, the landing palette preview, and anywhere else the app needs to
+ * render a theme tile. Visual-only fields (icon components, CSS variables)
+ * stay in their respective apps.
+ */
+export interface BuiltInThemeMeta {
+  value: BuiltInTheme;
+  label: string;
+  /** Primary/brand color hex, matches `--primary` in the theme's stylesheet. */
+  color: string;
+  isDark: boolean;
+}
+
+/**
+ * Single source of truth for built-in theme order and display colors.
+ * Order drives the theme picker grid; Plum leads as the default.
+ */
+export const BUILT_IN_THEME_METADATA: readonly BuiltInThemeMeta[] = [
+  { value: 'plum', label: 'Plum', color: '#d46cb1', isDark: true },
+  { value: 'noir', label: 'Noir', color: '#d8d8d8', isDark: true },
+  { value: 'matcha', label: 'Matcha', color: '#88c06a', isDark: true },
+  { value: 'iced', label: 'Iced', color: '#7cc1d4', isDark: true },
+  { value: 'ember', label: 'Ember', color: '#e08a3a', isDark: true },
+  { value: 'sakura', label: 'Sakura', color: '#f19bc0', isDark: true },
+  { value: 'midnight', label: 'Midnight', color: '#4e9dd8', isDark: true },
+  { value: 'abyss', label: 'Abyss', color: '#5fc7bf', isDark: true },
+  { value: 'crimson', label: 'Crimson', color: '#d2423a', isDark: true },
+  { value: 'dusk', label: 'Dusk', color: '#d4a04a', isDark: true },
+  { value: 'cosmic', label: 'Cosmic', color: '#b07cf4', isDark: true },
+  { value: 'void', label: 'Void', color: '#9c3ff0', isDark: true },
+  { value: 'sunset', label: 'Sunset', color: '#e4b042', isDark: true },
+  { value: 'shirogane', label: 'Shirogane', color: '#cfc7c9', isDark: true },
+  { value: 'onyx', label: 'Onyx', color: '#c98f3e', isDark: true },
+  { value: 'paper', label: 'Paper', color: '#b0305b', isDark: false },
+  { value: 'haiku', label: 'Haiku', color: '#3e8552', isDark: false },
+];
+
+/**
  * Dark themes list
  */
-export const DARK_THEMES: BuiltInTheme[] = [
-  'plum',
-  'noir',
-  'matcha',
-  'iced',
-  'ember',
-  'sakura',
-  'midnight',
-  'abyss',
-  'crimson',
-  'dusk',
-  'cosmic',
-  'void',
-  'sunset',
-  'shirogane',
-  'onyx',
-];
+export const DARK_THEMES: BuiltInTheme[] = BUILT_IN_THEME_METADATA.filter(t => t.isDark).map(
+  t => t.value
+);
 
 /**
  * Light themes list
  */
-export const LIGHT_THEMES: BuiltInTheme[] = ['paper', 'haiku'];
+export const LIGHT_THEMES: BuiltInTheme[] = BUILT_IN_THEME_METADATA.filter(t => !t.isDark).map(
+  t => t.value
+);
 
 /**
  * Set of all built-in theme names for fast lookup

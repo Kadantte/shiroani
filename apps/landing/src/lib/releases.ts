@@ -1,13 +1,12 @@
 /**
  * Landing changelog adapter.
  *
- * The canonical release data lives in the `@shiroani/changelog` workspace
- * package and is shared with the desktop app's in-app changelog view. This
- * file stays as a thin adapter: it re-exports the data under the names the
- * landing components already use and owns the mapping from `category.kind` →
- * the lucide icon + tailwind color class that used to live inline.
+ * Release data is sourced from the shared `@shiroani/changelog` package —
+ * the single source of truth, also consumed by the in-app view in
+ * `apps/web`. This file keeps the field names the landing UI was built
+ * against (`dateShort`, `slug`) and exposes a `currentVersion()` helper
+ * used by the hero, navbar, footer and suite tagline.
  */
-import { MessageCircle, Monitor, Rss, Shield, Sparkles, Wrench } from 'lucide-react';
 import {
   RELEASES,
   type Category as SharedCategory,
@@ -15,57 +14,31 @@ import {
   type Release as SharedRelease,
 } from '@shiroani/changelog';
 
-export type { CategoryKind };
-
-export interface ChangeEntry {
-  icon: typeof Sparkles;
-  text: string;
-}
+export type CategorySlug = CategoryKind;
 
 export interface ReleaseCategory {
+  slug: CategorySlug;
   label: string;
-  icon: typeof Sparkles;
-  color: string;
-  entries: ChangeEntry[];
+  // entries are rendered via set:html in ChangelogPage.astro to allow <code> tags.
+  // Source is author-controlled static data only — never accept user input here.
+  entries: string[];
 }
 
 export interface Release {
   version: string;
   date: string;
+  dateShort: string;
   title: string;
   description: string;
+  type: 'major' | 'minor';
   categories: ReleaseCategory[];
 }
 
-/** Marketing-side presentation for each category kind. */
-interface CategoryPresentation {
-  icon: typeof Sparkles;
-  color: string;
-}
-
-const CATEGORY_PRESENTATION: Record<CategoryKind, CategoryPresentation> = {
-  feature: { icon: Sparkles, color: 'text-primary' },
-  fix: { icon: Wrench, color: 'text-muted-foreground' },
-  polish: { icon: Wrench, color: 'text-muted-foreground' },
-  security: { icon: Shield, color: 'text-primary' },
-  feed: { icon: Rss, color: 'text-primary' },
-  macos: { icon: Monitor, color: 'text-muted-foreground' },
-  app: { icon: Monitor, color: 'text-primary' },
-  bot: { icon: MessageCircle, color: 'text-gold' },
-};
-
-/** Maps a category kind to its lucide icon (used in section headings). */
-export function iconForKind(kind: CategoryKind): typeof Sparkles {
-  return CATEGORY_PRESENTATION[kind].icon;
-}
-
-function adaptCategory(cat: SharedCategory): ReleaseCategory {
-  const { icon, color } = CATEGORY_PRESENTATION[cat.kind];
+function adaptCategory(category: SharedCategory): ReleaseCategory {
   return {
-    label: cat.label,
-    icon,
-    color,
-    entries: cat.entries.map(text => ({ icon, text })),
+    slug: category.kind,
+    label: category.label,
+    entries: [...category.entries],
   };
 }
 
@@ -73,12 +46,16 @@ function adaptRelease(release: SharedRelease): Release {
   return {
     version: release.version,
     date: release.date,
+    dateShort: release.shortDate,
     title: release.title,
     description: release.description,
+    type: release.type,
     categories: release.categories.map(adaptCategory),
   };
 }
 
 export const releases: Release[] = RELEASES.map(adaptRelease);
 
-export const latestRelease = releases[0];
+export const currentVersion = (): string => releases[0].version;
+
+export const latestRelease: Release = releases[0];

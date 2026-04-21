@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title,
-  description = 'ShiroAni to osobista przeglądarka i tracker anime. Przeglądaj, śledź i odkrywaj anime z wbudowaną przeglądarką i społecznością Discord.',
+  description = 'ShiroAni to aplikacja na komputer: przeglądarka bez reklam, biblioteka, harmonogram emisji i pamiętnik.',
 } = Astro.props;
 
 const ogImage = new URL('/og-default.png', Astro.site);
@@ -20,19 +20,34 @@ const ogImage = new URL('/og-default.png', Astro.site);
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 
-<!-- Primary Meta Tags -->
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Shippori+Mincho:wght@500;700;800&display=swap"
+  media="print"
+  onload="this.media='all'"
+/>
+<noscript>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Shippori+Mincho:wght@500;700;800&display=swap"
+  />
+</noscript>
+
 <title>{title}</title>
 <meta name="description" content={description} />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content={Astro.url} />
-<meta property="og:title" content="ShiroAni · Twój przytulny kącik anime" />
-<meta property="og:description" content="Przeglądaj, śledź i odkrywaj anime w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
+<meta property="og:title" content="ShiroAni · przeglądarka i tracker anime" />
+<meta property="og:description" content={description} />
 <meta property="og:image" content={ogImage} />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ShiroAni · Twój przytulny kącik anime" />
-<meta name="twitter:description" content="Przeglądaj, śledź i odkrywaj anime w jednej desktopowej aplikacji z wbudowaną przeglądarką i społecznością." />
+<meta name="twitter:title" content="ShiroAni · przeglądarka i tracker anime" />
+<meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={ogImage} />

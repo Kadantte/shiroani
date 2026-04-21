@@ -1,0 +1,332 @@
+/* ============ DOWNLOAD PAGE (/download) ============ */
+.dlp-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 100px;
+}
+
+/* ---- Header (matches changelog .hdr rhythm) ---- */
+.dlp-hdr {
+  position: relative;
+  padding: 72px 0 40px;
+  overflow: hidden;
+}
+.dlp-hdr .kanji-bg {
+  position: absolute;
+  top: 10px;
+  right: -40px;
+  font-family: var(--font-mincho);
+  font-weight: 800;
+  font-size: clamp(180px, 22vw, 280px);
+  line-height: 0.82;
+  color: oklch(from var(--text) l c h / 0.04);
+  pointer-events: none;
+  user-select: none;
+}
+.dlp-hdr .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 6px 12px;
+  border: 1px solid oklch(from var(--accent) l c h / 0.3);
+  border-radius: 999px;
+  background: oklch(from var(--accent) l c h / 0.08);
+}
+.dlp-hdr .eyebrow .blip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.dlp-hdr h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--fs-display-xl);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  margin-top: 20px;
+  max-width: 14ch;
+  text-wrap: balance;
+}
+.dlp-hdr h1 em {
+  font-family: var(--font-mincho);
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 800;
+}
+.dlp-hdr .sub {
+  margin-top: 22px;
+  font-size: 17px;
+  color: var(--text-2);
+  max-width: 58ch;
+}
+
+/* ---- Body ---- */
+.dlp-body {
+  margin-top: 16px;
+}
+
+/* ---- Platform cards ---- */
+.dlp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dlp-card {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 26px;
+  background: var(--bg-2);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  color: var(--text);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+.dlp-card:hover {
+  transform: translateY(-2px);
+  border-color: oklch(from var(--accent) l c h / 0.5);
+  background: var(--bg-3);
+}
+.dlp-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.dlp-card.is-primary {
+  border-color: oklch(from var(--accent) l c h / 0.55);
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+  box-shadow: 0 20px 40px -24px var(--accent-glow);
+}
+.dlp-card.is-loading {
+  pointer-events: none;
+  opacity: 0.75;
+}
+.dlp-card .pico {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: oklch(from var(--accent) l c h / 0.1);
+  color: var(--accent);
+}
+.dlp-card .pico svg {
+  width: 22px;
+  height: 22px;
+}
+.dlp-card .pbody {
+  min-width: 0;
+}
+.dlp-card .pn {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dlp-card .pbadge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid oklch(from var(--accent) l c h / 0.4);
+  background: oklch(from var(--accent) l c h / 0.1);
+}
+.dlp-card .ps {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.dlp-card .pskel {
+  display: inline-block;
+  min-width: 120px;
+  color: var(--text-3);
+  opacity: 0.6;
+  animation: dlp-skel 1.4s ease-in-out infinite;
+}
+.dlp-card .parr {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--accent);
+  transition: transform 0.2s ease;
+}
+.dlp-card:hover .parr {
+  transform: translateY(2px);
+}
+
+/* ---- Error ---- */
+.dlp-error {
+  padding: 40px 32px;
+  background: var(--bg-2);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  text-align: center;
+}
+.dlp-error p {
+  color: var(--text-2);
+  max-width: 48ch;
+  margin: 0 auto 20px;
+}
+
+/* ---- Platform notes (Win SmartScreen, macOS xattr) ---- */
+.dlp-notes {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dlp-note {
+  padding: 28px 32px;
+  background: var(--bg-2);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+}
+.dlp-note .nhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.dlp-note .ndot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.dlp-note p {
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 64ch;
+}
+.dlp-note .ncode {
+  margin-top: 16px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--hairline-2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-3);
+}
+.dlp-note .ncode code {
+  flex: 1;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.dlp-note .ncode button {
+  padding: 0 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-left: 1px solid var(--hairline-2);
+  background: var(--bg-2);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dlp-note .ncode button:hover {
+  background: oklch(from var(--accent) l c h / 0.12);
+}
+.dlp-note .nmeta {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ---- Links row ---- */
+.dlp-links {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 28px;
+  border-top: 1px solid var(--hairline);
+}
+.dlp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid var(--hairline-2);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: transparent;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+}
+.dlp-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: oklch(from var(--accent) l c h / 0.06);
+}
+.dlp-btn-primary {
+  color: var(--accent);
+  border-color: oklch(from var(--accent) l c h / 0.5);
+  background: oklch(from var(--accent) l c h / 0.1);
+}
+.dlp-btn-primary:hover {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ---- SR-only live region ---- */
+.dlp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes dlp-skel {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}

@@ -1,0 +1,59 @@
+/* Subtle atmosphere — ONE soft glow */
+.atm {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--accent-glow), transparent 55%);
+  opacity: 0.5;
+}
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+html[data-theme='paper'] .grain {
+  mix-blend-mode: multiply;
+  opacity: 0.05;
+}
+body.no-grain .grain {
+  display: none;
+}
+body.no-ticker .ticker-wrap {
+  display: none;
+}
+
+main,
+header,
+section,
+footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keyboard-only skip-to-content link (WCAG 2.4.1). Hidden until focused. */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 0 0 8px 0;
+  transform: translateY(-120%);
+  transition: transform 0.2s;
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--bg);
+  outline-offset: 2px;
+}

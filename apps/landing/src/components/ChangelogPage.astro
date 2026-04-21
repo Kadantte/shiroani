@@ -1,0 +1,92 @@
+---
+import { releases, type CategorySlug } from '../lib/releases';
+
+const counts = {
+  all: releases.length,
+  major: releases.filter((r) => r.type === 'major').length,
+  minor: releases.filter((r) => r.type === 'minor').length,
+};
+
+const iconPaths: Record<CategorySlug, string> = {
+  feature: 'M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z',
+  polish: 'M14.7 6.3a1 1 0 0 1 0 1.4L8 14.4l-4.4 1 1-4.4 6.7-6.7a1 1 0 0 1 1.4 0l2 2z|M13.5 6.5l3 3',
+  fix: 'M14 7l3 3m-3-3l-8 8v3h3l8-8m-3-3l2-2a1.4 1.4 0 0 1 2 2l-2 2',
+  security: 'M12 2l8 3v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z',
+  feed: 'M4 4a16 16 0 0 1 16 16M4 11a9 9 0 0 1 9 9M5 18a1 1 0 1 0 0 2 1 1 0 0 0 0-2z',
+  macos: 'M3 4h18v13H3z|M8 21h8M12 17v4',
+  app: 'M3 4h18v13H3z|M8 21h8M12 17v4',
+  bot: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z',
+};
+---
+
+<header class="hdr">
+  <div class="kanji-bg">記録</div>
+  <span class="eyebrow"><span class="blip"></span>v{releases[0].version} · {releases[0].title.split(',')[0]}</span>
+  <h1>Co <em>nowego</em>?</h1>
+  <p class="sub">
+    Historia zmian w ShiroAni: funkcja po funkcji, poprawka po poprawce. Od pierwszego buildu po
+    ostatni wieczór w bibliotece.
+  </p>
+  <div class="filters" id="filters">
+    <b>Filtr</b>
+    <button class="chip on" data-f="all" aria-pressed="true">Wszystkie <span style="opacity:.6">{counts.all}</span></button>
+    <button class="chip" data-f="major" aria-pressed="false">Większe wydania <span style="opacity:.6">{counts.major}</span></button>
+    <button class="chip" data-f="minor" aria-pressed="false">Patche <span style="opacity:.6">{counts.minor}</span></button>
+  </div>
+</header>
+
+<section class="log" id="log">
+  {releases.map((r, i) => (
+    <article class={`rel${i === 0 ? ' latest' : ''}`} data-t={r.type}>
+      <div class="side"><b>v{r.version}</b>{r.dateShort}</div>
+      <div class="rel-head">
+        <span class="v-tag">v{r.version}</span>
+        {i === 0 && <span class="badge-new">Najnowsza</span>}
+        <span class="date">{r.date}</span>
+      </div>
+      <h2>{r.title}</h2>
+      <p class="desc">{r.description}</p>
+      <div class="cats">
+        {r.categories.map((c) => (
+          <div class="cat" data-c={c.slug}>
+            <div class="cat-head">
+              <span class="cico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  {iconPaths[c.slug].split('|').map((d) => <path d={d} />)}
+                </svg>
+              </span>
+              {c.label}
+            </div>
+            <ul class="cat-list">
+              {c.entries.map((e) => <li set:html={e}></li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </article>
+  ))}
+
+  <div class="end">
+    <span class="tag">Początek · 2026</span>
+    <p>„A co, gdyby śledzenie anime było wygodne?"</p>
+  </div>
+</section>
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('#filters .chip');
+  const rels = document.querySelectorAll<HTMLElement>('.rel');
+  chips.forEach((c) => {
+    c.addEventListener('click', () => {
+      chips.forEach((x) => {
+        x.classList.remove('on');
+        x.setAttribute('aria-pressed', 'false');
+      });
+      c.classList.add('on');
+      c.setAttribute('aria-pressed', 'true');
+      const f = c.dataset.f;
+      rels.forEach((r) => {
+        r.style.display = f === 'all' || r.dataset.t === f ? '' : 'none';
+      });
+    });
+  });
+</script>

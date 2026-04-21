@@ -1,0 +1,24 @@
+---
+interface Props {
+  id?: string;
+  num: string;
+  eyebrow: string;
+  title: string;
+  em?: string;
+  titleSuffix?: string;
+  meta: string;
+}
+
+const { id, num, eyebrow, title, em, titleSuffix, meta } = Astro.props;
+---
+
+<div class="divider" id={id}>
+  <div class="n">{num}</div>
+  <div class="t">
+    <small>{eyebrow}</small>
+    {title}
+    {em && <em>{em}</em>}
+    {titleSuffix}
+  </div>
+  <div class="meta" set:html={meta}></div>
+</div>

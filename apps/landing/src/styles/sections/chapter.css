@@ -1,0 +1,56 @@
+/* ============ CHAPTERS ============ */
+.divider {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 92px 32px 32px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 28px;
+  align-items: center;
+}
+.divider .n {
+  font-family: var(--font-mincho);
+  font-weight: 800;
+  font-size: var(--fs-display-xxl);
+  line-height: 0.85;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+.divider .t {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--fs-display-sm);
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+}
+.divider .t small {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+.divider .t em {
+  font-family: var(--font-mincho);
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 800;
+}
+.divider .meta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.divider::after {
+  grid-column: 1 / -1;
+  content: '';
+  height: 1px;
+  background: var(--hairline-2);
+  margin-top: 18px;
+}
