@@ -6,11 +6,11 @@ type Theme = {
 
 const THEMES: Theme[] = [
   { id: 'plum', name: 'Plum', sub: 'DOMYŚLNY' },
-  { id: 'noir', name: 'Noir', sub: 'MONOCHROME' },
+  { id: 'noir', name: 'Noir', sub: 'MONOCHROMATYCZNY' },
   { id: 'matcha', name: 'Matcha', sub: 'ZIELONY CHŁÓD' },
   { id: 'iced', name: 'Iced', sub: 'BŁĘKITNA NOC' },
-  { id: 'ember', name: 'Ember', sub: 'CIEPŁA POMARAŃCZ' },
-  { id: 'paper', name: 'Paper', sub: 'JASNY TRYB' },
+  { id: 'ember', name: 'Ember', sub: 'CIEPŁA POMARAŃCZA' },
+  { id: 'paper', name: 'Paper', sub: 'TRYB JASNY' },
 ];
 
 export function Themes() {

@@ -131,8 +131,8 @@ export function DownloadPage() {
           Pobierz <em>ShiroAni</em>.
         </h1>
         <p className="sub">
-          Darmowe, bez konta, bez reklam. Auto-update na Windowsie. Żadna z wersji nie jest jeszcze
-          podpisana — szczegóły dotyczące SmartScreen i macOS poniżej.
+          Za darmo, bez konta, bez reklam. Na Windowsie aktualizuje się sama. Żadna wersja nie jest
+          jeszcze podpisana, szczegóły o SmartScreen i macOS znajdziesz niżej.
         </p>
       </header>
 
@@ -140,7 +140,8 @@ export function DownloadPage() {
         {error ? (
           <div className="dlp-error">
             <p>
-              Nie udało się pobrać informacji o najnowszej wersji. Plik znajdziesz na stronie wydań.
+              Nie udało się pobrać informacji o najnowszej wersji. Plik znajdziesz w wydaniach na
+              GitHubie.
             </p>
             <a
               href={GITHUB_RELEASES_URL}
@@ -188,9 +189,9 @@ export function DownloadPage() {
                           {p.extension} · {p.arch} · {size}
                         </>
                       ) : release && !asset ? (
-                        <>Brak asseta — zobacz release</>
+                        <>Brak pliku dla tej platformy, zajrzyj do wydania</>
                       ) : (
-                        <span className="pskel">pobieranie danych…</span>
+                        <span className="pskel">wczytywanie…</span>
                       )}
                     </div>
                   </div>
@@ -214,12 +215,12 @@ export function DownloadPage() {
               Windows · SmartScreen
             </div>
             <p>
-              Instalator nie jest podpisany certyfikatem EV, więc Windows SmartScreen pokaże
-              ostrzeżenie <b>„Windows ochronił Twój komputer"</b>. Kliknij <b>Więcej informacji</b>,
-              a następnie <b>Uruchom mimo to</b>, żeby kontynuować instalację.
+              Instalator nie ma certyfikatu EV, więc Windows SmartScreen wyświetli ostrzeżenie{' '}
+              <b>„System Windows ochronił Twój komputer"</b>. Kliknij <b>Więcej informacji</b>, a
+              potem <b>Uruchom mimo to</b>.
             </p>
             <p className="nmeta">
-              Po instalacji aplikacja aktualizuje się sama — ostrzeżenie pojawi się tylko przy
+              Po instalacji aplikacja aktualizuje się sama. Ostrzeżenie zobaczysz tylko przy
               pierwszym uruchomieniu.
             </p>
           </aside>
@@ -230,8 +231,8 @@ export function DownloadPage() {
               macOS · po każdym pobraniu
             </div>
             <p>
-              Aplikacja nie jest podpisana certyfikatem Apple, więc macOS zablokuje ją przy próbie
-              otwarcia. Po przeniesieniu ShiroAni do folderu <b>Applications</b> uruchom w
+              Aplikacja nie ma certyfikatu Apple, więc macOS zablokuje ją przy pierwszym
+              uruchomieniu. Po przeniesieniu ShiroAni do folderu <b>Applications</b> wklej w
               terminalu:
             </p>
             <div className="ncode">
@@ -241,8 +242,8 @@ export function DownloadPage() {
               </button>
             </div>
             <p className="nmeta">
-              Powtórz tę komendę przy każdej aktualizacji — macOS nakłada kwarantannę na każdy
-              świeżo pobrany plik.
+              Powtarzaj tę komendę po każdej aktualizacji. macOS oznacza kwarantanną każdy świeżo
+              pobrany plik.
             </p>
           </aside>
         </div>
@@ -259,7 +260,7 @@ export function DownloadPage() {
             className="dlp-btn"
           >
             <span aria-hidden="true">↗</span>
-            <span>Pełny release na GitHubie</span>
+            <span>Pełne wydanie na GitHubie</span>
           </a>
         </div>
       </section>

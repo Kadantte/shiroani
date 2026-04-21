@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title,
-  description = 'ShiroAni to desktopowa aplikacja z wbudowaną przeglądarką bez reklam, trackerem biblioteki, harmonogramem emisji i pamiętnikiem.',
+  description = 'ShiroAni to aplikacja na komputer: przeglądarka bez reklam, biblioteka, harmonogram emisji i pamiętnik.',
 } = Astro.props;
 
 const ogImage = new URL('/og-default.png', Astro.site);
@@ -42,12 +42,12 @@ const ogImage = new URL('/og-default.png', Astro.site);
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content={Astro.url} />
-<meta property="og:title" content="ShiroAni · przeglądarka & tracker anime" />
+<meta property="og:title" content="ShiroAni · przeglądarka i tracker anime" />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImage} />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ShiroAni · przeglądarka & tracker anime" />
+<meta name="twitter:title" content="ShiroAni · przeglądarka i tracker anime" />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={ogImage} />
