@@ -1,9 +1,19 @@
-import { session } from 'electron';
+import { session, webContents } from 'electron';
 import { createMainLogger } from '../logger';
 import { getBlocker, enableCosmeticFiltering, disableCosmeticFiltering } from '../adblock';
 import { fromElectronDetails } from '@ghostery/adblocker-electron';
 
 const logger = createMainLogger('BrowserManager');
+
+/**
+ * Normalize a hostname for whitelist comparisons (lowercase + strip leading `www.`).
+ * Returns an empty string for invalid input.
+ */
+function normalizeHost(host: string | undefined | null): string {
+  if (!host) return '';
+  const lower = host.trim().toLowerCase();
+  return lower.startsWith('www.') ? lower.slice(4) : lower;
+}
 
 /**
  * Manages the shared browser session for <webview> tags.
@@ -18,12 +28,49 @@ const logger = createMainLogger('BrowserManager');
 export class BrowserManager {
   private browserSession: Electron.Session | null = null;
   private adblockEnabled = false;
+  /** Top-frame hostnames where adblock network filtering is skipped. */
+  private adblockWhitelist = new Set<string>();
 
   /**
    * Check if adblocking is currently enabled.
    */
   isAdblockEnabled(): boolean {
     return this.adblockEnabled;
+  }
+
+  /**
+   * Replace the adblock whitelist with the given top-frame hostnames.
+   * Hosts are normalized (lowercased, `www.` stripped) before storage.
+   */
+  setAdblockWhitelist(hosts: string[]): void {
+    this.adblockWhitelist = new Set(hosts.map(h => normalizeHost(h)).filter(h => h.length > 0));
+    logger.info(`Adblock whitelist updated: ${this.adblockWhitelist.size} host(s)`);
+  }
+
+  /**
+   * Resolve the top-frame hostname for a webRequest by looking up the
+   * originating webContents. Returns an empty string when unresolvable.
+   */
+  private resolveTopFrameHost(webContentsId: number | undefined): string {
+    if (typeof webContentsId !== 'number' || webContentsId < 0) return '';
+    try {
+      const contents = webContents.fromId(webContentsId);
+      if (!contents || contents.isDestroyed()) return '';
+      const currentUrl = contents.getURL();
+      if (!currentUrl) return '';
+      return normalizeHost(new URL(currentUrl).hostname);
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Whether the top-frame hostname for this request is whitelisted (adblock off).
+   */
+  private isTopFrameWhitelisted(webContentsId: number | undefined): boolean {
+    if (this.adblockWhitelist.size === 0) return false;
+    const host = this.resolveTopFrameHost(webContentsId);
+    return host.length > 0 && this.adblockWhitelist.has(host);
   }
 
   /**
@@ -167,8 +214,10 @@ export class BrowserManager {
         'autoplay=*, fullscreen=*, encrypted-media=*, picture-in-picture=*',
       ];
 
-      // If adblock is enabled, also run the adblocker's CSP injection logic
-      if (this.adblockEnabled) {
+      // If adblock is enabled, also run the adblocker's CSP injection logic.
+      // TODO(adblock-whitelist): cosmetic filtering still applies session-wide;
+      // see section L follow-up. This whitelist only disables network-level blocking.
+      if (this.adblockEnabled && !this.isTopFrameWhitelisted(details.webContentsId)) {
         const blocker = getBlocker();
         if (
           blocker &&
@@ -201,6 +250,13 @@ export class BrowserManager {
     // Composite onBeforeRequest: optional adblocker network blocking
     sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
       if (!this.adblockEnabled) {
+        callback({});
+        return;
+      }
+
+      // TODO(adblock-whitelist): cosmetic filtering still applies session-wide;
+      // see section L follow-up. This whitelist only disables network-level blocking.
+      if (this.isTopFrameWhitelisted(details.webContentsId)) {
         callback({});
         return;
       }

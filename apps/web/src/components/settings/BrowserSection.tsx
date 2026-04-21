@@ -1,17 +1,12 @@
-import { useCallback } from 'react';
-import { Check, Globe, Shield } from 'lucide-react';
+import { useCallback, useState, type KeyboardEvent } from 'react';
+import { Globe, Shield, X, AppWindow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { PillTag } from '@/components/ui/pill-tag';
 import { useBrowserStore } from '@/stores/useBrowserStore';
-import { useElectronSettings } from '@/hooks/useElectronSettings';
 import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
-
-const BROWSER_SETTINGS_KEY = 'browser-settings';
-
-interface BrowserSettings {
-  adblockEnabled: boolean;
-}
+import { cn } from '@/lib/utils';
 
 const BLOCKED_CATEGORIES = [
   'Reklamy graficzne / pop-up',
@@ -20,30 +15,32 @@ const BLOCKED_CATEGORIES = [
 ];
 
 export function BrowserSection() {
-  const setStoreAdblock = useBrowserStore(state => state.setAdblockEnabled);
+  const adblockEnabled = useBrowserStore(state => state.adblockEnabled);
+  const setAdblockEnabled = useBrowserStore(state => state.setAdblockEnabled);
+  const popupBlockEnabled = useBrowserStore(state => state.popupBlockEnabled);
+  const setPopupBlockEnabled = useBrowserStore(state => state.setPopupBlockEnabled);
+  const adblockWhitelist = useBrowserStore(state => state.adblockWhitelist);
+  const addAdblockDomain = useBrowserStore(state => state.addAdblockDomain);
+  const removeAdblockDomain = useBrowserStore(state => state.removeAdblockDomain);
 
-  const { data, update, loaded, saved, save } = useElectronSettings<BrowserSettings>({
-    defaultValue: { adblockEnabled: true },
-    load: useCallback(async () => {
-      const settings = await window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY);
-      if (settings && typeof settings.adblockEnabled === 'boolean') {
-        setStoreAdblock(settings.adblockEnabled);
-        return settings;
+  const [whitelistInput, setWhitelistInput] = useState('');
+
+  const handleAddWhitelist = useCallback(() => {
+    const value = whitelistInput.trim();
+    if (!value) return;
+    addAdblockDomain(value);
+    setWhitelistInput('');
+  }, [whitelistInput, addAdblockDomain]);
+
+  const handleWhitelistKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddWhitelist();
       }
-      return undefined;
-    }, [setStoreAdblock]),
-    save: useCallback(
-      async (d: BrowserSettings) => {
-        await window.electronAPI?.store?.set(BROWSER_SETTINGS_KEY, d);
-        // Sync to browser store and toggle adblock on the actual browser session
-        setStoreAdblock(d.adblockEnabled);
-        window.electronAPI?.browser?.toggleAdblock(d.adblockEnabled);
-      },
-      [setStoreAdblock]
-    ),
-  });
-
-  if (!loaded) return null;
+    },
+    [handleAddWhitelist]
+  );
 
   return (
     <div className="space-y-4">
@@ -60,8 +57,8 @@ export function BrowserSection() {
           />
           <Switch
             aria-labelledby="browser-adblock-label"
-            checked={data.adblockEnabled}
-            onCheckedChange={v => update({ adblockEnabled: v })}
+            checked={adblockEnabled}
+            onCheckedChange={setAdblockEnabled}
           />
         </SettingsRow>
 
@@ -73,22 +70,96 @@ export function BrowserSection() {
               className="flex items-center justify-between rounded-lg border border-border-glass/70 bg-background/30 px-3 py-2 text-[12px]"
             >
               <span className="text-muted-foreground">{category}</span>
-              <PillTag variant={data.adblockEnabled ? 'green' : 'muted'}>
-                {data.adblockEnabled ? 'Blokowane' : 'Wyłączone'}
+              <PillTag variant={adblockEnabled ? 'green' : 'muted'}>
+                {adblockEnabled ? 'Blokowane' : 'Wyłączone'}
               </PillTag>
             </div>
           ))}
         </div>
 
-        <div className="flex items-center gap-3 pt-1">
-          <Button size="sm" onClick={save}>
-            {saved ? <Check className="w-4 h-4" /> : null}
-            {saved ? 'Zapisano' : 'Zapisz'}
-          </Button>
-          <p className="font-mono text-[10.5px] text-muted-foreground/80 leading-snug">
-            Strony szybkiego dostępu można dostosować na stronie nowej karty.
+        {/* Whitelist subsection */}
+        <div className="border-t border-border-glass/50 pt-3.5 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+              Wyjątki
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
+              {adblockWhitelist.length} / 500
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Input
+              value={whitelistInput}
+              onChange={e => setWhitelistInput(e.target.value)}
+              onKeyDown={handleWhitelistKeyDown}
+              placeholder="np. example.com"
+              aria-label="Dodaj domenę do listy wyjątków"
+              className="flex-1 font-mono text-[12px]"
+            />
+            <Button size="sm" onClick={handleAddWhitelist} disabled={!whitelistInput.trim()}>
+              Dodaj
+            </Button>
+          </div>
+
+          {adblockWhitelist.length === 0 ? (
+            <p className="font-mono text-[11px] text-muted-foreground/80 leading-snug">
+              Brak wyjątków — reklamy są blokowane na wszystkich stronach.
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-1.5" aria-label="Lista zwolnionych z blokady domen">
+              {adblockWhitelist.map(host => (
+                <li key={host}>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full pl-2.5 pr-1 py-[3px]',
+                      'bg-foreground/[0.05] border border-border-glass',
+                      'font-mono text-[11px] text-foreground'
+                    )}
+                  >
+                    <span className="leading-none">{host}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAdblockDomain(host)}
+                      aria-label={`Usuń ${host} z listy wyjątków`}
+                      className={cn(
+                        'grid place-items-center size-[18px] rounded-full',
+                        'text-muted-foreground hover:text-foreground hover:bg-foreground/[0.08]',
+                        'transition-colors cursor-pointer'
+                      )}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="text-[11.5px] text-muted-foreground/85 leading-relaxed">
+            Adblock nie będzie aktywny dla dodanych tu domen. Filtry kosmetyczne pozostają aktywne.
           </p>
         </div>
+      </SettingsCard>
+
+      <SettingsCard
+        icon={AppWindow}
+        title="Wyskakujące okna"
+        subtitle="Kontrola nad popup-ami otwieranymi przez strony"
+        tone="gold"
+      >
+        <SettingsRow>
+          <SettingsRowLabel
+            id="browser-popup-block-label"
+            title="Blokuj wyskakujące okna"
+            description="Okna OAuth (Google, Discord) zawsze są dozwolone."
+          />
+          <Switch
+            aria-labelledby="browser-popup-block-label"
+            checked={popupBlockEnabled}
+            onCheckedChange={setPopupBlockEnabled}
+          />
+        </SettingsRow>
       </SettingsCard>
 
       <SettingsCard

@@ -12,18 +12,8 @@ import { useBrowserInit } from '@/components/browser/useBrowserInit';
 import { unregisterWebview } from '@/components/browser/webviewRefs';
 
 // Actions are stable references — extract once outside render cycle
-const {
-  openTab,
-  closeTab,
-  switchTab,
-  reorderTabs,
-  navigate,
-  goBack,
-  goForward,
-  reload,
-  toggleAdblock,
-  cyclePopupBlockMode,
-} = useBrowserStore.getState();
+const { openTab, closeTab, switchTab, reorderTabs, navigate, goBack, goForward, reload } =
+  useBrowserStore.getState();
 
 /**
  * BrowserView: The main embedded browser interface.
@@ -33,8 +23,6 @@ export function BrowserView() {
   // Granular selectors: only re-render when these specific slices change
   const tabs = useBrowserStore(useShallow(s => s.tabs));
   const activeTabId = useBrowserStore(s => s.activeTabId);
-  const adblockEnabled = useBrowserStore(s => s.adblockEnabled);
-  const popupBlockMode = useBrowserStore(s => s.popupBlockMode);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   const [urlInput, setUrlInput] = useState('');
@@ -164,15 +152,11 @@ export function BrowserView() {
           canGoBack={activeTab?.canGoBack ?? false}
           canGoForward={activeTab?.canGoForward ?? false}
           isLoading={activeTab?.isLoading ?? false}
-          adblockEnabled={adblockEnabled}
-          popupBlockMode={popupBlockMode}
           hasActiveTab={!!activeTab}
           onGoBack={goBack}
           onGoForward={goForward}
           onReload={reload}
           onNavigate={navigate}
-          onToggleAdblock={toggleAdblock}
-          onCyclePopupBlockMode={cyclePopupBlockMode}
           onGoHome={handleGoHome}
           onAddToLibrary={() => setIsAddToLibraryOpen(true)}
           urlInputRef={urlInputRef}

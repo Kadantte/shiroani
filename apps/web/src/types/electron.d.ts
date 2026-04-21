@@ -57,8 +57,9 @@ interface ElectronAPI {
   browser?: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     setFullscreen: (fullscreen: boolean) => Promise<void>;
-    getPopupBlockMode: () => Promise<string>;
-    setPopupBlockMode: (mode: string) => Promise<void>;
+    getPopupBlockEnabled: () => Promise<boolean>;
+    setPopupBlockEnabled: (enabled: boolean) => Promise<void>;
+    setAdblockWhitelist: (hosts: string[]) => Promise<void>;
     onNewWindowRequest: (callback: (url: string) => void) => () => void;
     onShortcut: (
       callback: (data: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => void

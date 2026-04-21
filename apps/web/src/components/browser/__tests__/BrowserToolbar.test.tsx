@@ -19,15 +19,11 @@ function getDefaultProps() {
     canGoBack: false,
     canGoForward: false,
     isLoading: false,
-    adblockEnabled: false,
-    popupBlockMode: 'smart' as const,
     hasActiveTab: true,
     onGoBack: vi.fn(),
     onGoForward: vi.fn(),
     onReload: vi.fn(),
     onNavigate: vi.fn(),
-    onToggleAdblock: vi.fn(),
-    onCyclePopupBlockMode: vi.fn(),
     onGoHome: vi.fn(),
     onAddToLibrary: vi.fn(),
   };
@@ -37,10 +33,8 @@ function getDefaultProps() {
 // 0: Back (Wstecz)
 // 1: Forward (Dalej)
 // 2: Reload (Odśwież)
-// 3: Adblock toggle — inline pill inside the URL field
-// 4: Add to library (Dodaj do biblioteki)
-// 5: Popup block mode toggle
-// 6: Home (Strona główna)
+// 3: Add to library (Dodaj do biblioteki)
+// 4: Home (Strona główna)
 
 function getButtons() {
   const buttons = screen.getAllByRole('button');
@@ -48,10 +42,8 @@ function getButtons() {
     back: buttons[0],
     forward: buttons[1],
     reload: buttons[2],
-    adblock: buttons[3],
-    addToLibrary: buttons[4],
-    popupBlock: buttons[5],
-    home: buttons[6],
+    addToLibrary: buttons[3],
+    home: buttons[4],
   };
 }
 
@@ -165,15 +157,6 @@ describe('BrowserToolbar', () => {
       const { user } = render(<BrowserToolbar {...props} />);
       await user.click(getButtons().home);
       expect(props.onGoHome).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('adblock toggle', () => {
-    it('calls onToggleAdblock when clicked', async () => {
-      const props = getDefaultProps();
-      const { user } = render(<BrowserToolbar {...props} />);
-      await user.click(getButtons().adblock);
-      expect(props.onToggleAdblock).toHaveBeenCalledOnce();
     });
   });
 

@@ -19,8 +19,6 @@ export function AdblockStep() {
   const handleAdblock = useCallback(
     (value: boolean) => {
       setAdblockEnabled(value);
-      window.electronAPI?.store?.set('browser-settings', { adblockEnabled: value });
-      window.electronAPI?.browser?.toggleAdblock(value);
     },
     [setAdblockEnabled]
   );

@@ -3,21 +3,16 @@ import {
   ArrowLeft,
   ArrowRight,
   RotateCw,
-  Shield,
-  ShieldOff,
   Home,
   Loader2,
   BookmarkPlus,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldX,
   Lock,
   Globe2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { TooltipButton } from '@/components/ui/tooltip-button';
-import { useBrowserStore, type PopupBlockMode } from '@/stores/useBrowserStore';
+import { useBrowserStore } from '@/stores/useBrowserStore';
 
 interface BrowserToolbarProps {
   urlInput: string;
@@ -25,35 +20,26 @@ interface BrowserToolbarProps {
   canGoBack: boolean;
   canGoForward: boolean;
   isLoading: boolean;
-  adblockEnabled: boolean;
-  popupBlockMode: PopupBlockMode;
   hasActiveTab: boolean;
   onGoBack: () => void;
   onGoForward: () => void;
   onReload: () => void;
   onNavigate: (url: string) => void;
-  onToggleAdblock: () => void;
-  onCyclePopupBlockMode: () => void;
   onGoHome: () => void;
   onAddToLibrary: () => void;
   urlInputRef?: RefObject<HTMLInputElement | null>;
 }
 
-const POPUP_MODE_LABELS: Record<PopupBlockMode, string> = {
-  smart: 'Blokowanie popup\u00F3w: Inteligentne',
-  strict: 'Blokowanie popup\u00F3w: Ścisłe',
-  off: 'Blokowanie popup\u00F3w: Wyłączone',
-};
-
 /**
  * Browser URL/navigation row (Browser.html `.urlbar`):
  *  - Back / Forward / Reload icon buttons (`.nav-btns .b`)
  *  - URL input styled as a glass pill with lock/globe leading icon
- *  - Inline adblock counter pill (status-success tint when active)
- *  - Trailing cluster: add-to-library / popup-mode / home
+ *  - Trailing cluster: add-to-library / home
+ *
+ * Adblock and popup-blocker toggles now live in Settings → Przeglądarka.
  *
  * Preserves button order expected by BrowserToolbar.test.tsx:
- *   0 back · 1 forward · 2 reload · 3 add-to-library · 4 adblock · 5 popup · 6 home
+ *   0 back · 1 forward · 2 reload · 3 add-to-library · 4 home
  */
 export function BrowserToolbar({
   urlInput,
@@ -61,15 +47,11 @@ export function BrowserToolbar({
   canGoBack,
   canGoForward,
   isLoading,
-  adblockEnabled,
-  popupBlockMode,
   hasActiveTab,
   onGoBack,
   onGoForward,
   onReload,
   onNavigate,
-  onToggleAdblock,
-  onCyclePopupBlockMode,
   onGoHome,
   onAddToLibrary,
   urlInputRef: externalUrlInputRef,
@@ -194,25 +176,9 @@ export function BrowserToolbar({
             'focus-visible:ring-0 focus-visible:border-0 focus-visible:bg-transparent'
           )}
         />
-        {/* Adblock counter pill — mirrors mock `.url .shield-on` */}
-        <button
-          onClick={onToggleAdblock}
-          aria-label={adblockEnabled ? 'Blokowanie reklam włączone' : 'Blokowanie reklam wyłączone'}
-          className={cn(
-            'shrink-0 inline-flex items-center gap-1.5 rounded-full px-2 py-[2px]',
-            'font-mono text-[10px] uppercase tracking-[0.08em] transition-colors cursor-pointer',
-            adblockEnabled
-              ? 'bg-[oklch(0.78_0.15_140/0.14)] border border-[oklch(0.78_0.15_140/0.32)] text-status-success hover:bg-[oklch(0.78_0.15_140/0.22)]'
-              : 'bg-foreground/[0.04] border border-border-glass text-muted-foreground hover:text-foreground/80'
-          )}
-          title={adblockEnabled ? 'Adblock ON' : 'Adblock OFF'}
-        >
-          {adblockEnabled ? <Shield className="w-3 h-3" /> : <ShieldOff className="w-3 h-3" />}
-          <span>{adblockEnabled ? 'ON' : 'OFF'}</span>
-        </button>
       </div>
 
-      {/* Trailing cluster — add-to-library, popup mode, home */}
+      {/* Trailing cluster — add-to-library, home */}
       <div className="flex items-center gap-1 shrink-0">
         <TooltipButton
           variant="ghost"
@@ -224,28 +190,6 @@ export function BrowserToolbar({
           tooltipSide="bottom"
         >
           <BookmarkPlus className="w-4 h-4" />
-        </TooltipButton>
-
-        <TooltipButton
-          variant="ghost"
-          size="icon"
-          className={cn(
-            'size-[30px] rounded-[8px]',
-            popupBlockMode === 'strict' && 'text-orange-400',
-            popupBlockMode === 'smart' && 'text-status-success',
-            popupBlockMode === 'off' && 'text-muted-foreground'
-          )}
-          onClick={onCyclePopupBlockMode}
-          tooltip={POPUP_MODE_LABELS[popupBlockMode]}
-          tooltipSide="bottom"
-        >
-          {popupBlockMode === 'strict' ? (
-            <ShieldAlert className="w-4 h-4" />
-          ) : popupBlockMode === 'smart' ? (
-            <ShieldCheck className="w-4 h-4" />
-          ) : (
-            <ShieldX className="w-4 h-4" />
-          )}
         </TooltipButton>
 
         <TooltipButton

@@ -23,6 +23,7 @@ import {
   onWindowFocus,
 } from './discord-rpc-service';
 import { store } from './store';
+import { setPopupBlockEnabled } from './ipc/browser';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
@@ -206,7 +207,12 @@ async function bootstrap(): Promise<void> {
     logger.info('Adblocker initialized successfully');
 
     const browserSettings = store.get('browser-settings') as
-      | { adblockEnabled?: boolean }
+      | {
+          adblockEnabled?: boolean;
+          popupBlockEnabled?: boolean;
+          popupBlockMode?: string;
+          adblockWhitelist?: unknown;
+        }
       | undefined;
     const shouldEnableAdblock = browserSettings?.adblockEnabled !== false;
 
@@ -216,6 +222,38 @@ async function bootstrap(): Promise<void> {
     } else {
       logger.info('Adblock disabled per user settings');
     }
+
+    // Push persisted whitelist to the browser session
+    if (Array.isArray(browserSettings?.adblockWhitelist)) {
+      const hosts = browserSettings.adblockWhitelist.filter(
+        (h): h is string => typeof h === 'string'
+      );
+      browserManager.setAdblockWhitelist(hosts);
+    } else {
+      browserManager.setAdblockWhitelist([]);
+    }
+
+    // Resolve popup block switch — migrate legacy string mode if the boolean
+    // shape is missing. 'off' → false, anything else ('smart' | 'strict') → true.
+    let popupEnabled: boolean;
+    if (typeof browserSettings?.popupBlockEnabled === 'boolean') {
+      popupEnabled = browserSettings.popupBlockEnabled;
+    } else if (typeof browserSettings?.popupBlockMode === 'string') {
+      popupEnabled = browserSettings.popupBlockMode !== 'off';
+      // Write migrated shape back so this migration runs at most once.
+      const merged = {
+        ...browserSettings,
+        popupBlockEnabled: popupEnabled,
+      } as Record<string, unknown>;
+      delete merged.popupBlockMode;
+      store.set('browser-settings', merged);
+      logger.info(
+        `Migrated legacy popupBlockMode="${browserSettings.popupBlockMode}" → popupBlockEnabled=${popupEnabled}`
+      );
+    } else {
+      popupEnabled = true;
+    }
+    setPopupBlockEnabled(popupEnabled);
   } catch (error) {
     logger.warn('Failed to initialize adblocker:', error);
   }
