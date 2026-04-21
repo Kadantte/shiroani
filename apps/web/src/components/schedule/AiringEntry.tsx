@@ -76,7 +76,7 @@ const AiringEntry = memo(function AiringEntry({
     <div
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      aria-label={`${title} — ${formatTime(anime.airingAt)}`}
+      aria-label={`${title}, ${formatTime(anime.airingAt)}`}
       onClick={onClick ? () => onClick(anime) : undefined}
       onKeyDown={
         onClick

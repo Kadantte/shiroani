@@ -16,12 +16,12 @@ const MESSAGE_ROTATE_MS = 1400;
 
 const LOADING_MESSAGES = [
   'Shiro-chan się przeciąga~ nyaa...',
-  'Szukam pilota od anime...',
+  'Szukam pilota do odcinków...',
   'Shiro rysuje plan na dziś...',
   'Podkradamy ciastka z kuchni...',
   'Shiro sprawdza co nowego...',
   'Jeszcze jedna drzemka... zzz',
-  'Shiro-chan jest prawie gotowa!',
+  'Shiro-chan już prawie gotowa!',
   'Układamy pluszaki na kanapie...',
   'Shiro goni motylka... zaraz wracam!',
   'Nastawiamy czajnik na herbatkę...',

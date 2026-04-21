@@ -21,7 +21,7 @@ export function ComingSoonPlaceholder({
   icon: Icon = Sparkles,
   title,
   description,
-  tag = 'SOON',
+  tag = 'WKRÓTCE',
   className,
   ...props
 }: ComingSoonPlaceholderProps) {

@@ -143,8 +143,7 @@ function Header({ filter, onFilterChange, filters, jumpTargets, compact }: Heade
         Co <em className="font-serif italic font-extrabold text-primary">nowego</em>?
       </h1>
       <p className="mt-5 max-w-[54ch] text-[17px] leading-relaxed text-muted-foreground">
-        Historia zmian w ShiroAni — funkcja po funkcji, poprawka po poprawce. Od pierwszego buildu
-        po ostatni wieczór w bibliotece.
+        Historia zmian w ShiroAni: funkcja po funkcji, poprawka po poprawce.
       </p>
 
       {/* Filter chips */}

@@ -39,9 +39,9 @@ interface ModeDef {
 }
 
 const MODES: ModeDef[] = [
-  { id: 'daily', label: 'Dzień', tooltip: 'Dzień — oś czasu', Icon: Rows3 },
-  { id: 'weekly', label: 'Tydzień', tooltip: 'Tydzień — siatka', Icon: LayoutGrid },
-  { id: 'timetable', label: 'Plakaty', tooltip: 'Plakaty — tablica', Icon: Images },
+  { id: 'daily', label: 'Dzień', tooltip: 'Dzień: oś czasu', Icon: Rows3 },
+  { id: 'weekly', label: 'Tydzień', tooltip: 'Tydzień: siatka', Icon: LayoutGrid },
+  { id: 'timetable', label: 'Plakaty', tooltip: 'Plakaty: tablica', Icon: Images },
 ];
 
 export function ScheduleView() {

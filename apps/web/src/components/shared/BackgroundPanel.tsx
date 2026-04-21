@@ -68,9 +68,9 @@ export function BackgroundPanel({
       >
         <span className="pointer-events-none absolute inset-0 bg-black/20" aria-hidden="true" />
         <span className="relative z-[2] font-serif text-base font-bold text-white drop-shadow-lg">
-          Twoje tło
+          Własne tło
           <small className="block font-mono text-[9px] font-medium uppercase tracking-[0.2em] text-white/70">
-            Niestandardowe
+            Własne
           </small>
         </span>
       </div>

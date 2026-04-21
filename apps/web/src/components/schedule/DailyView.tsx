@@ -254,9 +254,9 @@ export function DailyView({ entries, day, onAnimeClick }: DailyViewProps) {
           <Calendar className="w-6 h-6 opacity-30" />
         </div>
         <div className="text-center space-y-1">
-          <p className="text-sm font-medium text-foreground/70">Brak anime na ten dzień</p>
+          <p className="text-sm font-medium text-foreground/70">Nic tego dnia nie leci</p>
           <p className="text-xs text-muted-foreground/50">
-            Spróbuj innego dnia lub widoku tygodniowego
+            Sprawdź inny dzień albo widok tygodniowy
           </p>
         </div>
       </div>
@@ -307,7 +307,7 @@ export function DailyView({ entries, day, onAnimeClick }: DailyViewProps) {
                 >
                   <div className="flex-1 border-t border-dashed border-border-glass/60" />
                   <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground/50 whitespace-nowrap">
-                    {b.endHour - b.startHour}h ciszy
+                    {b.endHour - b.startHour}h przerwy
                   </span>
                   <div className="flex-1 border-t border-dashed border-border-glass/60" />
                 </div>
@@ -327,7 +327,7 @@ export function DailyView({ entries, day, onAnimeClick }: DailyViewProps) {
           {nowTop != null && (
             <div
               role="presentation"
-              aria-label={`Teraz — ${nowLabel}`}
+              aria-label={`Teraz, ${nowLabel}`}
               className="absolute left-0 right-0 z-[3] pointer-events-none"
               style={{ top: `${nowTop}px`, height: '2px' }}
             >

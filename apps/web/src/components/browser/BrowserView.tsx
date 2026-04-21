@@ -170,7 +170,7 @@ export function BrowserView() {
         {tabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
             <Globe className="w-16 h-16 opacity-20" />
-            <p className="text-sm">Kliknij + aby otworzyć nową kartę</p>
+            <p className="text-sm">Kliknij +, żeby otworzyć nową kartę</p>
           </div>
         ) : (
           <>

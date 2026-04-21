@@ -136,7 +136,7 @@ export function BrowserToolbar({
             'bg-foreground/[0.03] border border-border-glass'
           )}
           onClick={onReload}
-          tooltip={isLoading ? 'Ładowanie...' : 'Odśwież'}
+          tooltip={isLoading ? 'Ładowanie' : 'Odśwież'}
           tooltipSide="bottom"
         >
           {isLoading ? (
@@ -167,7 +167,7 @@ export function BrowserToolbar({
           onKeyDown={handleUrlSubmit}
           onFocus={handleUrlFocus}
           onBlur={handleUrlBlur}
-          placeholder="Wpisz adres URL lub wyszukaj..."
+          placeholder="Wpisz adres albo szukaj"
           aria-label="Pasek adresu"
           className={cn(
             'h-6 min-w-0 flex-1 px-0 text-[12.5px]',

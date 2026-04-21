@@ -56,7 +56,7 @@ export function SplashFooter({
               onClick={onRetry}
               className="rounded-[7px] bg-primary px-3.5 py-1.5 text-[11.5px] font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer"
             >
-              Ponów
+              Spróbuj ponownie
             </button>
           </div>
         ) : (

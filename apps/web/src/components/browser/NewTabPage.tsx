@@ -238,9 +238,7 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Dodaj stronę</DialogTitle>
-            <DialogDescription>
-              Dodaj stronę do szybkiego dostępu na nowej karcie.
-            </DialogDescription>
+            <DialogDescription>Dodaj stronę do szybkiego dostępu.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <Input
@@ -406,7 +404,7 @@ function GreetingSubtitle({ episodesWaiting, unreadFeedCount, todayCount }: Gree
       <p className="mt-1 text-[13px] text-muted-foreground">
         {episodesWaiting > 0 && (
           <>
-            Czeka na Ciebie{' '}
+            {episodesWaiting === 1 ? 'Czeka' : 'Czekają'} na Ciebie{' '}
             <b className="font-semibold text-foreground">
               {episodesWaiting} {pluralize(episodesWaiting, 'odcinek', 'odcinki', 'odcinków')}
             </b>
@@ -530,7 +528,7 @@ function AiringTodaySection() {
           onClick={() => navigateTo('schedule')}
           className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary/70 hover:text-primary transition-colors cursor-pointer"
         >
-          Zobacz wszystkie &rarr;
+          Pokaż wszystkie &rarr;
         </button>
       </div>
 
@@ -726,9 +724,9 @@ function EmptyResumeState({ onBrowseLibrary }: { onBrowseLibrary: () => void }) 
           <Play className="w-3.5 h-3.5" />
         </span>
         <div className="min-w-0">
-          <p className="text-[12.5px] font-semibold text-foreground">Nic w trakcie oglądania</p>
+          <p className="text-[12.5px] font-semibold text-foreground">Nic w trakcie</p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Dodaj tytuł ze statusem „W trakcie” w bibliotece, żeby zobaczyć go tutaj.
+            Oznacz coś jako „W trakcie" w bibliotece, a pojawi się tutaj.
           </p>
         </div>
       </div>
@@ -747,7 +745,7 @@ function EmptyRecents() {
       </span>
       <p className="text-[11.5px] font-medium text-foreground/80">Brak historii</p>
       <p className="max-w-[28ch] text-[10.5px] text-muted-foreground">
-        Ostatnio odwiedzane strony pojawią się tutaj po kilku wizytach.
+        Strony, które odwiedzasz, pojawią się tutaj.
       </p>
     </div>
   );
@@ -824,7 +822,7 @@ function SiteCard({
             <Globe2 className="w-3 h-3" />
           )}
           <span className="truncate">
-            {site.isPredefined ? 'predefined' : (displayHost ?? 'site')}
+            {site.isPredefined ? 'zapisane' : (displayHost ?? 'strona')}
           </span>
         </span>
 

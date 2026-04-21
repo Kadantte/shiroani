@@ -113,7 +113,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
             <Download className="w-5 h-5 text-primary" />
             Eksportuj dane
           </DialogTitle>
-          <DialogDescription>Eksportuj dane z aplikacji do pliku JSON</DialogDescription>
+          <DialogDescription>Zapisz dane w pliku JSON.</DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
@@ -131,7 +131,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
               <CheckCircle className="w-8 h-8 text-green-400" />
               <p className="text-sm text-foreground">
                 Wyeksportowano <span className="font-semibold">{state.data.totalExported}</span>{' '}
-                elementów
+                wpisów
               </p>
             </div>
           )}
@@ -156,7 +156,7 @@ export function ExportDialog({ open, onOpenChange, type, selectedIds }: ExportDi
           {state.step === 'saved' && (
             <div className="flex flex-col items-center gap-3 py-4">
               <CheckCircle className="w-8 h-8 text-green-400" />
-              <p className="text-sm text-green-400">Plik został zapisany pomyślnie</p>
+              <p className="text-sm text-green-400">Zapisano plik</p>
             </div>
           )}
 
