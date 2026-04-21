@@ -14,7 +14,6 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'schedule', label: 'Harmonogram' },
   { id: 'feed', label: 'Aktualności' },
   { id: 'profile', label: 'Profil' },
-  { id: 'changelog', label: 'Historia' },
   { id: 'settings', label: 'Ustawienia' },
 ];
 
