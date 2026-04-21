@@ -10,9 +10,18 @@
  * - LOG_LEVEL: error, warn, info, debug (default: info)
  * - LOG_COLORS: true/false (default: true in Node.js)
  * - LOG_TIMESTAMPS: true/false (default: false)
+ * - LOG_BUFFER_MAX: positive integer, clamped to [50, 5000] (default: 200)
  */
 
-enum LogLevel {
+import {
+  LOG_RING_BUFFER_DEFAULT,
+  LOG_RING_BUFFER_MIN,
+  LOG_RING_BUFFER_MAX,
+  LOG_REDACT_KEYS,
+  LOG_REDACT_PLACEHOLDER,
+} from './constants/app';
+
+export enum LogLevel {
   ERROR = 0,
   WARN = 1,
   INFO = 2,
@@ -84,6 +93,46 @@ if (envLogLevel && LOG_LEVEL_NAMES[envLogLevel] !== undefined) {
   currentLogLevel = LOG_LEVEL_NAMES[envLogLevel];
 }
 
+type LogLevelListener = (level: LogLevel) => void;
+const logLevelListeners = new Set<LogLevelListener>();
+
+function resolveLogLevel(level: LogLevel | keyof typeof LogLevel | string): LogLevel | undefined {
+  if (typeof level === 'number') {
+    return level in LogLevel ? (level as LogLevel) : undefined;
+  }
+  const mapped = LOG_LEVEL_NAMES[String(level).toLowerCase()];
+  return mapped;
+}
+
+/** Current numeric log level. */
+export function getLogLevel(): LogLevel {
+  return currentLogLevel;
+}
+
+/**
+ * Update the active log level at runtime. Accepts either the enum value or a
+ * case-insensitive name ("debug", "info", "warn", "error"). Unknown strings
+ * are rejected via a warn on the internal logger and the call is a no-op.
+ */
+export function setLogLevel(level: LogLevel | keyof typeof LogLevel | string): void {
+  const resolved = resolveLogLevel(level);
+  if (resolved === undefined) {
+    internalLogger().warn(`setLogLevel: ignoring unknown level ${JSON.stringify(level)}`);
+    return;
+  }
+  if (resolved === currentLogLevel) return;
+  currentLogLevel = resolved;
+  for (const listener of logLevelListeners) listener(resolved);
+}
+
+/** Subscribe to runtime log-level changes. Returns an unsubscribe function. */
+export function subscribeToLogLevel(listener: LogLevelListener): () => void {
+  logLevelListeners.add(listener);
+  return () => {
+    logLevelListeners.delete(listener);
+  };
+}
+
 /**
  * Format ISO timestamp
  */
@@ -133,18 +182,114 @@ export interface LogEntry {
 // diagnostics clipboard snapshot, so users can include real context
 // when reporting a bug from prod.
 
-const LOG_BUFFER_MAX = 200;
+function resolveBufferMax(): number {
+  const raw = getEnvVar('LOG_BUFFER_MAX');
+  if (!raw) return LOG_RING_BUFFER_DEFAULT;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return LOG_RING_BUFFER_DEFAULT;
+  return Math.min(LOG_RING_BUFFER_MAX, Math.max(LOG_RING_BUFFER_MIN, parsed));
+}
+
+const LOG_BUFFER_MAX = resolveBufferMax();
 const logBuffer: LogEntry[] = [];
 type BufferListener = (entries: readonly LogEntry[]) => void;
 const bufferListeners = new Set<BufferListener>();
 
+/** Effective ring buffer capacity (post env parsing + clamp). */
+export function getLogBufferMax(): number {
+  return LOG_BUFFER_MAX;
+}
+
+const REDACT_KEY_SET = new Set(LOG_REDACT_KEYS.map(k => k.toLowerCase()));
+
+// Path regexes for home-directory scrubbing. The Windows form uses a negated
+// class on [^\\/] so the capture stops at either separator even when Node has
+// normalized one side to forward slashes. All three are anchored on the
+// literal prefix (C:\Users\, /Users/, /home/) to avoid matching arbitrary
+// substrings that happen to contain a username-shaped segment.
+const WIN_USER_PATH_RE = /([A-Za-z]:[\\/]Users[\\/])[^\\/]+([\\/])/gi;
+const MAC_USER_PATH_RE = /(\/Users\/)[^/]+(\/)/g;
+const LINUX_USER_PATH_RE = /(\/home\/)[^/]+(\/)/g;
+
+// Starts at the first '?' after a URL scheme and consumes until fragment or
+// end so query-string secrets (access_token, sig, etc.) never leak verbatim.
+const URL_QUERY_RE = /^(https?:\/\/[^?#\s]*)\?[^#]*(.*)$/i;
+
+let redactionEnabled = true;
+
+/**
+ * Enable or disable the redaction walker. Defaults to true in dev and prod;
+ * disabling is an explicit escape hatch for local debugging.
+ */
+export function setRedactionEnabled(enabled: boolean): void {
+  redactionEnabled = enabled;
+}
+
+function redactString(value: string): string {
+  let out = value.replace(WIN_USER_PATH_RE, '$1<USER>$2');
+  out = out.replace(MAC_USER_PATH_RE, '$1<USER>$2');
+  out = out.replace(LINUX_USER_PATH_RE, '$1<USER>$2');
+  const urlMatch = out.match(URL_QUERY_RE);
+  if (urlMatch) {
+    out = `${urlMatch[1]}?${LOG_REDACT_PLACEHOLDER}${urlMatch[2]}`;
+  }
+  return out;
+}
+
+function lastSegmentKey(key: string): string {
+  const dot = key.lastIndexOf('.');
+  return (dot >= 0 ? key.slice(dot + 1) : key).toLowerCase();
+}
+
+function redactWalk<T>(value: T, seen: WeakMap<object, unknown>): T {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return redactString(value) as unknown as T;
+  if (typeof value !== 'object') return value;
+  if (value instanceof Error) return value;
+
+  const asObject = value as unknown as object;
+  const cached = seen.get(asObject);
+  if (cached !== undefined) return cached as T;
+
+  if (Array.isArray(value)) {
+    const out: unknown[] = [];
+    seen.set(asObject, out);
+    for (let i = 0; i < value.length; i++) {
+      out[i] = redactWalk(value[i], seen);
+    }
+    return out as unknown as T;
+  }
+
+  const out: Record<string, unknown> = {};
+  seen.set(asObject, out);
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    if (REDACT_KEY_SET.has(lastSegmentKey(key))) {
+      out[key] = LOG_REDACT_PLACEHOLDER;
+      continue;
+    }
+    out[key] = redactWalk(child, seen);
+  }
+  return out as unknown as T;
+}
+
+/**
+ * Return a deep clone of `value` with deny-listed keys masked, home-directory
+ * paths scrubbed, and URL query strings redacted. Circular refs are preserved
+ * via a WeakMap visited set.
+ */
+export function redactForLogs<T>(value: T): T {
+  if (!redactionEnabled) return value;
+  return redactWalk(value, new WeakMap());
+}
+
 function safeStringify(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (value instanceof Error) return value.stack ?? value.message;
+  const target = redactionEnabled ? redactForLogs(value) : value;
+  if (typeof target === 'string') return target;
+  if (target instanceof Error) return target.stack ?? target.message;
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(target);
   } catch {
-    return String(value);
+    return String(target);
   }
 }
 
@@ -390,4 +535,10 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
  */
 export function setTimestampsEnabled(enabled: boolean): void {
   timestampsEnabled = enabled;
+}
+
+let _internalLogger: Logger | null = null;
+function internalLogger(): Logger {
+  if (!_internalLogger) _internalLogger = createLogger('Logger');
+  return _internalLogger;
 }

@@ -68,3 +68,40 @@ export const LOG_BUFFER_MAX_ENTRIES = 50;
 
 /** Log cleanup interval (1 hour in ms) */
 export const LOG_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+
+/** Default in-memory ring buffer size for shared logger */
+export const LOG_RING_BUFFER_DEFAULT = 200;
+
+/** Minimum allowed ring buffer size (clamp floor) */
+export const LOG_RING_BUFFER_MIN = 50;
+
+/** Maximum allowed ring buffer size (clamp ceiling) */
+export const LOG_RING_BUFFER_MAX = 5000;
+
+/**
+ * Keys whose values must be redacted from structured log output.
+ * Match is case-insensitive against the last segment of a property path.
+ */
+export const LOG_REDACT_KEYS: readonly string[] = [
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'token',
+  'access_token',
+  'accessToken',
+  'refresh_token',
+  'refreshToken',
+  'api_key',
+  'apiKey',
+  'apikey',
+  'x-api-key',
+  'password',
+  'secret',
+  'client_secret',
+  'clientSecret',
+  'private_key',
+  'privateKey',
+];
+
+/** Placeholder substituted for redacted values */
+export const LOG_REDACT_PLACEHOLDER = '[REDACTED]';
