@@ -19,12 +19,15 @@ import {
   FEED_STARTUP_REFRESH_SETTING_KEY,
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
+import { electronStoreSet } from '@/lib/electron-store';
+import { createLocalStorageAccessor } from '@/lib/persisted-storage';
 import { createLogger } from '@shiroani/shared';
 
 const logger = createLogger('FeedStore');
 
 const PAGE_SIZE = 30;
 const REFRESH_FALLBACK_MS = 35_000;
+const MAX_READ_IDS = 5000;
 
 async function isStartupRefreshEnabled(): Promise<boolean> {
   try {
@@ -50,6 +53,10 @@ interface FeedState extends SocketStoreSlice {
   isRefreshing: boolean;
   isBootstrapping: boolean;
   lastRefreshNewCount: number | null;
+  /** Epoch ms of the last time the user opened the Feed view. Items published after this are "unread" from the newtab greeting's perspective. */
+  lastVisitedAt: number;
+  /** Persistent set of feed item IDs the user has opened in the reader. */
+  readIds: Set<number>;
 }
 
 /**
@@ -63,8 +70,64 @@ interface FeedActions {
   setLanguageFilter: (language: FeedLanguage | 'all') => void;
   setSourceFilter: (sourceId: number | null) => void;
   toggleSource: (id: number, enabled: boolean) => void;
+  /** Stamp `lastVisitedAt` to now — resets the newtab unread count. */
+  markAllSeen: () => void;
+  /** Persist a single feed item as "read" (idempotent). */
+  markRead: (id: number) => void;
+  /**
+   * Mark every currently-loaded feed item as read. Distinct from {@link markAllSeen},
+   * which only bumps the newtab greeting's `lastVisitedAt` timestamp — this one
+   * permanently flags the items themselves so they stop rendering the "unread" glow.
+   */
+  markAllRead: () => void;
   initListeners: () => void;
   cleanupListeners: () => void;
+}
+
+const LAST_VISITED_STORAGE_KEY = 'shiroani:feedLastVisitedAt';
+const READ_IDS_STORAGE_KEY = 'shiroani:feedReadIds';
+
+const lastVisitedStorage = createLocalStorageAccessor<number>(LAST_VISITED_STORAGE_KEY, {
+  parse: raw => {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : 0;
+  },
+  serialize: ts => String(ts),
+  fallback: 0,
+});
+
+const readIdsStorage = createLocalStorageAccessor<Set<number>>(READ_IDS_STORAGE_KEY, {
+  parse: raw => {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    const ids = new Set<number>();
+    for (const v of parsed) {
+      if (typeof v === 'number' && Number.isFinite(v)) ids.add(v);
+    }
+    return ids;
+  },
+  serialize: ids => JSON.stringify(Array.from(ids)),
+  fallback: new Set(),
+});
+
+function getPersistedLastVisitedAt(): number {
+  return lastVisitedStorage.get();
+}
+
+function persistLastVisitedAt(ts: number) {
+  lastVisitedStorage.set(ts);
+}
+
+function getPersistedReadIds(): Set<number> {
+  return readIdsStorage.get();
+}
+
+function persistReadIds(ids: Set<number>) {
+  readIdsStorage.set(ids);
+  // Fire-and-forget mirror to electron-store so main-process consumers can read it.
+  void electronStoreSet(READ_IDS_STORAGE_KEY, Array.from(ids)).catch(() => {
+    // ignore — localStorage is the primary store
+  });
 }
 
 type FeedStore = FeedState & FeedActions;
@@ -142,6 +205,8 @@ export const useFeedStore = create<FeedStore>()(
         isRefreshing: false,
         isBootstrapping: false,
         lastRefreshNewCount: null,
+        lastVisitedAt: getPersistedLastVisitedAt(),
+        readIds: getPersistedReadIds(),
 
         // Socket actions
         ...socketActions,
@@ -275,9 +340,7 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setCategoryFilter'
           );
-          // Re-fetch with new filter
-          // Need to defer so the state update is applied first
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
         },
 
         setLanguageFilter: (language: FeedLanguage | 'all') => {
@@ -286,7 +349,7 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setLanguageFilter'
           );
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
         },
 
         setSourceFilter: (sourceId: number | null) => {
@@ -295,7 +358,53 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setSourceFilter'
           );
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
+        },
+
+        markAllSeen: () => {
+          const now = Date.now();
+          if (get().lastVisitedAt === now) return;
+          set({ lastVisitedAt: now }, undefined, 'feed/markAllSeen');
+          persistLastVisitedAt(now);
+        },
+
+        markRead: (id: number) => {
+          const current = get().readIds;
+          if (current.has(id)) return;
+
+          let next: Set<number>;
+          if (current.size >= MAX_READ_IDS) {
+            // Drop the oldest entry to stay within the cap.
+            const arr = Array.from(current);
+            arr.shift();
+            arr.push(id);
+            next = new Set(arr);
+          } else {
+            next = new Set(current);
+            next.add(id);
+          }
+
+          set({ readIds: next }, undefined, 'feed/markRead');
+          persistReadIds(next);
+        },
+
+        markAllRead: () => {
+          const { readIds, items } = get();
+          if (items.length === 0) return;
+
+          let next = new Set(readIds);
+          for (const item of items) next.add(item.id);
+
+          if (next.size === readIds.size) return; // no change
+
+          if (next.size > MAX_READ_IDS) {
+            // Truncate oldest entries to stay within cap.
+            const arr = Array.from(next);
+            next = new Set(arr.slice(arr.length - MAX_READ_IDS));
+          }
+
+          set({ readIds: next }, undefined, 'feed/markAllRead');
+          persistReadIds(next);
         },
 
         toggleSource: (id: number, enabled: boolean) => {

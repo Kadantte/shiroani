@@ -1,57 +1,34 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { IS_ELECTRON } from '@/lib/platform';
-import { MASCOT_THINK_URL } from '@/lib/constants';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { SplashHero } from './SplashHero';
+import { SplashFooter } from './SplashFooter';
 
 /** Minimum time the splash screen stays visible (ms) */
 const MIN_DISPLAY_MS = 3000;
 /** Duration of the fade-out exit animation (ms) */
 const EXIT_ANIMATION_MS = 600;
-/** Delay before showing the spinner (ms) */
+/** Delay before showing the footer status + progress (ms) */
 const SPINNER_DELAY_MS = 600;
 /** How often loading messages rotate (ms) */
 const MESSAGE_ROTATE_MS = 1400;
 
 const LOADING_MESSAGES = [
   'Shiro-chan się przeciąga~ nyaa...',
-  'Szukam pilota od anime...',
+  'Szukam pilota do odcinków...',
   'Shiro rysuje plan na dziś...',
   'Podkradamy ciastka z kuchni...',
   'Shiro sprawdza co nowego...',
   'Jeszcze jedna drzemka... zzz',
-  'Shiro-chan jest prawie gotowa!',
+  'Shiro-chan już prawie gotowa!',
   'Układamy pluszaki na kanapie...',
   'Shiro goni motylka... zaraz wracam!',
   'Nastawiamy czajnik na herbatkę...',
 ];
 
-/** Pick a random starting index so each launch feels different */
 function randomStartIndex() {
   return Math.floor(Math.random() * LOADING_MESSAGES.length);
-}
-
-/** Sparkle particles that twinkle around the mascot area */
-const SPARKLE_COUNT = 10;
-
-function useSparkles() {
-  return useMemo(
-    () =>
-      Array.from({ length: SPARKLE_COUNT }, (_, i) => {
-        // Distribute sparkles in a circle around center (mascot area)
-        const angle = (i / SPARKLE_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
-        const radius = 60 + Math.random() * 80; // 60-140px from center
-        return {
-          id: i,
-          x: Math.cos(angle) * radius,
-          y: Math.sin(angle) * radius,
-          size: 2 + Math.random() * 3,
-          delay: Math.random() * 2,
-          duration: 1.5 + Math.random() * 1.5,
-        };
-      }),
-    []
-  );
 }
 
 interface SplashScreenProps {
@@ -66,24 +43,21 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
   const [isDismissing, setIsDismissing] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [messageIndex, setMessageIndex] = useState(randomStartIndex);
+  const [version, setVersion] = useState<string | null>(null);
   const hasDismissedRef = useRef(false);
-  const sparkles = useSparkles();
 
   const shouldDismiss = ready && minTimeElapsed;
 
-  // Minimum display timer
   useEffect(() => {
     const timer = setTimeout(() => setMinTimeElapsed(true), MIN_DISPLAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  // Spinner delay
   useEffect(() => {
     const timer = setTimeout(() => setShowSpinner(true), SPINNER_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  // Rotate loading messages
   useEffect(() => {
     if (error) return;
     const timer = setInterval(
@@ -93,7 +67,16 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
     return () => clearInterval(timer);
   }, [error]);
 
-  // Dismiss sequence: start fade-out, then remove from DOM and notify parent
+  useEffect(() => {
+    let mounted = true;
+    window.electronAPI?.app?.getVersion().then(v => {
+      if (mounted && v) setVersion(v);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!shouldDismiss || hasDismissedRef.current) return;
     hasDismissedRef.current = true;
@@ -120,83 +103,19 @@ export function SplashScreen({ ready, error, onDismissed }: SplashScreenProps) {
       {/* Draggable region so the window can still be moved during splash */}
       {IS_ELECTRON && <div className="absolute inset-x-0 top-0 h-8 drag" />}
 
-      <div className="flex flex-col items-center justify-center gap-3">
-        {/* Chibi character with bounce entrance + floating animation */}
-        <div className="relative animate-[splash-bounce-in_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-          {/* Soft glow behind character */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-32 h-32 rounded-full bg-primary/10 blur-3xl animate-pulse-subtle" />
-          </div>
+      <KanjiWatermark kanji="白" position="tr" size={320} opacity={0.03} />
 
-          {/* Sparkles twinkling around the mascot */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            {sparkles.map(s => (
-              <div
-                key={s.id}
-                className="absolute rounded-full bg-primary"
-                style={{
-                  left: `calc(50% + ${s.x}px)`,
-                  top: `calc(50% + ${s.y}px)`,
-                  width: s.size,
-                  height: s.size,
-                  animation: `splash-twinkle ${s.duration}s ease-in-out ${s.delay}s infinite both`,
-                }}
-              />
-            ))}
-          </div>
+      <SplashHero variant={error ? 'error' : 'loading'} errorMessage={error} />
 
-          <img
-            src={MASCOT_THINK_URL}
-            alt="Maskotka ShiroAni"
-            className="relative w-40 h-40 object-contain drop-shadow-lg animate-[splash-float_3s_ease-in-out_0.7s_infinite]"
-            draggable={false}
-          />
-        </div>
-
-        {/* Branding */}
-        <div className="flex flex-col items-center gap-0.5 animate-[splash-fade-up_0.8s_ease-out_0.3s_both]">
-          <span className="text-2xl font-bold tracking-tight text-foreground">白アニ</span>
-          <span className="text-[10px] text-muted-foreground/50 tracking-[0.25em] uppercase font-medium">
-            ShiroAni
-          </span>
-        </div>
-
-        {/* Spinner + status */}
-        <div
-          className={cn(
-            'mt-4 flex flex-col items-center gap-2.5 transition-opacity duration-400 ease-in',
-            showSpinner ? 'opacity-100' : 'opacity-0'
-          )}
-          role="status"
-          aria-live="polite"
-        >
-          {error ? (
-            <div className="flex flex-col items-center gap-3 max-w-xs text-center animate-fade-in">
-              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-destructive" aria-hidden="true" />
-              </div>
-              <p className="text-destructive text-sm">{error}</p>
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline cursor-pointer"
-                onClick={() => window.location.reload()}
-              >
-                Spróbuj ponownie
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5 animate-[splash-fade-up_0.6s_ease-out_0.8s_both]">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              <p
-                key={messageIndex}
-                className="text-muted-foreground text-sm animate-[splash-msg-swap_0.4s_ease-out_both]"
-              >
-                {LOADING_MESSAGES[messageIndex]}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      <SplashFooter
+        showSpinner={showSpinner}
+        message={LOADING_MESSAGES[messageIndex]}
+        messageKey={messageIndex}
+        version={version}
+        error={error}
+        onRetry={() => window.location.reload()}
+        onClose={() => window.close()}
+      />
     </div>
   );
 }

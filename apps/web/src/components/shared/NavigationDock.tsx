@@ -9,11 +9,10 @@ import { ALL_NAV_ITEMS, ALWAYS_VISIBLE_VIEWS, type NavItem } from '@/lib/nav-ite
 
 // Layout constants (rem) — keep in sync with classNames below so root font scaling
 // changes the pill geometry together with the dock items.
-const GAP_REM = 0.25; // gap-1
-const H_PAD_X_REM = 0.5; // px-2
-const H_PAD_Y_REM = 0.375; // py-1.5
-const V_PAD_X_REM = 0.375; // px-1.5
-const V_PAD_Y_REM = 0.5; // py-2
+// Pre-redesign sizing: 6px padding, 4px gap, 40×40 rounded-full icon slots.
+// User prefers the pre-redesign 40px buttons over the phase 1 mock's 32px.
+const GAP_REM = 0.25; // gap-[4px]
+const PAD_REM = 0.375; // p-1.5 → 6px on both axes in the floating pill
 
 function toRem(value: number): string {
   return `${value}rem`;
@@ -22,19 +21,19 @@ function toRem(value: number): string {
 function getDockMetrics(isVertical: boolean, showLabels: boolean) {
   if (isVertical) {
     return {
-      itemWidthRem: showLabels ? 3 : 2.5, // w-12 / w-10
-      itemHeightRem: showLabels ? 3.5 : 2.5, // h-14 / h-10
-      padXRem: V_PAD_X_REM,
-      padYRem: V_PAD_Y_REM,
+      itemWidthRem: showLabels ? 3 : 2.5, // w-12 / size-10
+      itemHeightRem: showLabels ? 3.5 : 2.5, // h-14 / size-10
+      padXRem: PAD_REM,
+      padYRem: PAD_REM,
       gapRem: GAP_REM,
     };
   }
 
   return {
-    itemWidthRem: showLabels ? 4.5 : 2.5, // w-[4.5rem] / w-10
-    itemHeightRem: showLabels ? 3 : 2.5, // h-12 / h-10
-    padXRem: H_PAD_X_REM,
-    padYRem: H_PAD_Y_REM,
+    itemWidthRem: showLabels ? 4.5 : 2.5, // w-[4.5rem] / size-10
+    itemHeightRem: showLabels ? 3 : 2.5, // h-12 / size-10
+    padXRem: PAD_REM,
+    padYRem: PAD_REM,
     gapRem: GAP_REM,
   };
 }
@@ -53,7 +52,8 @@ const EXPAND_ORIGINS: Record<DockEdge, string> = {
 
 /** Renders the icon for each nav item with per-item hover/active animations */
 function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
-  const base = 'w-6 h-6 transition-transform duration-300 ease-out motion-reduce:transition-none';
+  const base =
+    'w-[18px] h-[18px] transition-transform duration-300 ease-out motion-reduce:transition-none';
 
   switch (id) {
     case 'browser':
@@ -63,7 +63,7 @@ function DockIcon({ id, isActive }: { id: ActiveView; isActive: boolean }) {
           alt=""
           draggable={false}
           className={cn(
-            'w-6 h-6 object-contain transition-transform duration-300 ease-out motion-reduce:transition-none',
+            'w-5 h-5 object-contain transition-transform duration-300 ease-out motion-reduce:transition-none',
             isActive && 'animate-[dock-bob_2s_ease-in-out_infinite] motion-reduce:animate-none'
           )}
         />
@@ -171,21 +171,15 @@ function DockItem({
       aria-label={item.label}
       className={cn(
         'group relative z-[1] flex items-center justify-center',
-        'rounded-xl overflow-hidden',
+        // Floating pill dock uses circular slots without labels; labeled mode
+        // keeps a soft rounded-xl rectangle for the extra text room.
+        showLabel ? 'rounded-xl overflow-hidden' : 'rounded-full overflow-hidden',
         'transition-[color,transform] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
         'motion-reduce:transition-none',
         'hover:scale-110 active:scale-95',
         showLabel && 'gap-1 flex-col',
-        showLabel
-          ? isVertical
-            ? 'w-12 h-14'
-            : 'w-[4.5rem] h-12'
-          : isVertical
-            ? 'w-10 h-10'
-            : 'w-10 h-10',
-        isActive
-          ? 'text-primary-foreground'
-          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
+        showLabel ? (isVertical ? 'w-12 h-14' : 'w-[4.5rem] h-12') : 'size-10',
+        isActive ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
       )}
     >
       {/* Click ripple */}
@@ -201,8 +195,8 @@ function DockItem({
       {showLabel && (
         <span
           className={cn(
-            'text-xs leading-none font-medium truncate max-w-full',
-            isActive ? 'text-primary-foreground/90' : 'text-sidebar-foreground/40'
+            'text-[10px] leading-none font-medium truncate max-w-full tracking-tight',
+            isActive ? 'text-primary-foreground/90' : 'text-muted-foreground/70'
           )}
         >
           {item.label}
@@ -440,14 +434,15 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           className={cn(
             'flex items-center justify-center',
             'w-10 h-10 rounded-full',
-            'border border-white/[0.06]',
-            'shadow-[0_4px_20px_rgba(0,0,0,0.3)]',
+            'border border-border-glass',
+            'shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]',
+            'backdrop-blur-[18px]',
             'animate-[dock-expand_450ms_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none',
             EXPAND_ORIGINS[edge],
             draggable && 'cursor-grab active:cursor-grabbing',
             'transition-shadow duration-300 ease-out',
-            'hover:scale-110 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)]',
-            hasBg ? 'bg-black/35 backdrop-blur-xl' : 'bg-sidebar/85 backdrop-blur-md'
+            'hover:scale-110 hover:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.55)]',
+            hasBg ? 'bg-black/45' : 'bg-card/70'
           )}
         >
           <img
@@ -479,9 +474,10 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           }
         }}
         className={cn(
-          'relative flex items-center gap-1 rounded-2xl',
-          'border border-white/[0.06]',
-          'shadow-[0_4px_20px_rgba(0,0,0,0.3)]',
+          'relative flex items-center gap-[4px] rounded-full',
+          'border border-border-glass',
+          'shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]',
+          'backdrop-blur-[18px]',
           draggable && 'cursor-grab active:cursor-grabbing',
           'touch-none select-none',
           isDragging && 'opacity-80 scale-95',
@@ -489,23 +485,24 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             'animate-[dock-snap_500ms_cubic-bezier(0.34,1.56,0.64,1)_both] motion-reduce:animate-none',
           !justSnapped && getAnimationClass(),
           'transition-[opacity,transform,box-shadow] duration-200',
-          vertical ? 'flex-col px-1.5 py-2' : 'flex-row px-2 py-1.5',
-          hasBg ? 'bg-black/35 backdrop-blur-xl' : 'bg-sidebar/85 backdrop-blur-md'
+          vertical ? 'flex-col p-1.5' : 'flex-row p-1.5',
+          hasBg ? 'bg-black/45' : 'bg-card/70'
         )}
       >
-        {/* Subtle highlight */}
+        {/* Subtle top/left highlight — sits along the inner edge of the pill */}
         <div
           className={cn(
-            'pointer-events-none absolute rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent',
-            vertical ? 'inset-y-3 left-0 w-px bg-gradient-to-b' : 'inset-x-3 top-0 h-px'
+            'pointer-events-none absolute bg-gradient-to-r from-transparent via-white/10 to-transparent',
+            vertical ? 'inset-y-3 left-0 w-px bg-gradient-to-b' : 'inset-x-4 top-0 h-px'
           )}
         />
 
-        {/* Sliding active pill */}
+        {/* Sliding active pill — circular in no-label mode, soft-rounded with labels */}
         <div
           className={cn(
-            'absolute rounded-xl',
-            'bg-primary/90',
+            'absolute',
+            showLabels ? 'rounded-xl' : 'rounded-full',
+            'bg-primary',
             'animate-[dock-pill-glow_3s_ease-in-out_infinite] motion-reduce:animate-none',
             'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
             'motion-reduce:transition-none'

@@ -1,4 +1,5 @@
 import { IS_ELECTRON } from '@/lib/platform';
+import { hostFromUrl } from '@/lib/url-utils';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
 import type { BrowserTab, DiscordPresenceActivity } from '@shiroani/shared';
@@ -28,14 +29,11 @@ export function slugToTitle(slug: string): string {
  * Pure function — no DOM access, no side effects.
  */
 export function detectAnimeFromUrl(url: string, pageTitle: string): AnimeDetection | null {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
+  const hostname = hostFromUrl(url);
+  if (hostname === null) return null;
 
-  const hostname = parsed.hostname.replace(/^www\./, '');
+  // Safe to parse again — hostFromUrl returning non-null guarantees the URL is well-formed.
+  const parsed = new URL(url);
 
   // ── ogladajanime.pl ───────────────────────────────────────────
   if (hostname === 'ogladajanime.pl') {
@@ -97,7 +95,7 @@ function detectShinden(parsed: URL): AnimeDetection | null {
 }
 
 function detectYoutube(parsed: URL, pageTitle: string): AnimeDetection | null {
-  const hostname = parsed.hostname.replace(/^www\./, '');
+  const hostname = hostFromUrl(parsed.href);
 
   // youtu.be short links always have a video ID as the path
   const isWatching =
@@ -140,12 +138,7 @@ export function updateAnimePresence(
 
   const detection = detectAnimeFromUrl(tab.url, tab.title);
 
-  let siteName: string | undefined;
-  try {
-    siteName = new URL(tab.url).hostname.replace(/^www\./, '');
-  } catch {
-    // invalid URL
-  }
+  const siteName = hostFromUrl(tab.url) ?? undefined;
 
   const activity: DiscordPresenceActivity = detection
     ? {

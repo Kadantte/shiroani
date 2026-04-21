@@ -4,6 +4,8 @@ import type { Theme } from '@shiroani/shared';
 import {
   createLogger,
   DEFAULT_UI_FONT_SCALE,
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_SETTING_KEY,
   isBuiltInTheme,
   UI_FONT_SCALE_SETTING_KEY,
 } from '@shiroani/shared';
@@ -11,6 +13,7 @@ import { themeOptions } from '@/lib/theme';
 import { persistTheme, getPersistedTheme } from '@/lib/theme-persistence';
 import { injectCustomThemeCSS, removeCustomThemeCSS } from '@/lib/custom-theme-css';
 import { electronStoreGet, electronStoreSet } from '@/lib/electron-store';
+import { createLocalStorageAccessor } from '@/lib/persisted-storage';
 import {
   applyUIFontScaleToDOM,
   clampUIFontScale,
@@ -34,6 +37,10 @@ interface SettingsState {
   uiFontScale: number;
   /** Preferred language for anime titles/subtitles */
   preferredLanguage: 'japanese' | 'english' | 'romaji';
+  /** How the app addresses the user (e.g. the newtab greeting). Empty means "no personalised name". */
+  displayName: string;
+  /** Developer mode — surfaces DevTools, diagnostics copy, and the log viewer. */
+  devModeEnabled: boolean;
 }
 
 /**
@@ -48,8 +55,50 @@ interface SettingsActions {
   setUIFontScale: (scale: number) => void;
   /** Set preferred language */
   setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => void;
+  /** Set the user's display name. Trimmed + clamped to DISPLAY_NAME_MAX_LENGTH. */
+  setDisplayName: (name: string) => void;
+  /** Toggle developer mode — persisted across sessions. */
+  setDevModeEnabled: (enabled: boolean) => void;
   /** Initialize persisted visual settings */
   initSettings: () => Promise<void>;
+}
+
+const DISPLAY_NAME_STORAGE_KEY = 'shiroani:displayName';
+const DEV_MODE_STORAGE_KEY = 'shiroani:devMode';
+const DEV_MODE_SETTING_KEY = 'settings.devMode';
+
+// Stored as the string `'true'`; any other value (including missing keys left
+// over from the old removeItem-on-disable shape) reads as disabled.
+const devModeStorage = createLocalStorageAccessor<boolean>(DEV_MODE_STORAGE_KEY, {
+  parse: raw => raw === 'true',
+  serialize: enabled => (enabled ? 'true' : ''),
+  fallback: false,
+});
+
+const displayNameStorage = createLocalStorageAccessor<string>(DISPLAY_NAME_STORAGE_KEY, {
+  parse: raw => raw,
+  serialize: value => value,
+  fallback: '',
+});
+
+function getPersistedDevMode(): boolean {
+  return devModeStorage.get();
+}
+
+function persistDevModeLocally(enabled: boolean) {
+  devModeStorage.set(enabled);
+}
+
+function getPersistedDisplayName(): string {
+  return displayNameStorage.get();
+}
+
+function persistDisplayNameLocally(name: string) {
+  displayNameStorage.set(name);
+}
+
+function normalizeDisplayName(name: string): string {
+  return name.trim().slice(0, DISPLAY_NAME_MAX_LENGTH);
 }
 
 /**
@@ -113,8 +162,8 @@ function applyThemeToDOM(theme: Theme) {
   }
 }
 
-// Default theme
-const DEFAULT_THEME: Theme = 'dark';
+// Default theme — matches DEFAULT_BUILT_IN_THEME in shared settings types
+const DEFAULT_THEME: Theme = 'plum';
 
 /**
  * Settings store using Zustand
@@ -156,12 +205,17 @@ export const useSettingsStore = create<SettingsStore>()(
         applyUIFontScaleToDOM(initialFontScale);
       }
 
+      const initialDisplayName = typeof window !== 'undefined' ? getPersistedDisplayName() : '';
+      const initialDevMode = typeof window !== 'undefined' ? getPersistedDevMode() : false;
+
       return {
         // Initial state
         theme: initialTheme,
         previewTheme: null,
         uiFontScale: initialFontScale,
         preferredLanguage: 'romaji',
+        displayName: initialDisplayName,
+        devModeEnabled: initialDevMode,
 
         // Actions
         setTheme: (theme: Theme) => {
@@ -199,6 +253,27 @@ export const useSettingsStore = create<SettingsStore>()(
           set({ preferredLanguage: lang }, undefined, 'settings/setPreferredLanguage');
         },
 
+        setDisplayName: (name: string) => {
+          const next = normalizeDisplayName(name);
+          if (get().displayName === next) return;
+          logger.debug('setDisplayName', next ? `"${next}"` : '(empty)');
+          set({ displayName: next }, undefined, 'settings/setDisplayName');
+          persistDisplayNameLocally(next);
+          void electronStoreSet(DISPLAY_NAME_SETTING_KEY, next).catch(error => {
+            logger.warn('Failed to persist display name:', error);
+          });
+        },
+
+        setDevModeEnabled: (enabled: boolean) => {
+          if (get().devModeEnabled === enabled) return;
+          logger.debug('setDevModeEnabled', enabled);
+          set({ devModeEnabled: enabled }, undefined, 'settings/setDevModeEnabled');
+          persistDevModeLocally(enabled);
+          void electronStoreSet(DEV_MODE_SETTING_KEY, enabled).catch(error => {
+            logger.warn('Failed to persist dev mode:', error);
+          });
+        },
+
         initSettings: async () => {
           logger.debug('initSettings');
           if (settingsInitPromise) {
@@ -206,24 +281,48 @@ export const useSettingsStore = create<SettingsStore>()(
           }
 
           const initialScale = get().uiFontScale;
+          const initialName = get().displayName;
           settingsInitPromise = (async () => {
             await useBackgroundStore.getState().restoreBackground();
 
             try {
               const persistedScale = await electronStoreGet<number>(UI_FONT_SCALE_SETTING_KEY);
-              if (typeof persistedScale !== 'number') {
-                return;
+              if (typeof persistedScale === 'number' && get().uiFontScale === initialScale) {
+                const next = clampUIFontScale(persistedScale);
+                set({ uiFontScale: next }, undefined, 'settings/initUIFontScale');
+                applyUIFontScaleToDOM(next);
+                persistUIFontScaleLocally(next);
               }
-
-              const next = clampUIFontScale(persistedScale);
-              if (get().uiFontScale !== initialScale) {
-                return;
-              }
-              set({ uiFontScale: next }, undefined, 'settings/initUIFontScale');
-              applyUIFontScaleToDOM(next);
-              persistUIFontScaleLocally(next);
             } catch (error) {
               logger.warn('Failed to restore UI font scale:', error);
+            }
+
+            try {
+              const persistedName = await electronStoreGet<string>(DISPLAY_NAME_SETTING_KEY);
+              if (
+                typeof persistedName === 'string' &&
+                get().displayName === initialName &&
+                persistedName !== initialName
+              ) {
+                const next = normalizeDisplayName(persistedName);
+                set({ displayName: next }, undefined, 'settings/initDisplayName');
+                persistDisplayNameLocally(next);
+              }
+            } catch (error) {
+              logger.warn('Failed to restore display name:', error);
+            }
+
+            try {
+              const persistedDevMode = await electronStoreGet<boolean>(DEV_MODE_SETTING_KEY);
+              if (
+                typeof persistedDevMode === 'boolean' &&
+                persistedDevMode !== get().devModeEnabled
+              ) {
+                set({ devModeEnabled: persistedDevMode }, undefined, 'settings/initDevMode');
+                persistDevModeLocally(persistedDevMode);
+              }
+            } catch (error) {
+              logger.warn('Failed to restore dev mode:', error);
             }
           })().catch(error => {
             settingsInitPromise = null;

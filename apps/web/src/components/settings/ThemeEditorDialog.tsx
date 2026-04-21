@@ -153,7 +153,7 @@ export function ThemeEditorDialog({
 
   const [name, setName] = useState('');
   const [isDark, setIsDark] = useState(true);
-  const [baseTheme, setBaseTheme] = useState<BuiltInTheme>('dark');
+  const [baseTheme, setBaseTheme] = useState<BuiltInTheme>('plum');
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [initialVariables, setInitialVariables] = useState<Record<string, string>>({});
 
@@ -273,7 +273,7 @@ export function ThemeEditorDialog({
         variables,
       });
       setTheme(editThemeId);
-      toast.success('Motyw zaktualizowany');
+      toast.success('Zapisano zmiany');
     } else {
       // Create new theme
       const newTheme: Omit<CustomThemeDefinition, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -287,7 +287,7 @@ export function ThemeEditorDialog({
       if (created) {
         setTheme(created.id);
       }
-      toast.success('Motyw utworzony');
+      toast.success('Motyw zapisany');
     }
 
     onOpenChange(false);

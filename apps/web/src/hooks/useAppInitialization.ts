@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { createLogger } from '@shiroani/shared';
+import { createLogger, setLoggerContext, makeCorrelationId } from '@shiroani/shared';
+import { installRendererLogBridge } from '@/lib/logger-bridge';
 import { initializeSocket, connectSocket } from '@/lib/socket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -51,6 +52,37 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     let mounted = true;
     let cleanupUpdate: (() => void) | undefined;
 
+    // Wire the renderer ring buffer to main-process file logging before any
+    // other init step logs so early initialization telemetry makes it to disk.
+    const uninstallLogBridge = installRendererLogBridge();
+
+    // Seed renderer session context immediately with what we can read
+    // synchronously. The richer appVersion arrives async via getSystemInfo
+    // below — early logs emitted in this tick won't carry it, which is fine.
+    const rendererPlatform =
+      typeof navigator !== 'undefined' && typeof navigator.platform === 'string'
+        ? navigator.platform
+        : undefined;
+    setLoggerContext({
+      sessionId: makeCorrelationId(),
+      platform: rendererPlatform,
+    });
+
+    // Resolve appVersion (and platform from main, which is more accurate)
+    // off the critical path. Failures are non-fatal — the field stays undefined.
+    void window.electronAPI?.app
+      ?.getSystemInfo?.()
+      .then(info => {
+        if (!info) return;
+        setLoggerContext({
+          appVersion: info.appVersion,
+          platform: info.osPlatform ?? rendererPlatform,
+        });
+      })
+      .catch(() => {
+        // ignore — diagnostics will fall back to navigator.platform / 'unknown'.
+      });
+
     const init = async () => {
       try {
         logger.info('Initializing app...');
@@ -101,6 +133,7 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
       mounted = false;
       cleanupAllListeners();
       cleanupUpdate?.();
+      uninstallLogBridge();
     };
   }, [initAllListeners, cleanupAllListeners, initUpdateListeners]);
 

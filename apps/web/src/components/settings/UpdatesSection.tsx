@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Download, ExternalLink, Loader2, Package } from 'lucide-react';
+import { Download, ExternalLink, Loader2, Package, RefreshCw } from 'lucide-react';
 import { GITHUB_RELEASES_URL } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 
 interface UpdatesSectionProps {
   version: string;
@@ -52,6 +53,13 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
     }
   })();
 
+  const statusTone: 'green' | 'accent' | 'destructive' | 'muted' = (() => {
+    if (status === 'error') return 'destructive';
+    if (status === 'idle') return 'green';
+    if (status === 'available' || status === 'downloading' || status === 'ready') return 'accent';
+    return 'muted';
+  })();
+
   const openReleasesPage = () => {
     if (window.electronAPI?.browser) {
       useBrowserStore.getState().openTab(GITHUB_RELEASES_URL);
@@ -62,80 +70,79 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
 
   return (
     <div className="space-y-4">
-      {/* Version & Channel */}
+      {/* Version + channel — editorial hero */}
       <SettingsCard
-        icon={Package}
+        icon={RefreshCw}
         title="Wersja aplikacji"
-        subtitle={isMac ? 'Aktualna wersja' : 'Aktualna wersja i kanał aktualizacji'}
+        subtitle={isMac ? 'Aktualna wersja ShiroAni.' : 'Aktualna wersja i kanał aktualizacji.'}
       >
-        <div>
-          <h4 className="text-sm font-medium mb-1">Wersja</h4>
-          <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">
-            {version || '...'}
-          </p>
+        <div className="flex flex-wrap items-end gap-6 pb-3.5 border-b border-border-glass/60">
+          <div>
+            <p className="font-serif font-extrabold text-[44px] leading-none tracking-[-0.04em] text-foreground tabular-nums">
+              {version || '...'}
+            </p>
+            <p className="mt-1 font-mono text-[11px] tracking-[0.12em] text-muted-foreground">
+              {channel === 'beta' ? 'KANAŁ BETA' : 'KANAŁ STABILNY'}
+            </p>
+          </div>
+          <StatusPill tone={statusTone} text={statusText} />
         </div>
 
         {!isMac && (
           <div>
-            <h4 className="text-sm font-medium mb-2">Kanał aktualizacji</h4>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setChannel('stable')}
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 mb-2">
+              Kanał aktualizacji
+            </p>
+            <div className="inline-flex items-center gap-1">
+              <ChannelButton
+                active={channel === 'stable'}
                 disabled={isChannelSwitching}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                  channel === 'stable'
-                    ? 'border-primary/50 bg-primary/15 text-foreground'
-                    : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
-                )}
+                onClick={() => setChannel('stable')}
               >
-                <div
+                <span
                   className={cn(
-                    'w-3 h-3 rounded-full',
+                    'w-1.5 h-1.5 rounded-full',
                     channel === 'stable' ? 'bg-primary' : 'bg-muted-foreground/30'
                   )}
                 />
-                <span className="text-sm">Stabilna</span>
-              </button>
-              <button
-                onClick={() => setChannel('beta')}
+                Stabilna
+              </ChannelButton>
+              <ChannelButton
+                active={channel === 'beta'}
                 disabled={isChannelSwitching}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                  channel === 'beta'
-                    ? 'border-primary/50 bg-primary/15 text-foreground'
-                    : 'border-border-glass text-muted-foreground hover:border-foreground/20 hover:bg-accent/50'
-                )}
+                onClick={() => setChannel('beta')}
               >
-                <div
+                <span
                   className={cn(
-                    'w-3 h-3 rounded-full',
+                    'w-1.5 h-1.5 rounded-full',
                     channel === 'beta' ? 'bg-primary' : 'bg-muted-foreground/30'
                   )}
                 />
-                <span className="text-sm">Beta</span>
-              </button>
+                Beta
+              </ChannelButton>
             </div>
+            <p className="mt-2 text-[11.5px] text-muted-foreground/80 leading-relaxed">
+              Kanał stabilny dostaje aktualizacje dopiero po przetestowaniu. Beta może zawierać
+              błędy.
+            </p>
           </div>
         )}
-      </SettingsCard>
 
-      {/* Updates */}
-      <SettingsCard>
+        {/* Actions */}
         {isMac ? (
-          <>
-            <p className="text-xs text-muted-foreground mb-3">
-              Automatyczne aktualizacje nie są na razie dostępne na macOS ze względu na brak podpisu
-              cyfrowego. Pobierz najnowszą wersję ręcznie z GitHub Releases lub Discorda.
+          <div className="space-y-3">
+            <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
+              Na macOS automatyczne aktualizacje na razie nie działają, bo aplikacja nie jest
+              podpisana cyfrowo. Najnowszą wersję pobierz ręcznie z GitHub Releases lub Discorda.
             </p>
             <Button size="sm" variant="outline" onClick={openReleasesPage}>
               <ExternalLink className="w-4 h-4" />
               Otwórz GitHub Releases
             </Button>
-          </>
+          </div>
         ) : (
-          <>
-            <div className="flex items-center gap-3 mb-2">
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 onClick={checkForUpdates}
@@ -144,13 +151,14 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
                 {status === 'checking' ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Download className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" />
                 )}
                 Sprawdź aktualizacje
               </Button>
 
               {status === 'available' && (
                 <Button size="sm" variant="outline" onClick={startDownload}>
+                  <Download className="w-4 h-4" />
                   Pobierz
                 </Button>
               )}
@@ -162,34 +170,88 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
               )}
             </div>
 
-            <p
-              className={cn(
-                'text-xs',
-                status === 'error' ? 'text-destructive' : 'text-muted-foreground'
-              )}
-            >
-              {statusText}
-            </p>
-
             {/* Download progress */}
             {status === 'downloading' && progress && (
-              <div
-                className="mt-2 w-full bg-primary/20 rounded-full h-1.5"
-                role="progressbar"
-                aria-valuenow={Math.round(progress.percent)}
-                aria-valuemin={0}
-                aria-valuemax={100}
+              <ProgressBar
+                className="mt-2"
+                value={progress.percent}
+                thickness={6}
                 aria-label="Postęp pobierania"
-              >
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300"
-                  style={{ width: `${progress.percent}%` }}
-                />
-              </div>
+              />
             )}
-          </>
+
+            <Package className="hidden" />
+          </div>
         )}
       </SettingsCard>
     </div>
+  );
+}
+
+// ── Helper components ───────────────────────────────────────────────
+
+function StatusPill({
+  tone,
+  text,
+}: {
+  tone: 'green' | 'accent' | 'destructive' | 'muted';
+  text: string;
+}) {
+  const toneClass = {
+    green:
+      'bg-[oklch(0.78_0.15_140/0.12)] border-[oklch(0.78_0.15_140/0.3)] text-[oklch(0.78_0.15_140)]',
+    accent: 'bg-primary/12 border-primary/30 text-primary',
+    destructive: 'bg-destructive/12 border-destructive/30 text-destructive',
+    muted: 'bg-muted/15 border-border-glass text-muted-foreground',
+  }[tone];
+
+  const dotClass = {
+    green: 'bg-[oklch(0.78_0.15_140)] shadow-[0_0_8px_oklch(0.78_0.15_140/0.6)]',
+    accent: 'bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]',
+    destructive: 'bg-destructive',
+    muted: 'bg-muted-foreground/60',
+  }[tone];
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-[12.5px] font-semibold',
+        toneClass
+      )}
+    >
+      <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', dotClass)} />
+      <span className="leading-tight">{text}</span>
+    </div>
+  );
+}
+
+function ChannelButton({
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      className={cn(
+        'inline-flex items-center gap-2 px-3 py-[6px] rounded-lg border text-[12px] font-medium',
+        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        'disabled:opacity-60 disabled:cursor-not-allowed',
+        active
+          ? 'border-primary/35 bg-primary/18 text-primary font-semibold'
+          : 'border-border-glass bg-background/30 text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+      )}
+    >
+      {children}
+    </button>
   );
 }

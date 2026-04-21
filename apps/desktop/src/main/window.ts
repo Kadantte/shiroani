@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, shell, session } from 'electron';
+import { app, BrowserWindow, Menu, shell, session, type WebContents } from 'electron';
 import * as path from 'path';
 import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
@@ -174,6 +174,12 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
   // Register all IPC handlers
   registerIpcHandlers(mainWindow, browserManager);
 
+  // Per-window crash/health instrumentation. These piggy-back on the same
+  // webContents the main window owns and complement the app-level
+  // 'render-process-gone' / 'child-process-gone' handlers in main/index.ts
+  // with window-scoped context (URL, title, preload path).
+  attachWebContentsDiagnostics(mainWindow.webContents);
+
   // Block all new window creation, open external links in browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (isExternalUrlAllowed(url)) {
@@ -223,12 +229,85 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
     mainWindow.loadFile(indexPath).catch(err => {
       logger.error('Failed to load renderer:', err);
     });
-
-    // Log renderer errors
-    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-      logger.error('Renderer failed to load:', errorCode, errorDescription);
-    });
   }
 
   return mainWindow;
+}
+
+/**
+ * Track webContents we've already instrumented so a single webContents
+ * (e.g. if a window is reused) doesn't get double-wired listeners.
+ */
+const instrumentedWebContents = new WeakSet<WebContents>();
+
+/**
+ * Wire crash / health / load-failure diagnostics onto a BrowserWindow's
+ * webContents. Idempotent per webContents instance — safe to call multiple
+ * times from different window-creation paths.
+ */
+function attachWebContentsDiagnostics(webContents: WebContents): void {
+  if (instrumentedWebContents.has(webContents)) return;
+  instrumentedWebContents.add(webContents);
+
+  webContents.on('render-process-gone', (_event, details) => {
+    const isError =
+      details.reason === 'crashed' ||
+      details.reason === 'oom' ||
+      details.reason === 'launch-failed' ||
+      details.reason === 'integrity-failure';
+    const payload = {
+      reason: details.reason,
+      exitCode: details.exitCode,
+      url: safeGetUrl(webContents),
+    };
+    if (isError) {
+      logger.error('[webContents render-process-gone]', payload);
+    } else {
+      logger.warn('[webContents render-process-gone]', payload);
+    }
+  });
+
+  webContents.on('unresponsive', () => {
+    logger.warn('[webContents unresponsive]', { url: safeGetUrl(webContents) });
+  });
+
+  webContents.on('responsive', () => {
+    logger.info('[webContents responsive]', { url: safeGetUrl(webContents) });
+  });
+
+  webContents.on('preload-error', (_event, preloadPath, error) => {
+    logger.error('[webContents preload-error]', {
+      preloadPath,
+      message: error.message,
+      stack: error.stack,
+    });
+  });
+
+  webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      // errorCode -3 (ABORTED) fires when the user navigates away mid-load or
+      // when we programmatically cancel — not a real failure.
+      if (errorCode === -3) return;
+      const payload = {
+        errorCode,
+        errorDescription,
+        url: validatedURL,
+        isMainFrame,
+      };
+      if (isMainFrame) {
+        logger.error('[webContents did-fail-load]', payload);
+      } else {
+        logger.warn('[webContents did-fail-load]', payload);
+      }
+    }
+  );
+}
+
+function safeGetUrl(webContents: WebContents): string {
+  try {
+    return webContents.getURL();
+  } catch {
+    return '<unavailable>';
+  }
 }

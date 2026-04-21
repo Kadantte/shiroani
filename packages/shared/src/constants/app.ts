@@ -60,6 +60,13 @@ export const LOG_MAX_FILE_SIZE = 10 * 1024 * 1024;
 /** Maximum age of log files before cleanup (7 days in ms) */
 export const LOG_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Maximum total bytes allowed across all log files in the logs directory.
+ * When the age-based cleanup pass leaves the directory above this ceiling,
+ * the oldest files (by mtime) are pruned until the total is at or below it.
+ */
+export const LOG_MAX_TOTAL_DIR_BYTES = 200 * 1024 * 1024;
+
 /** Log flush interval in milliseconds */
 export const LOG_FLUSH_INTERVAL_MS = 100;
 
@@ -68,3 +75,40 @@ export const LOG_BUFFER_MAX_ENTRIES = 50;
 
 /** Log cleanup interval (1 hour in ms) */
 export const LOG_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+
+/** Default in-memory ring buffer size for shared logger */
+export const LOG_RING_BUFFER_DEFAULT = 200;
+
+/** Minimum allowed ring buffer size (clamp floor) */
+export const LOG_RING_BUFFER_MIN = 50;
+
+/** Maximum allowed ring buffer size (clamp ceiling) */
+export const LOG_RING_BUFFER_MAX = 5000;
+
+/**
+ * Keys whose values must be redacted from structured log output.
+ * Match is case-insensitive against the last segment of a property path.
+ */
+export const LOG_REDACT_KEYS: readonly string[] = [
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'token',
+  'access_token',
+  'accessToken',
+  'refresh_token',
+  'refreshToken',
+  'api_key',
+  'apiKey',
+  'apikey',
+  'x-api-key',
+  'password',
+  'secret',
+  'client_secret',
+  'clientSecret',
+  'private_key',
+  'privateKey',
+];
+
+/** Placeholder substituted for redacted values */
+export const LOG_REDACT_PLACEHOLDER = '[REDACTED]';

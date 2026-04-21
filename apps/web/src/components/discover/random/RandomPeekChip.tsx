@@ -23,22 +23,27 @@ export const RandomPeekChip = memo(function RandomPeekChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'group flex items-center gap-2 max-w-[45%] min-w-0 p-1.5 rounded-xl',
+        'group flex items-center gap-2 max-w-[45%] min-w-0 p-1.5 rounded-[10px]',
         'bg-card/40 hover:bg-card/70 border border-border-glass transition-colors',
         direction === 'next' && 'flex-row-reverse'
       )}
       aria-label={`${direction === 'prev' ? 'Poprzednie' : 'Następne'}: ${title}`}
     >
       {cover ? (
-        <img src={cover} alt="" aria-hidden className="w-8 h-10 object-cover rounded-md shrink-0" />
+        <img
+          src={cover}
+          alt=""
+          aria-hidden
+          className="w-8 h-10 object-cover rounded-[4px] shrink-0"
+        />
       ) : (
-        <div className="w-8 h-10 rounded-md bg-muted shrink-0" />
+        <div className="w-8 h-10 rounded-[4px] bg-muted shrink-0" />
       )}
       <div className={cn('min-w-0', direction === 'next' ? 'text-right' : 'text-left')}>
-        <p className="text-2xs text-muted-foreground/70 leading-tight">
+        <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground/70 leading-tight">
           {direction === 'prev' ? '← Poprzednie' : 'Następne →'}
         </p>
-        <p className="text-2xs font-medium text-foreground/80 truncate leading-tight">
+        <p className="text-[11px] font-medium text-foreground/80 truncate leading-tight mt-[2px]">
           {title}
           {inLibrary && <span className="ml-1 text-status-success">✓</span>}
         </p>

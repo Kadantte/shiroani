@@ -1,8 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { createMainLogger } from '../logger';
-import { Request } from '@ghostery/adblocker-electron';
 import { BrowserManager } from '../browser/browser-manager';
-import { getBlocker } from '../adblock';
 
 const logger = createMainLogger('IPC:Browser');
 
@@ -18,17 +16,20 @@ const POPUP_ALLOWLIST = new Set([
   'discord.com',
 ]);
 
-/** Popup block mode: 'smart' uses blocker + origin heuristics, 'strict' blocks all cross-origin */
-type PopupBlockMode = 'smart' | 'strict' | 'off';
-let popupBlockMode: PopupBlockMode = 'smart';
+/** Popup block switch: `true` blocks all cross-origin popups except the OAuth allowlist. */
+let popupBlockEnabled = true;
 
-export function getPopupBlockMode(): PopupBlockMode {
-  return popupBlockMode;
+/** Input validation limits for the adblock whitelist. */
+const MAX_WHITELIST_ENTRIES = 500;
+const MAX_HOST_LENGTH = 253;
+
+export function getPopupBlockEnabled(): boolean {
+  return popupBlockEnabled;
 }
 
-export function setPopupBlockMode(mode: PopupBlockMode): void {
-  popupBlockMode = mode;
-  logger.info(`Popup block mode set to: ${mode}`);
+export function setPopupBlockEnabled(enabled: boolean): void {
+  popupBlockEnabled = enabled;
+  logger.info(`Popup block ${enabled ? 'enabled' : 'disabled'}`);
 }
 
 /**
@@ -36,7 +37,7 @@ export function setPopupBlockMode(mode: PopupBlockMode): void {
  * Returns true if the popup should be blocked (not opened as a tab).
  */
 function shouldBlockPopup(popupUrl: string, openerUrl: string): boolean {
-  if (popupBlockMode === 'off') return false;
+  if (!popupBlockEnabled) return false;
 
   let popupHostname: string;
   let openerHostname: string;
@@ -53,31 +54,9 @@ function shouldBlockPopup(popupUrl: string, openerUrl: string): boolean {
   // Always allow auth/OAuth domains
   if (POPUP_ALLOWLIST.has(popupHostname)) return false;
 
-  // Block about:blank popups (common ad launcher technique)
-  if (popupUrl === 'about:blank') return true;
-
-  if (popupBlockMode === 'strict') {
-    // Strict mode: block all cross-origin popups not in the allowlist
-    logger.debug(`Popup blocked (strict): ${popupUrl} from ${openerUrl}`);
-    return true;
-  }
-
-  // Smart mode: check against adblocker filter lists
-  const blocker = getBlocker();
-  if (blocker) {
-    const request = Request.fromRawDetails({
-      url: popupUrl,
-      sourceUrl: openerUrl,
-      type: 'document',
-    });
-    const { match } = blocker.match(request);
-    if (match) {
-      logger.debug(`Popup blocked (adblock match): ${popupUrl} from ${openerUrl}`);
-      return true;
-    }
-  }
-
-  return false;
+  // Block all cross-origin popups not in the OAuth allowlist
+  logger.debug(`Popup blocked: ${popupUrl} from ${openerUrl}`);
+  return true;
 }
 
 /**
@@ -107,15 +86,31 @@ export function registerBrowserHandlers(
     }
   });
 
-  // Popup block mode IPC
-  ipcMain.handle('browser:get-popup-block-mode', () => {
-    return popupBlockMode;
+  // Popup block switch IPC
+  ipcMain.handle('browser:get-popup-block-enabled', () => {
+    return popupBlockEnabled;
   });
 
-  ipcMain.handle('browser:set-popup-block-mode', (_event, mode: string) => {
-    if (mode === 'smart' || mode === 'strict' || mode === 'off') {
-      setPopupBlockMode(mode);
+  ipcMain.handle('browser:set-popup-block-enabled', (_event, enabled: unknown) => {
+    if (typeof enabled === 'boolean') {
+      setPopupBlockEnabled(enabled);
     }
+  });
+
+  // Adblock whitelist IPC — validates input and silently drops invalid entries
+  ipcMain.handle('browser:set-adblock-whitelist', (_event, hosts: unknown) => {
+    if (!Array.isArray(hosts)) {
+      logger.warn('browser:set-adblock-whitelist received non-array payload; ignoring');
+      return;
+    }
+    const cleaned: string[] = [];
+    for (const entry of hosts.slice(0, MAX_WHITELIST_ENTRIES)) {
+      if (typeof entry !== 'string') continue;
+      const trimmed = entry.trim();
+      if (!trimmed || trimmed.length > MAX_HOST_LENGTH) continue;
+      cleaned.push(trimmed);
+    }
+    browserManager.setAdblockWhitelist(cleaned);
   });
 
   // Intercept window.open calls from webview guest pages.
@@ -184,6 +179,7 @@ export function registerBrowserHandlers(
 export function cleanupBrowserHandlers(): void {
   ipcMain.removeHandler('browser:toggle-adblock');
   ipcMain.removeHandler('browser:set-fullscreen');
-  ipcMain.removeHandler('browser:get-popup-block-mode');
-  ipcMain.removeHandler('browser:set-popup-block-mode');
+  ipcMain.removeHandler('browser:get-popup-block-enabled');
+  ipcMain.removeHandler('browser:set-popup-block-enabled');
+  ipcMain.removeHandler('browser:set-adblock-whitelist');
 }

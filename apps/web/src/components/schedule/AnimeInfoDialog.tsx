@@ -519,7 +519,7 @@ export function AnimeInfoDialog({ anime, open, onOpenChange }: AnimeInfoDialogPr
                   onOpenChange(false);
                 }}
               >
-                Otwórz na AniList
+                Otwórz w AniList
                 <ExternalLink className="w-3 h-3" />
               </Button>
             </div>

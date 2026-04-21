@@ -1,21 +1,29 @@
-import { Calendar, Clock } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DAY_NAMES_FULL } from '@/lib/constants';
-import { formatTime, getAnimeTitle, isToday } from './schedule-utils';
-import { formatEpisodeProgress, formatScore } from '@/lib/anime-utils';
-import { DayColumnHeader } from './DayColumnHeader';
+import { DAY_NAMES_SHORT } from '@/lib/constants';
+import { formatTime, getAnimeTitle, type SlotStatus } from './schedule-utils';
+import { ScheduleDayColumn } from './ScheduleDayColumn';
 import { SubscribeBellButton } from './SubscribeBellButton';
 import { useWeekData } from '@/hooks/useWeekData';
+import { useNowSeconds } from '@/hooks/useNowSeconds';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface TimetableViewProps {
   weekDays: string[];
   getEntriesForDay: (day: string) => AiringAnime[];
-  /** Pass the raw schedule object so useMemo can detect changes */
+  /** Raw schedule object so useMemo can detect changes */
   schedule: Record<string, AiringAnime[]>;
   onAnimeClick?: (anime: AiringAnime) => void;
 }
 
+/**
+ * Poster board — 7 columns, one per day, each filled with cinematic poster
+ * cards. Time and episode are rendered as floating mono pills on top of the
+ * cover; title overlays the bottom via a dark gradient.
+ *
+ * Kept under the `timetable` view-mode id for store compatibility, but the
+ * UI-facing label is "Plakaty" (posters).
+ */
 export function TimetableView({
   weekDays,
   getEntriesForDay,
@@ -23,117 +31,136 @@ export function TimetableView({
   onAnimeClick,
 }: TimetableViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
+  const now = useNowSeconds(60_000);
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1540px]">
+      <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
-          const isTodayDay = isToday(day);
-
           return (
-            <div
+            <ScheduleDayColumn
               key={day}
-              className={cn(
-                'flex flex-col bg-background min-w-[220px] flex-1',
-                isTodayDay && 'bg-primary/5'
+              day={day}
+              label={DAY_NAMES_SHORT[idx]}
+              entries={dayEntries}
+              now={now}
+              emptyLabel="brak plakatów"
+              listClassName="space-y-2"
+              emptyStateClassName="py-10"
+              emptyIconClassName="w-6 h-6"
+              renderCard={(anime, status) => (
+                <PosterCard
+                  key={`${anime.id}-${anime.episode}`}
+                  anime={anime}
+                  status={status}
+                  onClick={onAnimeClick}
+                />
               )}
-            >
-              <DayColumnHeader
-                day={day}
-                label={DAY_NAMES_FULL[idx]}
-                entryCount={dayEntries.length}
-              />
-
-              {/* Timetable entries */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                {dayEntries.map((anime: AiringAnime) => {
-                  const title = getAnimeTitle(anime.media);
-                  // Timetable prefers large cover for the card layout
-                  const coverUrl = anime.media.coverImage.large || anime.media.coverImage.medium;
-
-                  return (
-                    <div
-                      key={`${anime.id}-${anime.episode}`}
-                      role={onAnimeClick ? 'button' : 'article'}
-                      aria-label={title}
-                      tabIndex={onAnimeClick ? 0 : undefined}
-                      onClick={() => onAnimeClick?.(anime)}
-                      onKeyDown={
-                        onAnimeClick
-                          ? e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                onAnimeClick(anime);
-                              }
-                            }
-                          : undefined
-                      }
-                      className={cn(
-                        'rounded-lg overflow-hidden',
-                        'border border-border-glass',
-                        'hover:border-border-glass/80 hover:shadow-md transition-all duration-200',
-                        'group relative',
-                        onAnimeClick && 'cursor-pointer'
-                      )}
-                    >
-                      {/* Info strip -- episode & time */}
-                      <div className="flex items-center justify-between px-2.5 py-1.5 bg-background/80 text-2xs">
-                        <span className="font-medium text-foreground/80">
-                          {formatEpisodeProgress(anime.episode, anime.media.episodes)}
-                        </span>
-                        <div className="flex items-center gap-1 text-muted-foreground/70">
-                          <Clock className="w-3 h-3" />
-                          <span>{formatTime(anime.airingAt)}</span>
-                        </div>
-                      </div>
-
-                      {/* Cover image with title overlay */}
-                      <div className="relative aspect-[3/4] bg-muted">
-                        {coverUrl ? (
-                          <img
-                            src={coverUrl}
-                            alt={title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Calendar className="w-8 h-8 text-muted-foreground/20" />
-                          </div>
-                        )}
-
-                        {/* Bell icon overlay - top right */}
-                        <SubscribeBellButton
-                          anime={anime}
-                          className="absolute top-1 right-1 w-7 h-7 bg-background/80"
-                        />
-
-                        {/* Title overlay at bottom */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/60 to-transparent p-2.5 pt-8">
-                          <p className="text-xs font-semibold leading-tight line-clamp-2 text-foreground drop-shadow-sm">
-                            {title}
-                          </p>
-                          {anime.media.averageScore != null && (
-                            <span className="text-2xs font-semibold text-primary/80 tabular-nums mt-0.5 inline-block">
-                              {formatScore(anime.media.averageScore)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {dayEntries.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/30">
-                    <Calendar className="w-6 h-6 mb-1.5" />
-                    <p className="text-xs">Brak emisji</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            />
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────── Poster card ────────────── */
+
+interface PosterCardProps {
+  anime: AiringAnime;
+  status: SlotStatus;
+  onClick?: (anime: AiringAnime) => void;
+}
+
+function PosterCard({ anime, status, onClick }: PosterCardProps) {
+  const title = getAnimeTitle(anime.media);
+  // Prefer high-res cover for the hero treatment
+  const coverUrl = anime.media.coverImage.large || anime.media.coverImage.medium;
+  const isLive = status === 'live';
+  const isDone = status === 'done';
+
+  return (
+    <div
+      role={onClick ? 'button' : 'article'}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={title}
+      onClick={onClick ? () => onClick(anime) : undefined}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(anime);
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        'group relative rounded-[9px] overflow-hidden border border-border-glass',
+        'transition-transform duration-200',
+        'bg-[linear-gradient(150deg,oklch(0.45_0.14_280),oklch(0.28_0.1_330))]',
+        isLive && 'border-primary/60 shadow-[0_0_18px_oklch(from_var(--primary)_l_c_h/0.35)]',
+        isDone && 'opacity-55',
+        onClick &&
+          'cursor-pointer hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      )}
+      style={{ aspectRatio: '2 / 2.6' }}
+    >
+      {/* Cover image */}
+      {coverUrl ? (
+        <img
+          src={coverUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Film className="w-8 h-8 text-foreground/20" />
+        </div>
+      )}
+
+      {/* Sheen + bottom darkening — matches mock .wp-card::after */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.18), transparent 50%), linear-gradient(180deg, transparent 40%, oklch(0 0 0 / 0.8))',
+        }}
+      />
+
+      {/* Top row — time + episode chips */}
+      <div className="absolute inset-x-[6px] top-[6px] flex items-center justify-between z-[2]">
+        <span
+          className={cn(
+            'inline-flex font-mono text-[10px] font-bold tracking-[0.05em] px-[5px] py-[2px] rounded',
+            isLive ? 'bg-primary text-primary-foreground' : 'bg-black/60 text-white'
+          )}
+        >
+          {formatTime(anime.airingAt)}
+        </span>
+        <span className="inline-flex font-mono text-[9px] tracking-[0.05em] px-[5px] py-[2px] rounded bg-black/60 text-white">
+          EP {anime.episode}
+        </span>
+      </div>
+
+      {/* Bell — top-right on hover */}
+      <SubscribeBellButton
+        anime={anime}
+        className="absolute top-7 right-[6px] w-6 h-6 bg-black/40 backdrop-blur-sm z-[2]"
+        iconClassName="w-3 h-3"
+      />
+
+      {/* Bottom title block */}
+      <div className="absolute inset-x-[6px] bottom-[6px] z-[2]">
+        <p className="text-[10.5px] font-bold leading-[1.15] text-white line-clamp-2 drop-shadow-[0_1px_3px_oklch(0_0_0/0.7)]">
+          {title}
+        </p>
+        {isLive && (
+          <p className="mt-[2px] font-mono text-[8.5px] tracking-[0.1em] text-white/90">▶ TERAZ</p>
+        )}
       </div>
     </div>
   );

@@ -1,80 +1,195 @@
-import { useCallback } from 'react';
-import { Check, Globe } from 'lucide-react';
+import { useCallback, useState, type KeyboardEvent } from 'react';
+import { Globe, Shield, X, AppWindow, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { PillTag } from '@/components/ui/pill-tag';
 import { useBrowserStore } from '@/stores/useBrowserStore';
-import { useElectronSettings } from '@/hooks/useElectronSettings';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
+import { SettingsCard, SettingsToggleRow } from '@/components/settings/SettingsCard';
+import { cn } from '@/lib/utils';
 
-const BROWSER_SETTINGS_KEY = 'browser-settings';
-
-interface BrowserSettings {
-  adblockEnabled: boolean;
-}
+const BLOCKED_CATEGORIES = [
+  'Reklamy graficzne / pop-up',
+  'Trackery analityczne',
+  'Reklamy w odtwarzaczu wideo',
+];
 
 export function BrowserSection() {
-  const setStoreAdblock = useBrowserStore(state => state.setAdblockEnabled);
+  const adblockEnabled = useBrowserStore(state => state.adblockEnabled);
+  const setAdblockEnabled = useBrowserStore(state => state.setAdblockEnabled);
+  const popupBlockEnabled = useBrowserStore(state => state.popupBlockEnabled);
+  const setPopupBlockEnabled = useBrowserStore(state => state.setPopupBlockEnabled);
+  const adblockWhitelist = useBrowserStore(state => state.adblockWhitelist);
+  const addAdblockDomain = useBrowserStore(state => state.addAdblockDomain);
+  const removeAdblockDomain = useBrowserStore(state => state.removeAdblockDomain);
+  const restoreTabsOnStartup = useBrowserStore(state => state.restoreTabsOnStartup);
+  const setRestoreTabsOnStartup = useBrowserStore(state => state.setRestoreTabsOnStartup);
+  const trackFrequentSites = useQuickAccessStore(state => state.trackFrequentSites);
+  const setTrackFrequentSites = useQuickAccessStore(state => state.setTrackFrequentSites);
 
-  const { data, update, loaded, saved, save } = useElectronSettings<BrowserSettings>({
-    defaultValue: { adblockEnabled: true },
-    load: useCallback(async () => {
-      const settings = await window.electronAPI?.store?.get<BrowserSettings>(BROWSER_SETTINGS_KEY);
-      if (settings && typeof settings.adblockEnabled === 'boolean') {
-        setStoreAdblock(settings.adblockEnabled);
-        return settings;
+  const [whitelistInput, setWhitelistInput] = useState('');
+
+  const handleAddWhitelist = useCallback(() => {
+    const value = whitelistInput.trim();
+    if (!value) return;
+    addAdblockDomain(value);
+    setWhitelistInput('');
+  }, [whitelistInput, addAdblockDomain]);
+
+  const handleWhitelistKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddWhitelist();
       }
-      return undefined;
-    }, [setStoreAdblock]),
-    save: useCallback(
-      async (d: BrowserSettings) => {
-        await window.electronAPI?.store?.set(BROWSER_SETTINGS_KEY, d);
-        // Sync to browser store and toggle adblock on the actual browser session
-        setStoreAdblock(d.adblockEnabled);
-        window.electronAPI?.browser?.toggleAdblock(d.adblockEnabled);
-      },
-      [setStoreAdblock]
-    ),
-  });
-
-  if (!loaded) return null;
+    },
+    [handleAddWhitelist]
+  );
 
   return (
     <div className="space-y-4">
       <SettingsCard
-        icon={Globe}
-        title="Przeglądarka"
-        subtitle="Ustawienia przeglądarki internetowej"
+        icon={Shield}
+        title="Blokowanie reklam"
+        subtitle="Wbudowany blokader reklam w przeglądarce ShiroAni."
       >
-        {/* Adblock */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="browser-adblock-label" className="text-sm font-medium">
-              Blokowanie reklam
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Blokuj reklamy w wbudowanej przeglądarce
-            </p>
-          </div>
-          <Switch
-            aria-labelledby="browser-adblock-label"
-            checked={data.adblockEnabled}
-            onCheckedChange={v => update({ adblockEnabled: v })}
-          />
+        <SettingsToggleRow
+          id="browser-adblock-label"
+          title="Blokowanie reklam"
+          description="Blokuj reklamy we wbudowanej przeglądarce (EasyList + EasyPrivacy)"
+          checked={adblockEnabled}
+          onCheckedChange={setAdblockEnabled}
+        />
+
+        {/* Blocked categories status chips */}
+        <div className="flex flex-col gap-1.5">
+          {BLOCKED_CATEGORIES.map(category => (
+            <div
+              key={category}
+              className="flex items-center justify-between rounded-lg border border-border-glass/70 bg-background/30 px-3 py-2 text-[12px]"
+            >
+              <span className="text-muted-foreground">{category}</span>
+              <PillTag variant={adblockEnabled ? 'green' : 'muted'}>
+                {adblockEnabled ? 'Blokowane' : 'Wyłączone'}
+              </PillTag>
+            </div>
+          ))}
         </div>
 
-        {/* Info about new tab quick access */}
-        <div>
-          <p className="text-xs text-muted-foreground">
-            Strony szybkiego dostępu można dostosować na stronie nowej karty.
+        {/* Whitelist subsection */}
+        <div className="border-t border-border-glass/50 pt-3.5 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+              Wyjątki
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
+              {adblockWhitelist.length} / 500
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Input
+              value={whitelistInput}
+              onChange={e => setWhitelistInput(e.target.value)}
+              onKeyDown={handleWhitelistKeyDown}
+              placeholder="np. example.com"
+              aria-label="Dodaj domenę do listy wyjątków"
+              maxLength={253}
+              className="flex-1 font-mono text-[12px]"
+            />
+            <Button size="sm" onClick={handleAddWhitelist} disabled={!whitelistInput.trim()}>
+              Dodaj
+            </Button>
+          </div>
+
+          {adblockWhitelist.length === 0 ? (
+            <p className="font-mono text-[11px] text-muted-foreground/80 leading-snug">
+              Brak wyjątków. Reklamy są blokowane na wszystkich stronach.
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-1.5" aria-label="Lista zwolnionych z blokady domen">
+              {adblockWhitelist.map(host => (
+                <li key={host}>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full pl-2.5 pr-1 py-[3px]',
+                      'bg-foreground/[0.05] border border-border-glass',
+                      'font-mono text-[11px] text-foreground'
+                    )}
+                  >
+                    <span className="leading-none">{host}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAdblockDomain(host)}
+                      aria-label={`Usuń ${host} z listy wyjątków`}
+                      className={cn(
+                        'grid place-items-center size-[18px] rounded-full',
+                        'text-muted-foreground hover:text-foreground hover:bg-foreground/[0.08]',
+                        'transition-colors cursor-pointer'
+                      )}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="text-[11.5px] text-muted-foreground/85 leading-relaxed">
+            Na dodanych tu domenach adblock jest wyłączony. Filtry kosmetyczne nadal działają.
           </p>
         </div>
+      </SettingsCard>
 
-        <div className="pt-2 border-t border-border/30">
-          <Button size="sm" onClick={save}>
-            {saved ? <Check className="w-4 h-4" /> : null}
-            {saved ? 'Zapisano' : 'Zapisz'}
-          </Button>
-        </div>
+      <SettingsCard
+        icon={AppWindow}
+        title="Wyskakujące okna"
+        subtitle="Kontroluj wyskakujące okna otwierane przez strony."
+        tone="gold"
+      >
+        <SettingsToggleRow
+          id="browser-popup-block-label"
+          title="Blokuj wyskakujące okna"
+          description="Okna OAuth (Google, Discord) zawsze są dozwolone."
+          checked={popupBlockEnabled}
+          onCheckedChange={setPopupBlockEnabled}
+        />
+      </SettingsCard>
+
+      <SettingsCard
+        icon={Copy}
+        title="Zachowanie kart"
+        subtitle="Zarządzaj kartami i historią przeglądania."
+        tone="blue"
+      >
+        <SettingsToggleRow
+          id="browser-restore-tabs-label"
+          title="Przywróć karty po restarcie"
+          description="Zapamiętuje otwarte karty między sesjami."
+          checked={restoreTabsOnStartup}
+          onCheckedChange={setRestoreTabsOnStartup}
+        />
+
+        <SettingsToggleRow
+          id="browser-track-frequent-label"
+          title="Zapisz historię przeglądania"
+          description="Lokalna historia. Nigdzie nie jest wysyłana."
+          checked={trackFrequentSites}
+          onCheckedChange={setTrackFrequentSites}
+        />
+      </SettingsCard>
+
+      <SettingsCard
+        icon={Globe}
+        title="Przeglądarka internetowa"
+        subtitle="Ogólne zachowanie wbudowanej przeglądarki"
+        tone="muted"
+      >
+        <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
+          ShiroAni używa wbudowanego Chromium. Dane przeglądania są zapisywane lokalnie i nigdy nie
+          opuszczają Twojego urządzenia.
+        </p>
       </SettingsCard>
     </div>
   );

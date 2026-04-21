@@ -2,16 +2,23 @@ import { useState, useEffect, useRef } from 'react';
 import { Cat } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+  SettingsCard,
+  SettingsRow,
+  SettingsRowLabel,
+  SettingsSelectRow,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
+import { MascotPreview } from '@/components/settings/MascotPreview';
+
+const VISIBILITY_OPTIONS = [
+  { value: 'always', label: 'Zawsze widoczna' },
+  { value: 'tray-only', label: 'Tylko gdy okno jest zminimalizowane' },
+];
+
+const MASCOT_MIN_SIZE = 48;
+const MASCOT_MAX_SIZE = 256;
 
 export function MascotSection() {
   const [enabled, setEnabled] = useState(true);
@@ -79,96 +86,75 @@ export function MascotSection() {
 
   return (
     <div className="space-y-4">
-      <SettingsCard icon={Cat} title="Maskotka" subtitle="Interaktywna maskotka na pulpicie">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="mascot-enabled-label" className="text-sm font-medium">
-              Maskotka na pulpicie
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Wyświetl animowaną maskotkę chibi na pulpicie z ikonką w zasobniku systemowym
-            </p>
-          </div>
-          <Switch
-            aria-labelledby="mascot-enabled-label"
-            checked={enabled}
-            onCheckedChange={handleToggle}
-          />
-        </div>
-      </SettingsCard>
+      <SettingsCard
+        icon={Cat}
+        title="Maskotka na pulpicie"
+        subtitle="Animowana maskotka chibi na pulpicie z ikonką w zasobniku systemowym."
+        headerAccessory={
+          <Switch aria-label="Włącz maskotkę" checked={enabled} onCheckedChange={handleToggle} />
+        }
+      >
+        {enabled && (
+          <>
+            <MascotPreview current={size} min={MASCOT_MIN_SIZE} max={MASCOT_MAX_SIZE} />
 
-      {enabled && (
-        <SettingsCard>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium">Rozmiar maskotki</h4>
-              <span className="text-xs text-muted-foreground tabular-nums">{size}px</span>
-            </div>
-            <Slider
-              aria-label="Rozmiar maskotki"
-              value={[size]}
-              min={48}
-              max={256}
-              step={8}
-              onValueChange={handleSizeChange}
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-2xs text-muted-foreground">48px</span>
-              <span className="text-2xs text-muted-foreground">256px</span>
-            </div>
-          </div>
-
-          <Separator className="bg-border/50" />
-
-          <div>
-            <h4 className="text-sm font-medium mb-1">Tryb widoczności</h4>
-            <p className="text-xs text-muted-foreground mb-2">
-              Kiedy maskotka ma być widoczna na pulpicie
-            </p>
-            <Select value={visibilityMode} onValueChange={handleVisibilityModeChange}>
-              <SelectTrigger className="h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="always">Zawsze widoczna</SelectItem>
-                <SelectItem value="tray-only">Tylko przy zminimalizowanej aplikacji</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator className="bg-border/50" />
-
-          <div className="flex items-center justify-between">
             <div>
-              <h4 id="mascot-lock-label" className="text-sm font-medium">
-                Zablokuj pozycję
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Zapobiega przypadkowemu przesuwaniu maskotki
-              </p>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-foreground">Rozmiar maskotki</span>
+                <span className="font-mono text-[11px] font-semibold tabular-nums text-primary">
+                  {size}px
+                </span>
+              </div>
+              <Slider
+                aria-label="Rozmiar maskotki"
+                value={[size]}
+                min={MASCOT_MIN_SIZE}
+                max={MASCOT_MAX_SIZE}
+                step={8}
+                onValueChange={handleSizeChange}
+              />
+              <div className="mt-1 flex justify-between font-mono text-[9.5px] tracking-[0.06em] text-muted-foreground/70">
+                <span>{MASCOT_MIN_SIZE}px</span>
+                <span>{MASCOT_MAX_SIZE}px</span>
+              </div>
             </div>
-            <Switch
-              aria-labelledby="mascot-lock-label"
+
+            <SettingsSelectRow
+              divider
+              title="Tryb widoczności"
+              description="Kiedy maskotka ma być widoczna na pulpicie"
+              value={visibilityMode}
+              onValueChange={handleVisibilityModeChange}
+              options={VISIBILITY_OPTIONS}
+              triggerClassName="w-56"
+            />
+
+            <SettingsToggleRow
+              divider
+              id="mascot-lock-label"
+              title="Zablokuj pozycję"
+              description="Zapobiega przypadkowemu przesuwaniu maskotki"
               checked={positionLocked}
               onCheckedChange={handleLockToggle}
             />
-          </div>
 
-          <Separator className="bg-border/50" />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium">Resetuj pozycję</h4>
-              <p className="text-xs text-muted-foreground">
-                Przywróć maskotkę do domyślnej pozycji (prawy dolny róg)
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleResetPosition}>
-              Resetuj
-            </Button>
-          </div>
-        </SettingsCard>
-      )}
+            <SettingsRow divider>
+              <SettingsRowLabel
+                title="Resetuj pozycję"
+                description="Przywróć maskotkę do domyślnej pozycji (prawy dolny róg)"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs border-border-glass"
+                onClick={handleResetPosition}
+              >
+                Resetuj
+              </Button>
+            </SettingsRow>
+          </>
+        )}
+      </SettingsCard>
     </div>
   );
 }

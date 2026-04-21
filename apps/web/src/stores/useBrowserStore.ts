@@ -4,19 +4,24 @@ import { arrayMove } from '@dnd-kit/sortable';
 import type { BrowserTab } from '@shiroani/shared';
 import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
-import { normalizeUrl } from '@/lib/url-utils';
+import { normalizeUrl, normalizeWhitelistHost } from '@/lib/url-utils';
 import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
 
 const logger = createLogger('BrowserStore');
 
-export type PopupBlockMode = 'smart' | 'strict' | 'off';
+/** Keep renderer state in lockstep with the main-process slice in browser IPC. */
+const MAX_ADBLOCK_WHITELIST_ENTRIES = 500;
 
 interface BrowserState {
   tabs: BrowserTab[];
   activeTabId: string | null;
   isAddressBarFocused: boolean;
   adblockEnabled: boolean;
-  popupBlockMode: PopupBlockMode;
+  popupBlockEnabled: boolean;
+  /** Top-frame hostnames where adblock network filtering is disabled. */
+  adblockWhitelist: string[];
+  /** Whether to restore the previous session's tabs on app start. */
+  restoreTabsOnStartup: boolean;
   isFullScreen: boolean;
 }
 
@@ -33,8 +38,11 @@ interface BrowserActions {
   setAddressBarFocused: (focused: boolean) => void;
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
-  setPopupBlockMode: (mode: PopupBlockMode) => void;
-  cyclePopupBlockMode: () => void;
+  setPopupBlockEnabled: (enabled: boolean) => void;
+  togglePopupBlock: () => void;
+  addAdblockDomain: (host: string) => void;
+  removeAdblockDomain: (host: string) => void;
+  setRestoreTabsOnStartup: (enabled: boolean) => void;
   persistTabs: () => void;
   restoreTabs: () => Promise<void>;
 }
@@ -45,6 +53,20 @@ type BrowserStore = BrowserState & BrowserActions;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 const PERSIST_DEBOUNCE_MS = 1000;
 
+/**
+ * Persist the browser-settings slice (adblock toggle, popup switch, whitelist)
+ * back to electron-store, merging with whatever else lives under that key.
+ */
+async function persistBrowserSettings(updates: {
+  adblockEnabled?: boolean;
+  popupBlockEnabled?: boolean;
+  adblockWhitelist?: string[];
+  restoreTabsOnStartup?: boolean;
+}): Promise<void> {
+  const existing = (await electronStoreGet<Record<string, unknown>>('browser-settings')) ?? {};
+  await electronStoreSet('browser-settings', { ...existing, ...updates });
+}
+
 export const useBrowserStore = create<BrowserStore>()(
   devtools(
     (set, get) => ({
@@ -53,7 +75,9 @@ export const useBrowserStore = create<BrowserStore>()(
       activeTabId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
-      popupBlockMode: 'smart' as PopupBlockMode,
+      popupBlockEnabled: true,
+      adblockWhitelist: [],
+      restoreTabsOnStartup: true,
       isFullScreen: false,
 
       // ── Tab CRUD (all local now) ────────────────────────────────
@@ -182,11 +206,11 @@ export const useBrowserStore = create<BrowserStore>()(
       setAdblockEnabled: async (enabled: boolean) => {
         const previous = get().adblockEnabled;
         set({ adblockEnabled: enabled }, undefined, 'browser/setAdblockEnabled');
-        // Adblock toggle still goes through IPC — the session-level webRequest
-        // handlers live in the main process
         try {
           await window.electronAPI?.browser?.toggleAdblock(enabled);
-        } catch {
+          await persistBrowserSettings({ adblockEnabled: enabled });
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist adblockEnabled', err);
           set({ adblockEnabled: previous }, undefined, 'browser/setAdblockEnabled:revert');
         }
       },
@@ -196,30 +220,78 @@ export const useBrowserStore = create<BrowserStore>()(
         get().setAdblockEnabled(enabled);
       },
 
-      setPopupBlockMode: async (mode: PopupBlockMode) => {
-        const previous = get().popupBlockMode;
-        set({ popupBlockMode: mode }, undefined, 'browser/setPopupBlockMode');
+      setPopupBlockEnabled: async (enabled: boolean) => {
+        const previous = get().popupBlockEnabled;
+        set({ popupBlockEnabled: enabled }, undefined, 'browser/setPopupBlockEnabled');
         try {
-          await window.electronAPI?.browser?.setPopupBlockMode(mode);
-          await electronStoreSet('browser-settings', {
-            ...((await electronStoreGet('browser-settings')) ?? {}),
-            popupBlockMode: mode,
-          });
-        } catch {
-          set({ popupBlockMode: previous }, undefined, 'browser/setPopupBlockMode:revert');
+          await window.electronAPI?.browser?.setPopupBlockEnabled(enabled);
+          await persistBrowserSettings({ popupBlockEnabled: enabled });
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist popupBlockEnabled', err);
+          set({ popupBlockEnabled: previous }, undefined, 'browser/setPopupBlockEnabled:revert');
         }
       },
 
-      cyclePopupBlockMode: () => {
-        const modes: PopupBlockMode[] = ['smart', 'strict', 'off'];
-        const current = get().popupBlockMode;
-        const next = modes[(modes.indexOf(current) + 1) % modes.length];
-        get().setPopupBlockMode(next);
+      togglePopupBlock: () => {
+        get().setPopupBlockEnabled(!get().popupBlockEnabled);
+      },
+
+      addAdblockDomain: (host: string) => {
+        const normalized = normalizeWhitelistHost(host);
+        if (!normalized) return;
+
+        const current = get().adblockWhitelist;
+        if (current.includes(normalized)) return;
+        // Main process silently slices to MAX_ADBLOCK_WHITELIST_ENTRIES; mirror
+        // that here so renderer state matches what's actually applied.
+        if (current.length >= MAX_ADBLOCK_WHITELIST_ENTRIES) return;
+
+        const next = [...current, normalized];
+        set({ adblockWhitelist: next }, undefined, 'browser/addAdblockDomain');
+        void window.electronAPI?.browser?.setAdblockWhitelist?.(next);
+        void persistBrowserSettings({ adblockWhitelist: next });
+      },
+
+      setRestoreTabsOnStartup: async (enabled: boolean) => {
+        const previous = get().restoreTabsOnStartup;
+        set({ restoreTabsOnStartup: enabled }, undefined, 'browser/setRestoreTabsOnStartup');
+        try {
+          await persistBrowserSettings({ restoreTabsOnStartup: enabled });
+          // When turning off, drop any stored tabs so toggling back on
+          // doesn't resurrect a stale session the user can't see anymore.
+          if (!enabled) {
+            electronStoreDelete('browser-tabs');
+          }
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist restoreTabsOnStartup', err);
+          set(
+            { restoreTabsOnStartup: previous },
+            undefined,
+            'browser/setRestoreTabsOnStartup:revert'
+          );
+        }
+      },
+
+      removeAdblockDomain: (host: string) => {
+        const normalized = normalizeWhitelistHost(host);
+        if (!normalized) return;
+
+        const current = get().adblockWhitelist;
+        if (!current.includes(normalized)) return;
+
+        const next = current.filter(h => h !== normalized);
+        set({ adblockWhitelist: next }, undefined, 'browser/removeAdblockDomain');
+        void window.electronAPI?.browser?.setAdblockWhitelist?.(next);
+        void persistBrowserSettings({ adblockWhitelist: next });
       },
 
       // ── Persistence ─────────────────────────────────────────────
 
       persistTabs: () => {
+        // Gated by the "Przywróć karty po restarcie" toggle — when off we
+        // drop writes entirely so nothing lingers under the store key.
+        if (!get().restoreTabsOnStartup) return;
+
         if (persistTimer) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
           const { tabs, activeTabId } = get();
@@ -243,28 +315,59 @@ export const useBrowserStore = create<BrowserStore>()(
       },
 
       restoreTabs: async () => {
-        // Restore adblock setting
+        // Restore browser settings (adblock toggle, popup switch, whitelist).
+        // Legacy `popupBlockMode` string is migrated to the new boolean shape.
         const settings = await electronStoreGet<{
           adblockEnabled?: boolean;
-          popupBlockMode?: PopupBlockMode;
+          popupBlockEnabled?: boolean;
+          popupBlockMode?: string;
+          adblockWhitelist?: unknown;
+          restoreTabsOnStartup?: boolean;
         }>('browser-settings');
 
         if (settings) {
           if (typeof settings.adblockEnabled === 'boolean') {
             set({ adblockEnabled: settings.adblockEnabled });
           }
-          if (
-            settings.popupBlockMode === 'smart' ||
-            settings.popupBlockMode === 'strict' ||
-            settings.popupBlockMode === 'off'
-          ) {
-            set({ popupBlockMode: settings.popupBlockMode });
-            // Sync with main process
-            window.electronAPI?.browser?.setPopupBlockMode(settings.popupBlockMode);
+
+          // Popup block: prefer the new boolean, fall back to legacy string.
+          let popupEnabled: boolean | null = null;
+          if (typeof settings.popupBlockEnabled === 'boolean') {
+            popupEnabled = settings.popupBlockEnabled;
+          } else if (typeof settings.popupBlockMode === 'string') {
+            // Legacy migration: 'off' → false, anything else ('smart' | 'strict') → true
+            popupEnabled = settings.popupBlockMode !== 'off';
+          }
+          if (popupEnabled !== null) {
+            set({ popupBlockEnabled: popupEnabled });
+            // Sync with main process and persist in the new shape so this
+            // migration runs at most once.
+            void window.electronAPI?.browser?.setPopupBlockEnabled?.(popupEnabled);
+            void persistBrowserSettings({ popupBlockEnabled: popupEnabled });
+          }
+
+          if (typeof settings.restoreTabsOnStartup === 'boolean') {
+            set({ restoreTabsOnStartup: settings.restoreTabsOnStartup });
+          }
+
+          // Restore + push whitelist to main
+          if (Array.isArray(settings.adblockWhitelist)) {
+            const cleaned = Array.from(
+              new Set(
+                settings.adblockWhitelist
+                  .filter((h): h is string => typeof h === 'string')
+                  .map(h => normalizeWhitelistHost(h))
+                  .filter(h => h.length > 0)
+              )
+            );
+            set({ adblockWhitelist: cleaned });
+            void window.electronAPI?.browser?.setAdblockWhitelist?.(cleaned);
           }
         }
 
-        // Restore tabs
+        // Restore tabs (unless the user disabled session restore)
+        if (!get().restoreTabsOnStartup) return;
+
         const saved = await electronStoreGet<{
           tabs: Array<{ url: string; title: string }>;
           activeIndex: number;

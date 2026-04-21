@@ -19,8 +19,19 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    logger.error('Uncaught error:', error.message, info.componentStack);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    logger.error('Uncaught error:', error.message, errorInfo.componentStack);
+    // Direct IPC forward — skips the buffered periodic flush so a crash log
+    // hits disk even if the renderer is about to unmount before the bridge
+    // subscription next fires.
+    window.electronAPI?.log
+      ?.write({
+        level: 'error',
+        context: 'ErrorBoundary',
+        message: error.message,
+        data: { stack: error.stack, componentStack: errorInfo.componentStack },
+      })
+      .catch(() => {});
   }
 
   handleReset = () => {

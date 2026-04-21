@@ -1,14 +1,11 @@
 import { useState, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { ExternalLink, Save, Trash2, Link2, X, Film } from 'lucide-react';
+import { Dialog, DialogPortal, DialogOverlay } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { PillTag } from '@/components/ui/pill-tag';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import {
   Select,
   SelectContent,
@@ -16,14 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ExternalLink, Save, Trash2, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
-import { STATUS_OPTIONS } from '@/lib/constants';
+import { STATUS_OPTIONS, STATUS_CONFIG } from '@/lib/constants';
 import { useAnimeDetailForm } from '@/hooks/useAnimeDetailForm';
 import { useNavigateToBrowser } from '@/hooks/useNavigateToBrowser';
 import { SliderInputField } from './SliderInputField';
@@ -35,6 +31,14 @@ interface AnimeDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const STATUS_PILL_VARIANT: Record<AnimeStatus, 'accent' | 'green' | 'gold' | 'blue' | 'muted'> = {
+  watching: 'accent',
+  completed: 'green',
+  plan_to_watch: 'blue',
+  on_hold: 'gold',
+  dropped: 'muted',
+};
 
 export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModalProps) {
   const navigateToBrowser = useNavigateToBrowser();
@@ -71,23 +75,13 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
       resumeUrl: resumeUrl.trim() || undefined,
     });
     onOpenChange(false);
-  }, [
-    entry,
-    status,
-    currentEpisode,
-    score,
-    notes,
-    resumeUrl,
-    anilistId,
-    updateEntry,
-    onOpenChange,
-  ]);
+  }, [entry, status, currentEpisode, score, notes, resumeUrl, anilistId, onOpenChange]);
 
   const handleRemove = useCallback(() => {
     if (!entry) return;
     removeFromLibrary(entry.id);
     onOpenChange(false);
-  }, [entry, removeFromLibrary, onOpenChange]);
+  }, [entry, onOpenChange]);
 
   const handleOpenInBrowser = useCallback(() => {
     if (entry?.resumeUrl) {
@@ -101,7 +95,6 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   const handleUpdateUrl = useCallback(() => {
     if (!entry) return;
 
-    // Get the active browser tab's URL
     const browserState = useBrowserStore.getState();
     const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
 
@@ -119,179 +112,283 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   if (!entry) return null;
 
   const maxEpisodes = entry.episodes ?? 9999;
+  const progressPercent = entry.episodes
+    ? Math.min(100, Math.round((currentEpisode / entry.episodes) * 100))
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        {/* Banner / Cover */}
-        {entry.coverImage && (
-          <div className="relative -mx-6 -mt-6 mb-4 h-32 overflow-hidden rounded-t-lg">
-            <img
-              src={entry.coverImage}
-              alt=""
-              className="w-full h-full object-cover blur-sm scale-110 opacity-40"
+      <DialogPortal>
+        <DialogOverlay className="backdrop-blur-sm" />
+        <DialogPrimitive.Content
+          className={cn(
+            'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
+            'w-[min(92vw,860px)] h-[min(92vh,560px)]',
+            'rounded-[16px] overflow-hidden',
+            'bg-popover border border-border-glass',
+            'shadow-[0_40px_100px_oklch(0_0_0/0.5)]',
+            'flex flex-row',
+            'data-[state=open]:animate-in data-[state=closed]:animate-out',
+            'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+            'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+            'duration-200'
+          )}
+          aria-describedby={undefined}
+        >
+          <DialogPrimitive.Title className="sr-only">{entry.title}</DialogPrimitive.Title>
+
+          {/* LEFT — poster + stats column */}
+          <div
+            className={cn(
+              'w-[220px] flex-shrink-0 relative overflow-hidden',
+              'flex flex-col items-center px-5 pt-7 pb-5',
+              'bg-background/60 border-r border-border-glass'
+            )}
+          >
+            {/* Soft glow backdrop */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 50% -10%, oklch(from var(--primary) l c h / 0.25), transparent 60%)',
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-            <div className="absolute bottom-3 left-6 flex items-end gap-3">
-              <img
-                src={entry.coverImage}
-                alt={entry.title}
-                className="w-16 h-22 rounded-md object-cover shadow-lg border border-border"
+
+            {/* Poster */}
+            <div
+              className={cn(
+                'relative z-[1] w-[150px] aspect-[2/3] rounded-[10px] overflow-hidden',
+                'border border-border-glass shadow-[0_8px_28px_oklch(0_0_0/0.5)]',
+                'flex-shrink-0'
+              )}
+            >
+              {entry.coverImage ? (
+                <img
+                  src={entry.coverImage}
+                  alt={entry.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
+                  <Film className="w-8 h-8 text-muted-foreground/40" />
+                </div>
+              )}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    'radial-gradient(circle at 30% 20%, oklch(1 0 0 / 0.18), transparent 55%)',
+                }}
               />
-              <div>
-                <h2 className="text-base font-semibold text-foreground leading-tight">
-                  {entry.title}
-                </h2>
-                {entry.titleNative && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{entry.titleNative}</p>
+            </div>
+
+            {/* Stats */}
+            <div className="relative z-[1] mt-5 w-full flex flex-col gap-3 text-left">
+              <SheetStat
+                label="Score"
+                value={
+                  score > 0 ? (
+                    <>
+                      <span className="text-[oklch(0.8_0.14_70)]">{score.toFixed(1)}</span>
+                      <span className="text-muted-foreground/60 font-normal"> / 10</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground/60">-</span>
+                  )
+                }
+              />
+              <SheetDivider />
+              <SheetStat
+                label="Postęp"
+                value={
+                  entry.episodes
+                    ? `${currentEpisode} / ${entry.episodes} EP`
+                    : `${currentEpisode} EP`
+                }
+              />
+              {entry.episodes ? <ProgressBar value={progressPercent} thickness={3} glow /> : null}
+              <SheetStat label="Status" value={STATUS_CONFIG[status].label} />
+              <SheetDivider />
+              <SheetStat
+                label="Dodano"
+                value={new Date(entry.addedAt).toLocaleDateString('pl-PL', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
+              />
+              <SheetStat
+                label="Aktualizacja"
+                value={new Date(entry.updatedAt).toLocaleDateString('pl-PL', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
+              />
+            </div>
+          </div>
+
+          {/* RIGHT — scrollable form + action bar */}
+          <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-popover">
+            {/* Top header with tags + title + close */}
+            <div className="relative flex-shrink-0 px-6 pt-5 pb-4 border-b border-border-glass">
+              <DialogPrimitive.Close
+                className={cn(
+                  'absolute top-4 right-4 w-7 h-7 rounded-full grid place-items-center',
+                  'bg-foreground/5 border border-border-glass text-muted-foreground',
+                  'hover:bg-foreground/10 hover:text-foreground transition-colors',
+                  'focus:outline-none focus:ring-2 focus:ring-ring'
                 )}
+                aria-label="Zamknij"
+              >
+                <X className="w-3.5 h-3.5" />
+              </DialogPrimitive.Close>
+
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                <PillTag variant={STATUS_PILL_VARIANT[status]}>
+                  {STATUS_CONFIG[status].label}
+                </PillTag>
+                {entry.episodes && <PillTag variant="muted">{entry.episodes} ODC</PillTag>}
+                {entry.anilistId && <PillTag variant="blue">ANILIST</PillTag>}
+              </div>
+
+              <h2 className="font-sans text-[22px] font-extrabold leading-[1.15] tracking-[-0.025em] text-foreground pr-10">
+                {entry.title}
+              </h2>
+              {(entry.titleNative || entry.titleRomaji) && (
+                <p className="mt-1 font-serif text-[12.5px] text-muted-foreground tracking-[0.02em]">
+                  {[entry.titleNative, entry.titleRomaji].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+
+            {/* Scrolling content */}
+            <div className={cn('flex-1 overflow-y-auto px-6 py-5 space-y-5', 'scrollbar-thin')}>
+              {entry.notes && (
+                <p className="text-[13px] leading-[1.65] text-foreground/80">{entry.notes}</p>
+              )}
+
+              {/* Status select */}
+              <div className="space-y-1.5">
+                <FormLabel htmlFor="detail-status">Status</FormLabel>
+                <Select value={status} onValueChange={v => setStatus(v as AnimeStatus)}>
+                  <SelectTrigger id="detail-status" className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Progress */}
+              <SliderInputField
+                label={`Postęp: ${currentEpisode} / ${entry.episodes ?? '?'} odcinków`}
+                value={currentEpisode}
+                onChange={setCurrentEpisode}
+                min={0}
+                max={maxEpisodes}
+                showSlider={!!entry.episodes && entry.episodes > 0}
+                disabled={isCompleted}
+              />
+
+              {/* Score */}
+              <SliderInputField
+                label={score > 0 ? `Ocena: ${score}/10` : 'Ocena: Brak'}
+                value={score}
+                onChange={setScore}
+                min={0}
+                max={10}
+              />
+
+              {/* Notes */}
+              <div className="space-y-1.5">
+                <FormLabel htmlFor="detail-notes">Notatki</FormLabel>
+                <textarea
+                  id="detail-notes"
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="Dodaj notatki..."
+                  rows={3}
+                  className={cn(
+                    'flex w-full rounded-md border border-input bg-background/40 px-3 py-2',
+                    'text-sm placeholder:text-muted-foreground',
+                    'focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring',
+                    'resize-none'
+                  )}
+                />
+              </div>
+
+              {/* Resume URL */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="detail-resume-url">Link do kontynuacji</FormLabel>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-2xs px-2 text-muted-foreground"
+                    onClick={handleUpdateUrl}
+                  >
+                    <Link2 className="w-3 h-3" />
+                    Pobierz link z przeglądarki
+                  </Button>
+                </div>
+                <Input
+                  id="detail-resume-url"
+                  value={resumeUrl}
+                  onChange={e => setResumeUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="h-8 text-xs"
+                />
+              </div>
+
+              {/* AniList ID */}
+              <div className="space-y-1.5">
+                <FormLabel htmlFor="detail-anilist-id">AniList ID</FormLabel>
+                <p className="text-2xs text-muted-foreground/70">
+                  Wymagane do powiadomień i odliczania do premiery odcinków
+                </p>
+                <Input
+                  id="detail-anilist-id"
+                  type="number"
+                  min={1}
+                  value={anilistId}
+                  onChange={e => setAnilistId(e.target.value)}
+                  placeholder="np. 21"
+                  className="h-8 text-xs w-32"
+                />
               </div>
             </div>
-          </div>
-        )}
 
-        {!entry.coverImage && (
-          <DialogHeader>
-            <DialogTitle>{entry.title}</DialogTitle>
-            {entry.titleNative && <DialogDescription>{entry.titleNative}</DialogDescription>}
-          </DialogHeader>
-        )}
-
-        <div className="space-y-4">
-          {/* Info badges */}
-          <div className="flex flex-wrap gap-1.5">
-            {entry.episodes && <Badge variant="secondary">{entry.episodes} odc.</Badge>}
-            {entry.score != null && entry.score > 0 && (
-              <Badge variant="secondary">Ocena: {entry.score}/10</Badge>
-            )}
-          </div>
-
-          {/* Status */}
-          <div className="space-y-1.5">
-            <label htmlFor="detail-status" className="text-xs font-medium text-muted-foreground">
-              Status
-            </label>
-            <Select value={status} onValueChange={v => setStatus(v as AnimeStatus)}>
-              <SelectTrigger id="detail-status" className="h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Progress */}
-          <SliderInputField
-            label={`Postęp: ${currentEpisode} / ${entry.episodes ?? '?'} odcinków`}
-            value={currentEpisode}
-            onChange={setCurrentEpisode}
-            min={0}
-            max={maxEpisodes}
-            showSlider={!!entry.episodes && entry.episodes > 0}
-            disabled={isCompleted}
-          />
-
-          {/* Score */}
-          <SliderInputField
-            label={score > 0 ? `Ocena: ${score}/10` : 'Ocena: Brak'}
-            value={score}
-            onChange={setScore}
-            min={0}
-            max={10}
-          />
-
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label htmlFor="detail-notes" className="text-xs font-medium text-muted-foreground">
-              Notatki
-            </label>
-            <textarea
-              id="detail-notes"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Dodaj notatki..."
-              rows={3}
-              className={cn(
-                'flex w-full rounded-md border border-input bg-transparent px-3 py-2',
-                'text-sm placeholder:text-muted-foreground',
-                'focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring',
-                'resize-none'
-              )}
-            />
-          </div>
-
-          {/* Resume URL */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="detail-resume-url"
-                className="text-xs font-medium text-muted-foreground"
-              >
-                Link do kontynuacji
-              </label>
+            {/* Bottom action bar */}
+            <div className="flex-shrink-0 px-6 py-3.5 border-t border-border-glass bg-background/40 flex items-center gap-2">
+              <Button onClick={handleSave} size="sm" className="gap-1.5">
+                <Save className="w-3.5 h-3.5" />
+                Zapisz
+              </Button>
+              <Button onClick={handleOpenInBrowser} variant="outline" size="sm" className="gap-1.5">
+                <ExternalLink className="w-3.5 h-3.5" />
+                Otwórz
+              </Button>
               <Button
+                onClick={() => setShowConfirm(true)}
                 variant="ghost"
                 size="sm"
-                className="h-6 text-2xs px-2 text-muted-foreground"
-                onClick={handleUpdateUrl}
+                className="ml-auto text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
               >
-                <Link2 className="w-3 h-3" />
-                Pobierz link z przeglądarki
+                <Trash2 className="w-3.5 h-3.5" />
+                Usuń
               </Button>
             </div>
-            <Input
-              id="detail-resume-url"
-              value={resumeUrl}
-              onChange={e => setResumeUrl(e.target.value)}
-              placeholder="https://..."
-              className="h-8 text-xs"
-            />
           </div>
-
-          {/* AniList ID */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="detail-anilist-id"
-              className="text-xs font-medium text-muted-foreground"
-            >
-              AniList ID
-            </label>
-            <p className="text-2xs text-muted-foreground/70">
-              Wymagane do powiadomień i odliczania odcinków
-            </p>
-            <Input
-              id="detail-anilist-id"
-              type="number"
-              min={1}
-              value={anilistId}
-              onChange={e => setAnilistId(e.target.value)}
-              placeholder="np. 21"
-              className="h-8 text-xs w-32"
-            />
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 pt-2">
-            <Button onClick={handleSave} size="sm" className="flex-1">
-              <Save className="w-4 h-4" />
-              Zapisz
-            </Button>
-            <Button onClick={handleOpenInBrowser} variant="outline" size="sm">
-              <ExternalLink className="w-4 h-4" />
-              Otwórz
-            </Button>
-            <Button onClick={() => setShowConfirm(true)} variant="destructive" size="sm">
-              <Trash2 className="w-4 h-4" />
-              Usuń
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPortal>
 
       <ConfirmDialog
         open={showConfirm}
@@ -305,4 +402,30 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
       />
     </Dialog>
   );
+}
+
+function FormLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium"
+    >
+      {children}
+    </label>
+  );
+}
+
+function SheetStat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-[3px]">
+      <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80">
+        {label}
+      </span>
+      <span className="text-[13px] font-bold text-foreground leading-[1.2]">{value}</span>
+    </div>
+  );
+}
+
+function SheetDivider() {
+  return <div className="h-px bg-border-glass" />;
 }

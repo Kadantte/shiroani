@@ -5,12 +5,12 @@ import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
 import { AppModule } from '../modules/app.module';
 import { createMainWindow } from './window';
 import { cleanupIpcHandlers } from './ipc/register';
-import { logger, getLogPath, flushLogs } from './logger';
+import { logger, getLogPath, flushLogs, flushLogsSync } from './logger';
 import { initializeAutoUpdater } from './updater';
 import { initializeAdblock } from './adblock';
 import { corsOriginCallback } from '../modules/shared/cors.config';
 import { NestLoggerAdapter } from '../modules/shared/nest-logger';
-import { LOCALHOST } from '@shiroani/shared';
+import { LOCALHOST, setLoggerContext, makeCorrelationId } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
@@ -23,6 +23,7 @@ import {
   onWindowFocus,
 } from './discord-rpc-service';
 import { store } from './store';
+import { setPopupBlockEnabled } from './ipc/browser';
 import {
   createMascotOverlay,
   destroyMascotOverlay,
@@ -206,7 +207,12 @@ async function bootstrap(): Promise<void> {
     logger.info('Adblocker initialized successfully');
 
     const browserSettings = store.get('browser-settings') as
-      | { adblockEnabled?: boolean }
+      | {
+          adblockEnabled?: boolean;
+          popupBlockEnabled?: boolean;
+          popupBlockMode?: string;
+          adblockWhitelist?: unknown;
+        }
       | undefined;
     const shouldEnableAdblock = browserSettings?.adblockEnabled !== false;
 
@@ -216,6 +222,38 @@ async function bootstrap(): Promise<void> {
     } else {
       logger.info('Adblock disabled per user settings');
     }
+
+    // Push persisted whitelist to the browser session
+    if (Array.isArray(browserSettings?.adblockWhitelist)) {
+      const hosts = browserSettings.adblockWhitelist.filter(
+        (h): h is string => typeof h === 'string'
+      );
+      browserManager.setAdblockWhitelist(hosts);
+    } else {
+      browserManager.setAdblockWhitelist([]);
+    }
+
+    // Resolve popup block switch — migrate legacy string mode if the boolean
+    // shape is missing. 'off' → false, anything else ('smart' | 'strict') → true.
+    let popupEnabled: boolean;
+    if (typeof browserSettings?.popupBlockEnabled === 'boolean') {
+      popupEnabled = browserSettings.popupBlockEnabled;
+    } else if (typeof browserSettings?.popupBlockMode === 'string') {
+      popupEnabled = browserSettings.popupBlockMode !== 'off';
+      // Write migrated shape back so this migration runs at most once.
+      const merged = {
+        ...browserSettings,
+        popupBlockEnabled: popupEnabled,
+      } as Record<string, unknown>;
+      delete merged.popupBlockMode;
+      store.set('browser-settings', merged);
+      logger.info(
+        `Migrated legacy popupBlockMode="${browserSettings.popupBlockMode}" → popupBlockEnabled=${popupEnabled}`
+      );
+    } else {
+      popupEnabled = true;
+    }
+    setPopupBlockEnabled(popupEnabled);
   } catch (error) {
     logger.warn('Failed to initialize adblocker:', error);
   }
@@ -253,10 +291,80 @@ async function bootstrap(): Promise<void> {
 // Global error handling
 process.on('uncaughtException', error => {
   logger.error('Uncaught exception:', error);
+  // Synchronously drain buffered logs before the process potentially exits.
+  flushLogsSync();
 });
 
 process.on('unhandledRejection', reason => {
   logger.error('Unhandled rejection:', reason);
+  flushLogsSync();
+});
+
+app.on('second-instance', () => {
+  logger.info('second-instance event received — focusing existing window');
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    showMainWindow(mainWindow);
+  }
+});
+
+// Render-process gone (per app). `reason` drives severity — hard crashes,
+// OOM, launch failures, and integrity failures are errors; everything else
+// (killed, clean-exit, abnormal-exit, memory-eviction) is a warn.
+app.on('render-process-gone', (_event, webContents, details) => {
+  const isError =
+    details.reason === 'crashed' ||
+    details.reason === 'oom' ||
+    details.reason === 'launch-failed' ||
+    details.reason === 'integrity-failure';
+  const payload = {
+    reason: details.reason,
+    exitCode: details.exitCode,
+    url: webContents.getURL(),
+  };
+  if (isError) {
+    logger.error('[render-process-gone]', payload);
+    flushLogsSync();
+  } else {
+    logger.warn('[render-process-gone]', payload);
+  }
+});
+
+// Child-process gone (utility, GPU, zygote, etc.). Anything that isn't a
+// clean exit is treated as an error.
+app.on('child-process-gone', (_event, details) => {
+  const isError = details.reason !== 'clean-exit';
+  const payload = {
+    type: details.type,
+    reason: details.reason,
+    exitCode: details.exitCode,
+    name: details.name,
+    serviceName: details.serviceName,
+  };
+  if (isError) {
+    logger.error('[child-process-gone]', payload);
+    flushLogsSync();
+  } else {
+    logger.warn('[child-process-gone]', payload);
+  }
+});
+
+// Deprecated and removed from Electron's type definitions, but the event
+// still fires at runtime on some platforms / GPU-driver crash paths. Cast
+// to EventEmitter so the strict overloads don't reject the string literal.
+// Kept at warn so we don't double-log when 'render-process-gone' also fires.
+(app as unknown as NodeJS.EventEmitter).on(
+  'gpu-process-crashed',
+  (_event: Electron.Event, killed: boolean) => {
+    logger.warn('[gpu-process-crashed]', { killed });
+  }
+);
+
+// Certificate errors are denied by default. We log them as warn so ops can
+// spot MITM or misconfigured TLS without changing behavior.
+app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
+  logger.warn('[certificate-error]', { url, error });
+  event.preventDefault();
+  callback(false);
 });
 
 // Handle SIGINT/SIGTERM (e.g. Ctrl+C in dev) by triggering graceful shutdown
@@ -272,7 +380,28 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 app
   .whenReady()
-  .then(bootstrap)
+  .then(() => {
+    // Stamp shared logger session context so every subsequent main-process
+    // entry (buffer + JSONL file) carries sessionId/appVersion/platform.
+    // Renderer stamps its own distinct sessionId from useAppInitialization.
+    setLoggerContext({
+      sessionId: makeCorrelationId(),
+      appVersion: app.getVersion(),
+      platform: process.platform,
+    });
+
+    // Ensure only one instance of the app runs at a time. If another
+    // instance already holds the lock, log a warning and quit early; the
+    // first instance will focus its window via the 'second-instance'
+    // handler registered above.
+    const gotSingleInstanceLock = app.requestSingleInstanceLock();
+    if (!gotSingleInstanceLock) {
+      logger.warn('Another instance is already running; quitting this one.');
+      app.quit();
+      return;
+    }
+    return bootstrap();
+  })
   .catch(error => {
     logger.error('Failed to bootstrap application:', error);
   });

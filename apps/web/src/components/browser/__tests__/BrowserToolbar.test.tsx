@@ -19,28 +19,22 @@ function getDefaultProps() {
     canGoBack: false,
     canGoForward: false,
     isLoading: false,
-    adblockEnabled: false,
-    popupBlockMode: 'smart' as const,
     hasActiveTab: true,
     onGoBack: vi.fn(),
     onGoForward: vi.fn(),
     onReload: vi.fn(),
     onNavigate: vi.fn(),
-    onToggleAdblock: vi.fn(),
-    onCyclePopupBlockMode: vi.fn(),
     onGoHome: vi.fn(),
     onAddToLibrary: vi.fn(),
   };
 }
 
-// Button order in the toolbar:
+// Button order in the redesigned toolbar (Browser.html `.urlbar`):
 // 0: Back (Wstecz)
-// 1: Forward (Do przodu)
+// 1: Forward (Dalej)
 // 2: Reload (Odśwież)
 // 3: Add to library (Dodaj do biblioteki)
-// 4: Adblock toggle
-// 5: Popup block mode toggle
-// 6: Home (Strona główna)
+// 4: Home (Strona główna)
 
 function getButtons() {
   const buttons = screen.getAllByRole('button');
@@ -49,14 +43,12 @@ function getButtons() {
     forward: buttons[1],
     reload: buttons[2],
     addToLibrary: buttons[3],
-    adblock: buttons[4],
-    popupBlock: buttons[5],
-    home: buttons[6],
+    home: buttons[4],
   };
 }
 
 function getUrlInput() {
-  return screen.getByPlaceholderText('Wpisz adres URL lub wyszukaj...');
+  return screen.getByPlaceholderText('Wpisz adres albo szukaj');
 }
 
 describe('BrowserToolbar', () => {
@@ -165,15 +157,6 @@ describe('BrowserToolbar', () => {
       const { user } = render(<BrowserToolbar {...props} />);
       await user.click(getButtons().home);
       expect(props.onGoHome).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('adblock toggle', () => {
-    it('calls onToggleAdblock when clicked', async () => {
-      const props = getDefaultProps();
-      const { user } = render(<BrowserToolbar {...props} />);
-      await user.click(getButtons().adblock);
-      expect(props.onToggleAdblock).toHaveBeenCalledOnce();
     });
   });
 

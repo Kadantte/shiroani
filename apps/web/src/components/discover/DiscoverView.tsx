@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { Compass, Search, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
+import { Compass, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { ViewHeader } from '@/components/shared/ViewHeader';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
 import { DiscoverSkeleton } from '@/components/discover/DiscoverSkeleton';
 import { RandomDiscoveryPanel } from '@/components/discover/RandomDiscoveryPanel';
@@ -28,6 +30,10 @@ function useLibraryAnilistIds(): Set<number> {
     () => new Set(entries.map(e => e.anilistId).filter(Boolean) as number[]),
     [entries]
   );
+}
+
+function getDiscoverTitle(media: DiscoverMedia): string {
+  return media.title.english || media.title.romaji || media.title.native || '?';
 }
 
 export function DiscoverView() {
@@ -72,6 +78,33 @@ export function DiscoverView() {
     };
     setSelectedAnime(asAiring);
     setDialogOpen(true);
+  }, []);
+
+  const handleAddToLibrary = useCallback((media: DiscoverMedia) => {
+    const title = getDiscoverTitle(media);
+    const entries = useLibraryStore.getState().entries;
+    const alreadyByAnilist = entries.some(e => e.anilistId === media.id);
+    const alreadyByTitle = entries.some(e => e.title.toLowerCase() === title.toLowerCase());
+    if (alreadyByAnilist || alreadyByTitle) {
+      toast.error('To anime jest już w bibliotece');
+      return;
+    }
+
+    try {
+      useLibraryStore.getState().addToLibrary({
+        anilistId: media.id,
+        title,
+        titleRomaji: media.title.romaji,
+        titleNative: media.title.native,
+        coverImage:
+          media.coverImage.large || media.coverImage.extraLarge || media.coverImage.medium,
+        episodes: media.episodes,
+        status: 'plan_to_watch',
+      });
+      toast.success('Dodano do biblioteki', { description: title });
+    } catch {
+      toast.error('Nie udało się dodać do biblioteki');
+    }
   }, []);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -186,46 +219,27 @@ export function DiscoverView() {
   const showGrid = !isRandomMode && items.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
-      {/* Header */}
-      <div className="shrink-0 px-5 pt-4 pb-3 space-y-3 border-b border-border/60 bg-card/20 backdrop-blur-sm">
-        {/* Title row */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Compass className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold text-foreground leading-tight">Odkrywaj</h1>
-            <p className="text-xs text-muted-foreground/70 leading-tight">
-              Przeglądaj i szukaj anime
-            </p>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
+      <ViewHeader<Tab>
+        icon={Compass}
+        title="Przeglądaj"
+        subtitle="Popularne, sezonowe i losowe"
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Szukaj anime..."
+        filters={isSearchMode ? undefined : TABS}
+        activeFilter={activeTab}
+        onFilterChange={handleTabChange}
+      />
 
-        {/* Search bar */}
-        <div className="relative group/search">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
-          <Input
-            value={searchQuery}
-            onChange={e => handleSearchChange(e.target.value)}
-            placeholder="Szukaj anime..."
-            className="pl-8 h-8 text-sm bg-background/40 border-border-glass focus:bg-background/60 transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={handleClearSearch}
-              aria-label="Wyczyść wyszukiwanie"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
-            >
-              <SearchX className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Tabs or search label */}
-        {isSearchMode ? (
+      {/* Search-mode banner — ViewHeader hides its filter row while searching,
+          so surface the "Wyniki wyszukiwania" label + quick clear here. */}
+      {isSearchMode && (
+        <div className="px-7 pb-3 border-b border-border-glass shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-foreground/70">Wyniki wyszukiwania</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/90 font-semibold">
+              Wyniki wyszukiwania
+            </span>
             <button
               onClick={handleClearSearch}
               className="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground/70 transition-colors"
@@ -234,94 +248,84 @@ export function DiscoverView() {
               Wyczyść
             </button>
           </div>
-        ) : (
-          <div
-            role="tablist"
-            className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
-          >
-            {TABS.map(tab => {
-              const isActive = activeTab === tab.value;
-              return (
-                <button
-                  key={tab.value}
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => handleTabChange(tab.value)}
-                  className={cn(
-                    'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-                    'transition-all duration-200',
-                    isActive
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
-                  )}
-                >
-                  {tab.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {/* Random discovery — own panel, owns its own loading/error/empty */}
-        {isRandomMode && (
-          <RandomDiscoveryPanel
-            libraryIds={libraryIds}
-            onCardClick={handleCardClick}
-            onError={handleRetry}
-          />
-        )}
+      {/* ── Content region with clipped kanji watermark layer ──────── */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Decorative kanji watermark — 探 (saga/tan: search / explore).
+            Clipped wrapper keeps the glyph's negative offsets from producing
+            scrollbars on either axis. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <KanjiWatermark kanji="探" position="br" size={300} opacity={0.03} />
+        </div>
 
-        {/* Error state */}
-        {!isRandomMode && error && !showLoading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-            <p className="text-sm text-center max-w-xs">{error}</p>
-            <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 text-xs">
-              <RefreshCw className="w-3.5 h-3.5" />
-              Spróbuj ponownie
-            </Button>
-          </div>
-        )}
-
-        {/* Loading state — only show skeleton on initial load (no items yet) */}
-        {!isRandomMode && showLoading && items.length === 0 && <DiscoverSkeleton />}
-
-        {/* Empty state */}
-        {showEmpty && !error && (
-          <EmptyState
-            icon={isSearchMode ? SearchX : Compass}
-            title={isSearchMode ? 'Brak wyników' : 'Brak anime do wyświetlenia'}
-            subtitle={
-              isSearchMode ? 'Spróbuj innej frazy wyszukiwania' : 'Nie udało się załadować anime.'
-            }
-          />
-        )}
-
-        {/* Grid */}
-        {showGrid && (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
-            {items.map(media => (
-              <DiscoverCard
-                key={media.id}
-                media={media}
-                inLibrary={libraryIds.has(media.id)}
-                onClick={() => handleCardClick(media)}
+        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+          <div className="relative z-[1] px-7 pt-5 pb-24">
+            {/* Random discovery — owns its own loading/error/empty */}
+            {isRandomMode && (
+              <RandomDiscoveryPanel
+                libraryIds={libraryIds}
+                onCardClick={handleCardClick}
+                onError={handleRetry}
               />
-            ))}
-          </div>
-        )}
+            )}
 
-        {/* Infinite scroll sentinel */}
-        {!isRandomMode && page.hasNext && (
-          <div ref={sentinelRef} className="flex justify-center py-8">
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
+            {/* Error state */}
+            {!isRandomMode && error && !showLoading && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+                <p className="text-sm text-center max-w-xs">{error}</p>
+                <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 text-xs">
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Spróbuj ponownie
+                </Button>
+              </div>
+            )}
+
+            {/* Loading state — only show skeleton on initial load (no items yet) */}
+            {!isRandomMode && showLoading && items.length === 0 && <DiscoverSkeleton />}
+
+            {/* Empty state */}
+            {showEmpty && !error && (
+              <EmptyState
+                icon={isSearchMode ? SearchX : Compass}
+                title={isSearchMode ? 'Brak wyników' : 'Brak anime'}
+                subtitle={isSearchMode ? 'Spróbuj innej frazy' : 'Nie udało się pobrać anime.'}
+              />
+            )}
+
+            {/* Grid — responsive 2:3 anime cards */}
+            {showGrid && (
+              <div
+                className={cn(
+                  'grid gap-3.5',
+                  'grid-cols-2',
+                  'sm:grid-cols-3',
+                  'md:grid-cols-4',
+                  'lg:grid-cols-5',
+                  '2xl:grid-cols-6'
+                )}
+              >
+                {items.map(media => (
+                  <DiscoverCard
+                    key={media.id}
+                    media={media}
+                    inLibrary={libraryIds.has(media.id)}
+                    onClick={() => handleCardClick(media)}
+                    onAddToLibrary={handleAddToLibrary}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            {!isRandomMode && page.hasNext && (
+              <div ref={sentinelRef} className="flex justify-center py-8">
+                {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <AnimeInfoDialog anime={selectedAnime} open={dialogOpen} onOpenChange={setDialogOpen} />

@@ -3,7 +3,11 @@ import { devtools } from 'zustand/middleware';
 import { createLogger, isNewTabUrl } from '@shiroani/shared';
 import type { QuickAccessSite, FrequentSite } from '@shiroani/shared';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
-import { createDebouncedPersist, electronStoreGet } from '@/lib/electron-store';
+import {
+  createDebouncedPersist,
+  electronStoreGet,
+  electronStoreDelete,
+} from '@/lib/electron-store';
 
 const logger = createLogger('QuickAccessStore');
 
@@ -18,6 +22,8 @@ interface QuickAccessState {
   hiddenPredefinedIds: string[];
   /** Frequently visited sites tracked automatically */
   frequentSites: FrequentSite[];
+  /** Whether to track browsing history (frequent sites). */
+  trackFrequentSites: boolean;
   /** Whether the store has been loaded from persistence */
   loaded: boolean;
 }
@@ -28,6 +34,7 @@ interface QuickAccessActions {
   hidePredefined: (id: string) => void;
   showPredefined: (id: string) => void;
   recordVisit: (url: string, title: string, favicon?: string) => void;
+  setTrackFrequentSites: (enabled: boolean) => void;
   loadSites: () => Promise<void>;
   persistSites: () => void;
   persistFrequent: () => void;
@@ -47,6 +54,7 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
       sites: [],
       hiddenPredefinedIds: [],
       frequentSites: [],
+      trackFrequentSites: true,
       loaded: false,
 
       // Actions
@@ -96,6 +104,8 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
       },
 
       recordVisit: (url, title, favicon) => {
+        // Respect the user's history-tracking toggle
+        if (!get().trackFrequentSites) return;
         // Don't track internal URLs
         if (isNewTabUrl(url) || url === 'about:blank') return;
 
@@ -150,20 +160,41 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
         get().persistFrequent();
       },
 
+      setTrackFrequentSites: enabled => {
+        set(
+          state => ({
+            trackFrequentSites: enabled,
+            // Silently wipe accumulated history when the user opts out.
+            frequentSites: enabled ? state.frequentSites : [],
+          }),
+          undefined,
+          'quickAccess/setTrackFrequentSites'
+        );
+        get().persistSites();
+        if (!enabled) {
+          electronStoreDelete(FREQUENT_STORE_KEY);
+        }
+      },
+
       loadSites: async () => {
         try {
           const saved = await electronStoreGet<{
             sites: QuickAccessSite[];
             hiddenPredefinedIds: string[];
+            trackFrequentSites?: boolean;
           }>(SITES_STORE_KEY);
 
-          const frequent = await electronStoreGet<FrequentSite[]>(FREQUENT_STORE_KEY);
+          const trackingEnabled = saved?.trackFrequentSites !== false;
+          const frequent = trackingEnabled
+            ? await electronStoreGet<FrequentSite[]>(FREQUENT_STORE_KEY)
+            : null;
 
           set(
             {
               sites: saved?.sites ?? [],
               hiddenPredefinedIds: saved?.hiddenPredefinedIds ?? [],
               frequentSites: frequent ?? [],
+              trackFrequentSites: trackingEnabled,
               loaded: true,
             },
             undefined,
@@ -178,8 +209,8 @@ export const useQuickAccessStore = create<QuickAccessStore>()(
       },
 
       persistSites: () => {
-        const { sites, hiddenPredefinedIds } = get();
-        debouncedPersistSites({ sites, hiddenPredefinedIds });
+        const { sites, hiddenPredefinedIds, trackFrequentSites } = get();
+        debouncedPersistSites({ sites, hiddenPredefinedIds, trackFrequentSites });
         logger.debug('Persisted quick access sites');
       },
 

@@ -1,124 +1,204 @@
-import { Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_SHORT } from '@/lib/constants';
-import { formatTime, getAnimeTitle, getCoverUrl, isToday } from './schedule-utils';
-import { formatScore } from '@/lib/anime-utils';
-import { DayColumnHeader } from './DayColumnHeader';
+import { Tv } from 'lucide-react';
+import { formatTime, getAnimeTitle, getCoverUrl, type SlotStatus } from './schedule-utils';
+import { ScheduleDayColumn } from './ScheduleDayColumn';
 import { SubscribeBellButton } from './SubscribeBellButton';
 import { useWeekData } from '@/hooks/useWeekData';
+import { useNowSeconds } from '@/hooks/useNowSeconds';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface WeeklyViewProps {
   weekDays: string[];
   getEntriesForDay: (day: string) => AiringAnime[];
-  /** Pass the raw schedule object so useMemo can detect changes */
+  /** Raw schedule object passed through so useMemo detects changes */
   schedule: Record<string, AiringAnime[]>;
   onAnimeClick?: (anime: AiringAnime) => void;
+  /**
+   * AniList ids of anime present in the user's library. Cards matching one of
+   * these get a primary-colour top edge + subtle wash. Library membership
+   * takes precedence over subscription.
+   */
+  libraryAnilistIds?: ReadonlySet<number>;
+  /**
+   * AniList ids of anime the user has subscribed to notifications for.
+   * Cards matching (and NOT in library) get a gold top edge + soft wash.
+   */
+  subscribedAnilistIds?: ReadonlySet<number>;
 }
 
+type MembershipKind = 'library' | 'subscribed' | 'none';
+
+const EMPTY_IDS: ReadonlySet<number> = new Set<number>();
+
+/**
+ * Compact 7-column week grid — one column per weekday, event cards stacked
+ * vertically within each. Status is encoded as a coloured left border
+ * (accent = live, green = soon/sub, violet = upcoming, muted = done).
+ */
 export function WeeklyView({
   weekDays,
   getEntriesForDay,
   schedule,
   onAnimeClick,
+  libraryAnilistIds = EMPTY_IDS,
+  subscribedAnilistIds = EMPTY_IDS,
 }: WeeklyViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
+  const now = useNowSeconds(60_000);
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex gap-px bg-border/50 h-full min-w-[1400px]">
+      <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
-          const isTodayDay = isToday(day);
-
           return (
-            <div
+            <ScheduleDayColumn
               key={day}
-              className={cn(
-                'flex flex-col bg-background min-w-[200px] flex-1',
-                isTodayDay && 'bg-primary/5'
-              )}
-            >
-              <DayColumnHeader
-                day={day}
-                label={DAY_NAMES_SHORT[idx]}
-                entryCount={dayEntries.length}
-              />
-
-              {/* Day entries -- vertical scroll per column */}
-              <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5">
-                {dayEntries.map((anime: AiringAnime) => {
-                  const title = getAnimeTitle(anime.media);
-                  const coverUrl = getCoverUrl(anime.media);
-
-                  return (
-                    <div
-                      key={`${anime.id}-${anime.episode}`}
-                      className={cn(
-                        'group relative p-2 rounded-lg text-xs',
-                        'bg-background/40 border border-border-glass',
-                        'hover:bg-background/60 hover:border-border-glass/80 transition-all duration-200',
-                        onAnimeClick && 'cursor-pointer'
-                      )}
-                      onClick={() => onAnimeClick?.(anime)}
-                      role={onAnimeClick ? 'button' : undefined}
-                      tabIndex={onAnimeClick ? 0 : undefined}
-                      onKeyDown={
-                        onAnimeClick
-                          ? e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                onAnimeClick(anime);
-                              }
-                            }
-                          : undefined
-                      }
-                    >
-                      <div className="flex items-start gap-2">
-                        {coverUrl && (
-                          <img
-                            src={coverUrl}
-                            alt={title}
-                            className="w-9 h-12 rounded object-cover shrink-0"
-                            loading="lazy"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate leading-tight text-xs">{title}</p>
-                          <div className="flex items-center gap-1 mt-0.5 text-muted-foreground/70 text-2xs">
-                            <Clock className="w-3 h-3" />
-                            <span>{formatTime(anime.airingAt)}</span>
-                            <span>&middot;</span>
-                            <span>Odc. {anime.episode}</span>
-                          </div>
-                          {anime.media.averageScore != null && (
-                            <span className="text-2xs font-semibold text-primary/80 tabular-nums">
-                              {formatScore(anime.media.averageScore)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bell icon overlay - top right */}
-                      <SubscribeBellButton
-                        anime={anime}
-                        className="absolute top-1 right-1 w-7 h-7 min-w-[44px] min-h-[44px]"
-                        iconClassName="w-3 h-3"
-                      />
-                    </div>
-                  );
-                })}
-                {dayEntries.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground/30">
-                    <Calendar className="w-5 h-5 mb-1" />
-                    <p className="text-xs">Brak emisji</p>
-                  </div>
-                )}
-              </div>
-            </div>
+              day={day}
+              label={DAY_NAMES_SHORT[idx]}
+              entries={dayEntries}
+              now={now}
+              emptyLabel="brak emisji"
+              listClassName="space-y-1.5"
+              emptyStateClassName="py-6"
+              emptyIconClassName="w-5 h-5"
+              renderCard={(anime, status) => {
+                const mediaId = anime.media.id;
+                const membership: MembershipKind = libraryAnilistIds.has(mediaId)
+                  ? 'library'
+                  : subscribedAnilistIds.has(mediaId)
+                    ? 'subscribed'
+                    : 'none';
+                return (
+                  <WeekEventCard
+                    key={`${anime.id}-${anime.episode}`}
+                    anime={anime}
+                    status={status}
+                    membership={membership}
+                    onClick={onAnimeClick}
+                  />
+                );
+              }}
+            />
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/* ────────────── Event card ────────────── */
+
+interface WeekEventCardProps {
+  anime: AiringAnime;
+  status: SlotStatus;
+  membership: MembershipKind;
+  onClick?: (anime: AiringAnime) => void;
+}
+
+function WeekEventCard({ anime, status, membership, onClick }: WeekEventCardProps) {
+  const title = getAnimeTitle(anime.media);
+  const coverUrl = getCoverUrl(anime.media);
+  const isLive = status === 'live';
+  const isDone = status === 'done';
+
+  const borderColor = isLive
+    ? 'border-l-primary'
+    : isDone
+      ? 'border-l-muted-foreground/30'
+      : 'border-l-[oklch(0.5_0.15_280)]';
+
+  // Top edge + subtle wash encodes library / subscription membership.
+  // Library wins when both are true. Kept as a separate axis from the
+  // status-driven left border (live/done/upcoming) so users can read both
+  // signals at a glance.
+  const membershipTint =
+    membership === 'library'
+      ? 'border-t-[3px] border-t-primary bg-primary/[0.06]'
+      : membership === 'subscribed'
+        ? 'border-t-[3px] border-t-[oklch(0.8_0.14_70)] bg-[oklch(0.8_0.14_70/0.06)]'
+        : '';
+
+  return (
+    <div
+      role={onClick ? 'button' : 'article'}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={title}
+      onClick={onClick ? () => onClick(anime) : undefined}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(anime);
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        'group relative rounded-lg border border-l-[3px] pl-2 pr-2.5 py-2 bg-card/40',
+        borderColor,
+        'transition-colors duration-200',
+        isLive && 'bg-primary/10 border-primary/30',
+        isDone && 'opacity-55',
+        onClick && 'cursor-pointer hover:bg-card/60',
+        isLive && onClick && 'hover:bg-primary/15',
+        membershipTint
+      )}
+    >
+      <div className="flex gap-2">
+        {/* Cover thumb — 2:3 aspect, helps users scan titles visually */}
+        <div
+          aria-hidden="true"
+          className="w-9 h-[54px] rounded-[4px] overflow-hidden flex-shrink-0 bg-muted/30 border border-border-glass relative"
+        >
+          {coverUrl ? (
+            <img
+              src={coverUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              onError={e => {
+                e.currentTarget.style.display = 'none';
+              }}
+              className={cn('w-full h-full object-cover', isDone && 'grayscale-[30%]')}
+            />
+          ) : (
+            <div className="w-full h-full grid place-items-center text-muted-foreground/40">
+              <Tv className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+
+        {/* Text content */}
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              'font-mono text-[10px] font-bold tracking-[0.06em]',
+              isLive ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            {formatTime(anime.airingAt)}
+            {isLive && <span className="ml-1.5 uppercase tracking-[0.12em]">· teraz</span>}
+          </div>
+          <p className="mt-1 text-[11.5px] font-semibold leading-[1.25] text-foreground line-clamp-2 pr-6">
+            {title}
+          </p>
+          <p className="mt-[3px] font-mono text-[9.5px] tracking-[0.06em] text-muted-foreground/70">
+            EP {anime.episode}
+            {anime.media.format && <span className="ml-1.5">· {anime.media.format}</span>}
+          </p>
+        </div>
+      </div>
+
+      {/* Bell overlay, top-right */}
+      <SubscribeBellButton
+        anime={anime}
+        className="absolute top-1 right-1 w-6 h-6"
+        iconClassName="w-3 h-3"
+      />
     </div>
   );
 }

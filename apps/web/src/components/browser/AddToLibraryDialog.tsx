@@ -154,9 +154,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
             <BookmarkPlus className="w-5 h-5 text-primary" />
             Dodaj do biblioteki
           </DialogTitle>
-          <DialogDescription>
-            Zapisz bieżącą stronę w bibliotece, aby móc do niej wrócić później.
-          </DialogDescription>
+          <DialogDescription>Zapisz tę stronę w bibliotece, żeby do niej wrócić.</DialogDescription>
         </DialogHeader>
 
         <div className="min-w-0 space-y-4 py-2">
@@ -186,14 +184,14 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                   id="add-lib-cover"
                   value={coverImage}
                   onChange={e => setCoverImage(e.target.value)}
-                  placeholder="URL obrazka okładki..."
+                  placeholder="URL okładki"
                   className="h-7 text-xs truncate"
                 />
                 <p className="text-[10px] text-muted-foreground/50">
                   {isFetchingCover
-                    ? 'Pobieranie okładki ze strony...'
+                    ? 'Pobieranie okładki'
                     : coverImage
-                      ? 'Pobrano automatycznie ze strony'
+                      ? 'Pobrano ze strony'
                       : 'Wklej URL lub zostaw puste'}
                 </p>
               </div>
@@ -220,7 +218,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
               id="add-lib-title"
               value={editableTitle}
               onChange={e => setEditableTitle(e.target.value)}
-              placeholder="Wpisz tytuł..."
+              placeholder="Tytuł"
               className="h-8 text-sm"
               autoFocus
             />
@@ -252,7 +250,7 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
                 htmlFor="add-lib-current-ep"
                 className="text-xs font-medium text-muted-foreground"
               >
-                Bieżący odcinek
+                Ostatni odcinek
               </label>
               <Input
                 id="add-lib-current-ep"

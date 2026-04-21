@@ -1,22 +1,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Bell, X, BellRing, Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SettingsCard } from '@/components/settings/SettingsCard';
+  SettingsCard,
+  SettingsSelectRow,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { IS_WINDOWS } from '@/lib/platform';
 import type { NotificationSettings } from '@shiroani/shared';
 
 const LEAD_TIME_OPTIONS = [
-  { value: '0', label: 'W momencie emisji' },
+  { value: '0', label: 'Dokładnie o godzinie emisji' },
   { value: '5', label: '5 minut' },
   { value: '15', label: '15 minut' },
   { value: '30', label: '30 minut' },
@@ -119,146 +115,99 @@ export function NotificationsSection() {
       <SettingsCard
         icon={Bell}
         title="Powiadomienia"
-        subtitle="Ustawienia powiadomień o nowych odcinkach"
+        subtitle="Informacje o nowych odcinkach i emisjach na żywo."
       >
-        {/* Enable notifications */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="notif-enabled-label" className="text-sm font-medium">
-              Powiadomienia o odcinkach
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany
-            </p>
-          </div>
-          <Switch
-            checked={data.enabled}
-            onCheckedChange={v => updateAndSave({ enabled: v })}
-            aria-labelledby="notif-enabled-label"
-          />
-        </div>
+        <SettingsToggleRow
+          id="notif-enabled-label"
+          title="Powiadomienia o odcinkach"
+          description="Wysyłaj powiadomienie, gdy leci nowy odcinek śledzonego anime."
+          checked={data.enabled}
+          onCheckedChange={v => updateAndSave({ enabled: v })}
+        />
 
-        <Separator className="bg-border/50" />
+        <SettingsSelectRow
+          divider
+          title="Powiadom przed emisją"
+          description="Ile minut przed emisją wysłać powiadomienie"
+          value={data.leadTime}
+          onValueChange={v => updateAndSave({ leadTime: v })}
+          disabled={!data.enabled}
+          options={LEAD_TIME_OPTIONS}
+        />
 
-        {/* Lead time */}
-        <div>
-          <h4 className="text-sm font-medium mb-1">Powiadom przed emisją</h4>
-          <p className="text-xs text-muted-foreground mb-2">
-            Ile minut przed emisją wysłać powiadomienie
-          </p>
-          <Select
-            value={data.leadTime}
-            onValueChange={v => updateAndSave({ leadTime: v })}
-            disabled={!data.enabled}
-          >
-            <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LEAD_TIME_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-xs">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SettingsToggleRow
+          divider
+          id="notif-quiet-label"
+          title="Cisza nocna"
+          description="Wstrzymaj powiadomienia w wybranych godzinach"
+          checked={data.quietHoursEnabled}
+          onCheckedChange={v => updateAndSave({ quietHoursEnabled: v })}
+          disabled={!data.enabled}
+        />
 
-        <Separator className="bg-border/50" />
-
-        {/* Quiet hours */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h4 id="notif-quiet-label" className="text-sm font-medium">
-                Cisza nocna
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Wstrzymaj powiadomienia w wybranych godzinach
-              </p>
+        {data.quietHoursEnabled && data.enabled && (
+          <div className="flex items-center gap-3 pl-0">
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="quiet-start" className="text-[11.5px] text-muted-foreground">
+                Od
+              </label>
+              <input
+                id="quiet-start"
+                type="time"
+                value={data.quietHoursStart}
+                onChange={e => updateAndSave({ quietHoursStart: e.target.value })}
+                className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
+              />
             </div>
-            <Switch
-              checked={data.quietHoursEnabled}
-              onCheckedChange={v => updateAndSave({ quietHoursEnabled: v })}
-              disabled={!data.enabled}
-              aria-labelledby="notif-quiet-label"
-            />
-          </div>
-          {data.quietHoursEnabled && data.enabled && (
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="quiet-start" className="text-xs text-muted-foreground">
-                  Od
-                </label>
-                <input
-                  id="quiet-start"
-                  type="time"
-                  value={data.quietHoursStart}
-                  onChange={e => updateAndSave({ quietHoursStart: e.target.value })}
-                  className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="quiet-end" className="text-xs text-muted-foreground">
-                  Do
-                </label>
-                <input
-                  id="quiet-end"
-                  type="time"
-                  value={data.quietHoursEnd}
-                  onChange={e => updateAndSave({ quietHoursEnd: e.target.value })}
-                  className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
-                />
-              </div>
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="quiet-end" className="text-[11.5px] text-muted-foreground">
+                Do
+              </label>
+              <input
+                id="quiet-end"
+                type="time"
+                value={data.quietHoursEnd}
+                onChange={e => updateAndSave({ quietHoursEnd: e.target.value })}
+                className="h-8 px-2 text-xs rounded-md border border-border-glass bg-background/40 focus:bg-background/60 transition-colors outline-none"
+              />
             </div>
-          )}
-        </div>
-
-        <Separator className="bg-border/50" />
-
-        {/* System sound */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 id="notif-sound-label" className="text-sm font-medium">
-              Dźwięk systemowy
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Odtwórz dźwięk przy wyświetlaniu powiadomienia
-            </p>
           </div>
-          <Switch
-            checked={data.useSystemSound}
-            onCheckedChange={v => updateAndSave({ useSystemSound: v })}
-            disabled={!data.enabled}
-            aria-labelledby="notif-sound-label"
-          />
-        </div>
+        )}
+
+        <SettingsToggleRow
+          divider
+          id="notif-sound-label"
+          title="Dźwięk systemowy"
+          description="Dźwięk przy nowym powiadomieniu."
+          checked={data.useSystemSound}
+          onCheckedChange={v => updateAndSave({ useSystemSound: v })}
+          disabled={!data.enabled}
+        />
       </SettingsCard>
 
       {/* Windows scheduled notifications info */}
       {IS_WINDOWS && data.enabled && (
-        <SettingsCard>
-          <div className="flex items-start gap-2.5">
-            <Info className="w-3.5 h-3.5 text-muted-foreground/70 mt-0.5 shrink-0" />
-            <p className="text-xs font-medium text-muted-foreground/80">
-              Na systemie Windows, po zamknięciu aplikacji nadchodzące powiadomienia są planowane za
-              pomocą polecenia PowerShell uruchamianego w tle. Nie wymaga to żadnej interakcji z
-              Twojej strony.
-            </p>
-          </div>
-        </SettingsCard>
+        <div className="flex items-start gap-3 rounded-xl border border-border-glass bg-background/40 px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
+          <Info className="w-4 h-4 text-muted-foreground/80 mt-0.5 shrink-0" />
+          <p>
+            Na Windowsie po zamknięciu aplikacji nadchodzące powiadomienia planowane są przez
+            polecenie PowerShell w tle.{' '}
+            <b className="font-semibold text-foreground">Nic nie musisz robić.</b>
+          </p>
+        </div>
       )}
 
       {/* Subscriptions list */}
       <SettingsCard
         icon={BellRing}
         title="Subskrypcje"
-        subtitle="Anime, o których chcesz otrzymywać powiadomienia"
+        subtitle="Anime, z których chcesz otrzymywać powiadomienia."
+        tone="gold"
       >
         {subscriptions.length === 0 ? (
-          <p className="text-xs text-muted-foreground/70 py-2">
-            Brak subskrypcji. Dodaj anime z harmonogramu klikając ikonkę dzwonka.
-          </p>
+          <div className="rounded-lg border border-border-glass bg-background/30 px-4 py-3 text-center text-[12px] text-muted-foreground">
+            Brak subskrypcji. Dodaj anime z harmonogramu, klikając ikonę dzwonka.
+          </div>
         ) : (
           <div className="space-y-2">
             {subscriptions.map(sub => (

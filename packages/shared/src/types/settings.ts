@@ -4,30 +4,29 @@
 
 /**
  * BuiltInTheme - All built-in color themes
- * 10 dark themes + 8 light themes = 18 total
+ * 15 dark themes + 2 light themes = 17 total
  * Users can create unlimited custom themes via the theme editor.
  */
 export type BuiltInTheme =
-  // Dark themes (10)
-  | 'dark'
-  | 'catppuccin'
-  | 'dracula'
-  | 'evangelion'
-  | 'gruvbox'
-  | 'monokai'
-  | 'nord'
-  | 'retro'
-  | 'spy-family'
-  | 'synthwave'
-  // Light themes (8)
-  | 'light'
-  | 'ayu-light'
-  | 'bocchi'
-  | 'ghibli-forest'
-  | 'github'
-  | 'one-piece'
-  | 'sepia'
-  | 'solarizedlight';
+  // Dark themes (15)
+  | 'plum'
+  | 'noir'
+  | 'matcha'
+  | 'iced'
+  | 'ember'
+  | 'sakura'
+  | 'midnight'
+  | 'abyss'
+  | 'crimson'
+  | 'dusk'
+  | 'cosmic'
+  | 'void'
+  | 'sunset'
+  | 'shirogane'
+  | 'onyx'
+  // Light themes (2)
+  | 'paper'
+  | 'haiku';
 
 /**
  * Theme - Either a built-in theme or a custom theme ID.
@@ -70,31 +69,27 @@ export interface CustomThemeDefinition {
  * Dark themes list
  */
 export const DARK_THEMES: BuiltInTheme[] = [
-  'dark',
-  'catppuccin',
-  'dracula',
-  'evangelion',
-  'gruvbox',
-  'monokai',
-  'nord',
-  'retro',
-  'spy-family',
-  'synthwave',
+  'plum',
+  'noir',
+  'matcha',
+  'iced',
+  'ember',
+  'sakura',
+  'midnight',
+  'abyss',
+  'crimson',
+  'dusk',
+  'cosmic',
+  'void',
+  'sunset',
+  'shirogane',
+  'onyx',
 ];
 
 /**
  * Light themes list
  */
-export const LIGHT_THEMES: BuiltInTheme[] = [
-  'light',
-  'ayu-light',
-  'bocchi',
-  'ghibli-forest',
-  'github',
-  'one-piece',
-  'sepia',
-  'solarizedlight',
-];
+export const LIGHT_THEMES: BuiltInTheme[] = ['paper', 'haiku'];
 
 /**
  * Set of all built-in theme names for fast lookup
@@ -103,6 +98,12 @@ export const BUILT_IN_THEMES: ReadonlySet<BuiltInTheme> = new Set<BuiltInTheme>(
   ...DARK_THEMES,
   ...LIGHT_THEMES,
 ]);
+
+/**
+ * Default built-in theme (applied when no theme is persisted or the persisted
+ * theme is unknown — e.g. users upgrading from the pre-redesign theme set).
+ */
+export const DEFAULT_BUILT_IN_THEME: BuiltInTheme = 'plum';
 
 /**
  * Feed startup refresh preference stored in electron-store.
@@ -118,6 +119,16 @@ export const DEFAULT_FEED_STARTUP_REFRESH = false;
  * Used by the desktop renderer to improve readability on dense displays.
  */
 export const UI_FONT_SCALE_SETTING_KEY = 'settings.uiFontScale';
+
+/**
+ * Local display name used in the newtab greeting and anywhere else the app
+ * addresses the user directly. Falls back to the AniList profile name when
+ * unset. Stored in electron-store.
+ */
+export const DISPLAY_NAME_SETTING_KEY = 'settings.displayName';
+
+/** Maximum length accepted for the user's display name input. */
+export const DISPLAY_NAME_MAX_LENGTH = 32;
 
 /** Default UI font scale */
 export const DEFAULT_UI_FONT_SCALE = 1;

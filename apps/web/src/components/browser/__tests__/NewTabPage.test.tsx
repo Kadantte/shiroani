@@ -158,7 +158,7 @@ describe('NewTabPage', () => {
     expect(mockRemoveSite).toHaveBeenCalledWith('custom-1');
   });
 
-  it('renders "Często odwiedzane" section when frequentSites is non-empty', () => {
+  it('renders "Ostatnio odwiedzone" section when frequentSites is non-empty', () => {
     setupMock({
       frequentSites: [
         { url: 'https://example.com', title: 'Example', visitCount: 5, lastVisited: Date.now() },
@@ -167,14 +167,15 @@ describe('NewTabPage', () => {
 
     render(<NewTabPage onNavigate={vi.fn()} />);
 
-    expect(screen.getByText('Często odwiedzane')).toBeInTheDocument();
+    expect(screen.getByText('Ostatnio odwiedzone')).toBeInTheDocument();
     expect(screen.getByText('Example')).toBeInTheDocument();
   });
 
-  it('does not render "Często odwiedzane" section when frequentSites is empty', () => {
+  it('shows empty state in "Ostatnio odwiedzone" when frequentSites is empty', () => {
     render(<NewTabPage onNavigate={vi.fn()} />);
 
-    expect(screen.queryByText('Często odwiedzane')).not.toBeInTheDocument();
+    expect(screen.getByText('Ostatnio odwiedzone')).toBeInTheDocument();
+    expect(screen.getByText('Brak historii')).toBeInTheDocument();
   });
 
   it('navigates when clicking a frequent site', async () => {

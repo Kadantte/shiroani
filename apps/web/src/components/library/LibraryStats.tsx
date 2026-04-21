@@ -52,7 +52,7 @@ export function LibraryStats() {
         <StatCard
           icon={<Star className="w-3.5 h-3.5" />}
           label="Średnia ocena"
-          value={stats.avgScore > 0 ? stats.avgScore.toFixed(1) : '\u2014'}
+          value={stats.avgScore > 0 ? stats.avgScore.toFixed(1) : '-'}
           subtitle={stats.scoredCount > 0 ? `z ${stats.scoredCount} ocen` : undefined}
           accent="warning"
         />
@@ -133,10 +133,7 @@ export function LibraryStats() {
 
 type AccentType = 'primary' | 'info' | 'success' | 'warning';
 
-const ACCENT_STYLES: Record<
-  AccentType,
-  { iconBg: string; iconColor: string; glowVar: string }
-> = {
+const ACCENT_STYLES: Record<AccentType, { iconBg: string; iconColor: string; glowVar: string }> = {
   primary: {
     iconBg: 'bg-primary/10',
     iconColor: 'text-primary',

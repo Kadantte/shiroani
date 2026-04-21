@@ -32,11 +32,13 @@ function ToolbarButton({ onClick, isActive, disabled, children, title }: Toolbar
       disabled={disabled}
       title={title}
       aria-label={title}
+      aria-pressed={isActive}
       className={cn(
-        'p-1.5 rounded-md transition-colors',
+        'inline-flex h-7 min-w-7 items-center justify-center rounded-[5px] px-1.5 font-mono text-[11px]',
+        'transition-colors',
         isActive
           ? 'bg-primary/15 text-primary'
-          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
         disabled && 'opacity-30 pointer-events-none'
       )}
     >
@@ -46,18 +48,31 @@ function ToolbarButton({ onClick, isActive, disabled, children, title }: Toolbar
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-5 bg-border/50 mx-0.5" />;
+  return <div aria-hidden="true" className="mx-1 h-[18px] w-px bg-border-glass" />;
 }
 
 interface EditorToolbarProps {
   editor: Editor | null;
+  /** Optional right-side slot — used in the editor for the mood strip. */
+  rightSlot?: React.ReactNode;
 }
 
-export function EditorToolbar({ editor }: EditorToolbarProps) {
+/**
+ * Restyled Tiptap toolbar — matches the `.ded-toolbar` band from the redesign
+ * mock. Thin horizontal bar, mono-spaced icon buttons with a pressed-state
+ * accent highlight. The engine, commands and keyboard shortcuts are
+ * unchanged — this component only redresses the surface.
+ */
+export function EditorToolbar({ editor, rightSlot }: EditorToolbarProps) {
   if (!editor) return null;
 
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-card/30 backdrop-blur-sm flex-wrap">
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-0.5 border-b border-border-glass bg-foreground/[0.015]',
+        'px-4 py-2'
+      )}
+    >
       {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -165,6 +180,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Minus className="w-3.5 h-3.5" />
       </ToolbarButton>
+
+      {rightSlot && <div className="ml-auto flex items-center gap-1.5">{rightSlot}</div>}
     </div>
   );
 }

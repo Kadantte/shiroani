@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import { getSocket, emitWithErrorHandling } from '@/lib/socket';
 import {
   ImportExportEvents,
@@ -73,14 +74,14 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       try {
         data = JSON.parse(raw);
       } catch {
-        transition({ step: 'file-error', message: 'Plik nie zawiera prawidłowego formatu JSON' });
+        transition({ step: 'file-error', message: 'To nie jest prawidłowy plik JSON' });
         return;
       }
 
       if (data.source !== 'shiroani' || data.version !== 1) {
         transition({
           step: 'file-error',
-          message: 'Nieprawidłowy format pliku. Oczekiwano pliku eksportu ShiroAni.',
+          message: 'To nie jest plik eksportu ShiroAni.',
         });
         return;
       }
@@ -209,7 +210,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
             <Upload className="w-5 h-5 text-primary" />
             Importuj dane
           </DialogTitle>
-          <DialogDescription>Importuj dane z pliku JSON do aplikacji</DialogDescription>
+          <DialogDescription>Wczytaj dane z pliku JSON.</DialogDescription>
         </DialogHeader>
 
         <div className="py-2">
@@ -283,12 +284,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
               </div>
 
               {/* Progress bar */}
-              <div className="h-2 bg-accent/40 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progressInfo.percent}%` }}
-                />
-              </div>
+              <ProgressBar value={progressInfo.percent} thickness={8} />
 
               {/* Current item being processed */}
               {progressInfo.currentItem && (

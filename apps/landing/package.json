@@ -10,6 +10,7 @@
     "check": "astro check"
   },
   "dependencies": {
+    "@shiroani/changelog": "workspace:*",
     "@shiroani/shared": "workspace:*",
     "@astrojs/check": "^0.9.8",
     "@astrojs/react": "^5.0.0",

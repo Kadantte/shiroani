@@ -18,6 +18,7 @@ interface ElectronAPI {
     close: () => void;
     isMaximized: () => Promise<boolean>;
     onMaximizedChange: (callback: (maximized: boolean) => void) => () => void;
+    openDevTools: () => Promise<void>;
   };
   store: {
     get: <T>(key: string) => Promise<T | undefined>;
@@ -43,6 +44,18 @@ interface ElectronAPI {
   app?: {
     getPath: (name: string) => Promise<string>;
     getVersion: () => Promise<string>;
+    getSystemInfo: () => Promise<{
+      appVersion: string;
+      electronVersion: string;
+      chromeVersion: string;
+      nodeVersion: string;
+      osPlatform: NodeJS.Platform;
+      osRelease: string;
+      arch: string;
+      userDataPath: string;
+      logsPath: string;
+      gpuFeatureStatus: Record<string, string> | { error: string };
+    }>;
     openLogsFolder: () => Promise<void>;
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;
@@ -53,12 +66,22 @@ interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
     getAutoLaunch: () => Promise<boolean>;
     setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+    setLogLevel: (level: string) => Promise<{ ok: boolean; level: string }>;
+  };
+  log?: {
+    write: (entry: {
+      level: 'error' | 'warn' | 'info' | 'debug';
+      context: string;
+      message: string;
+      data?: unknown;
+    }) => Promise<void>;
   };
   browser?: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     setFullscreen: (fullscreen: boolean) => Promise<void>;
-    getPopupBlockMode: () => Promise<string>;
-    setPopupBlockMode: (mode: string) => Promise<void>;
+    getPopupBlockEnabled: () => Promise<boolean>;
+    setPopupBlockEnabled: (enabled: boolean) => Promise<void>;
+    setAdblockWhitelist: (hosts: string[]) => Promise<void>;
     onNewWindowRequest: (callback: (url: string) => void) => () => void;
     onShortcut: (
       callback: (data: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => void

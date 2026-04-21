@@ -16,12 +16,12 @@ export function ConnectionBanner() {
       {status === 'reconnecting' ? (
         <>
           <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          <span>Ponowne łączenie...</span>
+          <span>Łączę ponownie…</span>
         </>
       ) : (
         <>
           <WifiOff className="size-3.5" aria-hidden="true" />
-          <span>Utracono połączenie</span>
+          <span>Brak połączenia</span>
           <button
             type="button"
             onClick={retryConnection}

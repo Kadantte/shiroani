@@ -1,7 +1,9 @@
-import { FolderOpen, Heart, Sparkles } from 'lucide-react';
+import { FolderOpen, Globe, Heart, History, Sparkles } from 'lucide-react';
 import { APP_NAME } from '@shiroani/shared';
 import { APP_LOGO_URL } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
+import { PillTag } from '@/components/ui/pill-tag';
+import { useAppStore } from '@/stores/useAppStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 
@@ -12,66 +14,82 @@ interface AboutSectionProps {
 export function AboutSection({ version }: AboutSectionProps) {
   const resetOnboarding = useOnboardingStore(s => s.reset);
 
+  const heroIcon = (
+    <div className="w-[42px] h-[42px] rounded-xl bg-primary/10 border border-border-glass flex items-center justify-center overflow-hidden flex-shrink-0">
+      <img
+        src={APP_LOGO_URL}
+        alt="Logo ShiroAni"
+        className="w-9 h-9 object-contain"
+        draggable={false}
+      />
+    </div>
+  );
+
+  const heroSubtitle = (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <PillTag variant="accent">v{version || '...'}</PillTag>
+      <span className="text-[11.5px] text-muted-foreground">
+        Przeglądarka · tracker anime w jednym miejscu
+      </span>
+    </span>
+  );
+
   return (
     <div className="space-y-4">
-      {/* App info - hero glass card */}
-      <SettingsCard>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-primary/10 border border-border-glass flex items-center justify-center overflow-hidden">
-            <img
-              src={APP_LOGO_URL}
-              alt="Logo ShiroAni"
-              className="w-12 h-12 object-contain"
-              draggable={false}
-            />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">{APP_NAME}</h2>
-            <p className="text-xs text-muted-foreground">Wersja {version || '...'}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Przeglądarka i tracker anime w jednym miejscu
-            </p>
-          </div>
+      {/* Hero: logo + name + version + CTA row */}
+      <SettingsCard iconSlot={heroIcon} title={APP_NAME} subtitle={heroSubtitle}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" onClick={resetOnboarding}>
+            <Sparkles className="w-3.5 h-3.5" />
+            Uruchom kreator ponownie
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border-glass"
+            onClick={() => window.open('https://github.com/Shironex/shiroani', '_blank')}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            GitHub
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border-glass"
+            onClick={() => useAppStore.getState().navigateTo('changelog')}
+          >
+            <History className="w-3.5 h-3.5" />
+            Zobacz historię zmian
+          </Button>
         </div>
-      </SettingsCard>
-
-      {/* Onboarding */}
-      <SettingsCard
-        icon={Sparkles}
-        title="Kreator konfiguracji"
-        subtitle="Ponownie przejdź kreator pierwszego uruchomienia"
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-border-glass gap-1.5"
-          onClick={resetOnboarding}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Uruchom kreator ponownie
-        </Button>
-        <p className="text-xs text-muted-foreground/70">
-          Po kliknięciu kreator uruchomi się od razu — Shiro-chan przeprowadzi Cię jeszcze raz!
+        <p className="text-[11.5px] text-muted-foreground/80 leading-relaxed">
+          Po kliknięciu kreator uruchomi się od razu, a Shiro-chan przeprowadzi Cię jeszcze raz!
         </p>
       </SettingsCard>
 
       {/* Story */}
-      <SettingsCard icon={Heart} title="Historia" subtitle="Skąd wzięło się ShiroAni">
-        <div className="space-y-2.5 text-[13px] text-muted-foreground leading-relaxed">
+      <SettingsCard
+        icon={Heart}
+        title="Historia"
+        subtitle="Od autora. Po prostu chciałem takiej aplikacji."
+      >
+        <div className="space-y-2.5 text-[13px] leading-[1.7] text-foreground/85">
           <p>
-            ShiroAni powstało z prostej potrzeby, chciałem mieć wszystko czego potrzebuję do
-            oglądania anime w jednym miejscu. Przeglądarka, biblioteka, harmonogram, pamiętnik... po
-            prostu jedno przytulne miejsce.
+            ShiroAni zrobiłem, bo chciałem mieć wszystko do oglądania anime w jednym miejscu.{' '}
+            <b className="font-bold text-primary">
+              Przeglądarka, biblioteka, harmonogram, pamiętnik
+            </b>
+            , po prostu jedno przytulne miejsce.
           </p>
           <p>
-            Z czasem zacząłem dodawać coraz więcej rzeczy, maskotki, motywy, powiadomienia i po
+            Z czasem zacząłem dodawać coraz więcej rzeczy: maskotki, motywy, powiadomienia i po
             prostu świetnie się przy tym bawiłem. W pewnym momencie pomyślałem: czemu nie udostępnić
             tego innym?
           </p>
           <p>
-            Głównym celem ShiroAni jest to, żeby każdy mógł mieć swoje unikalne, fajne doświadczenie
-            z anime. A przy okazji zbudować społeczność osób, z którymi można pogadać o ulubionych
-            seriach.
+            Chodzi o to, żeby każdy miał swój własny, fajny sposób oglądania anime. I żeby dało się
+            przy okazji pogadać o ulubionych seriach z innymi osobami, w dobrej{' '}
+            <b className="font-bold text-primary">społeczności</b>.
           </p>
         </div>
       </SettingsCard>
@@ -81,12 +99,13 @@ export function AboutSection({ version }: AboutSectionProps) {
         <SettingsCard
           icon={FolderOpen}
           title="Logi aplikacji"
-          subtitle="Otwórz folder z logami aplikacji"
+          subtitle="Otwórz folder z logami aplikacji w eksploratorze."
+          tone="muted"
         >
           <Button
             variant="outline"
             size="sm"
-            className="border-border-glass gap-1.5"
+            className="border-border-glass gap-2"
             onClick={() => window.electronAPI?.app?.openLogsFolder()}
           >
             <FolderOpen className="w-3.5 h-3.5" />

@@ -13,10 +13,12 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shiroani/shared": ["../../packages/shared/src"],
-      "@shiroani/shared/*": ["../../packages/shared/src/*"]
+      "@shiroani/shared/*": ["../../packages/shared/src/*"],
+      "@shiroani/changelog": ["../../packages/changelog/src"],
+      "@shiroani/changelog/*": ["../../packages/changelog/src/*"]
     }
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "include": ["src/**/*", "../../packages/shared/src/**/*", "../../packages/changelog/src/**/*"],
   "exclude": [
     "node_modules",
     "dist",

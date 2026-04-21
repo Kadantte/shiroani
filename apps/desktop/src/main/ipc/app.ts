@@ -2,11 +2,72 @@ import { ipcMain, app, shell, clipboard, nativeImage } from 'electron';
 import { existsSync } from 'fs';
 import { readdir, stat, readFile, writeFile } from 'fs/promises';
 import { join, resolve, sep } from 'path';
-import { LOG_FILE_PREFIX, LOG_MAX_FILE_SIZE } from '@shiroani/shared';
+import { release as osRelease } from 'os';
+import { gunzipSync } from 'zlib';
+import {
+  LOG_FILE_PREFIX,
+  LOG_MAX_FILE_SIZE,
+  setLogLevel,
+  getLogLevel,
+  LogLevel,
+} from '@shiroani/shared';
 import { getLogsDir, createMainLogger } from '../logger';
 import { getBackendPort } from '../backend-port';
 
 const logger = createMainLogger('IPC:App');
+
+// Dedicated forwarder logger — keeps renderer-originated entries visually
+// distinct (and separable via the `Renderer:*` context) from main-process ones.
+const rendererForwardLoggers = new Map<string, ReturnType<typeof createMainLogger>>();
+function getRendererForwardLogger(subContext: string): ReturnType<typeof createMainLogger> {
+  const tag = `Renderer:${subContext}`;
+  let existing = rendererForwardLoggers.get(tag);
+  if (!existing) {
+    existing = createMainLogger(tag);
+    rendererForwardLoggers.set(tag, existing);
+  }
+  return existing;
+}
+
+const ALLOWED_LOG_LEVELS = new Set(['error', 'warn', 'info', 'debug'] as const);
+type AllowedLogLevel = 'error' | 'warn' | 'info' | 'debug';
+
+// Clamp thresholds — prevent a runaway renderer from bloating the log file.
+const RENDERER_LOG_MESSAGE_MAX = 16 * 1024; // 16 KB
+const RENDERER_LOG_DATA_MAX = 32 * 1024; // 32 KB
+const TRUNCATED_SUFFIX = '...[truncated]';
+
+function clampString(value: string, max: number): string {
+  if (value.length <= max) return value;
+  return value.slice(0, Math.max(0, max - TRUNCATED_SUFFIX.length)) + TRUNCATED_SUFFIX;
+}
+
+function clampSerializedData(data: unknown): unknown {
+  if (data === undefined) return undefined;
+  let serialized: string;
+  try {
+    serialized = typeof data === 'string' ? data : JSON.stringify(data);
+  } catch {
+    // Fall back to String() for non-serializable values (circular refs, BigInt).
+    serialized = String(data);
+  }
+  if (serialized.length <= RENDERER_LOG_DATA_MAX) return data;
+  return clampString(serialized, RENDERER_LOG_DATA_MAX);
+}
+
+function logLevelName(level: LogLevel): AllowedLogLevel {
+  switch (level) {
+    case LogLevel.ERROR:
+      return 'error';
+    case LogLevel.WARN:
+      return 'warn';
+    case LogLevel.DEBUG:
+      return 'debug';
+    case LogLevel.INFO:
+    default:
+      return 'info';
+  }
+}
 
 /**
  * Register app-related IPC handlers
@@ -34,6 +95,30 @@ export function registerAppHandlers(): void {
   ipcMain.handle('app:get-version', () => {
     logger.debug('app:get-version invoked');
     return app.getVersion();
+  });
+
+  ipcMain.handle('app:get-system-info', () => {
+    logger.debug('app:get-system-info invoked');
+    // getGPUFeatureStatus can throw very early in startup; guard so diagnostics
+    // still render a best-effort payload.
+    let gpuFeatureStatus: Record<string, string> | { error: string };
+    try {
+      gpuFeatureStatus = app.getGPUFeatureStatus() as unknown as Record<string, string>;
+    } catch (err) {
+      gpuFeatureStatus = { error: err instanceof Error ? err.message : String(err) };
+    }
+    return {
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron ?? 'unknown',
+      chromeVersion: process.versions.chrome ?? 'unknown',
+      nodeVersion: process.versions.node ?? 'unknown',
+      osPlatform: process.platform,
+      osRelease: osRelease(),
+      arch: process.arch,
+      userDataPath: app.getPath('userData'),
+      logsPath: getLogsDir(),
+      gpuFeatureStatus,
+    };
   });
 
   ipcMain.handle('app:open-logs-folder', async () => {
@@ -133,7 +218,8 @@ export function registerAppHandlers(): void {
     const logFiles: { name: string; size: number; lastModified: number }[] = [];
 
     for (const entry of entries) {
-      if (!entry.startsWith(LOG_FILE_PREFIX) || !entry.endsWith('.log')) continue;
+      if (!entry.startsWith(LOG_FILE_PREFIX)) continue;
+      if (!entry.endsWith('.log') && !entry.endsWith('.log.gz')) continue;
       const fileStat = await stat(join(logsDir, entry));
       if (!fileStat.isFile()) continue;
       logFiles.push({
@@ -146,10 +232,57 @@ export function registerAppHandlers(): void {
     return logFiles.sort((a, b) => b.lastModified - a.lastModified);
   });
 
+  ipcMain.handle('app:log-write', (_event, payload: unknown) => {
+    // Fire-and-forget from renderer perspective. Validate payload shape and
+    // silently drop invalid messages rather than throwing — a malformed log
+    // write must not propagate as an IPC rejection to the renderer.
+    if (!payload || typeof payload !== 'object') return;
+    const entry = payload as {
+      level?: unknown;
+      context?: unknown;
+      message?: unknown;
+      data?: unknown;
+    };
+
+    const rawLevel = typeof entry.level === 'string' ? entry.level.toLowerCase() : '';
+    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) return;
+    const level = rawLevel as AllowedLogLevel;
+
+    if (typeof entry.context !== 'string' || entry.context.length === 0) return;
+    if (typeof entry.message !== 'string') return;
+
+    const message = clampString(entry.message, RENDERER_LOG_MESSAGE_MAX);
+    const forwardLogger = getRendererForwardLogger(entry.context);
+
+    if (entry.data === undefined) {
+      forwardLogger[level](message);
+    } else {
+      forwardLogger[level](message, clampSerializedData(entry.data));
+    }
+  });
+
+  ipcMain.handle('app:set-log-level', (_event, payload: unknown) => {
+    const requested =
+      payload && typeof payload === 'object' && 'level' in payload
+        ? (payload as { level: unknown }).level
+        : undefined;
+    const rawLevel = typeof requested === 'string' ? requested.toLowerCase() : '';
+    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) {
+      return { ok: false, level: logLevelName(getLogLevel()) };
+    }
+    setLogLevel(rawLevel);
+    const current = logLevelName(getLogLevel());
+    logger.debug(`app:set-log-level → ${current}`);
+    return { ok: current === rawLevel, level: current };
+  });
+
   ipcMain.handle('app:read-log-file', async (_event, fileName: string) => {
     logger.debug(`app:read-log-file invoked for "${fileName}"`);
 
-    // Security: reject path traversal, null bytes, and invalid filenames
+    // Security: reject path traversal, null bytes, and invalid filenames.
+    // Allowlist matches both `.log` and `.log.gz` rotated siblings.
+    const isGzipped = typeof fileName === 'string' && fileName.endsWith('.log.gz');
+    const hasValidSuffix = typeof fileName === 'string' && (fileName.endsWith('.log') || isGzipped);
     if (
       typeof fileName !== 'string' ||
       fileName.includes('\0') ||
@@ -157,19 +290,20 @@ export function registerAppHandlers(): void {
       fileName.includes('\\') ||
       fileName.includes('..') ||
       !fileName.startsWith(LOG_FILE_PREFIX) ||
-      !fileName.endsWith('.log')
+      !hasValidSuffix
     ) {
       throw new Error('Invalid log file name');
     }
 
     const filePath = join(getLogsDir(), fileName);
 
-    // Check file size before reading to avoid loading very large files
+    // For uncompressed `.log`, enforce the cap against on-disk size before
+    // reading. For `.log.gz`, the on-disk size is post-compression so we have
+    // to decompress first; the cap is then applied to the decompressed length
+    // and we truncate (with a trailing JSONL warn line) instead of rejecting.
+    let fileStat: Awaited<ReturnType<typeof stat>>;
     try {
-      const fileStat = await stat(filePath);
-      if (fileStat.size > LOG_MAX_FILE_SIZE) {
-        throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
-      }
+      fileStat = await stat(filePath);
     } catch (err: unknown) {
       if (
         err instanceof Error &&
@@ -181,7 +315,41 @@ export function registerAppHandlers(): void {
       throw err;
     }
 
-    return readFile(filePath, 'utf-8');
+    if (!isGzipped) {
+      if (fileStat.size > LOG_MAX_FILE_SIZE) {
+        throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+      }
+      return readFile(filePath, 'utf-8');
+    }
+
+    // Compressed branch: gunzip, then enforce the cap on decompressed bytes.
+    const compressed = await readFile(filePath);
+    let decompressed: Buffer;
+    try {
+      decompressed = gunzipSync(compressed);
+    } catch (err) {
+      throw new Error('Failed to decompress log file', { cause: err });
+    }
+
+    if (decompressed.length <= LOG_MAX_FILE_SIZE) {
+      return decompressed.toString('utf-8');
+    }
+
+    const truncationNotice =
+      JSON.stringify({
+        level: 'warn',
+        context: 'LogFile',
+        message: `truncated at ${LOG_MAX_FILE_SIZE} bytes`,
+      }) + '\n';
+    // Reserve room for the notice so the total payload stays under the cap.
+    const noticeBytes = Buffer.byteLength(truncationNotice, 'utf-8');
+    const sliceLen = Math.max(0, LOG_MAX_FILE_SIZE - noticeBytes);
+    let head = decompressed.subarray(0, sliceLen).toString('utf-8');
+    // Don't leave a partial JSONL line dangling — chop back to the last `\n`
+    // so the caller still sees well-formed lines before the notice.
+    const lastNewline = head.lastIndexOf('\n');
+    if (lastNewline >= 0) head = head.slice(0, lastNewline + 1);
+    return head + truncationNotice;
   });
 }
 
@@ -191,6 +359,7 @@ export function registerAppHandlers(): void {
 export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-path');
   ipcMain.removeHandler('app:get-version');
+  ipcMain.removeHandler('app:get-system-info');
   ipcMain.removeHandler('app:open-logs-folder');
   ipcMain.removeHandler('app:clipboard-write');
   ipcMain.removeHandler('app:clipboard-write-image');
@@ -200,4 +369,6 @@ export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-backend-port');
   ipcMain.removeHandler('app:list-log-files');
   ipcMain.removeHandler('app:read-log-file');
+  ipcMain.removeHandler('app:log-write');
+  ipcMain.removeHandler('app:set-log-level');
 }

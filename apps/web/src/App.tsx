@@ -13,6 +13,7 @@ import { DiaryView } from '@/components/diary/DiaryView';
 import { FeedView } from '@/components/feed/FeedView';
 import { DiscoverView } from '@/components/discover/DiscoverView';
 import { ProfileView } from '@/components/profile/ProfileView';
+import { ChangelogView } from '@/components/changelog/ChangelogView';
 import { SplashScreen } from '@/components/splash';
 import { OnboardingWizard } from '@/components/onboarding';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
@@ -22,6 +23,7 @@ import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useDockStore } from '@/stores/useDockStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { AppBackground } from '@/components/shared/AppBackground';
 import { BackgroundOverlay } from '@/components/shared/BackgroundOverlay';
 import { ConnectionBanner } from '@/components/shared/ConnectionBanner';
 
@@ -69,7 +71,8 @@ function App() {
         view === 'settings' ||
         view === 'browser' ||
         view === 'diary' ||
-        view === 'feed'
+        view === 'feed' ||
+        view === 'changelog'
       ) {
         navigateTo(view);
       }
@@ -97,6 +100,9 @@ function App() {
             IS_ELECTRON && 'rounded-t-[10px]'
           )}
         >
+          {/* Decorative radial glows + SVG noise — behind user wallpaper (if any) */}
+          {!isFullScreen && <AppBackground />}
+
           {/* Custom background overlay — covers entire window including sidebar */}
           {hasBg && !isFullScreen && <BackgroundOverlay />}
 
@@ -130,6 +136,7 @@ function App() {
               {activeView === 'schedule' && <ScheduleView />}
               {activeView === 'feed' && <FeedView />}
               {activeView === 'profile' && <ProfileView />}
+              {activeView === 'changelog' && <ChangelogView />}
               {activeView === 'settings' && <SettingsView />}
             </ErrorBoundary>
           </main>

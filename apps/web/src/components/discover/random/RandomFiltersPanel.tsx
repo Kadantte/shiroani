@@ -19,7 +19,7 @@ export const RandomFiltersPanel = memo(function RandomFiltersPanel({
   const hasFilters = included.length > 0 || excluded.length > 0;
 
   return (
-    <div className="rounded-2xl border border-border-glass bg-card/40 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-[12px] border border-border-glass bg-card/40 backdrop-blur-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -28,7 +28,9 @@ export const RandomFiltersPanel = memo(function RandomFiltersPanel({
       >
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs font-semibold">Gatunki</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] font-semibold text-foreground/90">
+            Gatunki
+          </span>
           {hasFilters && (
             <span className="text-2xs text-muted-foreground">
               {included.length > 0 && <span className="text-primary">+{included.length}</span>}
@@ -37,13 +39,15 @@ export const RandomFiltersPanel = memo(function RandomFiltersPanel({
             </span>
           )}
         </div>
-        <span className="text-2xs text-muted-foreground/70">{open ? 'Zwiń' : 'Rozwiń'}</span>
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground/70">
+          {open ? 'Zwiń' : 'Rozwiń'}
+        </span>
       </button>
       {open && (
-        <div className="px-4 pb-3 pt-1 space-y-2">
-          <p className="text-2xs text-muted-foreground/70">
+        <div className="px-4 pb-3 pt-1 space-y-2 border-t border-border-glass/60">
+          <p className="text-2xs text-muted-foreground/70 leading-relaxed">
             Kliknij, aby wybrać. Kliknij ponownie, aby wykluczyć. Trzeci klik czyści wybór. Wybrane
-            gatunki łączą się przez „i”.
+            gatunki łączą się przez „i".
           </p>
           <GenrePicker
             included={included}

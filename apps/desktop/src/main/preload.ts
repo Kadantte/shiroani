@@ -10,6 +10,33 @@ import type {
 } from '@shiroani/shared';
 
 /**
+ * Structured log entry forwarded from renderer → main via `app:log-write`.
+ */
+export interface RendererLogWriteEntry {
+  level: 'error' | 'warn' | 'info' | 'debug';
+  context: string;
+  message: string;
+  data?: unknown;
+}
+
+/**
+ * Snapshot of host/runtime info gathered by the main process for diagnostics.
+ * `gpuFeatureStatus` may be an error wrapper if Chromium wasn't ready yet.
+ */
+export interface SystemInfoSnapshot {
+  appVersion: string;
+  electronVersion: string;
+  chromeVersion: string;
+  nodeVersion: string;
+  osPlatform: NodeJS.Platform;
+  osRelease: string;
+  arch: string;
+  userDataPath: string;
+  logsPath: string;
+  gpuFeatureStatus: Record<string, string> | { error: string };
+}
+
+/**
  * Create a typed IPC listener that returns an unsubscribe function.
  * Eliminates the repeated on/removeListener boilerplate.
  */
@@ -29,10 +56,12 @@ function createIpcListener<T>(channel: string): (callback: (data: T) => void) =>
  */
 const ALLOWED_IPC_CHANNELS = new Set([
   'window:is-maximized',
+  'window:open-devtools',
   'store:get',
   'store:set',
   'store:delete',
   'app:get-version',
+  'app:get-system-info',
   'app:get-backend-port',
   'app:get-path',
   'app:clipboard-write',
@@ -42,6 +71,8 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'app:open-logs-folder',
   'app:list-log-files',
   'app:read-log-file',
+  'app:log-write',
+  'app:set-log-level',
   'app:get-auto-launch',
   'app:set-auto-launch',
   'dialog:open-directory',
@@ -55,8 +86,9 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'background:get-url',
   'browser:toggle-adblock',
   'browser:set-fullscreen',
-  'browser:get-popup-block-mode',
-  'browser:set-popup-block-mode',
+  'browser:get-popup-block-enabled',
+  'browser:set-popup-block-enabled',
+  'browser:set-adblock-whitelist',
   'updater:check-for-updates',
   'updater:start-download',
   'updater:install-now',
@@ -160,6 +192,7 @@ export interface ElectronAPI {
     close: () => void;
     isMaximized: () => Promise<boolean>;
     onMaximizedChange: (callback: (maximized: boolean) => void) => () => void;
+    openDevTools: () => Promise<void>;
   };
   store: {
     get: <T>(key: string) => Promise<T | undefined>;
@@ -190,6 +223,7 @@ export interface ElectronAPI {
   app: {
     getPath: (name: string) => Promise<string>;
     getVersion: () => Promise<string>;
+    getSystemInfo: () => Promise<SystemInfoSnapshot>;
     getBackendPort: () => Promise<number>;
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;
@@ -200,12 +234,22 @@ export interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
     getAutoLaunch: () => Promise<boolean>;
     setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+    setLogLevel: (level: string) => Promise<{ ok: boolean; level: string }>;
+  };
+  log: {
+    /**
+     * Forward a log entry from the renderer to the main-process logger.
+     * Fire-and-forget: resolves to void and never rejects to the caller so
+     * log failures cannot feed back into the renderer logger (loop hazard).
+     */
+    write: (entry: RendererLogWriteEntry) => Promise<void>;
   };
   browser: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
     setFullscreen: (isFullscreen: boolean) => Promise<void>;
-    getPopupBlockMode: () => Promise<string>;
-    setPopupBlockMode: (mode: string) => Promise<void>;
+    getPopupBlockEnabled: () => Promise<boolean>;
+    setPopupBlockEnabled: (enabled: boolean) => Promise<void>;
+    setAdblockWhitelist: (hosts: string[]) => Promise<void>;
     onNewWindowRequest: (callback: (url: string) => void) => () => void;
     onShortcut: (
       callback: (data: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => void
@@ -276,6 +320,7 @@ const electronAPI: ElectronAPI = {
     close: () => ipcRenderer.send('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
     onMaximizedChange: createIpcListener<boolean>('window:maximized-change'),
+    openDevTools: () => ipcRenderer.invoke('window:open-devtools') as Promise<void>,
   },
   store: {
     get: <T>(key: string) => ipcRenderer.invoke('store:get', key) as Promise<T | undefined>,
@@ -304,6 +349,7 @@ const electronAPI: ElectronAPI = {
   app: {
     getPath: (name: string) => ipcRenderer.invoke('app:get-path', name),
     getVersion: () => ipcRenderer.invoke('app:get-version'),
+    getSystemInfo: () => ipcRenderer.invoke('app:get-system-info') as Promise<SystemInfoSnapshot>,
     getBackendPort: () => ipcRenderer.invoke('app:get-backend-port') as Promise<number>,
     clipboardWrite: (text: string) => ipcRenderer.invoke('app:clipboard-write', text),
     clipboardWriteImage: (pngBase64: string) =>
@@ -320,15 +366,26 @@ const electronAPI: ElectronAPI = {
     getAutoLaunch: () => ipcRenderer.invoke('app:get-auto-launch') as Promise<boolean>,
     setAutoLaunch: (enabled: boolean) =>
       ipcRenderer.invoke('app:set-auto-launch', enabled) as Promise<boolean>,
+    setLogLevel: (level: string) =>
+      ipcRenderer.invoke('app:set-log-level', { level }) as Promise<{ ok: boolean; level: string }>,
+  },
+  log: {
+    write: (entry: RendererLogWriteEntry) =>
+      (ipcRenderer.invoke('app:log-write', entry) as Promise<void>).catch(() => {
+        // Swallow — log forwarding failures must never reach the renderer.
+      }),
   },
   browser: {
     toggleAdblock: (enabled: boolean) =>
       ipcRenderer.invoke('browser:toggle-adblock', enabled) as Promise<void>,
     setFullscreen: (isFullscreen: boolean) =>
       ipcRenderer.invoke('browser:set-fullscreen', isFullscreen) as Promise<void>,
-    getPopupBlockMode: () => ipcRenderer.invoke('browser:get-popup-block-mode') as Promise<string>,
-    setPopupBlockMode: (mode: string) =>
-      ipcRenderer.invoke('browser:set-popup-block-mode', mode) as Promise<void>,
+    getPopupBlockEnabled: () =>
+      ipcRenderer.invoke('browser:get-popup-block-enabled') as Promise<boolean>,
+    setPopupBlockEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke('browser:set-popup-block-enabled', enabled) as Promise<void>,
+    setAdblockWhitelist: (hosts: string[]) =>
+      ipcRenderer.invoke('browser:set-adblock-whitelist', hosts) as Promise<void>,
     onNewWindowRequest: createIpcListener<string>('browser:new-window-request'),
     onShortcut: createIpcListener<{ key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }>(
       'browser:shortcut'

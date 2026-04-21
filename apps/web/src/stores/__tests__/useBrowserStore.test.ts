@@ -26,6 +26,9 @@ describe('useBrowserStore', () => {
       activeTabId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
+      popupBlockEnabled: true,
+      adblockWhitelist: [],
+      restoreTabsOnStartup: true,
       isFullScreen: false,
     });
     uuidCounter = 0;
@@ -190,6 +193,88 @@ describe('useBrowserStore', () => {
 
       useBrowserStore.getState().toggleAdblock();
       expect(useBrowserStore.getState().adblockEnabled).toBe(true);
+    });
+  });
+
+  // ── Popup block switch ───────────────────────────────────────
+
+  describe('togglePopupBlock', () => {
+    it('toggles popup block enabled state', () => {
+      expect(useBrowserStore.getState().popupBlockEnabled).toBe(true);
+
+      useBrowserStore.getState().togglePopupBlock();
+      expect(useBrowserStore.getState().popupBlockEnabled).toBe(false);
+
+      useBrowserStore.getState().togglePopupBlock();
+      expect(useBrowserStore.getState().popupBlockEnabled).toBe(true);
+    });
+  });
+
+  describe('setPopupBlockEnabled', () => {
+    it('sets the value directly', () => {
+      useBrowserStore.getState().setPopupBlockEnabled(false);
+      expect(useBrowserStore.getState().popupBlockEnabled).toBe(false);
+
+      useBrowserStore.getState().setPopupBlockEnabled(true);
+      expect(useBrowserStore.getState().popupBlockEnabled).toBe(true);
+    });
+  });
+
+  // ── Adblock whitelist ────────────────────────────────────────
+
+  describe('addAdblockDomain', () => {
+    it('adds a bare hostname', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['example.com']);
+    });
+
+    it('normalizes hostnames (lowercase, strip www., strip protocol/path)', () => {
+      useBrowserStore.getState().addAdblockDomain('  HTTPS://WWW.Example.COM/some/path?q=1  ');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['example.com']);
+    });
+
+    it('dedupes entries that normalize to the same host', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com');
+      useBrowserStore.getState().addAdblockDomain('https://www.example.com/');
+      useBrowserStore.getState().addAdblockDomain('EXAMPLE.com');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['example.com']);
+    });
+
+    it('rejects empty and whitespace-only input', () => {
+      useBrowserStore.getState().addAdblockDomain('');
+      useBrowserStore.getState().addAdblockDomain('   ');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual([]);
+    });
+
+    it('strips port suffixes', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com:8080');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['example.com']);
+    });
+
+    it('preserves subdomains other than www.', () => {
+      useBrowserStore.getState().addAdblockDomain('sub.example.com');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['sub.example.com']);
+    });
+  });
+
+  describe('removeAdblockDomain', () => {
+    it('removes a previously added host', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com');
+      useBrowserStore.getState().addAdblockDomain('other.com');
+      useBrowserStore.getState().removeAdblockDomain('example.com');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['other.com']);
+    });
+
+    it('normalizes the removal input', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com');
+      useBrowserStore.getState().removeAdblockDomain('https://WWW.example.com/');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual([]);
+    });
+
+    it('is a no-op for non-existent hosts', () => {
+      useBrowserStore.getState().addAdblockDomain('example.com');
+      useBrowserStore.getState().removeAdblockDomain('notthere.com');
+      expect(useBrowserStore.getState().adblockWhitelist).toEqual(['example.com']);
     });
   });
 
