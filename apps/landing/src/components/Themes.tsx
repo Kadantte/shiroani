@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 type Theme = {
   id: string;
   name: string;
@@ -16,27 +14,11 @@ const THEMES: Theme[] = [
 ];
 
 export function Themes() {
-  const [active, setActive] = useState('plum');
-
-  useEffect(() => {
-    const html = document.documentElement;
-    html.classList.add('theme-transitioning');
-    html.setAttribute('data-theme', active);
-    const t = window.setTimeout(() => html.classList.remove('theme-transitioning'), 500);
-    return () => window.clearTimeout(t);
-  }, [active]);
-
   return (
     <section className="themes" id="motywy-grid">
       <div className="themes-grid">
         {THEMES.map(t => (
-          <button
-            key={t.id}
-            className={`th${active === t.id ? ' on' : ''}`}
-            data-t={t.id}
-            onClick={() => setActive(t.id)}
-            aria-pressed={active === t.id}
-          >
+          <div key={t.id} className="th" data-t={t.id}>
             <div className="mini">
               <span className="sw"></span>
               <div>
@@ -55,8 +37,7 @@ export function Themes() {
               <b>Frieren EP 28</b>
               <span>22:30</span>
             </div>
-            <div className="use">{active === t.id ? 'Aktywny ·' : 'Użyj →'}</div>
-          </button>
+          </div>
         ))}
       </div>
     </section>
