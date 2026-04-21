@@ -9,7 +9,7 @@ const ANA: Record<
 > = {
   library: {
     src: '/assets/screenshot_library.webp',
-    t: 'Półka tytułów — statusy, postęp, okładki.',
+    t: 'Twoja półka z tytułami. Statusy, postęp, okładki.',
     label: 'Biblioteka',
     viewLabel: 'Widok · Biblioteka',
     pins: [
@@ -17,7 +17,7 @@ const ANA: Record<
         x: 8,
         y: 10,
         title: 'Nagłówek',
-        text: 'Tytuł widoku + licznik tytułów. Obok przyciski importu/eksportu, statystyk i przełącznik widoku siatka/lista.',
+        text: 'Nazwa widoku i licznik pozycji. Obok: import, eksport, statystyki i przełącznik siatka/lista.',
       },
       {
         x: 22,
@@ -35,13 +35,13 @@ const ANA: Record<
         x: 50,
         y: 95,
         title: 'Pływający dock',
-        text: 'Nawigacja między przestrzeniami. Chowa się automatycznie, wraca po najechaniu.',
+        text: 'Przełączanie między sekcjami. Chowa się sam, wraca, gdy najedziesz kursorem.',
       },
     ],
   },
   schedule: {
     src: '/assets/screenshot_schedule.webp',
-    t: 'Harmonogram emisji z AniList.',
+    t: 'Harmonogram emisji prosto z AniList.',
     label: 'Harmonogram',
     viewLabel: 'Widok · Harmonogram',
     pins: [
@@ -49,13 +49,13 @@ const ANA: Record<
         x: 5,
         y: 10,
         title: 'Zakres tygodnia',
-        text: 'Nawigacja prev/next i konkretny zakres dat. Dane pobierają się na żywo z AniList.',
+        text: 'Strzałki w przód i w tył oraz konkretny zakres dat. Dane lecą na żywo z AniList.',
       },
       {
         x: 50,
         y: 18,
         title: 'Dzień aktywny',
-        text: 'Aktualny dzień podświetlony akcentem. Numer dnia i licznik premier obok.',
+        text: 'Dzisiejszy dzień wyróżniony kolorem. Obok numer dnia i liczba premier.',
       },
       {
         x: 20,
@@ -67,7 +67,7 @@ const ANA: Record<
   },
   newtab: {
     src: '/assets/screenshot_newtab.webp',
-    t: 'Nowa karta — ulubione strony jednym kliknięciem.',
+    t: 'Nowa karta z ulubionymi stronami pod ręką.',
     label: 'Nowa karta',
     viewLabel: 'Widok · Nowa karta',
     pins: [
@@ -75,25 +75,25 @@ const ANA: Record<
         x: 50,
         y: 11,
         title: 'Pasek adresu',
-        text: 'Wpisz URL albo szukaj. Działa na stronach anime i w Google tak samo.',
+        text: 'Wpisz adres albo frazę. Działa tak samo na stronach anime i w Google.',
       },
       {
         x: 30,
         y: 40,
         title: 'Szybki dostęp',
-        text: 'Kafelki ulubionych stron. Ikona + nazwa, konfiguracja jednym kliknięciem.',
+        text: 'Kafelki z ulubionymi stronami. Ikona, nazwa i konfiguracja w jednym kliknięciu.',
       },
       {
         x: 30,
         y: 70,
         title: 'Ostatnio odwiedzane',
-        text: 'Historia ostatnich wizyt. Pojawia się tylko gdy masz niepustą historię.',
+        text: 'Ostatnio odwiedzane strony. Sekcja pojawia się, kiedy jest co pokazać.',
       },
     ],
   },
   settings: {
     src: '/assets/screenshot_settings.webp',
-    t: 'Ustawienia — motywy, tła, dock.',
+    t: 'Ustawienia: motywy, tła, dock.',
     label: 'Ustawienia',
     viewLabel: 'Widok · Ustawienia',
     pins: [
@@ -107,19 +107,19 @@ const ANA: Record<
         x: 30,
         y: 15,
         title: 'Dock nawigacyjny',
-        text: 'Autohide, etykiety, swobodne przeciąganie, przywracanie pozycji.',
+        text: 'Autoukrywanie, etykiety, swobodne przeciąganie i powrót do pozycji startowej.',
       },
       {
         x: 30,
         y: 50,
         title: 'Własne tło',
-        text: 'Dowolny obraz lub GIF. Suwaki przezroczystości i rozmycia dla czytelności.',
+        text: 'Dowolny obraz albo GIF. Suwaki przezroczystości i rozmycia, żeby wszystko dobrze się czytało.',
       },
       {
         x: 30,
         y: 90,
         title: 'Motywy anime',
-        text: '15 palet inspirowanych tytułami + edytor własnych motywów z podglądem.',
+        text: '15 palet inspirowanych tytułami i edytor własnych motywów z podglądem na żywo.',
       },
     ],
   },

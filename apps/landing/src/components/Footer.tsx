@@ -23,8 +23,8 @@ export function Footer() {
             </div>
           </div>
           <p>
-            Shiro-chan jeszcze rośnie. Aplikacja jest we wczesnej fazie, ale z każdym wydaniem robi
-            się bardziej przytulna.
+            Shiro-chan wciąż rośnie. Apka jest na wczesnym etapie, ale z każdym wydaniem robi się
+            przytulniej.
           </p>
           <div className="s">
             <a
@@ -79,7 +79,7 @@ export function Footer() {
         </div>
       </div>
       <div className="ft-btm">
-        <div>© 2026 Shironex · Wszystkie prawa zastrzeżone</div>
+        <div>© 2026 Shironex · Wszelkie prawa zastrzeżone</div>
         <div>白 · アニ · Made with ♥ in Poland</div>
       </div>
     </footer>
