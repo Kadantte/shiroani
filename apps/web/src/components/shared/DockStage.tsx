@@ -1,19 +1,33 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import type { DockEdge } from '@/stores/useDockStore';
+
+export interface DockStageItem {
+  id: string;
+  /** Optional icon node rendered inside the mini-dock slot. Falls back to a small square. */
+  icon?: ReactNode;
+  /** When true, the slot is drawn as the active/highlighted dot. */
+  highlighted?: boolean;
+}
 
 interface DockStageProps {
   edge: DockEdge;
   /** Override the stage height in px (default 144). */
   height?: number;
   className?: string;
+  /**
+   * Explicit list of slots to render in the mini-dock. When omitted the stage
+   * falls back to a 4-dot placeholder (used by the Dock position preview).
+   */
+  items?: DockStageItem[];
 }
 
 /**
  * Miniature stage with a grid background + floating dock positioned by edge.
- * Reused between the onboarding DockStep and the Dock settings section so the
- * live preview stays consistent across first-run and post-setup adjustments.
+ * Reused between the onboarding DockStep, the Dock settings section, and the
+ * Widoki section's visibility preview so the live preview stays consistent.
  */
-export function DockStage({ edge, height = 144, className }: DockStageProps) {
+export function DockStage({ edge, height = 144, className, items }: DockStageProps) {
   return (
     <div
       className={cn('relative overflow-hidden rounded-xl border border-border-glass', className)}
@@ -33,12 +47,19 @@ export function DockStage({ edge, height = 144, className }: DockStageProps) {
           backgroundSize: '20px 20px',
         }}
       />
-      <MiniDock edge={edge} />
+      <MiniDock edge={edge} items={items} />
     </div>
   );
 }
 
-function MiniDock({ edge }: { edge: DockEdge }) {
+const PLACEHOLDER_ITEMS: DockStageItem[] = [
+  { id: '0', highlighted: true },
+  { id: '1' },
+  { id: '2' },
+  { id: '3' },
+];
+
+function MiniDock({ edge, items }: { edge: DockEdge; items?: DockStageItem[] }) {
   const isVertical = edge === 'left' || edge === 'right';
   const positionStyle: React.CSSProperties = (() => {
     switch (edge) {
@@ -53,26 +74,35 @@ function MiniDock({ edge }: { edge: DockEdge }) {
     }
   })();
 
+  const slots = items && items.length > 0 ? items : PLACEHOLDER_ITEMS;
+
   return (
     <div
       className={cn(
         'absolute flex gap-1 rounded-full border border-white/10 p-1 shadow-[0_10px_24px_oklch(0_0_0_/_0.5)] backdrop-blur-md',
+        'transition-all duration-200',
         isVertical ? 'flex-col' : 'flex-row'
       )}
       style={{ ...positionStyle, background: 'oklch(0.16 0.025 300 / 0.85)' }}
     >
-      <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-        <span className="block h-2 w-2 rounded-[2px] bg-current" />
-      </span>
-      <span className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground">
-        <span className="block h-2 w-2 rounded-[2px] bg-current opacity-60" />
-      </span>
-      <span className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground">
-        <span className="block h-2 w-2 rounded-[2px] bg-current opacity-60" />
-      </span>
-      <span className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground">
-        <span className="block h-2 w-2 rounded-[2px] bg-current opacity-60" />
-      </span>
+      {slots.map(slot => (
+        <span
+          key={slot.id}
+          className={cn(
+            'grid h-6 w-6 place-items-center rounded-full transition-colors duration-150',
+            slot.highlighted ? 'bg-primary text-primary-foreground' : 'text-muted-foreground/80'
+          )}
+        >
+          {slot.icon ?? (
+            <span
+              className={cn(
+                'block h-2 w-2 rounded-[2px] bg-current',
+                !slot.highlighted && 'opacity-60'
+              )}
+            />
+          )}
+        </span>
+      ))}
     </div>
   );
 }
