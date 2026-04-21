@@ -185,7 +185,7 @@ export function Anatomy() {
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
                 onClick={() => setPin(i)}
                 aria-label={p.title}
-                aria-describedby="ana-note"
+                aria-describedby={i === pin ? 'ana-note' : undefined}
                 aria-pressed={i === pin}
               >
                 {i + 1}

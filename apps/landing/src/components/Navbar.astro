@@ -70,7 +70,10 @@ const links = [
       if (target.closest('a')) setOpen(false);
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        burger.focus();
+      }
     });
   }
 </script>

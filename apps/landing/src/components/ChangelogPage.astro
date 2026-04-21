@@ -29,9 +29,9 @@ const iconPaths: Record<CategorySlug, string> = {
   </p>
   <div class="filters" id="filters">
     <b>Filtr</b>
-    <button class="chip on" data-f="all">Wszystkie <span style="opacity:.6">{counts.all}</span></button>
-    <button class="chip" data-f="major">Większe wydania <span style="opacity:.6">{counts.major}</span></button>
-    <button class="chip" data-f="minor">Patche <span style="opacity:.6">{counts.minor}</span></button>
+    <button class="chip on" data-f="all" aria-pressed="true">Wszystkie <span style="opacity:.6">{counts.all}</span></button>
+    <button class="chip" data-f="major" aria-pressed="false">Większe wydania <span style="opacity:.6">{counts.major}</span></button>
+    <button class="chip" data-f="minor" aria-pressed="false">Patche <span style="opacity:.6">{counts.minor}</span></button>
   </div>
 </header>
 
@@ -77,8 +77,12 @@ const iconPaths: Record<CategorySlug, string> = {
   const rels = document.querySelectorAll<HTMLElement>('.rel');
   chips.forEach((c) => {
     c.addEventListener('click', () => {
-      chips.forEach((x) => x.classList.remove('on'));
+      chips.forEach((x) => {
+        x.classList.remove('on');
+        x.setAttribute('aria-pressed', 'false');
+      });
       c.classList.add('on');
+      c.setAttribute('aria-pressed', 'true');
       const f = c.dataset.f;
       rels.forEach((r) => {
         r.style.display = f === 'all' || r.dataset.t === f ? '' : 'none';
