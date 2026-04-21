@@ -52,6 +52,9 @@ const ALLOWED_STORE_KEYS = new Set([
   'onboarding-completed',
   // AniList profile username
   'anilist-username',
+  // Feed bookmarks and read state (mirrored from renderer for cross-window access)
+  'shiroani:feed-bookmarks',
+  'shiroani:feedReadIds',
 ]);
 
 /**

@@ -49,6 +49,26 @@ export interface Release {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: '0.6.1',
+    date: '21 kwietnia 2026',
+    shortDate: '21.04.2026',
+    title: 'Szybka poprawka zakładek i przeczytanych wiadomości',
+    description:
+      'Drobna aktualizacja naprawiająca zapisywanie zakładek i stanu przeczytania w widoku Aktualności. Po redesignie dwa nowe klucze zapisu nie zostały dodane do listy dozwolonej, przez co zakładki i oznaczenia przeczytanych artykułów nie przetrwały restartu aplikacji.',
+    type: 'minor',
+    latest: true,
+    categories: [
+      {
+        kind: 'fix',
+        label: 'Poprawki',
+        entries: [
+          'Zakładki w Aktualnościach zapisują się i przeżywają restart aplikacji',
+          'Oznaczenia przeczytanych artykułów w Aktualnościach również zapisują się poprawnie',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.6.0',
     date: '21 kwietnia 2026',
     shortDate: '21.04.2026',
@@ -56,7 +76,6 @@ export const RELEASES: readonly Release[] = [
     description:
       'Największa aktualizacja wizualna od premiery. ShiroAni dostała kompletnie przeprojektowany interfejs z nowymi motywami, odświeżonymi widokami i rozbudowanymi ustawieniami. Strona internetowa również została zbudowana od zera. Jeśli coś wygląda znajomo, ale inaczej, tak, to właśnie to.',
     type: 'major',
-    latest: true,
     categories: [
       {
         kind: 'feature',
