@@ -78,7 +78,7 @@ export function Footer() {
         </div>
       </div>
       <div className="ft-btm">
-        <div>© 2026 Shironex · Wszelkie prawa zastrzeżone</div>
+        <div>© {new Date().getFullYear()} Shironex · Wszelkie prawa zastrzeżone</div>
         <div>白 · アニ · Made with ♥ in Poland</div>
       </div>
     </footer>

@@ -21,14 +21,26 @@ interface PlatformSpec {
   key: Platform;
   label: string;
   extension: string;
-  arch: string;
   pattern: RegExp;
 }
 
 const PLATFORMS: PlatformSpec[] = [
-  { key: 'win', label: 'Windows', extension: '.exe', arch: '64-bit', pattern: /\.exe$/i },
-  { key: 'mac', label: 'macOS', extension: '.dmg', arch: 'Universal', pattern: /\.dmg$/i },
+  { key: 'win', label: 'Windows', extension: '.exe', pattern: /\.exe$/i },
+  { key: 'mac', label: 'macOS', extension: '.dmg', pattern: /\.dmg$/i },
 ];
+
+// Electron-builder ships filenames like "ShiroAni-0.5.0-arm64.dmg" or
+// "ShiroAni.Setup.exe". Pull the arch token when present; otherwise label
+// the binary by extension only.
+function parseArch(filename: string): string | null {
+  const match = filename.match(/(arm64|aarch64|x64|x86_64|ia32|universal)/i);
+  if (!match) return null;
+  const token = match[1].toLowerCase();
+  if (token === 'arm64' || token === 'aarch64') return 'ARM64';
+  if (token === 'x64' || token === 'x86_64') return 'x64';
+  if (token === 'ia32') return '32-bit';
+  return 'Universal';
+}
 
 const MAC_QUARANTINE_CMD = 'xattr -rd com.apple.quarantine /Applications/ShiroAni.app';
 
@@ -68,13 +80,9 @@ export function DownloadPage() {
   const fallbackVersion = currentVersion();
   const [release, setRelease] = useState<ReleaseData | null>(null);
   const [error, setError] = useState(false);
-  const [detected, setDetected] = useState<Platform | null>(null);
+  const [detected] = useState<Platform>(detectPlatform);
   const [downloaded, setDownloaded] = useState<Platform | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setDetected(detectPlatform());
-  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -114,7 +122,7 @@ export function DownloadPage() {
       });
   }, []);
 
-  const version = release?.tag_name?.replace(/^v/i, '') ?? fallbackVersion;
+  const version = release?.tag_name?.replace(/^v/i, '') || fallbackVersion;
   const releasedOn = release ? formatReleaseDate(release.published_at) : null;
 
   return (
@@ -184,9 +192,10 @@ export function DownloadPage() {
                       {isPrimary && <span className="pbadge">Twój system</span>}
                     </div>
                     <div className="ps">
-                      {release && size ? (
+                      {release && asset && size ? (
                         <>
-                          {p.extension} · {p.arch} · {size}
+                          {p.extension}
+                          {parseArch(asset.name) && <> · {parseArch(asset.name)}</>} · {size}
                         </>
                       ) : release && !asset ? (
                         <>Brak pliku dla tej platformy, zajrzyj do wydania</>
