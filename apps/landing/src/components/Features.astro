@@ -1,4 +1,6 @@
 ---
+import { BUILT_IN_THEME_METADATA, type BuiltInThemeMeta } from '@shiroani/shared';
+
 type Feature = {
   cls: string;
   no: string;
@@ -10,6 +12,7 @@ type Feature = {
   alt?: string;
   w?: number;
   h?: number;
+  themes?: readonly BuiltInThemeMeta[];
 };
 
 const SHOT = { w: 3420, h: 2214 };
@@ -78,10 +81,11 @@ const features: Feature[] = [
     ...SHOT,
   },
   {
-    cls: 'col-4',
+    cls: 'col-4 ft-themes',
     no: '№ 07 · THEMES',
-    title: '39 motywów plus edytor własnych.',
-    desc: '15 inspirowanych anime. Wizualny edytor palety, czcionek i tła.',
+    title: '17 motywów plus edytor własnych.',
+    desc: '15 ciemnych, 2 jasne, większość inspirowana anime. Wizualny edytor palety, czcionek i tła.',
+    themes: BUILT_IN_THEME_METADATA,
   },
   {
     cls: 'col-4',
@@ -118,6 +122,32 @@ const features: Feature[] = [
               width={f.w}
               height={f.h}
             />
+          </div>
+        )}
+        {f.themes && (
+          <div class="fthemes" aria-hidden="true">
+            <div class="fthemes-row" data-group="dark">
+              {f.themes.filter((t) => t.isDark).map((t) => (
+                <div
+                  class="fthemes-sw"
+                  title={t.label}
+                  style={`--sw-bg: oklch(0.12 0.018 300); --sw-fg: ${t.color};`}
+                >
+                  <span class="fthemes-lbl">{t.label}</span>
+                </div>
+              ))}
+            </div>
+            <div class="fthemes-row" data-group="light">
+              {f.themes.filter((t) => !t.isDark).map((t) => (
+                <div
+                  class="fthemes-sw is-light"
+                  title={t.label}
+                  style={`--sw-bg: oklch(0.97 0.008 80); --sw-fg: ${t.color};`}
+                >
+                  <span class="fthemes-lbl">{t.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </article>

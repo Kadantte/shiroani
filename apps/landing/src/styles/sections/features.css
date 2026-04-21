@@ -103,3 +103,63 @@
   background: linear-gradient(180deg, oklch(from var(--accent) l c h / 0.09), var(--bg-2) 40%);
   border-color: oklch(from var(--accent) l c h / 0.2);
 }
+
+/* ── Themes preview (card № 07) ── */
+.fc.ft-themes {
+  min-height: 380px;
+}
+.fc .fthemes {
+  margin-top: auto;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fc .fthemes-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.fc .fthemes-row[data-group='light'] {
+  grid-template-columns: repeat(5, 1fr);
+}
+.fc .fthemes-sw {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--sw-bg), var(--sw-fg));
+}
+.fc .fthemes-sw::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 50% 40% at 75% 25%,
+    color-mix(in oklch, var(--sw-fg), transparent 80%),
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.fc .fthemes-lbl {
+  position: absolute;
+  inset: auto 4px 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc .fthemes-sw.is-light .fthemes-lbl {
+  color: rgba(20, 14, 30, 0.85);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+}
