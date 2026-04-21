@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_NAMES_SHORT } from '@/lib/constants';
 import { Tv } from 'lucide-react';
-import {
-  formatTime,
-  getAnimeTitle,
-  getCoverUrl,
-  getSlotStatus,
-  isToday,
-  type SlotStatus,
-} from './schedule-utils';
-import { DayColumnHeader } from './DayColumnHeader';
+import { formatTime, getAnimeTitle, getCoverUrl, type SlotStatus } from './schedule-utils';
+import { ScheduleDayColumn } from './ScheduleDayColumn';
 import { SubscribeBellButton } from './SubscribeBellButton';
 import { useWeekData } from '@/hooks/useWeekData';
+import { useNowSeconds } from '@/hooks/useNowSeconds';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface WeeklyViewProps {
@@ -53,61 +45,42 @@ export function WeeklyView({
   subscribedAnilistIds = EMPTY_IDS,
 }: WeeklyViewProps) {
   const weekData = useWeekData(weekDays, getEntriesForDay, schedule);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const now = useNowSeconds(60_000);
 
   return (
     <div className="flex-1 overflow-x-auto overflow-y-hidden">
       <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
         {weekDays.map((day, idx) => {
           const dayEntries = weekData.get(day) ?? [];
-          const isTodayCol = isToday(day);
-
           return (
-            <div
+            <ScheduleDayColumn
               key={day}
-              className={cn('flex flex-col min-h-0', isTodayCol && 'bg-primary/[0.04]')}
-            >
-              <DayColumnHeader
-                day={day}
-                label={DAY_NAMES_SHORT[idx]}
-                entryCount={dayEntries.length}
-              />
-
-              {/* Event cards — vertical scroll per column */}
-              <div className="flex-1 overflow-y-auto p-2 pb-20 space-y-1.5">
-                {dayEntries.map(anime => {
-                  const status = getSlotStatus(anime.airingAt, now);
-                  const mediaId = anime.media.id;
-                  const membership: MembershipKind = libraryAnilistIds.has(mediaId)
-                    ? 'library'
-                    : subscribedAnilistIds.has(mediaId)
-                      ? 'subscribed'
-                      : 'none';
-                  return (
-                    <WeekEventCard
-                      key={`${anime.id}-${anime.episode}`}
-                      anime={anime}
-                      status={status}
-                      membership={membership}
-                      onClick={onAnimeClick}
-                    />
-                  );
-                })}
-                {dayEntries.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground/30">
-                    <Calendar className="w-5 h-5 mb-1" />
-                    <p className="text-[10.5px] font-mono tracking-[0.1em] uppercase">
-                      brak emisji
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+              day={day}
+              label={DAY_NAMES_SHORT[idx]}
+              entries={dayEntries}
+              now={now}
+              emptyLabel="brak emisji"
+              listClassName="space-y-1.5"
+              emptyStateClassName="py-6"
+              emptyIconClassName="w-5 h-5"
+              renderCard={(anime, status) => {
+                const mediaId = anime.media.id;
+                const membership: MembershipKind = libraryAnilistIds.has(mediaId)
+                  ? 'library'
+                  : subscribedAnilistIds.has(mediaId)
+                    ? 'subscribed'
+                    : 'none';
+                return (
+                  <WeekEventCard
+                    key={`${anime.id}-${anime.episode}`}
+                    anime={anime}
+                    status={status}
+                    membership={membership}
+                    onClick={onAnimeClick}
+                  />
+                );
+              }}
+            />
           );
         })}
       </div>

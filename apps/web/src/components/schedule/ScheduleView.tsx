@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { ViewHeader } from '@/components/shared/ViewHeader';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -127,86 +128,77 @@ export function ScheduleView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
-      {/* ── Editorial view header (matches .vh) ─────────────────────── */}
-      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4 shrink-0 gap-4">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div className="size-9 rounded-[10px] grid place-items-center flex-shrink-0 bg-primary/15 border border-primary/30 text-primary">
-            <Calendar className="w-[18px] h-[18px]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
-              Harmonogram
-            </h1>
-            <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
-              {summary}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Date nav */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-8 h-8"
-            onClick={navigatePrevious}
-            aria-label={`Poprzedni ${navAriaLabel === 'Dzień' ? 'dzień' : 'tydzień'}`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-8 h-8"
-            onClick={navigateNext}
-            aria-label={`Następny ${navAriaLabel === 'Dzień' ? 'dzień' : 'tydzień'}`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          {!isToday(selectedDay) && (
+      <ViewHeader
+        icon={Calendar}
+        title="Harmonogram"
+        subtitle={summary}
+        actions={
+          <>
+            {/* Date nav */}
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs font-medium"
-              onClick={navigateToday}
+              size="icon"
+              className="w-8 h-8"
+              onClick={navigatePrevious}
+              aria-label={`Poprzedni ${navAriaLabel === 'Dzień' ? 'dzień' : 'tydzień'}`}
             >
-              <CalendarDays className="w-3.5 h-3.5" />
-              Dziś
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-          )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
+              onClick={navigateNext}
+              aria-label={`Następny ${navAriaLabel === 'Dzień' ? 'dzień' : 'tydzień'}`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            {!isToday(selectedDay) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs font-medium"
+                onClick={navigateToday}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Dziś
+              </Button>
+            )}
 
-          <div className="w-px h-4 bg-border-glass mx-1" />
+            <div className="w-px h-4 bg-border-glass mx-1" />
 
-          {/* View mode switcher */}
-          <div
-            role="tablist"
-            aria-label="Tryb widoku harmonogramu"
-            className="flex items-center gap-1"
-          >
-            {MODES.map(m => {
-              const Icon = m.Icon;
-              const active = viewMode === m.id;
-              return (
-                <TooltipButton
-                  key={m.id}
-                  role="tab"
-                  aria-selected={active}
-                  variant={active ? 'secondary' : 'ghost'}
-                  size="icon"
-                  onClick={() => setViewMode(m.id)}
-                  className={cn(
-                    'w-8 h-8 transition-colors duration-150',
-                    active && 'bg-primary/15 text-primary hover:bg-primary/15'
-                  )}
-                  tooltip={m.tooltip}
-                >
-                  <Icon className="w-4 h-4" />
-                </TooltipButton>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+            {/* View mode switcher — icon-only tabs with tooltips, kept as
+                TooltipButton because FilterTabBar renders its label text. */}
+            <div
+              role="tablist"
+              aria-label="Tryb widoku harmonogramu"
+              className="flex items-center gap-1"
+            >
+              {MODES.map(m => {
+                const Icon = m.Icon;
+                const active = viewMode === m.id;
+                return (
+                  <TooltipButton
+                    key={m.id}
+                    role="tab"
+                    aria-selected={active}
+                    variant={active ? 'secondary' : 'ghost'}
+                    size="icon"
+                    onClick={() => setViewMode(m.id)}
+                    className={cn(
+                      'w-8 h-8 transition-colors duration-150',
+                      active && 'bg-primary/15 text-primary hover:bg-primary/15'
+                    )}
+                    tooltip={m.tooltip}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </TooltipButton>
+                );
+              })}
+            </div>
+          </>
+        }
+      />
 
       {/* ── Sub-header row — currently-visible date range + legend ───── */}
       <div className="shrink-0 flex items-center justify-between gap-4 px-7 py-3 border-b border-border-glass">

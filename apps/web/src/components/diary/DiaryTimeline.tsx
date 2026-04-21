@@ -2,16 +2,8 @@ import { memo, useMemo } from 'react';
 import { Pin, Trash2, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PillTag } from '@/components/ui/pill-tag';
-import { DIARY_GRADIENTS, MOOD_ICONS } from '@/lib/diary-constants';
+import { DIARY_GRADIENTS, MOOD_EMOJI, MOOD_ICONS } from '@/lib/diary-constants';
 import type { DiaryEntry } from '@shiroani/shared';
-
-const MOOD_EMOJI: Record<string, string> = {
-  great: '✨',
-  good: '💗',
-  neutral: '😐',
-  bad: '😕',
-  terrible: '😡',
-};
 
 const WEEKDAYS_PL = [
   'niedziela',

@@ -34,8 +34,10 @@ interface DiaryStats {
   maxWeekCount: number;
 }
 
-function dayKey(dateStr: string): string {
-  const d = new Date(dateStr);
+// Bucket by local calendar day so streaks don't flip a day early/late for
+// users in non-UTC timezones. Always use local-time components — never
+// toISOString, which returns UTC.
+function dayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
@@ -57,7 +59,7 @@ function computeStats(entries: DiaryEntry[]): DiaryStats {
 
   for (const e of entries) {
     const d = new Date(e.createdAt);
-    activeDays.add(dayKey(e.createdAt));
+    activeDays.add(dayKey(d));
     if (d >= monthStart) thisMonth++;
     if (e.animeId != null) linkedToAnime++;
     if (e.tags) {
@@ -75,17 +77,17 @@ function computeStats(entries: DiaryEntry[]): DiaryStats {
   }
 
   // Compute current streak (consecutive days ending today or yesterday)
-  const todayKey = dayKey(now.toISOString());
+  const todayKey = dayKey(now);
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  const yesterdayKey = dayKey(yesterday.toISOString());
+  const yesterdayKey = dayKey(yesterday);
 
   let currentStreak = 0;
   const hasToday = activeDays.has(todayKey);
   const hasYesterday = activeDays.has(yesterdayKey);
   if (hasToday || hasYesterday) {
     const cursor = new Date(hasToday ? now : yesterday);
-    while (activeDays.has(dayKey(cursor.toISOString()))) {
+    while (activeDays.has(dayKey(cursor))) {
       currentStreak++;
       cursor.setDate(cursor.getDate() - 1);
     }

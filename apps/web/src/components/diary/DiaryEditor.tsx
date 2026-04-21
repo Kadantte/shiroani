@@ -10,6 +10,7 @@ import { PillTag } from '@/components/ui/pill-tag';
 import { EditorToolbar } from './EditorToolbar';
 import { BubbleMenuBar } from './BubbleMenuBar';
 import { GradientPicker } from './GradientPicker';
+import { MoodPickerPills } from './MoodPickerPills';
 import type {
   DiaryEntry,
   DiaryCreatePayload,
@@ -17,15 +18,7 @@ import type {
   DiaryMood,
   DiaryGradient,
 } from '@shiroani/shared';
-import { DIARY_GRADIENTS, MOOD_OPTIONS } from '@/lib/diary-constants';
-
-const MOOD_EMOJI: Record<DiaryMood, string> = {
-  great: '✨',
-  good: '💗',
-  neutral: '😐',
-  bad: '😕',
-  terrible: '😡',
-};
+import { DIARY_GRADIENTS } from '@/lib/diary-constants';
 
 const MAX_CONTENT_LENGTH = 2000;
 
@@ -90,6 +83,9 @@ export function DiaryEditor({ entry, onClose, onCreate, onUpdate }: DiaryEditorP
 
   const handleSave = useCallback(() => {
     if (!editor) return;
+    // Silent-bail when over the cap — the footer counter already turns red,
+    // so the user sees why the save button "doesn't do anything".
+    if (editor.getText().length > MAX_CONTENT_LENGTH) return;
     const contentJson = JSON.stringify(editor.getJSON());
 
     if (isEditing) {
@@ -244,31 +240,7 @@ export function DiaryEditor({ entry, onClose, onCreate, onUpdate }: DiaryEditorP
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             Nastrój
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            {MOOD_OPTIONS.map(opt => {
-              const active = mood === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setMood(active ? undefined : opt.value)}
-                  title={opt.label}
-                  aria-pressed={active}
-                  aria-label={opt.label}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1',
-                    'text-[11px] transition-colors',
-                    active
-                      ? 'border-primary/40 bg-primary/15 text-primary'
-                      : 'border-border-glass bg-foreground/[0.03] text-foreground/80 hover:text-foreground'
-                  )}
-                >
-                  <span aria-hidden="true">{MOOD_EMOJI[opt.value]}</span>
-                  <span>{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <MoodPickerPills value={mood} onChange={setMood} size="sm" />
         </div>
 
         {/* Tags */}
@@ -396,27 +368,7 @@ export function DiaryEditor({ entry, onClose, onCreate, onUpdate }: DiaryEditorP
               <span className="font-mono text-[9.5px] uppercase tracking-[0.15em] text-muted-foreground">
                 Nastrój
               </span>
-              <div className="flex items-center gap-1">
-                {MOOD_OPTIONS.map(opt => {
-                  const active = mood === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setMood(active ? undefined : opt.value)}
-                      title={opt.label}
-                      aria-label={opt.label}
-                      aria-pressed={active}
-                      className={cn(
-                        'rounded-[6px] px-1.5 py-0.5 text-[14px] leading-none transition-all',
-                        active ? 'bg-primary/15 opacity-100' : 'opacity-40 hover:opacity-80'
-                      )}
-                    >
-                      {MOOD_EMOJI[opt.value]}
-                    </button>
-                  );
-                })}
-              </div>
+              <MoodPickerPills value={mood} onChange={setMood} size="xs" />
             </div>
           }
         />

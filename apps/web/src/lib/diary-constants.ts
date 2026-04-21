@@ -45,6 +45,14 @@ export const MOOD_ICONS = {
   terrible: { Icon: Frown, color: 'text-red-400' },
 } as const;
 
+export const MOOD_EMOJI: Record<DiaryMood, string> = {
+  great: '✨',
+  good: '💗',
+  neutral: '😐',
+  bad: '😕',
+  terrible: '😡',
+};
+
 export const MOOD_OPTIONS: {
   value: DiaryMood;
   label: string;

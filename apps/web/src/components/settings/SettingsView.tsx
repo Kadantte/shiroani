@@ -18,6 +18,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_WINDOWS, IS_MAC, IS_ELECTRON } from '@/lib/platform';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { ViewHeader } from '@/components/shared/ViewHeader';
 import { ThemesSection } from '@/components/settings/ThemesSection';
 import { BackgroundSettings } from '@/components/settings/BackgroundSettings';
 import { DockSection } from '@/components/settings/DockSection';
@@ -204,26 +205,14 @@ export function SettingsView() {
   }, []);
 
   const currentSection = sections.find(s => s.id === activeSection) ?? sections[0];
-  const HeaderIcon = currentSection.Icon;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
-      {/* ── Editorial view header (matches .vh) ─────────────────────── */}
-      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4 shrink-0">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div className="size-9 rounded-[10px] grid place-items-center flex-shrink-0 bg-primary/15 border border-primary/30 text-primary">
-            <HeaderIcon className="w-[18px] h-[18px]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
-              {currentSection.label}
-            </h1>
-            <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
-              {currentSection.subtitle}
-            </span>
-          </div>
-        </div>
-      </div>
+      <ViewHeader
+        icon={currentSection.Icon}
+        title={currentSection.label}
+        subtitle={currentSection.subtitle}
+      />
 
       {/* ── Body: sidebar + main scroll area ────────────────────────── */}
       <div className="flex-1 flex min-h-0">

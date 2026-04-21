@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Settings, Sparkles, UserRound } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsRowLabel,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
 import {
   DEFAULT_FEED_STARTUP_REFRESH,
   DISPLAY_NAME_MAX_LENGTH,
@@ -78,31 +82,22 @@ export function GeneralSection() {
         title="Ogólne ustawienia aplikacji"
         subtitle="Zachowanie aplikacji przy starcie systemu i odświeżaniu danych."
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="auto-launch-label"
-            title="Uruchamiaj przy starcie systemu"
-            description="Automatycznie otwiera ShiroAni po zalogowaniu do systemu"
-          />
-          <Switch
-            checked={autoLaunch}
-            onCheckedChange={handleAutoLaunchChange}
-            aria-labelledby="auto-launch-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="auto-launch-label"
+          title="Uruchamiaj przy starcie systemu"
+          description="Automatycznie otwiera ShiroAni po zalogowaniu do systemu"
+          checked={autoLaunch}
+          onCheckedChange={handleAutoLaunchChange}
+        />
 
-        <SettingsRow divider>
-          <SettingsRowLabel
-            id="feed-startup-refresh-label"
-            title="Odświeżaj RSS przy starcie aplikacji"
-            description="Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku Aktualności lub po ręcznym odświeżeniu. Zmiana zacznie działać od następnego uruchomienia."
-          />
-          <Switch
-            checked={feedRefreshOnStartup}
-            onCheckedChange={handleFeedRefreshOnStartupChange}
-            aria-labelledby="feed-startup-refresh-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          divider
+          id="feed-startup-refresh-label"
+          title="Odświeżaj RSS przy starcie aplikacji"
+          description="Gdy wyłączone, pierwsze pobranie aktualności nastąpi dopiero po wejściu do widoku Aktualności lub po ręcznym odświeżeniu. Zmiana zacznie działać od następnego uruchomienia."
+          checked={feedRefreshOnStartup}
+          onCheckedChange={handleFeedRefreshOnStartupChange}
+        />
       </SettingsCard>
 
       {/* Info callout matching the mock's .info-box */}

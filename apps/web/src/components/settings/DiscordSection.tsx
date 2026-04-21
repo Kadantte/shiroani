@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MessageCircle, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { DiscordPreview } from '@/components/settings/DiscordPreview';
 import { DiscordTemplateEditor } from '@/components/settings/DiscordTemplateEditor';
 import { substitutePreview } from '@/lib/discord-utils';
@@ -107,49 +107,36 @@ export function DiscordSection() {
     >
       {!settings.useCustomTemplates && (
         <>
-          <SettingsRow>
-            <SettingsRowLabel
-              id="discord-details-label"
-              title="Pokaż tytuły anime"
-              description="Wyświetlaj tytuł oglądanego anime na Discordzie"
-            />
-            <Switch
-              aria-labelledby="discord-details-label"
-              checked={settings.showAnimeDetails}
-              onCheckedChange={v => updateField('showAnimeDetails', v)}
-              disabled={!settings.enabled}
-            />
-          </SettingsRow>
+          <SettingsToggleRow
+            id="discord-details-label"
+            title="Pokaż tytuły anime"
+            description="Wyświetlaj tytuł oglądanego anime na Discordzie"
+            checked={settings.showAnimeDetails}
+            onCheckedChange={v => updateField('showAnimeDetails', v)}
+            disabled={!settings.enabled}
+          />
 
-          <SettingsRow divider>
-            <SettingsRowLabel
-              id="discord-time-label"
-              title="Pokaż czas"
-              description="Wyświetlaj czas trwania aktywności"
-            />
-            <Switch
-              aria-labelledby="discord-time-label"
-              checked={settings.showElapsedTime}
-              onCheckedChange={v => updateField('showElapsedTime', v)}
-              disabled={!settings.enabled}
-            />
-          </SettingsRow>
+          <SettingsToggleRow
+            divider
+            id="discord-time-label"
+            title="Pokaż czas"
+            description="Wyświetlaj czas trwania aktywności"
+            checked={settings.showElapsedTime}
+            onCheckedChange={v => updateField('showElapsedTime', v)}
+            disabled={!settings.enabled}
+          />
         </>
       )}
 
-      <SettingsRow divider={!settings.useCustomTemplates}>
-        <SettingsRowLabel
-          id="discord-templates-label"
-          title="Własne szablony"
-          description="Dostosuj tekst statusu dla każdej aktywności"
-        />
-        <Switch
-          aria-labelledby="discord-templates-label"
-          checked={settings.useCustomTemplates}
-          onCheckedChange={v => updateField('useCustomTemplates', v)}
-          disabled={!settings.enabled}
-        />
-      </SettingsRow>
+      <SettingsToggleRow
+        divider={!settings.useCustomTemplates}
+        id="discord-templates-label"
+        title="Własne szablony"
+        description="Dostosuj tekst statusu dla każdej aktywności"
+        checked={settings.useCustomTemplates}
+        onCheckedChange={v => updateField('useCustomTemplates', v)}
+        disabled={!settings.enabled}
+      />
 
       <div>
         <Button size="sm" onClick={handleSave}>

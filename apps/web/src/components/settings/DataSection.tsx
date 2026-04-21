@@ -75,21 +75,13 @@ export function DataSection() {
         </Button>
       </SettingsCard>
 
-      {/* Danger zone — destructive tone with tinted surface */}
-      <div className="rounded-xl border border-destructive/25 bg-destructive/[0.06] px-5 py-4 space-y-3.5">
-        <div className="flex items-start gap-3 pb-3 border-b border-destructive/15">
-          <div className="size-[38px] rounded-[10px] grid place-items-center flex-shrink-0 border border-destructive/30 bg-destructive/15 text-destructive">
-            <AlertTriangle className="w-[18px] h-[18px]" />
-          </div>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="font-serif font-bold text-[16px] leading-tight tracking-[-0.01em] text-destructive">
-              Usuń wszystkie dane
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">
-              Nieodwracalne usunięcie danych aplikacji.
-            </p>
-          </div>
-        </div>
+      {/* Danger zone — destructive tone tints the whole card surface */}
+      <SettingsCard
+        icon={AlertTriangle}
+        tone="destructive"
+        title="Usuń wszystkie dane"
+        subtitle="Nieodwracalne usunięcie danych aplikacji."
+      >
         <p className="text-[12px] text-muted-foreground/85 leading-relaxed">
           Operacja usunie bibliotekę, pamiętnik, subskrypcje i ustawienia. Nie można jej cofnąć.
         </p>
@@ -101,7 +93,7 @@ export function DataSection() {
         >
           Usuń wszystkie dane
         </Button>
-      </div>
+      </SettingsCard>
 
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} type="all" />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} type="all" />

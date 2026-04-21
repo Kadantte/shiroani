@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Terminal, SquareCode, ClipboardCopy, ScrollText, Check } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { DevLogsDialog } from '@/components/settings/DevLogsDialog';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { copyDiagnosticsToClipboard } from '@/lib/diagnostics';
@@ -28,18 +27,13 @@ export function DeveloperSection() {
         subtitle="Narzędzia debugowania — pomocne, gdy chcesz zgłosić błąd lub zajrzeć pod maskę."
         tone="muted"
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="dev-mode-label"
-            title="Włącz tryb deweloperski"
-            description="Udostępnia narzędzia deweloperskie, podgląd logów i kopię diagnostyki."
-          />
-          <Switch
-            checked={devModeEnabled}
-            onCheckedChange={setDevModeEnabled}
-            aria-labelledby="dev-mode-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="dev-mode-label"
+          title="Włącz tryb deweloperski"
+          description="Udostępnia narzędzia deweloperskie, podgląd logów i kopię diagnostyki."
+          checked={devModeEnabled}
+          onCheckedChange={setDevModeEnabled}
+        />
 
         {devModeEnabled && (
           <div className="grid gap-2 sm:grid-cols-3 pt-1">

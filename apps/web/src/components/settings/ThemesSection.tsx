@@ -1,15 +1,26 @@
 import { useState, useCallback } from 'react';
-import { Download, Moon, Palette, Pencil, Plus, Sun, Type, Trash2, Upload } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  Moon,
+  Palette,
+  Pencil,
+  Plus,
+  Sun,
+  Type,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
 import { darkThemes, lightThemes, getAllThemeOptions } from '@/lib/theme';
 import { removeCustomThemeCSS } from '@/lib/custom-theme-css';
-import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
+import { ThemeSwatch } from '@/components/shared/theme/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
 import { SettingsCard } from '@/components/settings/SettingsCard';
-import { ThemeGrid } from '@/components/settings/ThemeGrid';
+import { ThemeGrid } from '@/components/shared/theme/ThemeGrid';
 import { PillTag } from '@/components/ui/pill-tag';
 import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
@@ -58,6 +69,25 @@ export function ThemesSection() {
 
   const customThemeOptions = getAllThemeOptions(customThemes).filter(t => t.isCustom);
   const clearPreview = useCallback(() => setPreviewTheme(null), [setPreviewTheme]);
+
+  // Hover-reveal clone button overlay for built-in theme swatches.
+  const cloneOverlay = useCallback(
+    (opt: { value: Theme; label: string }) => (
+      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            handleCloneTheme(opt.value);
+          }}
+          className="w-6 h-6 rounded bg-background/85 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={`Klonuj motyw ${opt.label}`}
+        >
+          <Copy className="w-3 h-3 text-foreground" />
+        </button>
+      </div>
+    ),
+    [handleCloneTheme]
+  );
 
   return (
     <div className="space-y-4">
@@ -165,7 +195,7 @@ export function ThemesSection() {
           onSelect={setTheme}
           onPreview={setPreviewTheme}
           onPreviewEnd={clearPreview}
-          onClone={handleCloneTheme}
+          trailingOverlay={cloneOverlay}
         />
 
         <ThemeGrid
@@ -176,7 +206,7 @@ export function ThemesSection() {
           onSelect={setTheme}
           onPreview={setPreviewTheme}
           onPreviewEnd={clearPreview}
-          onClone={handleCloneTheme}
+          trailingOverlay={cloneOverlay}
         />
 
         {customThemeOptions.length === 0 && (

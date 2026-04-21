@@ -4,14 +4,18 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+  SettingsCard,
+  SettingsRow,
+  SettingsRowLabel,
+  SettingsSelectRow,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
 import { MascotPreview } from '@/components/settings/MascotPreview';
+
+const VISIBILITY_OPTIONS = [
+  { value: 'always', label: 'Zawsze widoczna' },
+  { value: 'tray-only', label: 'Tylko przy zminimalizowanej' },
+];
 
 const MASCOT_MIN_SIZE = 48;
 const MASCOT_MAX_SIZE = 256;
@@ -115,34 +119,24 @@ export function MascotSection() {
               </div>
             </div>
 
-            <SettingsRow divider>
-              <SettingsRowLabel
-                title="Tryb widoczności"
-                description="Kiedy maskotka ma być widoczna na pulpicie"
-              />
-              <Select value={visibilityMode} onValueChange={handleVisibilityModeChange}>
-                <SelectTrigger className="w-56 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="always">Zawsze widoczna</SelectItem>
-                  <SelectItem value="tray-only">Tylko przy zminimalizowanej</SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingsRow>
+            <SettingsSelectRow
+              divider
+              title="Tryb widoczności"
+              description="Kiedy maskotka ma być widoczna na pulpicie"
+              value={visibilityMode}
+              onValueChange={handleVisibilityModeChange}
+              options={VISIBILITY_OPTIONS}
+              triggerClassName="w-56"
+            />
 
-            <SettingsRow divider>
-              <SettingsRowLabel
-                id="mascot-lock-label"
-                title="Zablokuj pozycję"
-                description="Zapobiega przypadkowemu przesuwaniu maskotki"
-              />
-              <Switch
-                aria-labelledby="mascot-lock-label"
-                checked={positionLocked}
-                onCheckedChange={handleLockToggle}
-              />
-            </SettingsRow>
+            <SettingsToggleRow
+              divider
+              id="mascot-lock-label"
+              title="Zablokuj pozycję"
+              description="Zapobiega przypadkowemu przesuwaniu maskotki"
+              checked={positionLocked}
+              onCheckedChange={handleLockToggle}
+            />
 
             <SettingsRow divider>
               <SettingsRowLabel

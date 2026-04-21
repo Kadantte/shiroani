@@ -4,6 +4,7 @@ import { Search, SearchX, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { TooltipButton } from '@/components/ui/tooltip-button';
+import { FilterTabBar } from '@/components/shared/FilterTabBar';
 
 interface FilterOption<T extends string = string> {
   value: T;
@@ -15,12 +16,14 @@ interface ViewHeaderProps<T extends string = string> {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  /** Search handlers — when omitted, the search input is not rendered. */
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   searchPlaceholder?: string;
-  filters: FilterOption<T>[];
-  activeFilter: T;
-  onFilterChange: (filter: T) => void;
+  /** Filter tabs — when omitted, the tab row is not rendered. */
+  filters?: FilterOption<T>[];
+  activeFilter?: T;
+  onFilterChange?: (filter: T) => void;
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
@@ -33,7 +36,12 @@ interface ViewHeaderProps<T extends string = string> {
  *   - 20px DM Sans 800 title, -0.02em tracking, paired with a 10px
  *     JetBrains Mono uppercase subtitle (tracking 0.15em, muted-foreground)
  *   - Right-side action cluster (e.g. sort, import/export, view-mode toggles)
- *   - Search + filter tabs retained underneath for the views that need them
+ *   - Optional search + filter tabs underneath for the views that need them
+ *
+ * Search input, filter tabs and view-mode toggles are all optional. If neither
+ * search nor filters are provided, the second row is skipped entirely so views
+ * that only want the title bar (Settings, Profile, Schedule) stay visually
+ * consistent with the editorial mock.
  */
 export function ViewHeader<T extends string = string>({
   icon: Icon,
@@ -49,6 +57,10 @@ export function ViewHeader<T extends string = string>({
   viewMode,
   onViewModeChange,
 }: ViewHeaderProps<T>) {
+  const showSearch = onSearchChange !== undefined;
+  const showFilters = filters !== undefined && filters.length > 0;
+  const showSecondRow = showSearch || showFilters;
+
   return (
     <div className="shrink-0 relative">
       {/* Title row — matches .vh */}
@@ -107,57 +119,35 @@ export function ViewHeader<T extends string = string>({
         </div>
       </div>
 
-      {/* Search + filter row — sits below the .vh bar with matching padding */}
-      <div className="px-7 pt-3 pb-3 space-y-3 border-b border-border-glass">
-        <div className="relative group/search">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
-          <Input
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="pl-8 h-8 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => onSearchChange('')}
-              aria-label="Wyczyść wyszukiwanie"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
-            >
-              <SearchX className="w-3.5 h-3.5" />
-            </button>
+      {/* Search + filter row — only rendered when at least one is enabled */}
+      {showSecondRow && (
+        <div className="px-7 pt-3 pb-3 space-y-3 border-b border-border-glass">
+          {showSearch && (
+            <div className="relative group/search">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
+              <Input
+                value={searchQuery ?? ''}
+                onChange={e => onSearchChange?.(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="pl-8 h-8 text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => onSearchChange?.('')}
+                  aria-label="Wyczyść wyszukiwanie"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
+                >
+                  <SearchX className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {showFilters && activeFilter !== undefined && onFilterChange && (
+            <FilterTabBar<T> tabs={filters} active={activeFilter} onChange={onFilterChange} />
           )}
         </div>
-
-        {/* Filter tabs */}
-        <div
-          role="tablist"
-          className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
-        >
-          {filters.map(tab => {
-            const isActive = activeFilter === tab.value;
-            return (
-              <button
-                key={tab.value}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => onFilterChange(tab.value)}
-                className={cn(
-                  'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-                  'transition-all duration-200',
-                  isActive
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
-                )}
-              >
-                {tab.label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

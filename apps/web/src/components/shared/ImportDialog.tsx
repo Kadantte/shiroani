@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import { getSocket, emitWithErrorHandling } from '@/lib/socket';
 import {
   ImportExportEvents,
@@ -283,12 +284,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
               </div>
 
               {/* Progress bar */}
-              <div className="h-2 bg-accent/40 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progressInfo.percent}%` }}
-                />
-              </div>
+              <ProgressBar value={progressInfo.percent} thickness={8} />
 
               {/* Current item being processed */}
               {progressInfo.currentItem && (

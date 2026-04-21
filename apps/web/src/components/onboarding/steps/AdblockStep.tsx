@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Shield, Check, Plus } from 'lucide-react';
 import { StepLayout } from '../StepLayout';
-import { Switch } from '@/components/ui/switch';
+import { SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { IS_ELECTRON } from '@/lib/platform';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 
@@ -59,17 +59,11 @@ export function AdblockStep() {
           >
             <Shield className="h-4 w-4" />
           </span>
-          <div className="min-w-0 flex-1">
-            <b className="block text-[13px] font-semibold text-foreground" id="onb-adblock-label">
-              Blokowanie reklam
-            </b>
-            <small className="text-[11.5px] text-muted-foreground" id="onb-adblock-desc">
-              EasyList + EasyPrivacy · 98 200 reguł
-            </small>
-          </div>
-          <Switch
-            aria-labelledby="onb-adblock-label"
-            aria-describedby="onb-adblock-desc"
+          <SettingsToggleRow
+            className="flex-1"
+            id="onb-adblock-label"
+            title="Blokowanie reklam"
+            description="EasyList + EasyPrivacy · 98 200 reguł"
             checked={adblockEnabled}
             onCheckedChange={handleAdblock}
             disabled={!IS_ELECTRON}

@@ -4,10 +4,13 @@ import { arrayMove } from '@dnd-kit/sortable';
 import type { BrowserTab } from '@shiroani/shared';
 import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
-import { normalizeUrl } from '@/lib/url-utils';
+import { normalizeUrl, normalizeWhitelistHost } from '@/lib/url-utils';
 import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
 
 const logger = createLogger('BrowserStore');
+
+/** Keep renderer state in lockstep with the main-process slice in browser IPC. */
+const MAX_ADBLOCK_WHITELIST_ENTRIES = 500;
 
 interface BrowserState {
   tabs: BrowserTab[];
@@ -49,34 +52,6 @@ type BrowserStore = BrowserState & BrowserActions;
 // Debounce timer for tab persistence
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 const PERSIST_DEBOUNCE_MS = 1000;
-
-/**
- * Normalize a user-entered host for the adblock whitelist:
- * - Lowercase + trim
- * - Strip leading protocol (`http://`, `https://`)
- * - Strip leading `www.`
- * - Drop any path / query / port — keep just the bare hostname
- *
- * Returns the normalized host, or an empty string if the input is invalid.
- */
-function normalizeWhitelistHost(input: string): string {
-  const raw = input.trim().toLowerCase();
-  if (!raw) return '';
-
-  // Strip protocol
-  let candidate = raw.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
-  // Strip everything after the first `/`, `?`, or `#`
-  candidate = candidate.split(/[/?#]/)[0];
-  // Strip credentials if any `user:pass@host` sneaks through
-  const atIndex = candidate.lastIndexOf('@');
-  if (atIndex !== -1) candidate = candidate.slice(atIndex + 1);
-  // Strip port
-  candidate = candidate.split(':')[0];
-  // Strip leading www.
-  if (candidate.startsWith('www.')) candidate = candidate.slice(4);
-
-  return candidate;
-}
 
 /**
  * Persist the browser-settings slice (adblock toggle, popup switch, whitelist)
@@ -265,6 +240,9 @@ export const useBrowserStore = create<BrowserStore>()(
 
         const current = get().adblockWhitelist;
         if (current.includes(normalized)) return;
+        // Main process silently slices to MAX_ADBLOCK_WHITELIST_ENTRIES; mirror
+        // that here so renderer state matches what's actually applied.
+        if (current.length >= MAX_ADBLOCK_WHITELIST_ENTRIES) return;
 
         const next = [...current, normalized];
         set({ adblockWhitelist: next }, undefined, 'browser/addAdblockDomain');

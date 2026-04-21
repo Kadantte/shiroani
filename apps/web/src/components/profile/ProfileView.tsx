@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { ViewHeader } from '@/components/shared/ViewHeader';
 import { useProfileStore, startProfileRefresh } from '@/stores/useProfileStore';
 import { ProfileSetup } from './ProfileSetup';
 import { ProfileSkeleton } from './ProfileSkeleton';
@@ -48,70 +49,56 @@ export function ProfileView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
-      {/* ── Editorial view header (matches .vh) ─────────────────────── */}
-      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4 shrink-0 z-10">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div
-            className={cn(
-              'size-9 rounded-[10px] grid place-items-center flex-shrink-0',
-              'bg-primary/15 border border-primary/30 text-primary'
+      <ViewHeader
+        icon={User}
+        title="Mój profil"
+        subtitle={subtitle}
+        actions={
+          <>
+            {profile && (
+              <TooltipButton
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8"
+                onClick={() => fetchProfile()}
+                disabled={isLoading}
+                tooltip="Odśwież"
+                tooltipSide="bottom"
+                aria-label="Odśwież profil"
+              >
+                <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
+              </TooltipButton>
             )}
-          >
-            <User className="w-[18px] h-[18px]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
-              Mój profil
-            </h1>
-            <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
-              {subtitle}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {profile && (
-            <TooltipButton
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8"
-              onClick={() => fetchProfile()}
-              disabled={isLoading}
-              tooltip="Odśwież"
-              tooltipSide="bottom"
-              aria-label="Odśwież profil"
-            >
-              <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
-            </TooltipButton>
-          )}
-          {canShare && (
-            <TooltipButton
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8"
-              onClick={() => setShareOpen(true)}
-              tooltip="Udostępnij jako PNG"
-              tooltipSide="bottom"
-              aria-label="Udostępnij profil jako PNG"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-            </TooltipButton>
-          )}
-          {profile?.siteUrl && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.open(profile.siteUrl, '_blank', 'noopener,noreferrer')}
-              className={cn(
-                'h-8 px-3 text-[12px] font-medium gap-1.5',
-                'bg-foreground/5 border border-foreground/10 hover:bg-foreground/10'
-              )}
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Otwórz AniList
-            </Button>
-          )}
-        </div>
-      </div>
+            {canShare && (
+              <TooltipButton
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8"
+                onClick={() => setShareOpen(true)}
+                tooltip="Udostępnij jako PNG"
+                tooltipSide="bottom"
+                aria-label="Udostępnij profil jako PNG"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </TooltipButton>
+            )}
+            {profile?.siteUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(profile.siteUrl, '_blank', 'noopener,noreferrer')}
+                className={cn(
+                  'h-8 px-3 text-[12px] font-medium gap-1.5',
+                  'bg-foreground/5 border border-foreground/10 hover:bg-foreground/10'
+                )}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Otwórz AniList
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* ── Body: state switcher with watermark layer ──────────────── */}
       <div className="flex-1 relative overflow-hidden">

@@ -2,11 +2,10 @@ import { useCallback, useState, type KeyboardEvent } from 'react';
 import { Globe, Shield, X, AppWindow, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { PillTag } from '@/components/ui/pill-tag';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import { SettingsCard, SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { cn } from '@/lib/utils';
 
 const BLOCKED_CATEGORIES = [
@@ -54,18 +53,13 @@ export function BrowserSection() {
         title="Blokowanie reklam"
         subtitle="Wbudowana ochrona prywatności w przeglądarce ShiroAni"
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="browser-adblock-label"
-            title="Blokowanie reklam"
-            description="Blokuj reklamy w wbudowanej przeglądarce (EasyList + EasyPrivacy)"
-          />
-          <Switch
-            aria-labelledby="browser-adblock-label"
-            checked={adblockEnabled}
-            onCheckedChange={setAdblockEnabled}
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="browser-adblock-label"
+          title="Blokowanie reklam"
+          description="Blokuj reklamy w wbudowanej przeglądarce (EasyList + EasyPrivacy)"
+          checked={adblockEnabled}
+          onCheckedChange={setAdblockEnabled}
+        />
 
         {/* Blocked categories status chips */}
         <div className="flex flex-col gap-1.5">
@@ -100,6 +94,7 @@ export function BrowserSection() {
               onKeyDown={handleWhitelistKeyDown}
               placeholder="np. example.com"
               aria-label="Dodaj domenę do listy wyjątków"
+              maxLength={253}
               className="flex-1 font-mono text-[12px]"
             />
             <Button size="sm" onClick={handleAddWhitelist} disabled={!whitelistInput.trim()}>
@@ -153,18 +148,13 @@ export function BrowserSection() {
         subtitle="Kontrola nad popup-ami otwieranymi przez strony"
         tone="gold"
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="browser-popup-block-label"
-            title="Blokuj wyskakujące okna"
-            description="Okna OAuth (Google, Discord) zawsze są dozwolone."
-          />
-          <Switch
-            aria-labelledby="browser-popup-block-label"
-            checked={popupBlockEnabled}
-            onCheckedChange={setPopupBlockEnabled}
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="browser-popup-block-label"
+          title="Blokuj wyskakujące okna"
+          description="Okna OAuth (Google, Discord) zawsze są dozwolone."
+          checked={popupBlockEnabled}
+          onCheckedChange={setPopupBlockEnabled}
+        />
       </SettingsCard>
 
       <SettingsCard
@@ -173,31 +163,21 @@ export function BrowserSection() {
         subtitle="Zarządzanie kartami i historią przeglądania"
         tone="blue"
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="browser-restore-tabs-label"
-            title="Przywróć karty po restarcie"
-            description="Zapamiętuje otwarte karty między sesjami."
-          />
-          <Switch
-            aria-labelledby="browser-restore-tabs-label"
-            checked={restoreTabsOnStartup}
-            onCheckedChange={setRestoreTabsOnStartup}
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="browser-restore-tabs-label"
+          title="Przywróć karty po restarcie"
+          description="Zapamiętuje otwarte karty między sesjami."
+          checked={restoreTabsOnStartup}
+          onCheckedChange={setRestoreTabsOnStartup}
+        />
 
-        <SettingsRow>
-          <SettingsRowLabel
-            id="browser-track-frequent-label"
-            title="Zapisz historię przeglądania"
-            description="Lokalna historia — nie jest nigdzie wysyłana."
-          />
-          <Switch
-            aria-labelledby="browser-track-frequent-label"
-            checked={trackFrequentSites}
-            onCheckedChange={setTrackFrequentSites}
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="browser-track-frequent-label"
+          title="Zapisz historię przeglądania"
+          description="Lokalna historia — nie jest nigdzie wysyłana."
+          checked={trackFrequentSites}
+          onCheckedChange={setTrackFrequentSites}
+        />
       </SettingsCard>
 
       <SettingsCard

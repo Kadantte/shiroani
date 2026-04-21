@@ -14,6 +14,7 @@ import { useFeedStore } from '@/stores/useFeedStore';
 import { useEpisodesWaitingCount } from '@/hooks/useEpisodesWaiting';
 import { PREDEFINED_SITES } from '@/lib/quick-access-defaults';
 import { useShallow } from 'zustand/react/shallow';
+import { hostFromUrl } from '@/lib/url-utils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -668,7 +669,7 @@ function ResumeCard({ entry, onResume }: { entry: AnimeEntry; onResume: () => vo
   const current = entry.currentEpisode ?? 0;
   const progress = total > 0 ? Math.min(100, (current / total) * 100) : 0;
   const episodeLabel = current > 0 ? `EP ${String(current).padStart(2, '0')}` : 'EP ??';
-  const host = entry.resumeUrl ? hostnameOrNull(entry.resumeUrl) : null;
+  const host = entry.resumeUrl ? hostFromUrl(entry.resumeUrl) : null;
 
   return (
     <button
@@ -752,14 +753,6 @@ function EmptyRecents() {
   );
 }
 
-function hostnameOrNull(url: string): string | null {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Individual site card — neutral glass tile with a large, faint site-logo
  * overlay instead of random gradients + first-letter kanji. Each tile reads
@@ -777,7 +770,7 @@ function SiteCard({
 }) {
   const [faviconError, setFaviconError] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  const displayHost = hostnameOrNull(site.url);
+  const displayHost = hostFromUrl(site.url);
   const logoUrl = useMemo(() => getLogoUrl(site), [site]);
 
   return (
@@ -878,7 +871,7 @@ function SiteCard({
 /** Frequent site row — favicon + title + host + time-ago */
 function FrequentSiteRow({ site, onClick }: { site: FrequentSite; onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
-  const host = hostnameOrNull(site.url) ?? site.url;
+  const host = hostFromUrl(site.url) ?? site.url;
 
   return (
     <button

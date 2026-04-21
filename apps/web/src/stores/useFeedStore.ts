@@ -20,6 +20,7 @@ import {
 } from '@shiroani/shared';
 import { emitWithErrorHandling } from '@/lib/socket';
 import { electronStoreSet } from '@/lib/electron-store';
+import { createLocalStorageAccessor } from '@/lib/persisted-storage';
 import { createLogger } from '@shiroani/shared';
 
 const logger = createLogger('FeedStore');
@@ -86,29 +87,17 @@ interface FeedActions {
 const LAST_VISITED_STORAGE_KEY = 'shiroani:feedLastVisitedAt';
 const READ_IDS_STORAGE_KEY = 'shiroani:feedReadIds';
 
-function getPersistedLastVisitedAt(): number {
-  try {
-    const raw = localStorage.getItem(LAST_VISITED_STORAGE_KEY);
-    if (!raw) return 0;
+const lastVisitedStorage = createLocalStorageAccessor<number>(LAST_VISITED_STORAGE_KEY, {
+  parse: raw => {
     const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : 0;
-  } catch {
-    return 0;
-  }
-}
+  },
+  serialize: ts => String(ts),
+  fallback: 0,
+});
 
-function persistLastVisitedAt(ts: number) {
-  try {
-    localStorage.setItem(LAST_VISITED_STORAGE_KEY, String(ts));
-  } catch {
-    // storage unavailable — in-memory is authoritative
-  }
-}
-
-function getPersistedReadIds(): Set<number> {
-  try {
-    const raw = localStorage.getItem(READ_IDS_STORAGE_KEY);
-    if (!raw) return new Set();
+const readIdsStorage = createLocalStorageAccessor<Set<number>>(READ_IDS_STORAGE_KEY, {
+  parse: raw => {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return new Set();
     const ids = new Set<number>();
@@ -116,18 +105,25 @@ function getPersistedReadIds(): Set<number> {
       if (typeof v === 'number' && Number.isFinite(v)) ids.add(v);
     }
     return ids;
-  } catch {
-    return new Set();
-  }
+  },
+  serialize: ids => JSON.stringify(Array.from(ids)),
+  fallback: new Set(),
+});
+
+function getPersistedLastVisitedAt(): number {
+  return lastVisitedStorage.get();
+}
+
+function persistLastVisitedAt(ts: number) {
+  lastVisitedStorage.set(ts);
+}
+
+function getPersistedReadIds(): Set<number> {
+  return readIdsStorage.get();
 }
 
 function persistReadIds(ids: Set<number>) {
-  const serialised = JSON.stringify(Array.from(ids));
-  try {
-    localStorage.setItem(READ_IDS_STORAGE_KEY, serialised);
-  } catch {
-    // storage unavailable — in-memory is authoritative
-  }
+  readIdsStorage.set(ids);
   // Fire-and-forget mirror to electron-store so main-process consumers can read it.
   void electronStoreSet(READ_IDS_STORAGE_KEY, Array.from(ids)).catch(() => {
     // ignore — localStorage is the primary store
@@ -344,9 +340,7 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setCategoryFilter'
           );
-          // Re-fetch with new filter
-          // Need to defer so the state update is applied first
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
         },
 
         setLanguageFilter: (language: FeedLanguage | 'all') => {
@@ -355,7 +349,7 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setLanguageFilter'
           );
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
         },
 
         setSourceFilter: (sourceId: number | null) => {
@@ -364,7 +358,7 @@ export const useFeedStore = create<FeedStore>()(
             undefined,
             'feed/setSourceFilter'
           );
-          setTimeout(() => get().fetchItems(), 0);
+          get().fetchItems();
         },
 
         markAllSeen: () => {

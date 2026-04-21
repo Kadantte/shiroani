@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { AiringEntry } from './AiringEntry';
 import { getSlotStatus, isToday as isTodayFn } from './schedule-utils';
+import { useNowSeconds } from '@/hooks/useNowSeconds';
 import type { AiringAnime } from '@shiroani/shared';
 
 export interface DailyViewProps {
@@ -80,16 +81,9 @@ function formatHourLabel(h: number): string {
  */
 export function DailyView({ entries, day, onAnimeClick }: DailyViewProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  // 30 s cadence keeps the live-now line and countdowns fresh.
+  const now = useNowSeconds(30_000);
   const [didInitialScroll, setDidInitialScroll] = useState(false);
-
-  // Tick every 30 s so the live-now line and countdowns stay fresh.
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setNow(Math.floor(Date.now() / 1000));
-    }, 30_000);
-    return () => window.clearInterval(id);
-  }, []);
 
   // Reset the auto-scroll flag whenever the day changes so we re-center once
   // the new day's entries arrive.

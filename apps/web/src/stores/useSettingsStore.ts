@@ -13,6 +13,7 @@ import { themeOptions } from '@/lib/theme';
 import { persistTheme, getPersistedTheme } from '@/lib/theme-persistence';
 import { injectCustomThemeCSS, removeCustomThemeCSS } from '@/lib/custom-theme-css';
 import { electronStoreGet, electronStoreSet } from '@/lib/electron-store';
+import { createLocalStorageAccessor } from '@/lib/persisted-storage';
 import {
   applyUIFontScaleToDOM,
   clampUIFontScale,
@@ -66,38 +67,34 @@ const DISPLAY_NAME_STORAGE_KEY = 'shiroani:displayName';
 const DEV_MODE_STORAGE_KEY = 'shiroani:devMode';
 const DEV_MODE_SETTING_KEY = 'settings.devMode';
 
+// Stored as the string `'true'`; any other value (including missing keys left
+// over from the old removeItem-on-disable shape) reads as disabled.
+const devModeStorage = createLocalStorageAccessor<boolean>(DEV_MODE_STORAGE_KEY, {
+  parse: raw => raw === 'true',
+  serialize: enabled => (enabled ? 'true' : ''),
+  fallback: false,
+});
+
+const displayNameStorage = createLocalStorageAccessor<string>(DISPLAY_NAME_STORAGE_KEY, {
+  parse: raw => raw,
+  serialize: value => value,
+  fallback: '',
+});
+
 function getPersistedDevMode(): boolean {
-  try {
-    return localStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return devModeStorage.get();
 }
 
 function persistDevModeLocally(enabled: boolean) {
-  try {
-    if (enabled) localStorage.setItem(DEV_MODE_STORAGE_KEY, 'true');
-    else localStorage.removeItem(DEV_MODE_STORAGE_KEY);
-  } catch {
-    // in-memory state is authoritative this session
-  }
+  devModeStorage.set(enabled);
 }
 
 function getPersistedDisplayName(): string {
-  try {
-    return localStorage.getItem(DISPLAY_NAME_STORAGE_KEY) ?? '';
-  } catch {
-    return '';
-  }
+  return displayNameStorage.get();
 }
 
 function persistDisplayNameLocally(name: string) {
-  try {
-    if (name) localStorage.setItem(DISPLAY_NAME_STORAGE_KEY, name);
-    else localStorage.removeItem(DISPLAY_NAME_STORAGE_KEY);
-  } catch {
-    // ignore — in-memory state is authoritative this session
-  }
+  displayNameStorage.set(name);
 }
 
 function normalizeDisplayName(name: string): string {

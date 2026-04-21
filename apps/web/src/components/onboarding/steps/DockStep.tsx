@@ -1,6 +1,6 @@
 import { LayoutGrid } from 'lucide-react';
 import { StepLayout } from '../StepLayout';
-import { Switch } from '@/components/ui/switch';
+import { SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { cn } from '@/lib/utils';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
 import { DockStage } from '@/components/shared/DockStage';
@@ -56,26 +56,26 @@ export function DockStep() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <ToggleRow
+        <SettingsToggleRow
           id="onb-dock-autohide"
-          label="Automatyczne ukrywanie"
+          title="Automatyczne ukrywanie"
           description="Dock chowa się do ikony i rozwija po najechaniu"
           checked={autoHide}
-          onChange={setAutoHide}
+          onCheckedChange={setAutoHide}
         />
-        <ToggleRow
+        <SettingsToggleRow
           id="onb-dock-labels"
-          label="Pokaż etykiety"
+          title="Pokaż etykiety"
           description="Wyświetla nazwy pod ikonami nawigacji"
           checked={showLabels}
-          onChange={setShowLabels}
+          onCheckedChange={setShowLabels}
         />
-        <ToggleRow
+        <SettingsToggleRow
           id="onb-dock-drag"
-          label="Przeciąganie"
+          title="Przeciąganie"
           description="Zmiana pozycji docka przez drag & drop"
           checked={draggable}
-          onChange={setDraggable}
+          onCheckedChange={setDraggable}
         />
       </div>
     </StepLayout>
@@ -126,38 +126,5 @@ function EdgePill({
       </span>
       <span className={cn('font-semibold', active && 'font-bold')}>{label}</span>
     </button>
-  );
-}
-
-function ToggleRow({
-  id,
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-border-glass bg-foreground/[0.02] px-3.5 py-2.5">
-      <div className="min-w-0 flex-1">
-        <p className="text-[12.5px] font-semibold text-foreground" id={`${id}-label`}>
-          {label}
-        </p>
-        <p className="text-[11px] text-muted-foreground" id={`${id}-desc`}>
-          {description}
-        </p>
-      </div>
-      <Switch
-        aria-labelledby={`${id}-label`}
-        aria-describedby={`${id}-desc`}
-        checked={checked}
-        onCheckedChange={onChange}
-      />
-    </div>
   );
 }

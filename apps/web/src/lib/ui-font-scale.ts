@@ -1,4 +1,5 @@
 import { DEFAULT_UI_FONT_SCALE, MAX_UI_FONT_SCALE, MIN_UI_FONT_SCALE } from '@shiroani/shared';
+import { createLocalStorageAccessor } from '@/lib/persisted-storage';
 
 const UI_FONT_SCALE_STORAGE_KEY = 'shiroani-ui-font-scale';
 
@@ -17,29 +18,16 @@ export function applyUIFontScaleToDOM(value: number): void {
   document.documentElement.style.setProperty('--app-font-scale', String(next));
 }
 
+const fontScaleStorage = createLocalStorageAccessor<number>(UI_FONT_SCALE_STORAGE_KEY, {
+  parse: raw => clampUIFontScale(Number(raw)),
+  serialize: value => String(clampUIFontScale(value)),
+  fallback: DEFAULT_UI_FONT_SCALE,
+});
+
 export function getPersistedUIFontScale(): number {
-  if (typeof window === 'undefined') {
-    return DEFAULT_UI_FONT_SCALE;
-  }
-
-  try {
-    const raw = localStorage.getItem(UI_FONT_SCALE_STORAGE_KEY);
-    if (!raw) {
-      return DEFAULT_UI_FONT_SCALE;
-    }
-
-    return clampUIFontScale(Number(raw));
-  } catch {
-    return DEFAULT_UI_FONT_SCALE;
-  }
+  return fontScaleStorage.get();
 }
 
 export function persistUIFontScaleLocally(value: number): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.setItem(UI_FONT_SCALE_STORAGE_KEY, String(clampUIFontScale(value)));
-  } catch {
-    // localStorage unavailable — silently ignore
-  }
+  fontScaleStorage.set(value);
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
 import { StepLayout } from '../StepLayout';
-import { Switch } from '@/components/ui/switch';
+import { SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { IS_ELECTRON } from '@/lib/platform';
 import { APP_LOGO_URL } from '@/lib/constants';
 
@@ -72,18 +72,11 @@ export function DiscordStep() {
           <p className="text-xs text-amber-500">Dostępne tylko w wersji desktopowej</p>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-b border-border-glass pb-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-foreground" id="onb-discord-label">
-              Włącz integrację
-            </p>
-            <p className="text-[11.5px] text-muted-foreground" id="onb-discord-desc">
-              Wyświetlaj aktywność ShiroAni na profilu
-            </p>
-          </div>
-          <Switch
-            aria-labelledby="onb-discord-label"
-            aria-describedby="onb-discord-desc"
+        <div className="border-b border-border-glass pb-3">
+          <SettingsToggleRow
+            id="onb-discord-label"
+            title="Włącz integrację"
+            description="Wyświetlaj aktywność ShiroAni na profilu"
             checked={enabled}
             onCheckedChange={handleToggle}
             disabled={saving || !IS_ELECTRON}

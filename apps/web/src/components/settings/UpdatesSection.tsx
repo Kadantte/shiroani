@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 
 interface UpdatesSectionProps {
   version: string;
@@ -171,19 +172,12 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
 
             {/* Download progress */}
             {status === 'downloading' && progress && (
-              <div
-                className="mt-2 w-full bg-primary/20 rounded-full h-1.5 overflow-hidden"
-                role="progressbar"
-                aria-valuenow={Math.round(progress.percent)}
-                aria-valuemin={0}
-                aria-valuemax={100}
+              <ProgressBar
+                className="mt-2"
+                value={progress.percent}
+                thickness={6}
                 aria-label="Postęp pobierania"
-              >
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300"
-                  style={{ width: `${progress.percent}%` }}
-                />
-              </div>
+              />
             )}
 
             <Package className="hidden" />

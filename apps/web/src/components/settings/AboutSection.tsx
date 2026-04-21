@@ -14,31 +14,30 @@ interface AboutSectionProps {
 export function AboutSection({ version }: AboutSectionProps) {
   const resetOnboarding = useOnboardingStore(s => s.reset);
 
+  const heroIcon = (
+    <div className="w-[42px] h-[42px] rounded-xl bg-primary/10 border border-border-glass flex items-center justify-center overflow-hidden flex-shrink-0">
+      <img
+        src={APP_LOGO_URL}
+        alt="Logo ShiroAni"
+        className="w-9 h-9 object-contain"
+        draggable={false}
+      />
+    </div>
+  );
+
+  const heroSubtitle = (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <PillTag variant="accent">v{version || '...'}</PillTag>
+      <span className="text-[11.5px] text-muted-foreground">
+        Przeglądarka · tracker anime w jednym miejscu
+      </span>
+    </span>
+  );
+
   return (
     <div className="space-y-4">
       {/* Hero: logo + name + version + CTA row */}
-      <div className="rounded-xl border border-border-glass bg-card/40 backdrop-blur-sm px-5 py-4 space-y-3.5">
-        <div className="flex items-start gap-3 pb-3 border-b border-border-glass/60">
-          <div className="w-[42px] h-[42px] rounded-xl bg-primary/10 border border-border-glass flex items-center justify-center overflow-hidden flex-shrink-0">
-            <img
-              src={APP_LOGO_URL}
-              alt="Logo ShiroAni"
-              className="w-9 h-9 object-contain"
-              draggable={false}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-serif font-bold text-[18px] leading-tight tracking-[-0.01em] text-foreground">
-              {APP_NAME}
-            </h3>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <PillTag variant="accent">v{version || '...'}</PillTag>
-              <span className="text-[11.5px] text-muted-foreground">
-                Przeglądarka · tracker anime w jednym miejscu
-              </span>
-            </div>
-          </div>
-        </div>
+      <SettingsCard iconSlot={heroIcon} title={APP_NAME} subtitle={heroSubtitle}>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={resetOnboarding}>
             <Sparkles className="w-3.5 h-3.5" />
@@ -66,7 +65,7 @@ export function AboutSection({ version }: AboutSectionProps) {
         <p className="text-[11.5px] text-muted-foreground/80 leading-relaxed">
           Po kliknięciu kreator uruchomi się od razu — Shiro-chan przeprowadzi Cię jeszcze raz!
         </p>
-      </div>
+      </SettingsCard>
 
       {/* Story */}
       <SettingsCard icon={Heart} title="Historia" subtitle="Stworzone z potrzeby. Od autora.">

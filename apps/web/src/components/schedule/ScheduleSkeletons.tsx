@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DAY_NAMES_SHORT } from '@/lib/constants';
@@ -8,6 +9,47 @@ const TITLE_WIDTHS = ['w-[70%]', 'w-[55%]', 'w-[80%]', 'w-[62%]', 'w-[75%]', 'w-
 /** Number of skeleton cards per column */
 const WEEKLY_COUNTS = [3, 4, 2, 4, 3, 2, 3];
 const TIMETABLE_COUNTS = [2, 3, 2, 3, 2, 1, 2];
+
+/**
+ * 7-column week-grid skeleton shell shared by WeeklyViewSkeleton and
+ * TimetableViewSkeleton. Owns the outer scroll box, the grid, the sticky
+ * day-header placeholders, and the inner list wrapper — callers only render
+ * the actual card shape.
+ */
+interface WeekGridSkeletonProps {
+  /** Per-column skeleton card counts — length must equal `DAY_NAMES_SHORT`. */
+  counts: readonly number[];
+  /** Tailwind class for vertical spacing between skeleton cards. */
+  listClassName: string;
+  /** Renders a single skeleton card for a given column + entry index. */
+  renderCard: (colIdx: number, entryIdx: number) => ReactNode;
+}
+
+function WeekGridSkeleton({ counts, listClassName, renderCard }: WeekGridSkeletonProps) {
+  return (
+    <div className="flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
+        {DAY_NAMES_SHORT.map((dayName, colIdx) => (
+          <div key={dayName} className="flex flex-col min-h-0">
+            {/* Day header */}
+            <div className="sticky top-0 z-10 shrink-0 px-3 py-3 text-center border-b border-border-glass bg-card/20 backdrop-blur-sm">
+              <Skeleton className="h-2.5 w-8 mx-auto rounded" />
+              <Skeleton className="h-6 w-8 mx-auto mt-1.5 rounded" />
+              <Skeleton className="h-2 w-6 mx-auto mt-1.5 rounded" />
+            </div>
+
+            {/* Day entries */}
+            <div className={cn('flex-1 overflow-hidden p-2', listClassName)}>
+              {Array.from({ length: counts[colIdx] }).map((_, entryIdx) =>
+                renderCard(colIdx, entryIdx)
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ─────────────────────────── Daily View ─────────────────────────── */
 
@@ -59,43 +101,29 @@ export function DailyViewSkeleton() {
 
 export function WeeklyViewSkeleton() {
   return (
-    <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
-        {DAY_NAMES_SHORT.map((dayName, colIdx) => (
-          <div key={dayName} className="flex flex-col min-h-0">
-            {/* Day header */}
-            <div className="sticky top-0 z-10 shrink-0 px-3 py-3 text-center border-b border-border-glass bg-card/20 backdrop-blur-sm">
-              <Skeleton className="h-2.5 w-8 mx-auto rounded" />
-              <Skeleton className="h-6 w-8 mx-auto mt-1.5 rounded" />
-              <Skeleton className="h-2 w-6 mx-auto mt-1.5 rounded" />
-            </div>
-
-            {/* Day entries */}
-            <div className="flex-1 overflow-hidden p-2 space-y-1.5">
-              {Array.from({ length: WEEKLY_COUNTS[colIdx] }).map((_, entryIdx) => {
-                const globalIdx = colIdx * 4 + entryIdx;
-                return (
-                  <div
-                    key={entryIdx}
-                    className={cn(
-                      'rounded-lg border border-l-[3px] border-border-glass border-l-muted-foreground/30',
-                      'bg-card/40 px-2.5 py-2 space-y-1.5'
-                    )}
-                    style={{ animationDelay: `${colIdx * 80 + entryIdx * 60}ms` }}
-                  >
-                    <Skeleton className="h-2.5 w-10 rounded" />
-                    <Skeleton
-                      className={cn('h-3 rounded', TITLE_WIDTHS[globalIdx % TITLE_WIDTHS.length])}
-                    />
-                    <Skeleton className="h-2 w-[40%] rounded" />
-                  </div>
-                );
-              })}
-            </div>
+    <WeekGridSkeleton
+      counts={WEEKLY_COUNTS}
+      listClassName="space-y-1.5"
+      renderCard={(colIdx, entryIdx) => {
+        const globalIdx = colIdx * 4 + entryIdx;
+        return (
+          <div
+            key={entryIdx}
+            className={cn(
+              'rounded-lg border border-l-[3px] border-border-glass border-l-muted-foreground/30',
+              'bg-card/40 px-2.5 py-2 space-y-1.5'
+            )}
+            style={{ animationDelay: `${colIdx * 80 + entryIdx * 60}ms` }}
+          >
+            <Skeleton className="h-2.5 w-10 rounded" />
+            <Skeleton
+              className={cn('h-3 rounded', TITLE_WIDTHS[globalIdx % TITLE_WIDTHS.length])}
+            />
+            <Skeleton className="h-2 w-[40%] rounded" />
           </div>
-        ))}
-      </div>
-    </div>
+        );
+      }}
+    />
   );
 }
 
@@ -103,33 +131,19 @@ export function WeeklyViewSkeleton() {
 
 export function TimetableViewSkeleton() {
   return (
-    <div className="flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="grid h-full min-w-[1100px] grid-cols-7 divide-x divide-border-glass">
-        {DAY_NAMES_SHORT.map((dayName, colIdx) => (
-          <div key={dayName} className="flex flex-col min-h-0">
-            {/* Day header */}
-            <div className="sticky top-0 z-10 shrink-0 px-3 py-3 text-center border-b border-border-glass bg-card/20 backdrop-blur-sm">
-              <Skeleton className="h-2.5 w-8 mx-auto rounded" />
-              <Skeleton className="h-6 w-8 mx-auto mt-1.5 rounded" />
-              <Skeleton className="h-2 w-6 mx-auto mt-1.5 rounded" />
-            </div>
-
-            {/* Poster cards */}
-            <div className="flex-1 overflow-hidden p-2 space-y-2">
-              {Array.from({ length: TIMETABLE_COUNTS[colIdx] }).map((_, entryIdx) => (
-                <Skeleton
-                  key={entryIdx}
-                  className="w-full rounded-[9px]"
-                  style={{
-                    aspectRatio: '2 / 2.6',
-                    animationDelay: `${colIdx * 100 + entryIdx * 70}ms`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <WeekGridSkeleton
+      counts={TIMETABLE_COUNTS}
+      listClassName="space-y-2"
+      renderCard={(colIdx, entryIdx) => (
+        <Skeleton
+          key={entryIdx}
+          className="w-full rounded-[9px]"
+          style={{
+            aspectRatio: '2 / 2.6',
+            animationDelay: `${colIdx * 100 + entryIdx * 70}ms`,
+          }}
+        />
+      )}
+    />
   );
 }

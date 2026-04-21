@@ -1,6 +1,16 @@
+import { useId, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type SettingsCardTone = 'primary' | 'green' | 'gold' | 'blue' | 'orange' | 'muted' | 'destructive';
 
 interface SettingsCardProps {
   children?: React.ReactNode;
@@ -10,14 +20,23 @@ interface SettingsCardProps {
   /** Title shown next to the icon */
   title?: string;
   /** Subtitle shown below the title */
-  subtitle?: string;
-  /** Optional tint for the icon tile (matches the mock's per-card accent colors). */
-  tone?: 'primary' | 'green' | 'gold' | 'blue' | 'orange' | 'muted' | 'destructive';
+  subtitle?: ReactNode;
+  /**
+   * Optional tint for the icon tile (matches the mock's per-card accent colors).
+   * When set to `destructive`, the outer container is also tinted and the
+   * subtitle uses the destructive foreground — used for the "Danger zone" card.
+   */
+  tone?: SettingsCardTone;
   /** Optional extra content rendered inside the header, right-aligned (e.g. an inline switch). */
   headerAccessory?: ReactNode;
+  /**
+   * Custom header icon slot — replaces the default tinted icon tile. Used when
+   * the section wants a full logo (e.g. About) instead of a Lucide icon.
+   */
+  iconSlot?: ReactNode;
 }
 
-const TONE_TILE: Record<NonNullable<SettingsCardProps['tone']>, string> = {
+const TONE_TILE: Record<SettingsCardTone, string> = {
   primary: 'bg-primary/15 border-primary/30 text-primary',
   green:
     'bg-[oklch(0.78_0.15_140/0.14)] border-[oklch(0.78_0.15_140/0.32)] text-[oklch(0.78_0.15_140)]',
@@ -37,13 +56,18 @@ export function SettingsCard({
   subtitle,
   tone = 'primary',
   headerAccessory,
+  iconSlot,
 }: SettingsCardProps) {
-  const hasHeader = Icon && title;
+  const hasHeader = (Icon || iconSlot) && title;
+  const isDestructive = tone === 'destructive';
   return (
     <div
       className={cn(
-        'relative rounded-xl border border-border-glass bg-card/40 backdrop-blur-sm',
+        'relative rounded-xl border backdrop-blur-sm',
         'px-5 py-4',
+        isDestructive
+          ? 'border-destructive/25 bg-destructive/[0.06]'
+          : 'border-border-glass bg-card/40',
         className
       )}
     >
@@ -51,19 +75,32 @@ export function SettingsCard({
         <div
           className={cn(
             'flex items-start gap-3',
-            children ? 'mb-3.5 pb-3 border-b border-border-glass/60' : undefined
+            children
+              ? cn(
+                  'mb-3.5 pb-3 border-b',
+                  isDestructive ? 'border-destructive/15' : 'border-border-glass/60'
+                )
+              : undefined
           )}
         >
-          <div
-            className={cn(
-              'grid place-items-center flex-shrink-0 size-[38px] rounded-[10px] border',
-              TONE_TILE[tone]
-            )}
-          >
-            <Icon className="w-[18px] h-[18px]" />
-          </div>
+          {iconSlot ??
+            (Icon && (
+              <div
+                className={cn(
+                  'grid place-items-center flex-shrink-0 size-[38px] rounded-[10px] border',
+                  TONE_TILE[tone]
+                )}
+              >
+                <Icon className="w-[18px] h-[18px]" />
+              </div>
+            ))}
           <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="font-serif font-bold text-[16px] leading-tight tracking-[-0.01em] text-foreground">
+            <h3
+              className={cn(
+                'font-serif font-bold text-[16px] leading-tight tracking-[-0.01em]',
+                isDestructive ? 'text-destructive' : 'text-foreground'
+              )}
+            >
               {title}
             </h3>
             {subtitle && (
@@ -127,5 +164,106 @@ export function SettingsRowLabel({ title, description, id, className }: Settings
         <p className="mt-0.5 text-[11.5px] text-muted-foreground/85 leading-snug">{description}</p>
       )}
     </div>
+  );
+}
+
+// ── Composite row primitives ────────────────────────────────────────
+//
+// Most rows in the settings surface are either "label + switch" or "label +
+// select". These wrappers keep the aria wiring (labelledby) tidy so callers
+// can't forget to thread the id.
+
+export interface SettingsToggleRowProps {
+  /** Explicit id for the label — auto-generated when omitted. */
+  id?: string;
+  title: ReactNode;
+  description?: ReactNode;
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+  disabled?: boolean;
+  divider?: boolean;
+  className?: string;
+}
+
+export function SettingsToggleRow({
+  id,
+  title,
+  description,
+  checked,
+  onCheckedChange,
+  disabled,
+  divider,
+  className,
+}: SettingsToggleRowProps) {
+  const autoId = useId();
+  const labelId = id ?? autoId;
+  return (
+    <SettingsRow divider={divider} className={className}>
+      <SettingsRowLabel id={labelId} title={title} description={description} />
+      <Switch
+        aria-labelledby={labelId}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        disabled={disabled}
+      />
+    </SettingsRow>
+  );
+}
+
+export interface SettingsSelectOption {
+  value: string;
+  label: ReactNode;
+}
+
+export interface SettingsSelectRowProps {
+  id?: string;
+  title: ReactNode;
+  description?: ReactNode;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: ReadonlyArray<SettingsSelectOption>;
+  disabled?: boolean;
+  divider?: boolean;
+  className?: string;
+  /** Override the width of the trigger (defaults to `w-40`). */
+  triggerClassName?: string;
+}
+
+export function SettingsSelectRow({
+  id,
+  title,
+  description,
+  value,
+  onValueChange,
+  options,
+  disabled,
+  divider,
+  className,
+  triggerClassName,
+}: SettingsSelectRowProps) {
+  const autoId = useId();
+  const labelId = id ?? autoId;
+  return (
+    <SettingsRow divider={divider} className={className}>
+      <SettingsRowLabel id={labelId} title={title} description={description} />
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+        <SelectTrigger
+          aria-labelledby={labelId}
+          className={cn(
+            'h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors',
+            triggerClassName ?? 'w-40'
+          )}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(option => (
+            <SelectItem key={option.value} value={option.value} className="text-xs">
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </SettingsRow>
   );
 }

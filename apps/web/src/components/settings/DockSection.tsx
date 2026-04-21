@@ -1,8 +1,12 @@
 import { LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsRowLabel,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
 import { DockStage } from '@/components/shared/DockStage';
 import { cn } from '@/lib/utils';
 
@@ -89,42 +93,29 @@ export function DockSection() {
         title="Zachowanie"
         subtitle="Jak dock reaguje na kursor i czy można go przesuwać."
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="dock-autohide-label"
-            title="Automatyczne ukrywanie"
-            description="Dock chowa się do ikony i rozwija po najechaniu kursorem"
-          />
-          <Switch
-            checked={dockAutoHide}
-            onCheckedChange={setDockAutoHide}
-            aria-labelledby="dock-autohide-label"
-          />
-        </SettingsRow>
-        <SettingsRow divider>
-          <SettingsRowLabel
-            id="dock-labels-label"
-            title="Pokaż etykiety"
-            description="Wyświetlaj nazwy pod ikonami nawigacji"
-          />
-          <Switch
-            checked={dockShowLabels}
-            onCheckedChange={setDockShowLabels}
-            aria-labelledby="dock-labels-label"
-          />
-        </SettingsRow>
-        <SettingsRow divider>
-          <SettingsRowLabel
-            id="dock-draggable-label"
-            title="Przeciąganie"
-            description="Pozwól na zmianę pozycji docka przeciąganiem"
-          />
-          <Switch
-            checked={dockDraggable}
-            onCheckedChange={setDockDraggable}
-            aria-labelledby="dock-draggable-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="dock-autohide-label"
+          title="Automatyczne ukrywanie"
+          description="Dock chowa się do ikony i rozwija po najechaniu kursorem"
+          checked={dockAutoHide}
+          onCheckedChange={setDockAutoHide}
+        />
+        <SettingsToggleRow
+          divider
+          id="dock-labels-label"
+          title="Pokaż etykiety"
+          description="Wyświetlaj nazwy pod ikonami nawigacji"
+          checked={dockShowLabels}
+          onCheckedChange={setDockShowLabels}
+        />
+        <SettingsToggleRow
+          divider
+          id="dock-draggable-label"
+          title="Przeciąganie"
+          description="Pozwól na zmianę pozycji docka przeciąganiem"
+          checked={dockDraggable}
+          onCheckedChange={setDockDraggable}
+        />
       </SettingsCard>
     </div>
   );

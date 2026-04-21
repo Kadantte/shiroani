@@ -1,11 +1,11 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { Compass, Search, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
+import { Compass, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
+import { ViewHeader } from '@/components/shared/ViewHeader';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
 import { DiscoverSkeleton } from '@/components/discover/DiscoverSkeleton';
 import { RandomDiscoveryPanel } from '@/components/discover/RandomDiscoveryPanel';
@@ -220,46 +220,22 @@ export function DiscoverView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
-      {/* ── Editorial view header (matches .vh pattern) ─────────────── */}
-      <div className="relative flex items-center justify-between border-b border-border-glass px-7 pt-[18px] pb-4 shrink-0">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div className="size-9 rounded-[10px] grid place-items-center flex-shrink-0 bg-primary/15 border border-primary/30 text-primary">
-            <Compass className="w-[18px] h-[18px]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-[20px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate">
-              Odkrywaj
-            </h1>
-            <span className="block mt-[3px] font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium truncate">
-              Trendy · sezon · losowe
-            </span>
-          </div>
-        </div>
-      </div>
+      <ViewHeader<Tab>
+        icon={Compass}
+        title="Odkrywaj"
+        subtitle="Trendy · sezon · losowe"
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Szukaj anime..."
+        filters={isSearchMode ? undefined : TABS}
+        activeFilter={activeTab}
+        onFilterChange={handleTabChange}
+      />
 
-      {/* ── Search + tab row ────────────────────────────────────────── */}
-      <div className="px-7 pt-3 pb-3 space-y-3 border-b border-border-glass shrink-0">
-        <div className="relative group/search">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within/search:text-primary/70" />
-          <Input
-            value={searchQuery}
-            onChange={e => handleSearchChange(e.target.value)}
-            placeholder="Szukaj anime..."
-            className="pl-8 h-8 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={handleClearSearch}
-              aria-label="Wyczyść wyszukiwanie"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground/70 transition-colors"
-            >
-              <SearchX className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Tabs or search-results label */}
-        {isSearchMode ? (
+      {/* Search-mode banner — ViewHeader hides its filter row while searching,
+          so surface the "Wyniki wyszukiwania" label + quick clear here. */}
+      {isSearchMode && (
+        <div className="px-7 pb-3 border-b border-border-glass shrink-0">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/90 font-semibold">
               Wyniki wyszukiwania
@@ -272,37 +248,8 @@ export function DiscoverView() {
               Wyczyść
             </button>
           </div>
-        ) : (
-          <div
-            role="tablist"
-            className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
-          >
-            {TABS.map(tab => {
-              const isActive = activeTab === tab.value;
-              return (
-                <button
-                  key={tab.value}
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => handleTabChange(tab.value)}
-                  className={cn(
-                    'relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-                    'transition-all duration-200',
-                    isActive
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground/80'
-                  )}
-                >
-                  {tab.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Content region with clipped kanji watermark layer ──────── */}
       <div className="flex-1 relative overflow-hidden">

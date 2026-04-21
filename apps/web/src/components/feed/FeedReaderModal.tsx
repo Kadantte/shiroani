@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { PillTag } from '@/components/ui/pill-tag';
+import { hostFromUrl } from '@/lib/url-utils';
 import { useFeedBookmarksStore } from '@/stores/useFeedBookmarksStore';
 import { CATEGORY_LABELS } from './feed-constants';
 
@@ -17,14 +18,6 @@ interface FeedReaderModalProps {
   relatedItems: FeedItem[];
   onOpenRelated: (item: FeedItem) => void;
   onOpenExternal: (item: FeedItem) => void;
-}
-
-function getDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
 }
 
 function getInitials(name: string): string {
@@ -101,7 +94,8 @@ export const FeedReaderModal = memo(function FeedReaderModal({
 }: FeedReaderModalProps) {
   const handleClose = useCallback(() => onOpenChange(false), [onOpenChange]);
 
-  const domain = useMemo(() => (item ? getDomain(item.url) : ''), [item]);
+  // Preserve legacy fallback of rendering the raw URL when parsing fails.
+  const domain = useMemo(() => (item ? (hostFromUrl(item.url) ?? item.url) : ''), [item]);
   const paragraphs = useMemo(
     () => (item?.description ? descriptionToParagraphs(item.description) : []),
     [item?.description]

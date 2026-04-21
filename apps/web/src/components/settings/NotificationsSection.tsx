@@ -2,13 +2,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { Bell, X, BellRing, Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SettingsCard, SettingsRow, SettingsRowLabel } from '@/components/settings/SettingsCard';
+  SettingsCard,
+  SettingsSelectRow,
+  SettingsToggleRow,
+} from '@/components/settings/SettingsCard';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { IS_WINDOWS } from '@/lib/platform';
@@ -120,55 +117,33 @@ export function NotificationsSection() {
         title="Powiadomienia"
         subtitle="Informacje o nowych odcinkach i emisjach na żywo."
       >
-        <SettingsRow>
-          <SettingsRowLabel
-            id="notif-enabled-label"
-            title="Powiadomienia o odcinkach"
-            description="Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany"
-          />
-          <Switch
-            checked={data.enabled}
-            onCheckedChange={v => updateAndSave({ enabled: v })}
-            aria-labelledby="notif-enabled-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          id="notif-enabled-label"
+          title="Powiadomienia o odcinkach"
+          description="Otrzymuj powiadomienia gdy nowy odcinek śledzonego anime jest nadawany"
+          checked={data.enabled}
+          onCheckedChange={v => updateAndSave({ enabled: v })}
+        />
 
-        <SettingsRow divider>
-          <SettingsRowLabel
-            title="Powiadom przed emisją"
-            description="Ile minut przed emisją wysłać powiadomienie"
-          />
-          <Select
-            value={data.leadTime}
-            onValueChange={v => updateAndSave({ leadTime: v })}
-            disabled={!data.enabled}
-          >
-            <SelectTrigger className="w-40 h-8 text-xs bg-background/40 border-border-glass focus:bg-background/60 transition-colors">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LEAD_TIME_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-xs">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingsRow>
+        <SettingsSelectRow
+          divider
+          title="Powiadom przed emisją"
+          description="Ile minut przed emisją wysłać powiadomienie"
+          value={data.leadTime}
+          onValueChange={v => updateAndSave({ leadTime: v })}
+          disabled={!data.enabled}
+          options={LEAD_TIME_OPTIONS}
+        />
 
-        <SettingsRow divider>
-          <SettingsRowLabel
-            id="notif-quiet-label"
-            title="Cisza nocna"
-            description="Wstrzymaj powiadomienia w wybranych godzinach"
-          />
-          <Switch
-            checked={data.quietHoursEnabled}
-            onCheckedChange={v => updateAndSave({ quietHoursEnabled: v })}
-            disabled={!data.enabled}
-            aria-labelledby="notif-quiet-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          divider
+          id="notif-quiet-label"
+          title="Cisza nocna"
+          description="Wstrzymaj powiadomienia w wybranych godzinach"
+          checked={data.quietHoursEnabled}
+          onCheckedChange={v => updateAndSave({ quietHoursEnabled: v })}
+          disabled={!data.enabled}
+        />
 
         {data.quietHoursEnabled && data.enabled && (
           <div className="flex items-center gap-3 pl-0">
@@ -199,19 +174,15 @@ export function NotificationsSection() {
           </div>
         )}
 
-        <SettingsRow divider>
-          <SettingsRowLabel
-            id="notif-sound-label"
-            title="Dźwięk systemowy"
-            description="Odtwórz dźwięk przy wyświetlaniu powiadomienia"
-          />
-          <Switch
-            checked={data.useSystemSound}
-            onCheckedChange={v => updateAndSave({ useSystemSound: v })}
-            disabled={!data.enabled}
-            aria-labelledby="notif-sound-label"
-          />
-        </SettingsRow>
+        <SettingsToggleRow
+          divider
+          id="notif-sound-label"
+          title="Dźwięk systemowy"
+          description="Odtwórz dźwięk przy wyświetlaniu powiadomienia"
+          checked={data.useSystemSound}
+          onCheckedChange={v => updateAndSave({ useSystemSound: v })}
+          disabled={!data.enabled}
+        />
       </SettingsCard>
 
       {/* Windows scheduled notifications info */}

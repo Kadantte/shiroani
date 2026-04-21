@@ -1,23 +1,34 @@
-import { Copy, type LucideIcon } from 'lucide-react';
-import { ThemeSwatch } from '@/components/settings/ThemeSwatch';
+import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { ThemeSwatch } from '@/components/shared/theme/ThemeSwatch';
 import { cn } from '@/lib/utils';
 import type { ThemeOption } from '@/lib/theme';
 import type { Theme } from '@shiroani/shared';
 
 interface ThemeGridProps {
-  themes: ThemeOption[];
+  themes: readonly ThemeOption[];
   label: string;
   icon?: LucideIcon;
   activeTheme: Theme;
   onSelect: (theme: Theme) => void;
   onPreview: (theme: Theme) => void;
   onPreviewEnd: () => void;
-  onClone: (sourceTheme: string) => void;
-  /** Optional trailing content in the header row (e.g. import button). */
-  action?: React.ReactNode;
+  /** Optional trailing content in the header row (e.g. count badge, buttons). */
+  action?: ReactNode;
+  /**
+   * Optional hover-reveal overlay rendered on top of every swatch. Used by the
+   * settings variant to surface a clone affordance per-tile while keeping the
+   * onboarding variant slim.
+   */
+  trailingOverlay?: (option: ThemeOption) => ReactNode;
   className?: string;
 }
 
+/**
+ * Shared theme grid — 5-column aspect-square swatches with a mono editorial
+ * section header. Used in both the Settings redesign (with a clone overlay
+ * via `trailingOverlay`) and the onboarding Theme step (overlay omitted).
+ */
 export function ThemeGrid({
   themes,
   label,
@@ -26,8 +37,8 @@ export function ThemeGrid({
   onSelect,
   onPreview,
   onPreviewEnd,
-  onClone,
   action,
+  trailingOverlay,
   className,
 }: ThemeGridProps) {
   return (
@@ -53,19 +64,7 @@ export function ThemeGrid({
               onPreview={onPreview}
               onPreviewEnd={onPreviewEnd}
             />
-            {/* Hover-reveal clone button */}
-            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  onClone(opt.value);
-                }}
-                className="w-6 h-6 rounded bg-background/85 backdrop-blur-sm border border-border-glass flex items-center justify-center hover:bg-accent transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`Klonuj motyw ${opt.label}`}
-              >
-                <Copy className="w-3 h-3 text-foreground" />
-              </button>
-            </div>
+            {trailingOverlay?.(opt)}
           </div>
         ))}
       </div>
