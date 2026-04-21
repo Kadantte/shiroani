@@ -116,14 +116,72 @@ function formatNodeLog(level: string, context: string, levelColor: string): stri
 }
 
 /**
- * Structured log entry for JSON file logging
+ * Structured log entry for JSON file logging and the in-memory ring buffer.
  */
-interface LogEntry {
+export interface LogEntry {
   timestamp: string; // ISO 8601
   level: 'error' | 'warn' | 'info' | 'debug';
   context: string; // Logger context name (e.g., "SessionService")
   message: string; // Primary message (first arg stringified)
   data?: unknown; // Additional args if any
+}
+
+// ── In-memory ring buffer ─────────────────────────────────────────
+//
+// Every log call is pushed into this fixed-size ring. Developer mode
+// reads it to surface recent activity in the log viewer and the
+// diagnostics clipboard snapshot, so users can include real context
+// when reporting a bug from prod.
+
+const LOG_BUFFER_MAX = 200;
+const logBuffer: LogEntry[] = [];
+type BufferListener = (entries: readonly LogEntry[]) => void;
+const bufferListeners = new Set<BufferListener>();
+
+function safeStringify(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value instanceof Error) return value.stack ?? value.message;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function pushToBuffer(level: LogEntry['level'], context: string, args: unknown[]): void {
+  const first = args.length > 0 ? args[0] : '';
+  const entry: LogEntry = {
+    timestamp: formatTimestamp(),
+    level,
+    context,
+    message: safeStringify(first),
+  };
+  if (args.length > 1) {
+    entry.data = args.length === 2 ? safeStringify(args[1]) : args.slice(1).map(safeStringify);
+  }
+  logBuffer.push(entry);
+  if (logBuffer.length > LOG_BUFFER_MAX) logBuffer.shift();
+  if (bufferListeners.size > 0) {
+    const snapshot = logBuffer.slice();
+    for (const listener of bufferListeners) listener(snapshot);
+  }
+}
+
+/** Snapshot of the current log ring buffer (oldest → newest). */
+export function getLogBuffer(): readonly LogEntry[] {
+  return logBuffer.slice();
+}
+
+/** Subscribe to buffer updates. Returns an unsubscribe function. */
+export function subscribeToLogBuffer(listener: BufferListener): () => void {
+  bufferListeners.add(listener);
+  return () => bufferListeners.delete(listener);
+}
+
+/** Clear the log ring buffer. Listeners are notified with an empty array. */
+export function clearLogBuffer(): void {
+  logBuffer.length = 0;
+  for (const listener of bufferListeners) listener([]);
 }
 
 /**
@@ -189,6 +247,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
     return {
       error: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.ERROR) {
+          pushToBuffer('error', context, args);
           console.error(
             `%cERROR%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.ERROR,
@@ -204,6 +263,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       warn: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.WARN) {
+          pushToBuffer('warn', context, args);
           console.warn(
             `%cWARN%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.WARN,
@@ -219,6 +279,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       info: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.INFO) {
+          pushToBuffer('info', context, args);
           console.log(
             `%cINFO%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.INFO,
@@ -234,6 +295,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       debug: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.DEBUG) {
+          pushToBuffer('debug', context, args);
           console.log(
             `%cDEBUG%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.DEBUG,
@@ -249,6 +311,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       log: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.INFO) {
+          pushToBuffer('info', context, args);
           console.log(
             `%cINFO%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.INFO,
@@ -272,6 +335,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
   return {
     error: (...args: unknown[]): void => {
       if (currentLogLevel >= LogLevel.ERROR) {
+        pushToBuffer('error', context, args);
         errorOutput(formatNodeLog('ERROR', context, ANSI.red), ...args);
         if (fileTransport) {
           fileTransport(formatFileLog('ERROR', context, args));
@@ -281,6 +345,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
     warn: (...args: unknown[]): void => {
       if (currentLogLevel >= LogLevel.WARN) {
+        pushToBuffer('warn', context, args);
         output(formatNodeLog('WARN', context, ANSI.yellow), ...args);
         if (fileTransport) {
           fileTransport(formatFileLog('WARN', context, args));
@@ -290,6 +355,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
     info: (...args: unknown[]): void => {
       if (currentLogLevel >= LogLevel.INFO) {
+        pushToBuffer('info', context, args);
         output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
         if (fileTransport) {
           fileTransport(formatFileLog('INFO', context, args));
@@ -299,6 +365,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
     debug: (...args: unknown[]): void => {
       if (currentLogLevel >= LogLevel.DEBUG) {
+        pushToBuffer('debug', context, args);
         output(formatNodeLog('DEBUG', context, ANSI.magenta), ...args);
         if (fileTransport) {
           fileTransport(formatFileLog('DEBUG', context, args));
@@ -308,6 +375,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
     log: (...args: unknown[]): void => {
       if (currentLogLevel >= LogLevel.INFO) {
+        pushToBuffer('info', context, args);
         output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
         if (fileTransport) {
           fileTransport(formatFileLog('INFO', context, args));

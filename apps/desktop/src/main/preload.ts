@@ -29,6 +29,7 @@ function createIpcListener<T>(channel: string): (callback: (data: T) => void) =>
  */
 const ALLOWED_IPC_CHANNELS = new Set([
   'window:is-maximized',
+  'window:open-devtools',
   'store:get',
   'store:set',
   'store:delete',
@@ -161,6 +162,7 @@ export interface ElectronAPI {
     close: () => void;
     isMaximized: () => Promise<boolean>;
     onMaximizedChange: (callback: (maximized: boolean) => void) => () => void;
+    openDevTools: () => Promise<void>;
   };
   store: {
     get: <T>(key: string) => Promise<T | undefined>;
@@ -278,6 +280,7 @@ const electronAPI: ElectronAPI = {
     close: () => ipcRenderer.send('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
     onMaximizedChange: createIpcListener<boolean>('window:maximized-change'),
+    openDevTools: () => ipcRenderer.invoke('window:open-devtools') as Promise<void>,
   },
   store: {
     get: <T>(key: string) => ipcRenderer.invoke('store:get', key) as Promise<T | undefined>,

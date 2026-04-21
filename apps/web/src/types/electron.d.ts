@@ -18,6 +18,7 @@ interface ElectronAPI {
     close: () => void;
     isMaximized: () => Promise<boolean>;
     onMaximizedChange: (callback: (maximized: boolean) => void) => () => void;
+    openDevTools: () => Promise<void>;
   };
   store: {
     get: <T>(key: string) => Promise<T | undefined>;

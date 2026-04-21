@@ -12,6 +12,7 @@ import {
   Database,
   MessageCircle,
   Settings,
+  Terminal,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,7 @@ import { MascotSection } from '@/components/settings/MascotSection';
 import { DataSection } from '@/components/settings/DataSection';
 import { DiscordSection } from '@/components/settings/DiscordSection';
 import { GeneralSection } from '@/components/settings/GeneralSection';
+import { DeveloperSection } from '@/components/settings/DeveloperSection';
 
 type SettingsSection =
   | 'general'
@@ -42,9 +44,10 @@ type SettingsSection =
   | 'mascot'
   | 'data'
   | 'updates'
-  | 'about';
+  | 'about'
+  | 'developer';
 
-type SectionGroup = 'app' | 'appearance' | 'integrations' | 'data';
+type SectionGroup = 'app' | 'appearance' | 'integrations' | 'data' | 'advanced';
 
 interface SectionDef {
   id: SettingsSection;
@@ -139,6 +142,13 @@ const ALL_SECTIONS: SectionDef[] = [
     group: 'data',
     Icon: Info,
   },
+  {
+    id: 'developer',
+    label: 'Deweloper',
+    subtitle: 'Narzędzia debugowania i diagnostyka',
+    group: 'advanced',
+    Icon: Terminal,
+  },
 ];
 
 const GROUP_LABELS: Record<SectionGroup, string> = {
@@ -146,9 +156,10 @@ const GROUP_LABELS: Record<SectionGroup, string> = {
   appearance: 'Wygląd',
   integrations: 'Integracje',
   data: 'Dane',
+  advanced: 'Zaawansowane',
 };
 
-const GROUP_ORDER: SectionGroup[] = ['app', 'appearance', 'integrations', 'data'];
+const GROUP_ORDER: SectionGroup[] = ['app', 'appearance', 'integrations', 'data', 'advanced'];
 
 export function SettingsView() {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -174,6 +185,7 @@ export function SettingsView() {
       appearance: [],
       integrations: [],
       data: [],
+      advanced: [],
     };
     for (const s of sections) buckets[s.group].push(s);
     return buckets;
@@ -302,6 +314,7 @@ export function SettingsView() {
               {activeSection === 'data' && <DataSection />}
               {activeSection === 'updates' && <UpdatesSection version={version} />}
               {activeSection === 'about' && <AboutSection version={version} />}
+              {activeSection === 'developer' && <DeveloperSection />}
             </div>
           </div>
         </div>

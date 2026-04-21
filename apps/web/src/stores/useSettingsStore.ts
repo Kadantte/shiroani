@@ -38,6 +38,8 @@ interface SettingsState {
   preferredLanguage: 'japanese' | 'english' | 'romaji';
   /** How the app addresses the user (e.g. the newtab greeting). Empty means "no personalised name". */
   displayName: string;
+  /** Developer mode — surfaces DevTools, diagnostics copy, and the log viewer. */
+  devModeEnabled: boolean;
 }
 
 /**
@@ -54,11 +56,32 @@ interface SettingsActions {
   setPreferredLanguage: (lang: 'japanese' | 'english' | 'romaji') => void;
   /** Set the user's display name. Trimmed + clamped to DISPLAY_NAME_MAX_LENGTH. */
   setDisplayName: (name: string) => void;
+  /** Toggle developer mode — persisted across sessions. */
+  setDevModeEnabled: (enabled: boolean) => void;
   /** Initialize persisted visual settings */
   initSettings: () => Promise<void>;
 }
 
 const DISPLAY_NAME_STORAGE_KEY = 'shiroani:displayName';
+const DEV_MODE_STORAGE_KEY = 'shiroani:devMode';
+const DEV_MODE_SETTING_KEY = 'settings.devMode';
+
+function getPersistedDevMode(): boolean {
+  try {
+    return localStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function persistDevModeLocally(enabled: boolean) {
+  try {
+    if (enabled) localStorage.setItem(DEV_MODE_STORAGE_KEY, 'true');
+    else localStorage.removeItem(DEV_MODE_STORAGE_KEY);
+  } catch {
+    // in-memory state is authoritative this session
+  }
+}
 
 function getPersistedDisplayName(): string {
   try {
@@ -186,6 +209,7 @@ export const useSettingsStore = create<SettingsStore>()(
       }
 
       const initialDisplayName = typeof window !== 'undefined' ? getPersistedDisplayName() : '';
+      const initialDevMode = typeof window !== 'undefined' ? getPersistedDevMode() : false;
 
       return {
         // Initial state
@@ -194,6 +218,7 @@ export const useSettingsStore = create<SettingsStore>()(
         uiFontScale: initialFontScale,
         preferredLanguage: 'romaji',
         displayName: initialDisplayName,
+        devModeEnabled: initialDevMode,
 
         // Actions
         setTheme: (theme: Theme) => {
@@ -242,6 +267,16 @@ export const useSettingsStore = create<SettingsStore>()(
           });
         },
 
+        setDevModeEnabled: (enabled: boolean) => {
+          if (get().devModeEnabled === enabled) return;
+          logger.debug('setDevModeEnabled', enabled);
+          set({ devModeEnabled: enabled }, undefined, 'settings/setDevModeEnabled');
+          persistDevModeLocally(enabled);
+          void electronStoreSet(DEV_MODE_SETTING_KEY, enabled).catch(error => {
+            logger.warn('Failed to persist dev mode:', error);
+          });
+        },
+
         initSettings: async () => {
           logger.debug('initSettings');
           if (settingsInitPromise) {
@@ -278,6 +313,19 @@ export const useSettingsStore = create<SettingsStore>()(
               }
             } catch (error) {
               logger.warn('Failed to restore display name:', error);
+            }
+
+            try {
+              const persistedDevMode = await electronStoreGet<boolean>(DEV_MODE_SETTING_KEY);
+              if (
+                typeof persistedDevMode === 'boolean' &&
+                persistedDevMode !== get().devModeEnabled
+              ) {
+                set({ devModeEnabled: persistedDevMode }, undefined, 'settings/initDevMode');
+                persistDevModeLocally(persistedDevMode);
+              }
+            } catch (error) {
+              logger.warn('Failed to restore dev mode:', error);
             }
           })().catch(error => {
             settingsInitPromise = null;
