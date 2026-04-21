@@ -53,7 +53,6 @@ export function Footer() {
           <h4>Produkt</h4>
           <a href="/#funkcje">Funkcje</a>
           <a href="/#podglad">Podgląd</a>
-          <a href="/#motywy">Motywy</a>
           <a href="/#pobierz">Pobierz</a>
         </div>
         <div className="ft-col">

@@ -35,6 +35,13 @@
   line-height: 0.95;
   letter-spacing: -0.03em;
 }
+/* Shrink headline at narrow viewports so the `&nbsp;` between
+   "dwóch" and "kliknięciach" doesn't force horizontal overflow. */
+@media (max-width: 640px) {
+  .dl-l h2 {
+    font-size: clamp(30px, 8.5vw, 40px);
+  }
+}
 .dl-l h2 em {
   font-family: var(--font-mincho);
   font-style: italic;
