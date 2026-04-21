@@ -20,6 +20,23 @@ export interface RendererLogWriteEntry {
 }
 
 /**
+ * Snapshot of host/runtime info gathered by the main process for diagnostics.
+ * `gpuFeatureStatus` may be an error wrapper if Chromium wasn't ready yet.
+ */
+export interface SystemInfoSnapshot {
+  appVersion: string;
+  electronVersion: string;
+  chromeVersion: string;
+  nodeVersion: string;
+  osPlatform: NodeJS.Platform;
+  osRelease: string;
+  arch: string;
+  userDataPath: string;
+  logsPath: string;
+  gpuFeatureStatus: Record<string, string> | { error: string };
+}
+
+/**
  * Create a typed IPC listener that returns an unsubscribe function.
  * Eliminates the repeated on/removeListener boilerplate.
  */
@@ -44,6 +61,7 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'store:set',
   'store:delete',
   'app:get-version',
+  'app:get-system-info',
   'app:get-backend-port',
   'app:get-path',
   'app:clipboard-write',
@@ -205,6 +223,7 @@ export interface ElectronAPI {
   app: {
     getPath: (name: string) => Promise<string>;
     getVersion: () => Promise<string>;
+    getSystemInfo: () => Promise<SystemInfoSnapshot>;
     getBackendPort: () => Promise<number>;
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;
@@ -330,6 +349,7 @@ const electronAPI: ElectronAPI = {
   app: {
     getPath: (name: string) => ipcRenderer.invoke('app:get-path', name),
     getVersion: () => ipcRenderer.invoke('app:get-version'),
+    getSystemInfo: () => ipcRenderer.invoke('app:get-system-info') as Promise<SystemInfoSnapshot>,
     getBackendPort: () => ipcRenderer.invoke('app:get-backend-port') as Promise<number>,
     clipboardWrite: (text: string) => ipcRenderer.invoke('app:clipboard-write', text),
     clipboardWriteImage: (pngBase64: string) =>

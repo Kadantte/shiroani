@@ -2,6 +2,7 @@ import { ipcMain, app, shell, clipboard, nativeImage } from 'electron';
 import { existsSync } from 'fs';
 import { readdir, stat, readFile, writeFile } from 'fs/promises';
 import { join, resolve, sep } from 'path';
+import { release as osRelease } from 'os';
 import {
   LOG_FILE_PREFIX,
   LOG_MAX_FILE_SIZE,
@@ -93,6 +94,30 @@ export function registerAppHandlers(): void {
   ipcMain.handle('app:get-version', () => {
     logger.debug('app:get-version invoked');
     return app.getVersion();
+  });
+
+  ipcMain.handle('app:get-system-info', () => {
+    logger.debug('app:get-system-info invoked');
+    // getGPUFeatureStatus can throw very early in startup; guard so diagnostics
+    // still render a best-effort payload.
+    let gpuFeatureStatus: Record<string, string> | { error: string };
+    try {
+      gpuFeatureStatus = app.getGPUFeatureStatus() as unknown as Record<string, string>;
+    } catch (err) {
+      gpuFeatureStatus = { error: err instanceof Error ? err.message : String(err) };
+    }
+    return {
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron ?? 'unknown',
+      chromeVersion: process.versions.chrome ?? 'unknown',
+      nodeVersion: process.versions.node ?? 'unknown',
+      osPlatform: process.platform,
+      osRelease: osRelease(),
+      arch: process.arch,
+      userDataPath: app.getPath('userData'),
+      logsPath: getLogsDir(),
+      gpuFeatureStatus,
+    };
   });
 
   ipcMain.handle('app:open-logs-folder', async () => {
@@ -294,6 +319,7 @@ export function registerAppHandlers(): void {
 export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-path');
   ipcMain.removeHandler('app:get-version');
+  ipcMain.removeHandler('app:get-system-info');
   ipcMain.removeHandler('app:open-logs-folder');
   ipcMain.removeHandler('app:clipboard-write');
   ipcMain.removeHandler('app:clipboard-write-image');

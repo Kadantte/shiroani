@@ -44,6 +44,18 @@ interface ElectronAPI {
   app?: {
     getPath: (name: string) => Promise<string>;
     getVersion: () => Promise<string>;
+    getSystemInfo: () => Promise<{
+      appVersion: string;
+      electronVersion: string;
+      chromeVersion: string;
+      nodeVersion: string;
+      osPlatform: NodeJS.Platform;
+      osRelease: string;
+      arch: string;
+      userDataPath: string;
+      logsPath: string;
+      gpuFeatureStatus: Record<string, string> | { error: string };
+    }>;
     openLogsFolder: () => Promise<void>;
     clipboardWrite: (text: string) => Promise<void>;
     clipboardWriteImage: (pngBase64: string) => Promise<void>;

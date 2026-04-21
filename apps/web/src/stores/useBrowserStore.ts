@@ -209,7 +209,8 @@ export const useBrowserStore = create<BrowserStore>()(
         try {
           await window.electronAPI?.browser?.toggleAdblock(enabled);
           await persistBrowserSettings({ adblockEnabled: enabled });
-        } catch {
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist adblockEnabled', err);
           set({ adblockEnabled: previous }, undefined, 'browser/setAdblockEnabled:revert');
         }
       },
@@ -225,7 +226,8 @@ export const useBrowserStore = create<BrowserStore>()(
         try {
           await window.electronAPI?.browser?.setPopupBlockEnabled(enabled);
           await persistBrowserSettings({ popupBlockEnabled: enabled });
-        } catch {
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist popupBlockEnabled', err);
           set({ popupBlockEnabled: previous }, undefined, 'browser/setPopupBlockEnabled:revert');
         }
       },
@@ -260,7 +262,8 @@ export const useBrowserStore = create<BrowserStore>()(
           if (!enabled) {
             electronStoreDelete('browser-tabs');
           }
-        } catch {
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist restoreTabsOnStartup', err);
           set(
             { restoreTabsOnStartup: previous },
             undefined,
