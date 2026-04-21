@@ -1,4 +1,33 @@
+/* Per CSS spec, all @import rules must precede other at-rules (including
+   Tailwind's @theme), otherwise they can be dropped by strict processors. */
 @import 'tailwindcss';
+
+/* Theme variants (data-theme) */
+@import './themes.css';
+
+/* Base resets, font vars, global element rules */
+@import './base/reset.css';
+
+/* Shared utilities (.atm, .grain, layering) */
+@import './utilities.css';
+
+/* Section styles */
+@import './sections/ticker.css';
+@import './sections/navbar.css';
+@import './sections/hero.css';
+@import './sections/chapter.css';
+@import './sections/features.css';
+@import './sections/anatomy.css';
+@import './sections/suite.css';
+@import './sections/changelog.css';
+@import './sections/mascot.css';
+@import './sections/download.css';
+@import './sections/download-page.css';
+@import './sections/faq.css';
+@import './sections/footer.css';
+
+/* Cross-cutting responsive rules (last so they override) */
+@import './responsive.css';
 
 /* Tailwind theme tokens — used on /download and /changelog pages */
 @theme {
@@ -29,30 +58,3 @@
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
 }
-
-/* Theme variants (data-theme) */
-@import './themes.css';
-
-/* Base resets, font vars, global element rules */
-@import './base/reset.css';
-
-/* Shared utilities (.atm, .grain, layering) */
-@import './utilities.css';
-
-/* Section styles */
-@import './sections/ticker.css';
-@import './sections/navbar.css';
-@import './sections/hero.css';
-@import './sections/chapter.css';
-@import './sections/features.css';
-@import './sections/anatomy.css';
-@import './sections/suite.css';
-@import './sections/changelog.css';
-@import './sections/mascot.css';
-@import './sections/download.css';
-@import './sections/download-page.css';
-@import './sections/faq.css';
-@import './sections/footer.css';
-
-/* Cross-cutting responsive rules (last so they override) */
-@import './responsive.css';

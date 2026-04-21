@@ -14,11 +14,13 @@ RUN pnpm install --frozen-lockfile --filter @shiroani/landing...
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/landing/node_modules ./apps/landing/node_modules
-COPY apps/landing/ apps/landing/
-COPY packages/changelog/ packages/changelog/
-COPY packages/shared/ packages/shared/
+# Copy rarely-changing files first so Docker can reuse cached layers when
+# only apps/landing source changes.
 COPY tsconfig.base.json ./
+COPY packages/shared/ packages/shared/
+COPY packages/changelog/ packages/changelog/
 RUN pnpm --filter @shiroani/changelog run build
+COPY apps/landing/ apps/landing/
 RUN pnpm --filter @shiroani/landing build
 
 # Serve static files — Coolify/Traefik handles TLS + routing

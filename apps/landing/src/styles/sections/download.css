@@ -103,7 +103,3 @@
   font-size: 18px;
   color: var(--accent);
 }
-.dl-row.soon {
-  opacity: 0.55;
-  pointer-events: none;
-}

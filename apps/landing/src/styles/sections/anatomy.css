@@ -67,7 +67,7 @@
 .ana-screen img {
   width: 100%;
   display: block;
-  animation: fadeIn 0.4s ease;
+  animation: fade-in 0.4s ease;
 }
 .ana-pin {
   position: absolute;
@@ -117,7 +117,7 @@
     transform: scale(2);
   }
 }
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
     transform: translateY(6px);
