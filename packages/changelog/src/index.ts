@@ -49,6 +49,85 @@ export interface Release {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: '0.6.0',
+    date: '21 kwietnia 2026',
+    shortDate: '21.04.2026',
+    title: 'Wielki redesign, nowy wygląd aplikacji i nowa strona',
+    description:
+      'Największa aktualizacja wizualna od premiery. ShiroAni dostała kompletnie przeprojektowany interfejs z nowymi motywami, odświeżonymi widokami i rozbudowanymi ustawieniami. Strona internetowa również została zbudowana od zera. Jeśli coś wygląda znajomo, ale inaczej, tak, to właśnie to.',
+    type: 'major',
+    latest: true,
+    categories: [
+      {
+        kind: 'feature',
+        label: 'Nowy wygląd aplikacji',
+        entries: [
+          'Przeprojektowany pasek tytułu, dock nawigacyjny, nagłówki widoków i tła z subtelnym watermarkiem kanji',
+          '17 gotowych motywów w nowym systemie kolorów OKLCH z obsługą jasnych i ciemnych wariantów',
+          'Edytor własnego motywu z podglądem na żywo, dostępny w Ustawieniach → Motywy',
+          'Czcionki Shippori Mincho, DM Sans i JetBrains Mono dołączone do aplikacji, bez pobierania z sieci',
+          'Nowy ekran startowy z podwójnymi pierścieniami, pulsującą maskotką i płynnym paskiem postępu',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Odświeżone widoki',
+        entries: [
+          'Onboarding: siedmiostopniowy kreator z wyborem pozycji docka, blokowania reklam i podsumowaniem',
+          'Biblioteka i profil: nowe karty, modal szczegółów i wykresy kołowe z podziałem na gatunki i studia',
+          'Harmonogram: widoki dzień, tydzień i plakat, wskaźnik emisji na żywo oraz podświetlenie serii z biblioteki i subskrypcji',
+          'Aktualności: nagłówek z wyróżnioną wiadomością, czytnik w modalu, zapamiętywanie przeczytanych i nowa zakładka Zakładki',
+          'Odkrywaj: cztery zakładki i losowy nagłówek z propozycją',
+          'Dziennik: edytor w miejscu, oś czasu wpisów i pasek boczny z rozkładem gatunków i studiów',
+          'Historia zmian dostępna z Ustawienia → O aplikacji, zawsze z aktualną listą wydań',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Ustawienia i nowe opcje',
+        entries: [
+          'Sekcja Wygląd podzielona na cztery grupy: Motywy, Tło, Dock i Widoki, każda z podglądem',
+          'Pozycja docka przy dowolnej krawędzi ekranu, łącznie z nową krawędzią górną',
+          'Ukrywanie nieużywanych widoków w docku z podglądem zmian na żywo',
+          'Biała lista adblocka dla wybranych domen, przeniesiona z paska przeglądarki do Ustawień',
+          'Zachowanie kart: przywracanie sesji i zapisywanie historii jako osobne przełączniki',
+          'Imię użytkownika wyświetlane w powitaniu na nowej karcie przeglądarki',
+          'Eksport danych: kafelki z zakresem i liczbą elementów do wyboru',
+          'Edytor szablonów Discord Rich Presence w układzie dwukolumnowym z podglądem rozmiaru maskotki',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Tryb deweloperski',
+        entries: [
+          'Nowa sekcja Zaawansowane → Deweloper w Ustawieniach, włączana jednym przełącznikiem',
+          'Otwieranie narzędzi deweloperskich okna głównego',
+          'Kopiowanie diagnostyki do schowka: wersja, system, ostatnie wpisy z dziennika zdarzeń',
+          'Podgląd logów aplikacji w czasie rzeczywistym w osobnym oknie',
+        ],
+      },
+      {
+        kind: 'polish',
+        label: 'Stabilność i dopracowania',
+        entries: [
+          'Przepisany system logowania z bezpiecznym redagowaniem wrażliwych pól i rotacją plików',
+          'Naturalniej brzmiące polskie teksty w całej aplikacji: biblioteka, odkrywaj, aktualności, ustawienia i onboarding',
+          'Stabilniejsza obsługa błędów i nieoczekiwanych wyjątków w oknie głównym',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Nowa strona internetowa',
+        entries: [
+          'Strona shiroani zbudowana od zera z nowym układem, animacjami i stylem zgodnym z aplikacją',
+          'Strona Pobierz pobiera listę wersji z GitHuba i pokazuje właściwy plik dla Twojego systemu',
+          'Strona Historia zmian z tymi samymi notkami co w aplikacji, jedno źródło dla obu miejsc',
+          'Menu mobilne z wysuwanym panelem na mniejszych ekranach',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     date: '13 kwietnia 2026',
     shortDate: '13.04.2026',
@@ -56,7 +135,6 @@ export const RELEASES: readonly Release[] = [
     description:
       'Ta aktualizacja skupia się głównie na wygodzie. Pojawił się nowy widok Odkrywaj, profil AniList z kartą do udostępniania, lepsze powiadomienia na Windowsie i kilka zmian, które po prostu ułatwiają codzienne korzystanie z aplikacji.',
     type: 'major',
-    latest: true,
     categories: [
       {
         kind: 'feature',
