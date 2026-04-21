@@ -6,6 +6,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/landing/package.json apps/landing/
+COPY packages/changelog/package.json packages/changelog/
 COPY packages/shared/package.json packages/shared/
 RUN pnpm install --frozen-lockfile --filter @shiroani/landing...
 
@@ -14,8 +15,10 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/landing/node_modules ./apps/landing/node_modules
 COPY apps/landing/ apps/landing/
+COPY packages/changelog/ packages/changelog/
 COPY packages/shared/ packages/shared/
 COPY tsconfig.base.json ./
+RUN pnpm --filter @shiroani/changelog run build
 RUN pnpm --filter @shiroani/landing build
 
 # Serve static files — Coolify/Traefik handles TLS + routing
