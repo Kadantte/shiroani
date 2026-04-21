@@ -10,7 +10,7 @@ import { initializeAutoUpdater } from './updater';
 import { initializeAdblock } from './adblock';
 import { corsOriginCallback } from '../modules/shared/cors.config';
 import { NestLoggerAdapter } from '../modules/shared/nest-logger';
-import { LOCALHOST } from '@shiroani/shared';
+import { LOCALHOST, setLoggerContext, makeCorrelationId } from '@shiroani/shared';
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
@@ -381,6 +381,15 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 app
   .whenReady()
   .then(() => {
+    // Stamp shared logger session context so every subsequent main-process
+    // entry (buffer + JSONL file) carries sessionId/appVersion/platform.
+    // Renderer stamps its own distinct sessionId from useAppInitialization.
+    setLoggerContext({
+      sessionId: makeCorrelationId(),
+      appVersion: app.getVersion(),
+      platform: process.platform,
+    });
+
     // Ensure only one instance of the app runs at a time. If another
     // instance already holds the lock, log a warning and quit early; the
     // first instance will focus its window via the 'second-instance'

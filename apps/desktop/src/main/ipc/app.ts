@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import { readdir, stat, readFile, writeFile } from 'fs/promises';
 import { join, resolve, sep } from 'path';
 import { release as osRelease } from 'os';
+import { gunzipSync } from 'zlib';
 import {
   LOG_FILE_PREFIX,
   LOG_MAX_FILE_SIZE,
@@ -217,7 +218,8 @@ export function registerAppHandlers(): void {
     const logFiles: { name: string; size: number; lastModified: number }[] = [];
 
     for (const entry of entries) {
-      if (!entry.startsWith(LOG_FILE_PREFIX) || !entry.endsWith('.log')) continue;
+      if (!entry.startsWith(LOG_FILE_PREFIX)) continue;
+      if (!entry.endsWith('.log') && !entry.endsWith('.log.gz')) continue;
       const fileStat = await stat(join(logsDir, entry));
       if (!fileStat.isFile()) continue;
       logFiles.push({
@@ -277,7 +279,10 @@ export function registerAppHandlers(): void {
   ipcMain.handle('app:read-log-file', async (_event, fileName: string) => {
     logger.debug(`app:read-log-file invoked for "${fileName}"`);
 
-    // Security: reject path traversal, null bytes, and invalid filenames
+    // Security: reject path traversal, null bytes, and invalid filenames.
+    // Allowlist matches both `.log` and `.log.gz` rotated siblings.
+    const isGzipped = typeof fileName === 'string' && fileName.endsWith('.log.gz');
+    const hasValidSuffix = typeof fileName === 'string' && (fileName.endsWith('.log') || isGzipped);
     if (
       typeof fileName !== 'string' ||
       fileName.includes('\0') ||
@@ -285,19 +290,20 @@ export function registerAppHandlers(): void {
       fileName.includes('\\') ||
       fileName.includes('..') ||
       !fileName.startsWith(LOG_FILE_PREFIX) ||
-      !fileName.endsWith('.log')
+      !hasValidSuffix
     ) {
       throw new Error('Invalid log file name');
     }
 
     const filePath = join(getLogsDir(), fileName);
 
-    // Check file size before reading to avoid loading very large files
+    // For uncompressed `.log`, enforce the cap against on-disk size before
+    // reading. For `.log.gz`, the on-disk size is post-compression so we have
+    // to decompress first; the cap is then applied to the decompressed length
+    // and we truncate (with a trailing JSONL warn line) instead of rejecting.
+    let fileStat: Awaited<ReturnType<typeof stat>>;
     try {
-      const fileStat = await stat(filePath);
-      if (fileStat.size > LOG_MAX_FILE_SIZE) {
-        throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
-      }
+      fileStat = await stat(filePath);
     } catch (err: unknown) {
       if (
         err instanceof Error &&
@@ -309,7 +315,41 @@ export function registerAppHandlers(): void {
       throw err;
     }
 
-    return readFile(filePath, 'utf-8');
+    if (!isGzipped) {
+      if (fileStat.size > LOG_MAX_FILE_SIZE) {
+        throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+      }
+      return readFile(filePath, 'utf-8');
+    }
+
+    // Compressed branch: gunzip, then enforce the cap on decompressed bytes.
+    const compressed = await readFile(filePath);
+    let decompressed: Buffer;
+    try {
+      decompressed = gunzipSync(compressed);
+    } catch (err) {
+      throw new Error('Failed to decompress log file', { cause: err });
+    }
+
+    if (decompressed.length <= LOG_MAX_FILE_SIZE) {
+      return decompressed.toString('utf-8');
+    }
+
+    const truncationNotice =
+      JSON.stringify({
+        level: 'warn',
+        context: 'LogFile',
+        message: `truncated at ${LOG_MAX_FILE_SIZE} bytes`,
+      }) + '\n';
+    // Reserve room for the notice so the total payload stays under the cap.
+    const noticeBytes = Buffer.byteLength(truncationNotice, 'utf-8');
+    const sliceLen = Math.max(0, LOG_MAX_FILE_SIZE - noticeBytes);
+    let head = decompressed.subarray(0, sliceLen).toString('utf-8');
+    // Don't leave a partial JSONL line dangling — chop back to the last `\n`
+    // so the caller still sees well-formed lines before the notice.
+    const lastNewline = head.lastIndexOf('\n');
+    if (lastNewline >= 0) head = head.slice(0, lastNewline + 1);
+    return head + truncationNotice;
   });
 }
 

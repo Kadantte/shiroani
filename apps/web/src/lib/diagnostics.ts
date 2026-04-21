@@ -1,4 +1,4 @@
-import { getLogBuffer, redactForLogs, type LogEntry } from '@shiroani/shared';
+import { getLogBuffer, getLoggerContext, redactForLogs, type LogEntry } from '@shiroani/shared';
 import { useAppStore } from '@/stores/useAppStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
@@ -105,8 +105,17 @@ export async function collectDiagnostics(): Promise<string> {
 
   const mainLogBlock = await readMainLogTail(50);
 
+  const ctx = getLoggerContext();
+  const sessionId = ctx.sessionId ?? '—';
+  const sessionApp = ctx.appVersion ?? '—';
+  const sessionPlatform = ctx.platform ?? '—';
+
   const sections: string[] = [
     '## ShiroAni diagnostics',
+    '',
+    '## Sesja',
+    `- Renderer session ID: ${sessionId}`,
+    `- App: ${sessionApp} (${sessionPlatform})`,
     '',
     `- **App version**: ${appVersion}`,
     `- **Platform**: ${platform}`,

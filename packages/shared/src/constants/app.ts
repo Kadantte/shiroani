@@ -60,6 +60,13 @@ export const LOG_MAX_FILE_SIZE = 10 * 1024 * 1024;
 /** Maximum age of log files before cleanup (7 days in ms) */
 export const LOG_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Maximum total bytes allowed across all log files in the logs directory.
+ * When the age-based cleanup pass leaves the directory above this ceiling,
+ * the oldest files (by mtime) are pruned until the total is at or below it.
+ */
+export const LOG_MAX_TOTAL_DIR_BYTES = 200 * 1024 * 1024;
+
 /** Log flush interval in milliseconds */
 export const LOG_FLUSH_INTERVAL_MS = 100;
 

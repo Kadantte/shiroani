@@ -1,10 +1,12 @@
 import { app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as zlib from 'zlib';
 import {
   LOG_FILE_PREFIX,
   LOG_MAX_FILE_SIZE,
   LOG_MAX_AGE_MS,
+  LOG_MAX_TOTAL_DIR_BYTES,
   LOG_FLUSH_INTERVAL_MS,
   LOG_BUFFER_MAX_ENTRIES,
   LOG_CLEANUP_INTERVAL_MS,
@@ -67,13 +69,15 @@ export function getLogPath(): string {
 // ============================================================================
 
 /**
- * Find the next available rotation number for a given base file.
+ * Find the next available rotation number for a given base file. Considers
+ * both `.log` and `.log.gz` rotated siblings so a fresh rotation never
+ * collides with a previously-compressed one.
  */
 async function getNextRotationNumber(dir: string, baseName: string): Promise<number> {
   const files = await fs.promises.readdir(dir);
   let max = 0;
-  // Pattern: shiroani-YYYY-MM-DD.N.log
-  const pattern = new RegExp(`^${escapeRegex(baseName)}\\.(\\d+)\\.log$`);
+  // Pattern: shiroani-YYYY-MM-DD.N.log or shiroani-YYYY-MM-DD.N.log.gz
+  const pattern = new RegExp(`^${escapeRegex(baseName)}\\.(\\d+)\\.log(?:\\.gz)?$`);
   for (const file of files) {
     const match = file.match(pattern);
     if (match) {
@@ -90,11 +94,24 @@ function escapeRegex(str: string): string {
 
 /**
  * Rotate the current log file if it exceeds LOG_MAX_FILE_SIZE.
- * Returns the path to write to (may be the same file or a new one after rotation).
+ *
+ * Steps:
+ *   1. Rename the active log to `<base>.N.log` so writes can resume on a fresh
+ *      file immediately.
+ *   2. Read the rotated file, gzip-compress in-memory, and write
+ *      `<base>.N.log.gz` next to it.
+ *   3. Delete the uncompressed `<base>.N.log` once the .gz is durable.
+ *
+ * If gzip fails for any reason we leave the rotated `.N.log` in place rather
+ * than losing data, and emit a warn through the main logger. Rotation is
+ * synchronous (sync zlib + sync FS) to preserve the existing flush ordering
+ * invariants — the async wrapper just exists to match the call site signature.
  */
 async function rotateIfNeeded(currentPath: string): Promise<void> {
   if (isRotating) return;
   isRotating = true;
+
+  let rotatedPath: string | null = null;
 
   try {
     const stat = await fs.promises.stat(currentPath);
@@ -104,9 +121,41 @@ async function rotateIfNeeded(currentPath: string): Promise<void> {
     const ext = path.extname(currentPath); // .log
     const base = path.basename(currentPath, ext); // shiroani-YYYY-MM-DD
     const n = await getNextRotationNumber(dir, base);
-    const rotatedPath = path.join(dir, `${base}.${n}${ext}`);
+    rotatedPath = path.join(dir, `${base}.${n}${ext}`);
+    const gzPath = `${rotatedPath}.gz`;
 
+    // Step 1: rename so the active file pointer is freed immediately.
     await fs.promises.rename(currentPath, rotatedPath);
+
+    // Step 2 + 3: gzip + cleanup. Done sync to keep ordering consistent.
+    try {
+      const buffer = fs.readFileSync(rotatedPath);
+      const compressed = zlib.gzipSync(buffer);
+      fs.writeFileSync(gzPath, compressed);
+      fs.unlinkSync(rotatedPath);
+    } catch (gzipError) {
+      // Gzip failed — leave the .N.log in place so no data is lost. Surface
+      // the failure via the main logger (after-the-fact) so devs can spot it.
+      try {
+        // Best-effort cleanup of a half-written .gz so future rotations don't
+        // see a corrupt sibling.
+        if (fs.existsSync(gzPath)) fs.unlinkSync(gzPath);
+      } catch {
+        // ignore
+      }
+      // Defer the warn so we don't recurse into rotateIfNeeded via the file
+      // transport while still inside this rotation pass.
+      setImmediate(() => {
+        try {
+          createMainLogger('Logger').warn(
+            `Log rotation gzip failed; leaving uncompressed file ${path.basename(rotatedPath ?? '')}`,
+            gzipError
+          );
+        } catch {
+          // Logger may itself have been the source of failure — ignore.
+        }
+      });
+    }
   } catch (error) {
     // File may not exist yet (first write), that's fine
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
@@ -122,17 +171,40 @@ async function rotateIfNeeded(currentPath: string): Promise<void> {
 // ============================================================================
 
 /**
- * Remove log files older than LOG_MAX_AGE_MS.
+ * Returns true when `name` is a managed log file (`.log` or `.log.gz`) under
+ * our prefix. Centralized so age-based and total-size cleanup agree on what
+ * counts as a managed file.
+ */
+function isManagedLogFile(name: string): boolean {
+  if (!name.startsWith(LOG_FILE_PREFIX)) return false;
+  return name.endsWith('.log') || name.endsWith('.log.gz');
+}
+
+/**
+ * Returns the basename of the currently-active (today's) log file. The file
+ * itself may not exist yet on disk; this is the *path* the next write would
+ * land in. Cleanup paths use it to refuse to delete the live target.
+ */
+function getActiveLogBasename(): string {
+  return path.basename(getLogPath());
+}
+
+/**
+ * Remove log files older than LOG_MAX_AGE_MS, then prune oldest files (by
+ * mtime) if the total directory size still exceeds LOG_MAX_TOTAL_DIR_BYTES.
+ * The active log file is never deleted by either pass.
  */
 async function cleanupOldLogs(): Promise<void> {
   try {
     const dir = getLogsDir();
     const files = await fs.promises.readdir(dir);
     const now = Date.now();
+    const activeName = getActiveLogBasename();
 
+    // ── Pass 1: age-based prune ────────────────────────────────────
     for (const file of files) {
-      // Only clean up our log files
-      if (!file.startsWith(LOG_FILE_PREFIX) || !file.endsWith('.log')) continue;
+      if (!isManagedLogFile(file)) continue;
+      if (file === activeName) continue;
 
       const filePath = path.join(dir, file);
       try {
@@ -144,6 +216,54 @@ async function cleanupOldLogs(): Promise<void> {
         // Ignore individual file errors during cleanup
       }
     }
+
+    // ── Pass 2: total-size ceiling ─────────────────────────────────
+    // Re-list because pass 1 may have deleted entries.
+    const remaining: { name: string; path: string; size: number; mtimeMs: number }[] = [];
+    try {
+      const after = await fs.promises.readdir(dir);
+      for (const file of after) {
+        if (!isManagedLogFile(file)) continue;
+        const full = path.join(dir, file);
+        try {
+          const st = await fs.promises.stat(full);
+          if (!st.isFile()) continue;
+          remaining.push({ name: file, path: full, size: st.size, mtimeMs: st.mtimeMs });
+        } catch {
+          // ignore individual stat failures
+        }
+      }
+    } catch {
+      // If the second readdir fails, skip the size pass.
+      return;
+    }
+
+    let total = 0;
+    for (const f of remaining) total += f.size;
+    if (total <= LOG_MAX_TOTAL_DIR_BYTES) return;
+
+    const ceilingMb = (LOG_MAX_TOTAL_DIR_BYTES / (1024 * 1024)).toFixed(0);
+    const totalMb = (total / (1024 * 1024)).toFixed(1);
+    logger.warn(`cleanup: total log dir ${totalMb} MB exceeds ceiling ${ceilingMb} MB, pruning`);
+
+    // Sort oldest-first by mtime, then walk forward deleting until under the
+    // ceiling. Skip the active log no matter where it lands in the sort.
+    remaining.sort((a, b) => a.mtimeMs - b.mtimeMs);
+    let deleted = 0;
+    for (const f of remaining) {
+      if (total <= LOG_MAX_TOTAL_DIR_BYTES) break;
+      if (f.name === activeName) continue;
+      try {
+        await fs.promises.unlink(f.path);
+        total -= f.size;
+        deleted += 1;
+      } catch {
+        // Ignore individual delete failures; continue with next oldest.
+      }
+    }
+
+    const finalMb = (total / (1024 * 1024)).toFixed(1);
+    logger.info(`cleanup: pruned ${deleted} file(s); final log dir size ${finalMb} MB`);
   } catch {
     // Ignore cleanup errors -- non-critical
   }

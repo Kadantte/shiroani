@@ -173,6 +173,87 @@ export interface LogEntry {
   context: string; // Logger context name (e.g., "SessionService")
   message: string; // Primary message (first arg stringified)
   data?: unknown; // Additional args if any
+  /** Stable per-process session identifier (set via setLoggerContext). */
+  sessionId?: string;
+  /** Application version at log time (set via setLoggerContext). */
+  appVersion?: string;
+  /** Process platform (set via setLoggerContext). */
+  platform?: string;
+  /** Per-operation correlation id applied by createCorrelatedLogger. */
+  correlationId?: string;
+}
+
+// ── Session context ───────────────────────────────────────────────
+//
+// Module-level metadata stamped onto every emitted LogEntry. Main and
+// renderer run in different processes and each call setLoggerContext()
+// from their bootstrap with a distinct sessionId.
+
+export interface LoggerSessionContext {
+  sessionId?: string;
+  appVersion?: string;
+  platform?: string;
+}
+
+const sessionContext: LoggerSessionContext = {};
+
+/**
+ * Shallow-merge `ctx` into the module-level session context. Only fields
+ * explicitly provided are updated; pass `undefined` to clear a field.
+ * Values appear on subsequent LogEntry emissions (buffer + file transport).
+ */
+export function setLoggerContext(ctx: Partial<LoggerSessionContext>): void {
+  if (!ctx || typeof ctx !== 'object') return;
+  if ('sessionId' in ctx) sessionContext.sessionId = ctx.sessionId;
+  if ('appVersion' in ctx) sessionContext.appVersion = ctx.appVersion;
+  if ('platform' in ctx) sessionContext.platform = ctx.platform;
+}
+
+/** Read-only snapshot of the current session context. */
+export function getLoggerContext(): Readonly<LoggerSessionContext> {
+  return { ...sessionContext };
+}
+
+/**
+ * Generate a short (12-char) random hex id suitable for correlation or
+ * per-process session identifiers. Prefers `crypto.randomUUID()` when the
+ * runtime exposes it; otherwise falls back to `Math.random()`.
+ */
+export function makeCorrelationId(): string {
+  const cryptoObj = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  const uuidFn = cryptoObj?.randomUUID;
+  if (typeof uuidFn === 'function') {
+    // UUID v4 has hyphens at positions 8,13,18,23 — strip them and take the
+    // first 12 hex chars for a compact id.
+    try {
+      return uuidFn.call(cryptoObj).replace(/-/g, '').slice(0, 12);
+    } catch {
+      // fall through to Math.random() path
+    }
+  }
+  return Math.random().toString(16).slice(2, 14).padEnd(12, '0');
+}
+
+/**
+ * Merge session context + per-logger tags onto a base entry. The base
+ * fields (level, context, timestamp, message, data) are authoritative and
+ * cannot be overridden by tags. Fields that are undefined are omitted so
+ * the JSONL output doesn't carry dead keys.
+ */
+function buildLogEntry(base: LogEntry, tags: Partial<LogEntry> | undefined): LogEntry {
+  // Start from tags (which may carry correlationId), then merge session
+  // context, then the authoritative base fields so they always win.
+  const merged: LogEntry = { ...base };
+  if (sessionContext.sessionId !== undefined) merged.sessionId = sessionContext.sessionId;
+  if (sessionContext.appVersion !== undefined) merged.appVersion = sessionContext.appVersion;
+  if (sessionContext.platform !== undefined) merged.platform = sessionContext.platform;
+  if (tags) {
+    if (tags.sessionId !== undefined) merged.sessionId = tags.sessionId;
+    if (tags.appVersion !== undefined) merged.appVersion = tags.appVersion;
+    if (tags.platform !== undefined) merged.platform = tags.platform;
+    if (tags.correlationId !== undefined) merged.correlationId = tags.correlationId;
+  }
+  return merged;
 }
 
 // ── In-memory ring buffer ─────────────────────────────────────────
@@ -293,17 +374,23 @@ function safeStringify(value: unknown): string {
   }
 }
 
-function pushToBuffer(level: LogEntry['level'], context: string, args: unknown[]): void {
+function pushToBuffer(
+  level: LogEntry['level'],
+  context: string,
+  args: unknown[],
+  tags?: Partial<LogEntry>
+): void {
   const first = args.length > 0 ? args[0] : '';
-  const entry: LogEntry = {
+  const base: LogEntry = {
     timestamp: formatTimestamp(),
     level,
     context,
     message: safeStringify(first),
   };
   if (args.length > 1) {
-    entry.data = args.length === 2 ? safeStringify(args[1]) : args.slice(1).map(safeStringify);
+    base.data = args.length === 2 ? safeStringify(args[1]) : args.slice(1).map(safeStringify);
   }
+  const entry = buildLogEntry(base, tags);
   logBuffer.push(entry);
   if (logBuffer.length > LOG_BUFFER_MAX) logBuffer.shift();
   if (bufferListeners.size > 0) {
@@ -332,28 +419,38 @@ export function clearLogBuffer(): void {
 /**
  * Format a message for file logging as structured JSONL (one JSON object per line)
  */
-function formatFileLog(level: string, context: string, args: unknown[]): string {
+function formatFileLog(
+  level: string,
+  context: string,
+  args: unknown[],
+  tags?: Partial<LogEntry>
+): string {
   try {
     const firstArg = args.length > 0 ? args[0] : '';
     const message = typeof firstArg === 'string' ? firstArg : JSON.stringify(firstArg);
-    const entry: LogEntry = {
+    const base: LogEntry = {
       timestamp: formatTimestamp(),
       level: level.toLowerCase() as LogEntry['level'],
       context,
       message,
     };
     if (args.length > 1) {
-      entry.data = args.length === 2 ? args[1] : args.slice(1);
+      base.data = args.length === 2 ? args[1] : args.slice(1);
     }
-    return JSON.stringify(entry) + '\n';
+    return JSON.stringify(buildLogEntry(base, tags)) + '\n';
   } catch {
     return (
-      JSON.stringify({
-        timestamp: formatTimestamp(),
-        level: level.toLowerCase(),
-        context,
-        message: String(args),
-      }) + '\n'
+      JSON.stringify(
+        buildLogEntry(
+          {
+            timestamp: formatTimestamp(),
+            level: level.toLowerCase() as LogEntry['level'],
+            context,
+            message: String(args),
+          },
+          tags
+        )
+      ) + '\n'
     );
   }
 }
@@ -380,19 +477,36 @@ export interface LoggerOptions {
   fileTransport?: (message: string) => void;
 }
 
+// Stash the options/context used to create a logger so correlated wrappers
+// can inherit the underlying transport + context + prior tags. We keep this
+// in a WeakMap keyed by the Logger object reference to avoid mutating the
+// Logger surface. Only loggers built via createLoggerInternal() are present.
+const loggerMeta = new WeakMap<
+  Logger,
+  { context: string; options: LoggerOptions | undefined; tags: Partial<LogEntry> | undefined }
+>();
+
 /**
- * Create a logger instance with a context prefix
+ * Internal factory shared by createLogger() and createCorrelatedLogger().
+ * Wires pushToBuffer + console + optional fileTransport against a single
+ * `tags` bag that's merged into every emitted entry.
  */
-export function createLogger(context: string, options?: LoggerOptions): Logger {
+function createLoggerInternal(
+  context: string,
+  options: LoggerOptions | undefined,
+  tags: Partial<LogEntry> | undefined
+): Logger {
   const useStderr = options?.useStderr ?? false;
   const fileTransport = options?.fileTransport;
 
+  let instance: Logger;
+
   if (isBrowser) {
     // Browser implementation with CSS styling
-    return {
+    instance = {
       error: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.ERROR) {
-          pushToBuffer('error', context, args);
+          pushToBuffer('error', context, args, tags);
           console.error(
             `%cERROR%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.ERROR,
@@ -408,7 +522,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       warn: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.WARN) {
-          pushToBuffer('warn', context, args);
+          pushToBuffer('warn', context, args, tags);
           console.warn(
             `%cWARN%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.WARN,
@@ -424,7 +538,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       info: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.INFO) {
-          pushToBuffer('info', context, args);
+          pushToBuffer('info', context, args, tags);
           console.log(
             `%cINFO%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.INFO,
@@ -440,7 +554,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       debug: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.DEBUG) {
-          pushToBuffer('debug', context, args);
+          pushToBuffer('debug', context, args, tags);
           console.log(
             `%cDEBUG%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.DEBUG,
@@ -456,7 +570,7 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
 
       log: (...args: unknown[]): void => {
         if (currentLogLevel >= LogLevel.INFO) {
-          pushToBuffer('info', context, args);
+          pushToBuffer('info', context, args, tags);
           console.log(
             `%cINFO%c %c${formatShortTime()}%c %c[${context}]%c`,
             BROWSER_STYLES.levels.INFO,
@@ -470,64 +584,89 @@ export function createLogger(context: string, options?: LoggerOptions): Logger {
         }
       },
     };
+  } else {
+    // Node.js implementation with ANSI colors
+    // Choose output function based on useStderr option
+    const output = useStderr ? console.error : console.log;
+    const errorOutput = console.error;
+
+    instance = {
+      error: (...args: unknown[]): void => {
+        if (currentLogLevel >= LogLevel.ERROR) {
+          pushToBuffer('error', context, args, tags);
+          errorOutput(formatNodeLog('ERROR', context, ANSI.red), ...args);
+          if (fileTransport) {
+            fileTransport(formatFileLog('ERROR', context, args, tags));
+          }
+        }
+      },
+
+      warn: (...args: unknown[]): void => {
+        if (currentLogLevel >= LogLevel.WARN) {
+          pushToBuffer('warn', context, args, tags);
+          output(formatNodeLog('WARN', context, ANSI.yellow), ...args);
+          if (fileTransport) {
+            fileTransport(formatFileLog('WARN', context, args, tags));
+          }
+        }
+      },
+
+      info: (...args: unknown[]): void => {
+        if (currentLogLevel >= LogLevel.INFO) {
+          pushToBuffer('info', context, args, tags);
+          output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
+          if (fileTransport) {
+            fileTransport(formatFileLog('INFO', context, args, tags));
+          }
+        }
+      },
+
+      debug: (...args: unknown[]): void => {
+        if (currentLogLevel >= LogLevel.DEBUG) {
+          pushToBuffer('debug', context, args, tags);
+          output(formatNodeLog('DEBUG', context, ANSI.magenta), ...args);
+          if (fileTransport) {
+            fileTransport(formatFileLog('DEBUG', context, args, tags));
+          }
+        }
+      },
+
+      log: (...args: unknown[]): void => {
+        if (currentLogLevel >= LogLevel.INFO) {
+          pushToBuffer('info', context, args, tags);
+          output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
+          if (fileTransport) {
+            fileTransport(formatFileLog('INFO', context, args, tags));
+          }
+        }
+      },
+    };
   }
 
-  // Node.js implementation with ANSI colors
-  // Choose output function based on useStderr option
-  const output = useStderr ? console.error : console.log;
-  const errorOutput = console.error;
+  loggerMeta.set(instance, { context, options, tags });
+  return instance;
+}
 
-  return {
-    error: (...args: unknown[]): void => {
-      if (currentLogLevel >= LogLevel.ERROR) {
-        pushToBuffer('error', context, args);
-        errorOutput(formatNodeLog('ERROR', context, ANSI.red), ...args);
-        if (fileTransport) {
-          fileTransport(formatFileLog('ERROR', context, args));
-        }
-      }
-    },
+/**
+ * Create a logger instance with a context prefix
+ */
+export function createLogger(context: string, options?: LoggerOptions): Logger {
+  return createLoggerInternal(context, options, undefined);
+}
 
-    warn: (...args: unknown[]): void => {
-      if (currentLogLevel >= LogLevel.WARN) {
-        pushToBuffer('warn', context, args);
-        output(formatNodeLog('WARN', context, ANSI.yellow), ...args);
-        if (fileTransport) {
-          fileTransport(formatFileLog('WARN', context, args));
-        }
-      }
-    },
-
-    info: (...args: unknown[]): void => {
-      if (currentLogLevel >= LogLevel.INFO) {
-        pushToBuffer('info', context, args);
-        output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
-        if (fileTransport) {
-          fileTransport(formatFileLog('INFO', context, args));
-        }
-      }
-    },
-
-    debug: (...args: unknown[]): void => {
-      if (currentLogLevel >= LogLevel.DEBUG) {
-        pushToBuffer('debug', context, args);
-        output(formatNodeLog('DEBUG', context, ANSI.magenta), ...args);
-        if (fileTransport) {
-          fileTransport(formatFileLog('DEBUG', context, args));
-        }
-      }
-    },
-
-    log: (...args: unknown[]): void => {
-      if (currentLogLevel >= LogLevel.INFO) {
-        pushToBuffer('info', context, args);
-        output(formatNodeLog('INFO', context, ANSI.cyan), ...args);
-        if (fileTransport) {
-          fileTransport(formatFileLog('INFO', context, args));
-        }
-      }
-    },
-  };
+/**
+ * Build a Logger that forwards every call through the same transport chain as
+ * `parent` but stamps `correlationId` on each resulting LogEntry. If `parent`
+ * was itself correlated, the new correlationId replaces the inherited one.
+ *
+ * Falls back to a standalone logger (same context, no file transport) if
+ * `parent` wasn't produced by `createLogger`/`createCorrelatedLogger` — this
+ * only matters for consumers passing in a hand-rolled Logger stub.
+ */
+export function createCorrelatedLogger(parent: Logger, correlationId: string): Logger {
+  const meta = loggerMeta.get(parent);
+  const mergedTags: Partial<LogEntry> = { ...(meta?.tags ?? {}), correlationId };
+  return createLoggerInternal(meta?.context ?? 'Correlated', meta?.options, mergedTags);
 }
 
 /**
