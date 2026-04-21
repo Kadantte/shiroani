@@ -81,7 +81,7 @@ export const FeedHero = memo(function FeedHero({ item, onOpen }: FeedHeroProps) 
       {/* Content */}
       <div className="relative z-[1] flex flex-col gap-2 p-5 sm:p-6 min-h-[180px]">
         <div className="flex flex-wrap items-center gap-1.5">
-          <PillTag className="bg-white/20 text-white/95">Feature</PillTag>
+          <PillTag className="bg-white/20 text-white/95">Wyróżnione</PillTag>
           <PillTag className="bg-black/35 text-white/95">
             {CATEGORY_LABELS[item.sourceCategory]}
           </PillTag>

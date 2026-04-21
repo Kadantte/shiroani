@@ -131,7 +131,7 @@ export const FeedReaderModal = memo(function FeedReaderModal({
       >
         <DialogTitle className="sr-only">{item.title}</DialogTitle>
         <DialogDescription className="sr-only">
-          {`Artykuł ze źródła ${item.sourceName} · ${publishedLabel}`}
+          {`Artykuł z ${item.sourceName} · ${publishedLabel}`}
         </DialogDescription>
 
         {/* Top bar */}
@@ -303,7 +303,7 @@ export const FeedReaderModal = memo(function FeedReaderModal({
               </div>
             ) : (
               <p className="text-[13.5px] leading-[1.75] text-muted-foreground/80">
-                Ten artykuł nie ma podglądu. Otwórz go w przeglądarce, aby przeczytać pełną treść.
+                Podgląd niedostępny. Otwórz artykuł w przeglądarce, aby przeczytać całość.
               </p>
             )}
 

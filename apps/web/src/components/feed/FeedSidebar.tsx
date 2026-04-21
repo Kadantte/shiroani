@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Rss, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { FeedItem, FeedSource } from '@shiroani/shared';
+import { pluralize, type FeedItem, type FeedSource } from '@shiroani/shared';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 
 interface FeedSidebarProps {
@@ -202,7 +202,7 @@ export const FeedSidebar = memo(function FeedSidebar({
                     {t.source.name}
                   </div>
                   <div className="font-mono text-[9px] text-muted-foreground/60 mt-0.5">
-                    {t.count} {t.count === 1 ? 'wpis' : 'wpisów'}
+                    {t.count} {pluralize(t.count, 'wpis', 'wpisy', 'wpisów')}
                   </div>
                 </div>
                 <div className="w-10 shrink-0">

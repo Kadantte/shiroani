@@ -110,7 +110,7 @@ const LibraryListItem = memo(function LibraryListItem({
             </span>
           </>
         ) : (
-          <span className="text-[11.5px] font-mono text-muted-foreground/40">—</span>
+          <span className="text-[11.5px] font-mono text-muted-foreground/40">-</span>
         )}
       </div>
     </div>

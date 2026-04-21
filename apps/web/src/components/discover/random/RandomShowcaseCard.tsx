@@ -244,7 +244,7 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
         <div className="mt-auto pt-5 flex items-center flex-wrap gap-2">
           <Button size="sm" onClick={onNext} disabled={isLoading} className="gap-1.5">
             <Shuffle className="w-3.5 h-3.5" />
-            Zatasuj
+            Przetasuj
           </Button>
           {onAddToLibrary && !inLibrary && (
             <Button size="sm" variant="outline" onClick={onAddToLibrary} className="gap-1.5">
@@ -286,7 +286,7 @@ export const RandomShowcaseCard = memo(function RandomShowcaseCard({
           </div>
         </div>
         <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50 hidden sm:block">
-          ← → aby przeglądać
+          ← → przełącza
         </p>
       </div>
     </div>

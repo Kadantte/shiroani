@@ -66,7 +66,7 @@ const GenrePicker = memo(function GenrePicker({
               cycle(genre, 'exclude');
             }}
             aria-pressed={state !== 'neutral'}
-            aria-label={`${ANIME_GENRE_LABELS_PL[genre]} — ${
+            aria-label={`${ANIME_GENRE_LABELS_PL[genre]}: ${
               state === 'included' ? 'wybrane' : state === 'excluded' ? 'wykluczone' : 'neutralne'
             }`}
             className={cn(

@@ -338,7 +338,12 @@ export function FeedView() {
               <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
               {lastRefreshNewCount !== null && lastRefreshNewCount > 0 && (
                 <span
-                  aria-label={`${lastRefreshNewCount} nowych`}
+                  aria-label={pluralize(
+                    lastRefreshNewCount,
+                    'nowy wpis',
+                    'nowe wpisy',
+                    'nowych wpisów'
+                  )}
                   className={cn(
                     'absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full',
                     'bg-primary text-[9px] font-bold leading-none grid place-items-center',
@@ -380,7 +385,7 @@ export function FeedView() {
                 <div className="text-center space-y-1">
                   <p className="text-sm font-medium text-foreground/70">Brak aktualności</p>
                   <p className="text-xs text-muted-foreground/50">
-                    Dla wybranych filtrów nie ma żadnych wpisów
+                    Brak wpisów dla wybranych filtrów
                   </p>
                 </div>
                 <Button
@@ -396,7 +401,7 @@ export function FeedView() {
             ) : (
               <div
                 role="region"
-                aria-label="Feed aktualności"
+                aria-label="Aktualności"
                 className={cn(
                   'px-6 pt-4 pb-16 gap-4 grid',
                   'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]'

@@ -195,7 +195,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
                       <span className="text-muted-foreground/60 font-normal"> / 10</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground/60">—</span>
+                    <span className="text-muted-foreground/60">-</span>
                   )
                 }
               />
@@ -352,7 +352,7 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
               <div className="space-y-1.5">
                 <FormLabel htmlFor="detail-anilist-id">AniList ID</FormLabel>
                 <p className="text-2xs text-muted-foreground/70">
-                  Wymagane do powiadomień i odliczania odcinków
+                  Wymagane do powiadomień i odliczania do premiery odcinków
                 </p>
                 <Input
                   id="detail-anilist-id"

@@ -286,7 +286,7 @@ export function FeedLoadingAnimation() {
 
       {/* Loading text with animated dots */}
       <div className="flex items-center gap-1.5 text-sm text-foreground/75">
-        <span className="font-medium tracking-tight">Pobieranie aktualności</span>
+        <span className="font-medium tracking-tight">Ładowanie aktualności</span>
         <span className="inline-flex w-6">
           {[0, 1, 2].map(i => (
             <span

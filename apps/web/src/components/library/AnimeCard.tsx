@@ -55,7 +55,7 @@ const AnimeCard = memo(function AnimeCard({
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${entry.title} — ${statusLabel}`}
+      aria-label={`${entry.title}, ${statusLabel}`}
       className={cn(
         'group relative rounded-[10px] overflow-hidden cursor-pointer',
         'border border-border-glass bg-card/60',

@@ -246,15 +246,15 @@ export function LibraryView() {
                   <div className="text-center space-y-1.5">
                     <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
                     <p className="text-xs text-muted-foreground/60 max-w-[240px]">
-                      Spróbuj innych słów kluczowych lub zmień filtr statusu
+                      Spróbuj innej frazy lub zmień filtr
                     </p>
                   </div>
                 </div>
               ) : (
                 <EmptyState
                   icon={BookOpen}
-                  title="Twoja biblioteka jest pusta"
-                  subtitle="Przejdź do przeglądarki i dodaj anime klikając ikonę zakładki na pasku"
+                  title="Biblioteka jest pusta"
+                  subtitle="Otwórz przeglądarkę, żeby dodać pierwsze anime"
                   action={{
                     label: 'Otwórz przeglądarkę',
                     icon: Globe,

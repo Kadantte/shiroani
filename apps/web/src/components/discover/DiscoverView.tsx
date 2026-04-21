@@ -222,8 +222,8 @@ export function DiscoverView() {
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
       <ViewHeader<Tab>
         icon={Compass}
-        title="Odkrywaj"
-        subtitle="Trendy · sezon · losowe"
+        title="Przeglądaj"
+        subtitle="Popularne, sezonowe i losowe"
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Szukaj anime..."
@@ -289,12 +289,8 @@ export function DiscoverView() {
             {showEmpty && !error && (
               <EmptyState
                 icon={isSearchMode ? SearchX : Compass}
-                title={isSearchMode ? 'Brak wyników' : 'Brak anime do wyświetlenia'}
-                subtitle={
-                  isSearchMode
-                    ? 'Spróbuj innej frazy wyszukiwania'
-                    : 'Nie udało się załadować anime.'
-                }
+                title={isSearchMode ? 'Brak wyników' : 'Brak anime'}
+                subtitle={isSearchMode ? 'Spróbuj innej frazy' : 'Nie udało się pobrać anime.'}
               />
             )}
 
