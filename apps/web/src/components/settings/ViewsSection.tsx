@@ -1,5 +1,15 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, Calendar, Compass, Eye, NotebookPen, Rss, Settings, User } from 'lucide-react';
+import {
+  BookOpen,
+  Calendar,
+  Compass,
+  Eye,
+  History,
+  NotebookPen,
+  Rss,
+  Settings,
+  User,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useDockStore } from '@/stores/useDockStore';
@@ -16,6 +26,7 @@ const ICON_BY_VIEW: Partial<Record<ActiveView, LucideIcon>> = {
   schedule: Calendar,
   feed: Rss,
   profile: User,
+  changelog: History,
   settings: Settings,
 };
 

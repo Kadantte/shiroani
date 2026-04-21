@@ -96,7 +96,7 @@ export const useDockStore = create<DockStore>()(
       autoHide: false,
       draggable: true,
       showLabels: true,
-      hiddenViews: [],
+      hiddenViews: ['changelog'],
       isDragging: false,
       dragPosition: null,
       isExpanded: false,
