@@ -214,22 +214,6 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
 
           {/* Resume watching — pulls from library */}
           <ResumeWatchingSection onNavigate={onNavigate} />
-
-          {/* Hidden section remains accessible for tests via the H2 heading,
-              but the actual UI uses the frequent-sites panel above.
-              We keep the legacy "Często odwiedzane" heading for compatibility. */}
-          {frequentSites.length > 0 && (
-            <section aria-labelledby="newtab-frequent-legacy" className="sr-only">
-              <h2 id="newtab-frequent-legacy">Często odwiedzane</h2>
-              <ul>
-                {frequentSites.map(site => (
-                  <li key={site.url}>
-                    <button onClick={() => onNavigate(site.url)}>{site.title}</button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </div>
       </div>
 

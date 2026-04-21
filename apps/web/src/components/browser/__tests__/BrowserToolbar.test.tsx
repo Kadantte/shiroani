@@ -48,7 +48,7 @@ function getButtons() {
 }
 
 function getUrlInput() {
-  return screen.getByPlaceholderText('Wpisz adres URL lub wyszukaj...');
+  return screen.getByPlaceholderText('Wpisz adres albo szukaj');
 }
 
 describe('BrowserToolbar', () => {
