@@ -18,27 +18,10 @@
   color: var(--th-text, var(--text));
   padding: 20px;
   min-height: 180px;
-  cursor: pointer;
-  transition:
-    transform 0.2s,
-    border-color 0.2s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   text-align: left;
-}
-.th:hover,
-.th:focus-visible {
-  transform: translateY(-3px);
-  border-color: var(--th-accent);
-}
-.th:focus-visible {
-  outline: 2px solid var(--th-accent);
-  outline-offset: 2px;
-}
-.th.on {
-  outline: 2px solid var(--th-accent);
-  outline-offset: 2px;
 }
 .th .mini {
   display: flex;
@@ -100,18 +83,6 @@
   border-radius: 50%;
   background: var(--th-accent);
   box-shadow: 0 0 6px var(--th-accent);
-}
-.th .use {
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--th-accent);
-  font-weight: 600;
 }
 
 .th[data-t='plum'] {
