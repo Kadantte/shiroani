@@ -105,6 +105,10 @@ export class BrowserManager {
     // and rejects sign-in. Firefox doesn't support Client Hints at all, so using a
     // Firefox UA sidesteps all Chromium-specific detection (proven by qutebrowser, nativefier).
     // YouTube is excluded — it serves a worse player to Firefox.
+    // Cloudflare Turnstile is intentionally NOT in this list: cleanly matching
+    // Chrome (via session.setUserAgent + app.userAgentFallback) is more reliable
+    // than pretending to be Firefox, because the JS-level navigator.userAgentData
+    // still reports Chromium and the header/runtime mismatch is itself a red flag.
     const firefoxUA = `Mozilla/5.0 (${osString.replace('Intel Mac OS X 10_15_7', 'Intel Mac OS X 10.15; rv:137.0')}) Gecko/20100101 Firefox/137.0`;
 
     this.browserSession.webRequest.onBeforeSendHeaders(

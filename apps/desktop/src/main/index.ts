@@ -40,6 +40,20 @@ import { isMascotEnabled } from './mascot/overlay-state';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
 
+// Override Electron's default User-Agent so "Electron/<version>" and the app
+// name never leak in request headers — some subframe/worker requests bypass
+// session.setUserAgent and fall back to this default, which Cloudflare's
+// Turnstile fingerprinting catches. Must run before any webContents is
+// created (top-level module load is the right spot).
+const chromeVersion = process.versions.chrome || '134.0.0.0';
+const osSlug =
+  process.platform === 'darwin'
+    ? 'Macintosh; Intel Mac OS X 10_15_7'
+    : process.platform === 'linux'
+      ? 'X11; Linux x86_64'
+      : 'Windows NT 10.0; Win64; x64';
+app.userAgentFallback = `Mozilla/5.0 (${osSlug}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+
 // Register custom protocol scheme for background images.
 // Must be called before app.ready.
 protocol.registerSchemesAsPrivileged([
