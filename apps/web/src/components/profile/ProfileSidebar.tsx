@@ -82,7 +82,7 @@ export function ProfileSidebar({
             aria-hidden="true"
             className="w-[5px] h-[5px] rounded-full bg-[oklch(0.7_0.12_220)] shadow-[0_0_6px_oklch(0.7_0.12_220)]"
           />
-          AniList · połączono
+          AniList · podłączono
         </div>
         {memberSince && (
           <div className="mt-2 text-[10.5px] text-muted-foreground/70">od {memberSince}</div>
@@ -130,7 +130,7 @@ export function ProfileSidebar({
           )}
         >
           <Share2 className="w-3.5 h-3.5" />
-          Eksportuj kartę PNG
+          Eksportuj kartę jako PNG
         </Button>
         <Button
           variant="ghost"

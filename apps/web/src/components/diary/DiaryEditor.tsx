@@ -354,7 +354,7 @@ export function DiaryEditor({ entry, onClose, onCreate, onUpdate }: DiaryEditorP
             </Button>
             <Button size="sm" onClick={handleSave} className="h-8 gap-1.5 text-xs">
               <Check className="w-3.5 h-3.5" />
-              {isEditing ? 'Zapisz' : 'Utwórz'}
+              {isEditing ? 'Zapisz' : 'Dodaj wpis'}
             </Button>
           </div>
         </header>

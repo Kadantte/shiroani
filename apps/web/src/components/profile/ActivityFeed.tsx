@@ -15,7 +15,7 @@ export function ActivityFeed() {
     <ComingSoonPlaceholder
       icon={Activity}
       title="Ostatnia aktywność"
-      description="Historia scrobbli, zmian statusów i ocen z AniList pojawi się tutaj po rozszerzeniu synchronizacji profilu."
+      description="Historia scrobbli, zmian statusów i ocen z AniList pojawi się tu, gdy rozszerzymy synchronizację profilu."
       tag="SOON"
     />
   );

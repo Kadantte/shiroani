@@ -43,7 +43,7 @@ export function ProfileView() {
     ? `AniList · @${profile.name.toLowerCase()}`
     : username
       ? `AniList · @${username.toLowerCase()}`
-      : 'Połącz konto AniList, aby zobaczyć statystyki';
+      : 'Podłącz konto AniList, żeby zobaczyć statystyki';
 
   const canShare = Boolean(profile && !statsEmpty);
 
@@ -117,7 +117,7 @@ export function ProfileView() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Statystyki tego użytkownika są prywatne
+                  Ten użytkownik ma prywatne statystyki
                 </p>
                 <Button variant="outline" size="sm" onClick={() => clearProfile()}>
                   Zmień użytkownika

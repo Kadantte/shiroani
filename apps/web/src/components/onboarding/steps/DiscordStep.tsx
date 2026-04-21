@@ -55,8 +55,8 @@ export function DiscordStep() {
       }
       description={
         <>
-          ShiroAni wyświetla aktualny odcinek na Twoim profilu Discord. Rozpoznawalność pomaga małym
-          projektom — ale jeśli wolisz prywatność, po prostu nie włączaj.
+          ShiroAni pokaże aktualny odcinek na twoim profilu Discord. Dla małych projektów
+          rozpoznawalność to dużo, ale jeśli wolisz prywatność, zostaw to wyłączone.
         </>
       }
       stepMarker={
@@ -76,7 +76,7 @@ export function DiscordStep() {
           <SettingsToggleRow
             id="onb-discord-label"
             title="Włącz integrację"
-            description="Wyświetlaj aktywność ShiroAni na profilu"
+            description="Pokazuj aktywność ShiroAni na profilu"
             checked={enabled}
             onCheckedChange={handleToggle}
             disabled={saving || !IS_ELECTRON}
@@ -112,7 +112,7 @@ export function DiscordStep() {
               </p>
               {enabled && (
                 <small className="block font-mono text-[10px] text-[oklch(0.7_0.02_260)]">
-                  Ep. 28 · 00:42 upłynęło
+                  Odc. 28 · 00:42
                 </small>
               )}
             </div>

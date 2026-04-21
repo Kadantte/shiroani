@@ -28,15 +28,14 @@ export function AdblockStep() {
       kanji="盾"
       headline={
         <>
-          Ostatnia rzecz — <em className="not-italic text-primary italic">czysty</em> odcinek bez
-          reklam.
+          Na koniec: <em className="not-italic text-primary italic">czysty</em> odcinek bez reklam.
         </>
       }
       description={
         <>
-          Wbudowana przeglądarka używa{' '}
-          <b className="font-semibold text-foreground">EasyList + EasyPrivacy</b>, żeby zablokować
-          reklamy i trackery na stronach streamingowych. Możesz to wyłączyć na konkretnych domenach.
+          Wbudowana przeglądarka blokuje reklamy i trackery na stronach streamingowych (
+          <b className="font-semibold text-foreground">EasyList + EasyPrivacy</b>). Wyjątki ustawisz
+          dla konkretnych domen.
         </>
       }
       stepMarker={
@@ -75,12 +74,12 @@ export function AdblockStep() {
           <BlockedRow label="Trackery analityczne" />
           <BlockedRow label="Reklamy w odtwarzaczu wideo" />
           <BlockedRow label="Cookie walls" />
-          <BlockedRow label="Whitelisty własnych domen" variant="add" />
+          <BlockedRow label="Własne wyjątki domen" variant="add" />
         </ul>
       </div>
 
       <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-        ✦ Listę wyjątków zbudujesz potem w ustawieniach przeglądarki
+        ✦ Listę wyjątków dodasz później w ustawieniach przeglądarki
       </p>
     </StepLayout>
   );

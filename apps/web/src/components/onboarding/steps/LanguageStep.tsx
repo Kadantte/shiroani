@@ -21,9 +21,9 @@ export function LanguageStep() {
       }
       description={
         <>
-          Cześć, jestem <b className="font-semibold text-foreground">Shiro</b>. Przeprowadzę Cię
-          przez sześć krótkich kroków — obiecuję, że to potrwa minutę. Zawsze możesz wrócić do tego
-          w ustawieniach.
+          Cześć, jestem <b className="font-semibold text-foreground">Shiro</b>. Przeprowadzę cię
+          przez sześć krótkich kroków, zajmie ci to minutę. Wszystko zmienisz później w
+          ustawieniach.
         </>
       }
       stepMarker={
@@ -33,7 +33,7 @@ export function LanguageStep() {
       }
       stepIcon={<Languages className="h-5 w-5" />}
       stepTitle="Język interfejsu"
-      stepHint="Aplikacja jest dostępna w języku polskim. Kolejne wersje językowe są w drodze."
+      stepHint="Na razie tylko po polsku. Kolejne języki wkrótce."
     >
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {/* Polski — active */}
@@ -45,7 +45,7 @@ export function LanguageStep() {
           />
           <div className="min-w-0 flex-1">
             <b className="block text-sm font-semibold text-foreground">Polski</b>
-            <small className="text-[11.5px] text-muted-foreground">Jedyna dostępna wersja</small>
+            <small className="text-[11.5px] text-muted-foreground">Obecny język</small>
           </div>
           <Check className="h-4 w-4 flex-shrink-0 text-primary" />
         </div>
@@ -64,7 +64,7 @@ export function LanguageStep() {
           />
           <div className="min-w-0 flex-1">
             <b className="block text-sm font-semibold text-foreground">English</b>
-            <small className="text-[11.5px] text-muted-foreground">Wkrótce dostępny</small>
+            <small className="text-[11.5px] text-muted-foreground">Wkrótce</small>
           </div>
           <PillTag variant="accent" className="absolute right-2 top-2">
             Soon
@@ -73,7 +73,7 @@ export function LanguageStep() {
       </div>
 
       <p className="mt-auto font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-        ✦ Więcej języków pojawi się w kolejnych aktualizacjach
+        ✦ Kolejne języki dodamy w przyszłych aktualizacjach
       </p>
     </StepLayout>
   );

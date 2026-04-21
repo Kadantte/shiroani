@@ -19,7 +19,7 @@ export function NameStep() {
       description={
         <>
           Użyję tego imienia w powitaniu na nowej karcie i wszędzie tam, gdzie aplikacja zwraca się
-          do Ciebie. Możesz pominąć ten krok — zawsze zmienisz to w ustawieniach.
+          do ciebie. Możesz pominąć ten krok, zmienisz to później w ustawieniach.
         </>
       }
       stepMarker={
@@ -29,7 +29,7 @@ export function NameStep() {
       }
       stepIcon={<UserRound className="h-5 w-5" />}
       stepTitle="Twoje imię"
-      stepHint="Może być pseudonim, skrócona forma — cokolwiek Ci odpowiada. Zostaje tylko na Twoim urządzeniu."
+      stepHint="Pseudonim, zdrobnienie, co ci pasuje. Imię zostaje tylko na twoim urządzeniu."
     >
       <div className="flex flex-col gap-2">
         <Input
@@ -50,7 +50,7 @@ export function NameStep() {
       </div>
 
       <p className="mt-auto font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-        ✦ Zostawiając puste, Shiro użyje Twojego nicku z AniList, jeśli go podłączysz
+        ✦ Jeśli zostawisz puste i podłączysz AniList, Shiro użyje twojego nicku stamtąd
       </p>
     </StepLayout>
   );

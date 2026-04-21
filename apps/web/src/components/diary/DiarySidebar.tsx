@@ -17,7 +17,7 @@ import { StudioBreakdown } from '@/components/profile/StudioBreakdown';
 import { useDiaryBreakdowns } from '@/hooks/useDiaryBreakdowns';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useAnimeDetailStore } from '@/stores/useAnimeDetailStore';
-import type { DiaryEntry } from '@shiroani/shared';
+import { pluralize, type DiaryEntry } from '@shiroani/shared';
 
 interface DiarySidebarProps {
   entries: DiaryEntry[];
@@ -257,12 +257,13 @@ interface StreakCardProps {
 function StreakCard({ current, longest, milestone }: StreakCardProps) {
   const dotsCount = Math.min(current, 23);
   const dots = Array.from({ length: 23 }, (_, i) => i < dotsCount);
+  const remaining = Math.max(0, milestone.target - current);
   const note =
     current === 0
-      ? 'Dodaj dziś wpis, aby rozpocząć nowy streak.'
+      ? 'Dodaj dziś wpis, a ruszysz ze streakiem.'
       : current >= longest
-        ? `Rekord osobisty! Kontynuuj, aby pobić kolejny cel: ${milestone.target} dni.`
-        : `Najdłuższa seria: ${longest} dni. Do kolejnego celu (${milestone.target}) brakuje ${Math.max(0, milestone.target - current)} dni.`;
+        ? `Rekord osobisty! Nie zatrzymuj się. Kolejny cel to ${milestone.target} dni.`
+        : `Twój rekord: ${longest} ${pluralize(longest, 'dzień', 'dni', 'dni')}. Do celu (${milestone.target}) brakuje ${remaining} ${pluralize(remaining, 'dnia', 'dni', 'dni')}.`;
 
   return (
     <div

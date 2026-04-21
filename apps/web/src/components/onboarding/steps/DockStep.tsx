@@ -33,8 +33,8 @@ export function DockStep() {
       }
       description={
         <>
-          Pływająca pigułka z ikonami domyślnie siedzi na dole — ale możesz przyczepić ją do
-          dowolnej krawędzi. Zobacz podgląd po prawej.
+          Pływająca pigułka z ikonami domyślnie siedzi na dole, ale możesz przypiąć ją do dowolnej
+          krawędzi. Podgląd masz po prawej.
         </>
       }
       stepMarker={
@@ -59,21 +59,21 @@ export function DockStep() {
         <SettingsToggleRow
           id="onb-dock-autohide"
           title="Automatyczne ukrywanie"
-          description="Dock chowa się do ikony i rozwija po najechaniu"
+          description="Chowa się do ikony, pokazuje po najechaniu"
           checked={autoHide}
           onCheckedChange={setAutoHide}
         />
         <SettingsToggleRow
           id="onb-dock-labels"
           title="Pokaż etykiety"
-          description="Wyświetla nazwy pod ikonami nawigacji"
+          description="Nazwy widoczne pod ikonami"
           checked={showLabels}
           onCheckedChange={setShowLabels}
         />
         <SettingsToggleRow
           id="onb-dock-drag"
           title="Przeciąganie"
-          description="Zmiana pozycji docka przez drag & drop"
+          description="Zmiana pozycji docka przeciąganiem"
           checked={draggable}
           onCheckedChange={setDraggable}
         />

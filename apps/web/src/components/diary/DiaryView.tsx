@@ -141,7 +141,7 @@ export function DiaryView() {
         subtitle={subtitle}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Szukaj w dzienniku..."
+        searchPlaceholder="Szukaj w dzienniku…"
         filters={DIARY_FILTER_OPTIONS}
         activeFilter={activeFilter}
         onFilterChange={setFilter}
@@ -224,15 +224,15 @@ export function DiaryView() {
                     <div className="text-center space-y-1.5">
                       <p className="text-sm font-medium text-foreground/70">Brak wyników</p>
                       <p className="text-xs text-muted-foreground/60 max-w-[200px]">
-                        Spróbuj innych słów kluczowych lub zmień filtr
+                        Spróbuj innych słów albo zmień filtr
                       </p>
                     </div>
                   </div>
                 ) : (
                   <EmptyState
                     icon={NotebookPen}
-                    title="Twój dziennik jest pusty"
-                    subtitle="Zacznij zapisywać przemyślenia o anime, recenzje odcinków i notatki"
+                    title="Dziennik jest jeszcze pusty"
+                    subtitle="Zapisuj wrażenia z odcinków, recenzje i notatki"
                     action={{
                       label: 'Napisz pierwszy wpis',
                       icon: Plus,

@@ -38,13 +38,13 @@ export function SummaryStep() {
   }, [theme, customThemes]);
 
   const backgroundLabel = customBackground
-    ? `Niestandardowe · ${Math.round((backgroundBlur / 20) * 100)}% blur`
+    ? `Własne · ${Math.round((backgroundBlur / 20) * 100)}% rozmycia`
     : 'Bez tła';
 
   const dockLabel = useMemo(() => {
     const edgeName =
       edge === 'bottom' ? 'Dół' : edge === 'left' ? 'Lewo' : edge === 'right' ? 'Prawo' : 'Góra';
-    return autoHide ? `${edgeName} · auto-hide` : edgeName;
+    return autoHide ? `${edgeName} · auto-ukrywanie` : edgeName;
   }, [edge, autoHide]);
 
   return (
@@ -52,14 +52,14 @@ export function SummaryStep() {
       kanji="完"
       headline={
         <>
-          Wszystko <em className="not-italic text-primary italic">zapięte</em> — czas oglądać.
+          Wszystko <em className="not-italic text-primary italic">zapięte</em>. Czas oglądać.
         </>
       }
       description={
         <>
-          Siedem ustawień za nami. Twoja konfiguracja jest zapisana lokalnie.{' '}
-          <b className="font-semibold text-foreground">Shiro-chan</b> będzie na dole ekranu, gdybyś
-          jej potrzebowała.
+          Siedem ustawień za nami, wszystko zapisane u ciebie na komputerze.{' '}
+          <b className="font-semibold text-foreground">Shiro-chan</b> będzie na dole ekranu, gdyby
+          była ci potrzebna.
         </>
       }
       stepMarker={
@@ -78,7 +78,7 @@ export function SummaryStep() {
       }
     >
       <p className="max-w-[34ch] text-[13px] leading-relaxed text-muted-foreground">
-        Poniżej Twoje wybory. Wszystko możesz zmienić w ustawieniach w dowolnym momencie.
+        Oto twoje wybory. Wszystko zmienisz później w ustawieniach.
       </p>
 
       <div className="flex flex-col gap-2">

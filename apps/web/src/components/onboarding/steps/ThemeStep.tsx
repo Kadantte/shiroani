@@ -27,8 +27,8 @@ export function ThemeStep() {
       description={
         <>
           Ciemne motywy sprawdzają się wieczorem.{' '}
-          <b className="font-semibold text-foreground">Paper</b> jest miły dla oczu rano. Zmienisz
-          kiedy chcesz — zapisujemy od razu.
+          <b className="font-semibold text-foreground">Paper</b> łagodniejszy dla oczu rano.
+          Zmienisz kiedy chcesz, zapisuje się od razu.
         </>
       }
       stepMarker={

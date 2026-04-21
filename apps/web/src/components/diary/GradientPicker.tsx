@@ -61,7 +61,7 @@ export function GradientPicker({
             onClick={() => onChange(undefined)}
             className="ml-1 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70 hover:text-foreground/80 transition-colors"
           >
-            usuń
+            wyczyść
           </button>
         )}
       </div>

@@ -123,7 +123,7 @@ export function ProfileShareDialog({ open, onOpenChange, profile }: ProfileShare
         <DialogHeader className="px-6 pt-5 pb-3">
           <DialogTitle className="text-base font-semibold">Udostępnij profil</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground/70">
-            Karta profilu w formacie PNG — idealna do udostępnienia na Discordzie
+            Karta profilu w formacie PNG, gotowa do wrzucenia na Discorda
           </DialogDescription>
         </DialogHeader>
 

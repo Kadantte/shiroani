@@ -8,7 +8,7 @@ import { StudioBreakdown } from './StudioBreakdown';
 import { ActivityFeed } from './ActivityFeed';
 import { STATUS_LABELS, formatDays, formatDaysLabel } from './profile-constants';
 import { FavouriteCard } from './ProfileCharts';
-import type { UserProfile } from '@shiroani/shared';
+import { pluralize, type UserProfile } from '@shiroani/shared';
 
 interface ProfileDashboardProps {
   profile: UserProfile;
@@ -66,7 +66,7 @@ export function ProfileDashboard({ profile, onShare }: ProfileDashboardProps) {
 
         {/* Library status rings */}
         <section>
-          <SectionHead>Statusy biblioteki</SectionHead>
+          <SectionHead>Podział biblioteki</SectionHead>
           <div className="flex gap-5 items-center flex-wrap">
             {statusRings.map(ring => (
               <ProgressRing
@@ -79,23 +79,23 @@ export function ProfileDashboard({ profile, onShare }: ProfileDashboardProps) {
             ))}
             <div className="flex-1 min-w-[220px] px-3.5 text-[12px] text-foreground/75 leading-[1.6] space-y-1">
               <div>
-                Łącznie obejrzano{' '}
+                Obejrzałeś łącznie{' '}
                 <b className="text-foreground font-bold tabular-nums">
                   {stats.episodesWatched.toLocaleString('pl-PL').replace(/,/g, ' ')} odcinków
                 </b>
               </div>
               <div>
-                Co daje ok.{' '}
+                To ok.{' '}
                 <b className="text-[oklch(0.8_0.14_70)] font-bold tabular-nums">
                   {formatDays(stats.minutesWatched)} {formatDaysLabel(stats.minutesWatched)}
                 </b>{' '}
-                czasu oglądania
+                przed ekranem
               </div>
               {topYear && (
                 <div>
                   Ulubiony rok:{' '}
                   <b className="text-primary font-bold tabular-nums">{topYear.year}</b> ·{' '}
-                  {topYear.count} tytuły
+                  {topYear.count} {pluralize(topYear.count, 'tytuł', 'tytuły', 'tytułów')}
                 </div>
               )}
             </div>

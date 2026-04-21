@@ -16,14 +16,14 @@ export function BackgroundStep() {
       kanji="景"
       headline={
         <>
-          Ustaw <em className="not-italic text-primary italic">atmosferę</em> — twoje ulubione
+          Ustaw <em className="not-italic text-primary italic">atmosferę</em>: twoje ulubione
           key-arty w tle.
         </>
       }
       description={
         <>
-          Wrzuć obraz lub GIF i my zrobimy z niego rozmyte tło dla biblioteki i harmonogramu. Możesz
-          też zostawić domyślne — <b className="font-semibold text-foreground">bez tła</b>.
+          Wrzuć obraz lub GIF, zrobimy z niego rozmyte tło dla biblioteki i harmonogramu. Możesz też
+          zostać przy domyślnym: <b className="font-semibold text-foreground">bez tła</b>.
         </>
       }
       stepMarker={
@@ -32,7 +32,7 @@ export function BackgroundStep() {
         </>
       }
       stepIcon={<Sparkles className="h-5 w-5" />}
-      stepTitle="Tapeta w tle"
+      stepTitle="Tło aplikacji"
     >
       <BackgroundPanel variant="onboarding" />
     </StepLayout>

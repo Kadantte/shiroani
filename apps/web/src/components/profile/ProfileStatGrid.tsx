@@ -24,23 +24,19 @@ export function ProfileStatGrid({ profile }: ProfileStatGridProps) {
       <StatCard
         label={STATUS_LABELS.COMPLETED ?? 'Ukończone'}
         value={completed}
-        sub="tytuły całkowicie obejrzane"
+        sub="obejrzane w całości"
         tone="accent"
       />
+      <StatCard label={STATUS_LABELS.CURRENT ?? 'Oglądam'} value={current} sub="w trakcie" />
       <StatCard
-        label={STATUS_LABELS.CURRENT ?? 'Oglądam'}
-        value={current}
-        sub="aktywnych w tej chwili"
-      />
-      <StatCard
-        label={STATUS_LABELS.PLANNING ?? 'Planuję'}
+        label={STATUS_LABELS.PLANNING ?? 'Planowane'}
         value={planning}
         sub="w kolejce do obejrzenia"
       />
       <StatCard
         label="Śr. ocena"
         value={formatScore(stats.meanScore)}
-        sub="z wszystkich ocenionych"
+        sub="ze wszystkich ocenionych"
         tone="gold"
       />
     </div>

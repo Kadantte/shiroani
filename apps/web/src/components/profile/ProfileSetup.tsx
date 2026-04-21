@@ -25,9 +25,9 @@ export function ProfileSetup() {
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
             <User className="w-7 h-7 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-foreground">Połącz profil AniList</h2>
+          <h2 className="text-lg font-semibold text-foreground">Podłącz profil AniList</h2>
           <p className="text-sm text-muted-foreground/70 leading-relaxed">
-            Wpisz swoją nazwę użytkownika AniList, aby zobaczyć statystyki oglądania
+            Wpisz nazwę użytkownika z AniList, żeby zobaczyć swoje statystyki
           </p>
         </div>
 
