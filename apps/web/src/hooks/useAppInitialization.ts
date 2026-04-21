@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createLogger } from '@shiroani/shared';
+import { installRendererLogBridge } from '@/lib/logger-bridge';
 import { initializeSocket, connectSocket } from '@/lib/socket';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -51,6 +52,10 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
     let mounted = true;
     let cleanupUpdate: (() => void) | undefined;
 
+    // Wire the renderer ring buffer to main-process file logging before any
+    // other init step logs so early initialization telemetry makes it to disk.
+    const uninstallLogBridge = installRendererLogBridge();
+
     const init = async () => {
       try {
         logger.info('Initializing app...');
@@ -101,6 +106,7 @@ export function useAppInitialization(): { ready: boolean; error: string | null }
       mounted = false;
       cleanupAllListeners();
       cleanupUpdate?.();
+      uninstallLogBridge();
     };
   }, [initAllListeners, cleanupAllListeners, initUpdateListeners]);
 

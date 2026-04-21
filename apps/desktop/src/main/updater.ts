@@ -6,9 +6,15 @@ import type { UpdateChannel } from '@shiroani/shared';
 import type { UpdateInfo as ElectronUpdateInfo } from 'electron-updater';
 import type { ProgressInfo } from 'electron-updater';
 import { store } from './store';
-import { createMainLogger } from './logger';
+import { attachUpdaterLogger, createMainLogger } from './logger';
 
 const logger = createMainLogger('AutoUpdater');
+
+// Route electron-updater's internal debug output through our file-backed
+// logger before any other updater wiring runs. Must be done first so that
+// the autoDownload/autoInstallOnAppQuit assignments below and any implicit
+// init electron-updater performs on import show up in our logs.
+attachUpdaterLogger(autoUpdater);
 
 let updaterEnabled = false;
 let currentChannel: UpdateChannel = DEFAULT_UPDATE_CHANNEL;

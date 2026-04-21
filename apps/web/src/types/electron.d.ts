@@ -54,6 +54,15 @@ interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
     getAutoLaunch: () => Promise<boolean>;
     setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+    setLogLevel: (level: string) => Promise<{ ok: boolean; level: string }>;
+  };
+  log?: {
+    write: (entry: {
+      level: 'error' | 'warn' | 'info' | 'debug';
+      context: string;
+      message: string;
+      data?: unknown;
+    }) => Promise<void>;
   };
   browser?: {
     toggleAdblock: (enabled: boolean) => Promise<void>;

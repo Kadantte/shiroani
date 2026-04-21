@@ -180,6 +180,40 @@ export async function flushLogs(): Promise<void> {
   await doFlush();
 }
 
+/**
+ * Synchronously drain the in-memory write buffer to disk.
+ *
+ * Intended for `uncaughtException` / `unhandledRejection` handlers and any
+ * other path where the process may exit before the event loop runs another
+ * tick. Uses `fs.appendFileSync` so the write completes before returning.
+ *
+ * Safe to call after `flushLogs()` or the async flush timer — if the buffer
+ * is empty, this is a no-op. On failure, entries are re-queued so a later
+ * async flush can retry.
+ */
+export function flushLogsSync(): void {
+  if (buffer.length === 0 || loggingFailed) return;
+
+  const entries = buffer.splice(0);
+  let logPath: string;
+  try {
+    logPath = getLogPath();
+  } catch (error) {
+    // Re-queue and bail — the logs dir may not be resolvable in the
+    // middle of a crash (e.g. app not yet ready).
+    buffer.unshift(...entries);
+    handleLoggingError(error);
+    return;
+  }
+
+  try {
+    fs.appendFileSync(logPath, entries.join(''));
+  } catch (error) {
+    buffer.unshift(...entries);
+    handleLoggingError(error);
+  }
+}
+
 // ============================================================================
 // Error handling
 // ============================================================================
@@ -286,5 +320,41 @@ export function createMainLogger(context: string) {
 
 /** Main process logger */
 export const logger = createMainLogger('Main');
+
+// ============================================================================
+// electron-updater shim
+// ============================================================================
+
+/**
+ * Minimal subset of `electron-updater`'s `AppUpdater` surface we need in order
+ * to install a logger. Declaring this locally keeps `logger.ts` free of a
+ * compile-time dependency on `electron-updater` (the caller, `updater.ts`,
+ * owns that import).
+ */
+export interface UpdaterLoggerTarget {
+  logger: {
+    info(message?: unknown): void;
+    warn(message?: unknown): void;
+    error(message?: unknown): void;
+    debug?(message: string): void;
+  } | null;
+}
+
+/**
+ * Install a logger shim on the given `electron-updater` instance so its
+ * internal debug output is routed through `createMainLogger('AutoUpdater')`
+ * and written to our log file from the first tick.
+ *
+ * The caller owns the `electron-updater` import; pass `autoUpdater` in.
+ */
+export function attachUpdaterLogger(target: UpdaterLoggerTarget): void {
+  const updaterLogger = createMainLogger('AutoUpdater');
+  target.logger = {
+    info: (message?: unknown) => updaterLogger.info(message),
+    warn: (message?: unknown) => updaterLogger.warn(message),
+    error: (message?: unknown) => updaterLogger.error(message),
+    debug: (message: string) => updaterLogger.debug(message),
+  };
+}
 
 export default logger;

@@ -2,11 +2,70 @@ import { ipcMain, app, shell, clipboard, nativeImage } from 'electron';
 import { existsSync } from 'fs';
 import { readdir, stat, readFile, writeFile } from 'fs/promises';
 import { join, resolve, sep } from 'path';
-import { LOG_FILE_PREFIX, LOG_MAX_FILE_SIZE } from '@shiroani/shared';
+import {
+  LOG_FILE_PREFIX,
+  LOG_MAX_FILE_SIZE,
+  setLogLevel,
+  getLogLevel,
+  LogLevel,
+} from '@shiroani/shared';
 import { getLogsDir, createMainLogger } from '../logger';
 import { getBackendPort } from '../backend-port';
 
 const logger = createMainLogger('IPC:App');
+
+// Dedicated forwarder logger — keeps renderer-originated entries visually
+// distinct (and separable via the `Renderer:*` context) from main-process ones.
+const rendererForwardLoggers = new Map<string, ReturnType<typeof createMainLogger>>();
+function getRendererForwardLogger(subContext: string): ReturnType<typeof createMainLogger> {
+  const tag = `Renderer:${subContext}`;
+  let existing = rendererForwardLoggers.get(tag);
+  if (!existing) {
+    existing = createMainLogger(tag);
+    rendererForwardLoggers.set(tag, existing);
+  }
+  return existing;
+}
+
+const ALLOWED_LOG_LEVELS = new Set(['error', 'warn', 'info', 'debug'] as const);
+type AllowedLogLevel = 'error' | 'warn' | 'info' | 'debug';
+
+// Clamp thresholds — prevent a runaway renderer from bloating the log file.
+const RENDERER_LOG_MESSAGE_MAX = 16 * 1024; // 16 KB
+const RENDERER_LOG_DATA_MAX = 32 * 1024; // 32 KB
+const TRUNCATED_SUFFIX = '...[truncated]';
+
+function clampString(value: string, max: number): string {
+  if (value.length <= max) return value;
+  return value.slice(0, Math.max(0, max - TRUNCATED_SUFFIX.length)) + TRUNCATED_SUFFIX;
+}
+
+function clampSerializedData(data: unknown): unknown {
+  if (data === undefined) return undefined;
+  let serialized: string;
+  try {
+    serialized = typeof data === 'string' ? data : JSON.stringify(data);
+  } catch {
+    // Fall back to String() for non-serializable values (circular refs, BigInt).
+    serialized = String(data);
+  }
+  if (serialized.length <= RENDERER_LOG_DATA_MAX) return data;
+  return clampString(serialized, RENDERER_LOG_DATA_MAX);
+}
+
+function logLevelName(level: LogLevel): AllowedLogLevel {
+  switch (level) {
+    case LogLevel.ERROR:
+      return 'error';
+    case LogLevel.WARN:
+      return 'warn';
+    case LogLevel.DEBUG:
+      return 'debug';
+    case LogLevel.INFO:
+    default:
+      return 'info';
+  }
+}
 
 /**
  * Register app-related IPC handlers
@@ -146,6 +205,50 @@ export function registerAppHandlers(): void {
     return logFiles.sort((a, b) => b.lastModified - a.lastModified);
   });
 
+  ipcMain.handle('app:log-write', (_event, payload: unknown) => {
+    // Fire-and-forget from renderer perspective. Validate payload shape and
+    // silently drop invalid messages rather than throwing — a malformed log
+    // write must not propagate as an IPC rejection to the renderer.
+    if (!payload || typeof payload !== 'object') return;
+    const entry = payload as {
+      level?: unknown;
+      context?: unknown;
+      message?: unknown;
+      data?: unknown;
+    };
+
+    const rawLevel = typeof entry.level === 'string' ? entry.level.toLowerCase() : '';
+    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) return;
+    const level = rawLevel as AllowedLogLevel;
+
+    if (typeof entry.context !== 'string' || entry.context.length === 0) return;
+    if (typeof entry.message !== 'string') return;
+
+    const message = clampString(entry.message, RENDERER_LOG_MESSAGE_MAX);
+    const forwardLogger = getRendererForwardLogger(entry.context);
+
+    if (entry.data === undefined) {
+      forwardLogger[level](message);
+    } else {
+      forwardLogger[level](message, clampSerializedData(entry.data));
+    }
+  });
+
+  ipcMain.handle('app:set-log-level', (_event, payload: unknown) => {
+    const requested =
+      payload && typeof payload === 'object' && 'level' in payload
+        ? (payload as { level: unknown }).level
+        : undefined;
+    const rawLevel = typeof requested === 'string' ? requested.toLowerCase() : '';
+    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) {
+      return { ok: false, level: logLevelName(getLogLevel()) };
+    }
+    setLogLevel(rawLevel);
+    const current = logLevelName(getLogLevel());
+    logger.debug(`app:set-log-level → ${current}`);
+    return { ok: current === rawLevel, level: current };
+  });
+
   ipcMain.handle('app:read-log-file', async (_event, fileName: string) => {
     logger.debug(`app:read-log-file invoked for "${fileName}"`);
 
@@ -200,4 +303,6 @@ export function cleanupAppHandlers(): void {
   ipcMain.removeHandler('app:get-backend-port');
   ipcMain.removeHandler('app:list-log-files');
   ipcMain.removeHandler('app:read-log-file');
+  ipcMain.removeHandler('app:log-write');
+  ipcMain.removeHandler('app:set-log-level');
 }

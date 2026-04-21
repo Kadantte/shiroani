@@ -10,6 +10,16 @@ import type {
 } from '@shiroani/shared';
 
 /**
+ * Structured log entry forwarded from renderer → main via `app:log-write`.
+ */
+export interface RendererLogWriteEntry {
+  level: 'error' | 'warn' | 'info' | 'debug';
+  context: string;
+  message: string;
+  data?: unknown;
+}
+
+/**
  * Create a typed IPC listener that returns an unsubscribe function.
  * Eliminates the repeated on/removeListener boilerplate.
  */
@@ -43,6 +53,8 @@ const ALLOWED_IPC_CHANNELS = new Set([
   'app:open-logs-folder',
   'app:list-log-files',
   'app:read-log-file',
+  'app:log-write',
+  'app:set-log-level',
   'app:get-auto-launch',
   'app:set-auto-launch',
   'dialog:open-directory',
@@ -203,6 +215,15 @@ export interface ElectronAPI {
     readLogFile: (fileName: string) => Promise<string>;
     getAutoLaunch: () => Promise<boolean>;
     setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+    setLogLevel: (level: string) => Promise<{ ok: boolean; level: string }>;
+  };
+  log: {
+    /**
+     * Forward a log entry from the renderer to the main-process logger.
+     * Fire-and-forget: resolves to void and never rejects to the caller so
+     * log failures cannot feed back into the renderer logger (loop hazard).
+     */
+    write: (entry: RendererLogWriteEntry) => Promise<void>;
   };
   browser: {
     toggleAdblock: (enabled: boolean) => Promise<void>;
@@ -325,6 +346,14 @@ const electronAPI: ElectronAPI = {
     getAutoLaunch: () => ipcRenderer.invoke('app:get-auto-launch') as Promise<boolean>,
     setAutoLaunch: (enabled: boolean) =>
       ipcRenderer.invoke('app:set-auto-launch', enabled) as Promise<boolean>,
+    setLogLevel: (level: string) =>
+      ipcRenderer.invoke('app:set-log-level', { level }) as Promise<{ ok: boolean; level: string }>,
+  },
+  log: {
+    write: (entry: RendererLogWriteEntry) =>
+      (ipcRenderer.invoke('app:log-write', entry) as Promise<void>).catch(() => {
+        // Swallow — log forwarding failures must never reach the renderer.
+      }),
   },
   browser: {
     toggleAdblock: (enabled: boolean) =>
