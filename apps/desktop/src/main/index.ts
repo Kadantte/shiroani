@@ -87,15 +87,22 @@ if (process.platform === 'win32') {
 // Single-instance lock. Runs before any heavy setup so a second launch
 // quits immediately instead of spinning up Nest, browser manager, and
 // IPC handlers only to tear them down. Gated on `app.isPackaged` so dev
-// builds can coexist with an installed production copy. The primary
-// instance's 'second-instance' listener (below) focuses its window.
+// builds can coexist with an installed production copy. The
+// 'second-instance' listener is registered immediately after acquiring
+// the lock so any follow-up launches during module init are not missed.
 if (app.isPackaged) {
   const gotSingleInstanceLock = app.requestSingleInstanceLock();
   if (!gotSingleInstanceLock) {
     console.warn('Another ShiroAni instance is already running; quitting this one.');
-    app.quit();
-    process.exit(0);
+    app.exit(0);
   }
+
+  app.on('second-instance', () => {
+    logger.info('second-instance event received — focusing existing window');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      showMainWindow(mainWindow);
+    }
+  });
 }
 
 export let mainWindow: BrowserWindow | null = null;
@@ -326,13 +333,6 @@ process.on('uncaughtException', error => {
 process.on('unhandledRejection', reason => {
   logger.error('Unhandled rejection:', reason);
   flushLogsSync();
-});
-
-app.on('second-instance', () => {
-  logger.info('second-instance event received — focusing existing window');
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    showMainWindow(mainWindow);
-  }
 });
 
 // Render-process gone (per app). `reason` drives severity — hard crashes,
