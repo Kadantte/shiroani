@@ -19,6 +19,8 @@ interface SiblingApp {
   accent: string;
 }
 
+const SUITE_ASSET_BASE = `${import.meta.env.BASE_URL}suite/`;
+
 const APPS: SiblingApp[] = [
   {
     id: 'shiranami',
@@ -29,8 +31,8 @@ const APPS: SiblingApp[] = [
       'Spokojny odtwarzacz na lokalną bibliotekę: playlisty, radio internetowe, synchronizowane teksty i pobieranie z YouTube. Idealny w tle, gdy oglądasz odcinek albo nadrabiasz mangę.',
     url: 'https://shiranami.app',
     hostname: 'shiranami.app',
-    iconSrc: '/suite/shiranami-icon.png',
-    previewSrc: '/suite/shiranami-preview.png',
+    iconSrc: `${SUITE_ASSET_BASE}shiranami-icon.png`,
+    previewSrc: `${SUITE_ASSET_BASE}shiranami-preview.png`,
     previewAlt: 'Widok biblioteki w aplikacji Shiranami',
     accent: '0.68 0.15 295',
   },
@@ -43,8 +45,8 @@ const APPS: SiblingApp[] = [
       'Wygodny czytnik z biblioteką rozdziałów, zakładkami, importem i trybem nocnym. Twoje serie czekają w jednym, cichym miejscu.',
     url: 'https://kireimanga.app',
     hostname: 'kireimanga.app',
-    iconSrc: '/suite/kireimanga-icon.png',
-    previewSrc: '/suite/kireimanga-preview.png',
+    iconSrc: `${SUITE_ASSET_BASE}kireimanga-icon.png`,
+    previewSrc: `${SUITE_ASSET_BASE}kireimanga-preview.png`,
     previewAlt: 'Widok biblioteki w aplikacji KireiManga',
     accent: '0.62 0.2 25',
   },
