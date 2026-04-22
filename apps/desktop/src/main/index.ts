@@ -84,6 +84,20 @@ if (process.platform === 'win32') {
   app.setAppUserModelId(WINDOWS_APP_ID);
 }
 
+// Single-instance lock. Runs before any heavy setup so a second launch
+// quits immediately instead of spinning up Nest, browser manager, and
+// IPC handlers only to tear them down. Gated on `app.isPackaged` so dev
+// builds can coexist with an installed production copy. The primary
+// instance's 'second-instance' listener (below) focuses its window.
+if (app.isPackaged) {
+  const gotSingleInstanceLock = app.requestSingleInstanceLock();
+  if (!gotSingleInstanceLock) {
+    console.warn('Another ShiroAni instance is already running; quitting this one.');
+    app.quit();
+    process.exit(0);
+  }
+}
+
 export let mainWindow: BrowserWindow | null = null;
 let nestApp: INestApplication | null = null;
 let isShuttingDown = false;
@@ -404,16 +418,6 @@ app
       platform: process.platform,
     });
 
-    // Ensure only one instance of the app runs at a time. If another
-    // instance already holds the lock, log a warning and quit early; the
-    // first instance will focus its window via the 'second-instance'
-    // handler registered above.
-    const gotSingleInstanceLock = app.requestSingleInstanceLock();
-    if (!gotSingleInstanceLock) {
-      logger.warn('Another instance is already running; quitting this one.');
-      app.quit();
-      return;
-    }
     return bootstrap();
   })
   .catch(error => {
