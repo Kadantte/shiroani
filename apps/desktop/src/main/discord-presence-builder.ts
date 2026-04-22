@@ -4,7 +4,9 @@ import type {
   DiscordPresenceTemplate,
   DiscordActivityType,
 } from '@shiroani/shared';
-import { DEFAULT_DISCORD_TEMPLATES } from '@shiroani/shared';
+import { DEFAULT_DISCORD_TEMPLATES, LANDING_URL } from '@shiroani/shared';
+
+const LANDING_BUTTON = { label: 'Pobierz ShiroAni', url: LANDING_URL } as const;
 
 const MAX_FIELD_LENGTH = 128;
 
@@ -69,6 +71,8 @@ function buildFromTemplate(
       url: `https://anilist.co/anime/${activity.anilistId}`,
     });
   }
+
+  buttons.push({ ...LANDING_BUTTON });
 
   const presence: Record<string, unknown> = {
     details: details || undefined,
@@ -144,6 +148,8 @@ function buildLegacy(
       details = 'Korzysta z ShiroAni';
       break;
   }
+
+  buttons.push({ ...LANDING_BUTTON });
 
   const presence: Record<string, unknown> = {
     details,

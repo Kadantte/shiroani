@@ -41,6 +41,9 @@ export const GITHUB_RELEASES_API_URL = `https://api.github.com/repos/${GITHUB_RE
 /** Discord community invite URL */
 export const DISCORD_INVITE_URL = 'https://discord.gg/M3ujRdUJpn';
 
+/** Landing page URL */
+export const LANDING_URL = 'https://shiroani.app';
+
 /** Custom protocol URL for the new tab page */
 export const NEW_TAB_URL = 'shiroani://newtab';
 
