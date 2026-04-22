@@ -49,6 +49,39 @@ export interface Release {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: '0.6.2',
+    date: '22 kwietnia 2026',
+    shortDate: '22.04.2026',
+    title: 'Naprawa logowania do AniList i nowa sekcja Rodzina',
+    description:
+      'Szybka poprawka przywracająca logowanie do AniList we wbudowanej przeglądarce. Przy okazji w ustawieniach pojawiła się nowa sekcja Rodzina, w której można poznać siostrzane aplikacje — Shiranami i KireiManga.',
+    type: 'minor',
+    latest: true,
+    categories: [
+      {
+        kind: 'feature',
+        label: 'Nowości',
+        entries: [
+          'Nowa sekcja Rodzina w Ustawieniach — prezentacja siostrzanych aplikacji Shiranami i KireiManga',
+        ],
+      },
+      {
+        kind: 'fix',
+        label: 'Poprawki',
+        entries: [
+          'Logowanie do AniList we wbudowanej przeglądarce znów przechodzi weryfikację antybotową',
+        ],
+      },
+      {
+        kind: 'polish',
+        label: 'Dopracowania',
+        entries: [
+          'Historia zmian domyślnie ukryta w docku; jej ikona nadal widoczna w podglądzie Widoków w ustawieniach',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.6.1',
     date: '21 kwietnia 2026',
     shortDate: '21.04.2026',
@@ -56,7 +89,6 @@ export const RELEASES: readonly Release[] = [
     description:
       'Drobna aktualizacja naprawiająca zapisywanie zakładek i stanu przeczytania w widoku Aktualności. Po redesignie dwa nowe klucze zapisu nie zostały dodane do listy dozwolonej, przez co zakładki i oznaczenia przeczytanych artykułów nie przetrwały restartu aplikacji.',
     type: 'minor',
-    latest: true,
     categories: [
       {
         kind: 'fix',
