@@ -1,0 +1,26 @@
+/**
+ * Zod schemas for feed gateway payloads.
+ *
+ * Mirrors the TypeScript types in `../types/feed.ts`. Note that the payload
+ * `category` and `language` can include `'all'` (a filter value that isn't
+ * present on the base `FeedCategory` / `FeedLanguage` unions).
+ */
+
+import { z } from 'zod';
+
+export const feedCategorySchema = z.enum(['news', 'episodes', 'reviews', 'community', 'all']);
+
+export const feedLanguageSchema = z.enum(['en', 'pl', 'all']);
+
+export const feedGetItemsPayloadSchema = z.object({
+  category: feedCategorySchema.optional(),
+  language: feedLanguageSchema.optional(),
+  sourceId: z.number().int().positive().optional(),
+  limit: z.number().int().positive().max(200).optional(),
+  offset: z.number().int().nonnegative().max(100_000).optional(),
+});
+
+export const feedToggleSourcePayloadSchema = z.object({
+  id: z.number().int().positive(),
+  enabled: z.boolean(),
+});

@@ -5,6 +5,8 @@ import { copyFile, unlink, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { randomUUID } from 'crypto';
 import { createMainLogger } from '../logger';
+import { handle, handleWithFallback } from './with-ipc-handler';
+import { backgroundPickSchema, backgroundRemoveSchema, backgroundGetUrlSchema } from './schemas';
 
 const logger = createMainLogger('IPC:Background');
 
@@ -85,83 +87,96 @@ export function registerBackgroundProtocol(): void {
  * Register IPC handlers for background image management
  */
 export function registerBackgroundHandlers(mainWindow: BrowserWindow): void {
-  ipcMain.handle('background:pick', async (): Promise<{ fileName: string; url: string } | null> => {
-    logger.debug('background:pick invoked');
+  handle(
+    'background:pick',
+    async (): Promise<{ fileName: string; url: string } | null> => {
+      logger.debug('background:pick invoked');
 
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Wybierz obraz tla',
-      filters: [
-        {
-          name: 'Obrazy',
-          extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
-        },
-      ],
-      properties: ['openFile'],
-    });
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Wybierz obraz tla',
+        filters: [
+          {
+            name: 'Obrazy',
+            extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
+          },
+        ],
+        properties: ['openFile'],
+      });
 
-    if (result.canceled || result.filePaths.length === 0) {
-      return null;
-    }
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
 
-    const sourcePath = result.filePaths[0];
+      const sourcePath = result.filePaths[0];
 
-    // Validate extension
-    if (!isAllowedExtension(sourcePath)) {
-      logger.warn(`Rejected file with invalid extension: ${sourcePath}`);
-      throw new Error('Nieobslugiwany format pliku');
-    }
+      // Validate extension
+      if (!isAllowedExtension(sourcePath)) {
+        logger.warn(`Rejected file with invalid extension: ${sourcePath}`);
+        throw new Error('Nieobslugiwany format pliku');
+      }
 
-    // Check file size
-    const fileStats = await stat(sourcePath);
-    if (fileStats.size > MAX_FILE_SIZE) {
-      throw new Error('Plik jest za duzy (maksymalnie 20 MB)');
-    }
+      // Check file size
+      const fileStats = await stat(sourcePath);
+      if (fileStats.size > MAX_FILE_SIZE) {
+        throw new Error('Plik jest za duzy (maksymalnie 20 MB)');
+      }
 
-    // Generate unique filename to avoid collisions
-    const ext = extname(sourcePath).toLowerCase();
-    const uniqueName = `bg-${randomUUID()}${ext}`;
-    const destPath = join(getBackgroundsDir(), uniqueName);
+      // Generate unique filename to avoid collisions
+      const ext = extname(sourcePath).toLowerCase();
+      const uniqueName = `bg-${randomUUID()}${ext}`;
+      const destPath = join(getBackgroundsDir(), uniqueName);
 
-    // Copy file to backgrounds directory
-    await copyFile(sourcePath, destPath);
-    logger.info(`Background image copied: ${uniqueName}`);
+      // Copy file to backgrounds directory
+      await copyFile(sourcePath, destPath);
+      logger.info(`Background image copied: ${uniqueName}`);
 
-    const url = `shiroani-bg://backgrounds/${uniqueName}`;
-    return { fileName: uniqueName, url };
-  });
+      const url = `shiroani-bg://backgrounds/${uniqueName}`;
+      return { fileName: uniqueName, url };
+    },
+    { schema: backgroundPickSchema }
+  );
 
-  ipcMain.handle('background:remove', async (_event, fileName: string): Promise<void> => {
-    logger.debug(`background:remove invoked for: ${fileName}`);
+  handle(
+    'background:remove',
+    async (_event, fileName): Promise<void> => {
+      logger.debug(`background:remove invoked for: ${fileName}`);
 
-    // Security: validate filename
-    if (typeof fileName !== 'string' || !fileName || isUnsafeFileName(fileName)) {
-      throw new Error('Invalid filename');
-    }
+      // Security: validate filename shape (Zod guarantees non-empty string)
+      if (isUnsafeFileName(fileName)) {
+        throw new Error('Invalid filename');
+      }
 
-    if (!isAllowedExtension(fileName)) {
-      throw new Error('Invalid file type');
-    }
+      if (!isAllowedExtension(fileName)) {
+        throw new Error('Invalid file type');
+      }
 
-    const filePath = join(getBackgroundsDir(), fileName);
+      const filePath = join(getBackgroundsDir(), fileName);
 
-    if (existsSync(filePath)) {
-      await unlink(filePath);
-      logger.info(`Background image removed: ${fileName}`);
-    }
-  });
+      if (existsSync(filePath)) {
+        await unlink(filePath);
+        logger.info(`Background image removed: ${fileName}`);
+      }
+    },
+    { schema: backgroundRemoveSchema }
+  );
 
-  ipcMain.handle('background:get-url', (_event, fileName: string): string | null => {
-    if (typeof fileName !== 'string' || !fileName || isUnsafeFileName(fileName)) {
-      return null;
-    }
+  handleWithFallback(
+    'background:get-url',
+    (_event, fileName): string | null => {
+      if (isUnsafeFileName(fileName)) {
+        return null;
+      }
 
-    const filePath = join(getBackgroundsDir(), fileName);
-    if (!existsSync(filePath)) {
-      return null;
-    }
+      const filePath = join(getBackgroundsDir(), fileName);
+      if (!existsSync(filePath)) {
+        return null;
+      }
 
-    return `shiroani-bg://backgrounds/${fileName}`;
-  });
+      return `shiroani-bg://backgrounds/${fileName}`;
+    },
+    () => null,
+    { schema: backgroundGetUrlSchema }
+  );
 }
 
 /**

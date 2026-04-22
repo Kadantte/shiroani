@@ -1,47 +1,59 @@
 import { ipcMain } from 'electron';
-import type { DiscordRpcSettings, DiscordPresenceActivity } from '@shiroani/shared';
-import { createMainLogger } from '../logger';
+import type { DiscordRpcSettings } from '@shiroani/shared';
 import {
   getDiscordRpcSettings,
   updateDiscordRpcSettings,
   updateDiscordPresence,
   clearDiscordPresence,
 } from '../discord-rpc-service';
-
-const logger = createMainLogger('IPC:DiscordRpc');
+import { handle, handleWithFallback } from './with-ipc-handler';
+import {
+  discordRpcGetSettingsSchema,
+  discordRpcUpdateSettingsSchema,
+  discordRpcUpdatePresenceSchema,
+  discordRpcClearPresenceSchema,
+} from './schemas';
 
 /**
  * Register Discord RPC IPC handlers
  */
 export function registerDiscordRpcHandlers(): void {
-  ipcMain.handle('discord-rpc:get-settings', () => {
-    return getDiscordRpcSettings();
-  });
+  handle(
+    'discord-rpc:get-settings',
+    () => {
+      return getDiscordRpcSettings();
+    },
+    { schema: discordRpcGetSettingsSchema }
+  );
 
-  ipcMain.handle('discord-rpc:update-settings', (_event, updates: Partial<DiscordRpcSettings>) => {
-    try {
-      return updateDiscordRpcSettings(updates);
-    } catch (error) {
-      logger.error('Failed to update Discord RPC settings:', error);
-      throw error;
-    }
-  });
+  handle(
+    'discord-rpc:update-settings',
+    (_event, updates) => {
+      // Zod infers `templates` as a Partial<Record<...>> while the canonical
+      // `DiscordRpcSettings.templates` is Record<...>. Cast at the boundary —
+      // the schema already enforces shape.
+      return updateDiscordRpcSettings(updates as Partial<DiscordRpcSettings>);
+    },
+    { schema: discordRpcUpdateSettingsSchema }
+  );
 
-  ipcMain.handle('discord-rpc:update-presence', (_event, activity: DiscordPresenceActivity) => {
-    try {
+  handleWithFallback(
+    'discord-rpc:update-presence',
+    (_event, activity) => {
       updateDiscordPresence(activity);
-    } catch (error) {
-      logger.error('Failed to update Discord presence:', error);
-    }
-  });
+    },
+    () => undefined,
+    { schema: discordRpcUpdatePresenceSchema }
+  );
 
-  ipcMain.handle('discord-rpc:clear-presence', () => {
-    try {
+  handleWithFallback(
+    'discord-rpc:clear-presence',
+    () => {
       clearDiscordPresence();
-    } catch (error) {
-      logger.error('Failed to clear Discord presence:', error);
-    }
-  });
+    },
+    () => undefined,
+    { schema: discordRpcClearPresenceSchema }
+  );
 }
 
 /**

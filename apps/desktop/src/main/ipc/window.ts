@@ -1,38 +1,71 @@
 import { BrowserWindow, ipcMain } from 'electron';
+import { createMainLogger } from '../logger';
+import { handle, on } from './with-ipc-handler';
+import {
+  windowMinimizeSchema,
+  windowMaximizeSchema,
+  windowCloseSchema,
+  windowIsMaximizedSchema,
+  windowOpenDevtoolsSchema,
+} from './schemas';
+
+const logger = createMainLogger('IPC:Window');
 
 /**
  * Register window control IPC handlers
  */
 export function registerWindowHandlers(mainWindow: BrowserWindow): void {
-  ipcMain.on('window:minimize', () => {
-    mainWindow.minimize();
-  });
+  logger.debug('registering window handlers');
 
-  ipcMain.on('window:maximize', () => {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
-    }
-  });
+  on(
+    'window:minimize',
+    () => {
+      mainWindow.minimize();
+    },
+    { schema: windowMinimizeSchema }
+  );
 
-  ipcMain.on('window:close', () => {
-    mainWindow.close();
-  });
+  on(
+    'window:maximize',
+    () => {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
+    },
+    { schema: windowMaximizeSchema }
+  );
 
-  ipcMain.handle('window:is-maximized', () => {
-    return mainWindow.isMaximized();
-  });
+  on(
+    'window:close',
+    () => {
+      mainWindow.close();
+    },
+    { schema: windowCloseSchema }
+  );
 
-  ipcMain.handle('window:open-devtools', () => {
-    if (mainWindow.isDestroyed()) return;
-    const wc = mainWindow.webContents;
-    if (wc.isDevToolsOpened()) {
-      wc.devToolsWebContents?.focus();
-      return;
-    }
-    wc.openDevTools({ mode: 'detach' });
-  });
+  handle(
+    'window:is-maximized',
+    () => {
+      return mainWindow.isMaximized();
+    },
+    { schema: windowIsMaximizedSchema }
+  );
+
+  handle(
+    'window:open-devtools',
+    () => {
+      if (mainWindow.isDestroyed()) return;
+      const wc = mainWindow.webContents;
+      if (wc.isDevToolsOpened()) {
+        wc.devToolsWebContents?.focus();
+        return;
+      }
+      wc.openDevTools({ mode: 'detach' });
+    },
+    { schema: windowOpenDevtoolsSchema }
+  );
 
   // Forward window state changes to renderer
   mainWindow.on('maximize', () => {

@@ -1,5 +1,12 @@
 import { BrowserWindow, ipcMain, dialog } from 'electron';
 import type { MessageDialogOptions } from './types';
+import { handleWithFallback } from './with-ipc-handler';
+import {
+  dialogOpenDirectorySchema,
+  dialogOpenFileSchema,
+  dialogSaveFileSchema,
+  dialogMessageSchema,
+} from './schemas';
 
 /**
  * Security: Sanitize and validate dialog options
@@ -112,43 +119,69 @@ function sanitizeMessageDialogOptions(options: MessageDialogOptions): MessageDia
  * Register dialog IPC handlers
  */
 export function registerDialogHandlers(mainWindow: BrowserWindow): void {
-  ipcMain.handle('dialog:open-directory', async (_event, options?: Electron.OpenDialogOptions) => {
-    const sanitized = sanitizeOpenDialogOptions(options);
-    const result = await dialog.showOpenDialog(mainWindow, {
-      ...sanitized,
-      properties: ['openDirectory'], // Always set explicitly
-    });
-    return result.canceled ? null : result.filePaths[0];
-  });
+  handleWithFallback(
+    'dialog:open-directory',
+    async (_event, options) => {
+      const sanitized = sanitizeOpenDialogOptions(
+        options as Electron.OpenDialogOptions | undefined
+      );
+      const result = await dialog.showOpenDialog(mainWindow, {
+        ...sanitized,
+        properties: ['openDirectory'], // Always set explicitly
+      });
+      return result.canceled ? null : result.filePaths[0];
+    },
+    () => null,
+    { schema: dialogOpenDirectorySchema }
+  );
 
-  ipcMain.handle('dialog:open-file', async (_event, options?: Electron.OpenDialogOptions) => {
-    const sanitized = sanitizeOpenDialogOptions(options);
-    const result = await dialog.showOpenDialog(mainWindow, {
-      ...sanitized,
-      properties: ['openFile'], // Always set explicitly
-    });
-    return result.canceled ? null : result.filePaths[0];
-  });
+  handleWithFallback(
+    'dialog:open-file',
+    async (_event, options) => {
+      const sanitized = sanitizeOpenDialogOptions(
+        options as Electron.OpenDialogOptions | undefined
+      );
+      const result = await dialog.showOpenDialog(mainWindow, {
+        ...sanitized,
+        properties: ['openFile'], // Always set explicitly
+      });
+      return result.canceled ? null : result.filePaths[0];
+    },
+    () => null,
+    { schema: dialogOpenFileSchema }
+  );
 
-  ipcMain.handle('dialog:save-file', async (_event, options?: Electron.SaveDialogOptions) => {
-    const sanitized = sanitizeSaveDialogOptions(options);
-    const result = await dialog.showSaveDialog(mainWindow, {
-      ...sanitized,
-    });
-    return result.canceled ? null : result.filePath;
-  });
+  handleWithFallback(
+    'dialog:save-file',
+    async (_event, options) => {
+      const sanitized = sanitizeSaveDialogOptions(
+        options as Electron.SaveDialogOptions | undefined
+      );
+      const result = await dialog.showSaveDialog(mainWindow, {
+        ...sanitized,
+      });
+      return result.canceled ? null : result.filePath;
+    },
+    () => null,
+    { schema: dialogSaveFileSchema }
+  );
 
-  ipcMain.handle('dialog:message', async (_event, options: MessageDialogOptions) => {
-    const sanitized = sanitizeMessageDialogOptions(options);
-    const result = await dialog.showMessageBox(mainWindow, {
-      type: sanitized.type ?? 'info',
-      title: sanitized.title ?? 'ShiroAni',
-      message: sanitized.message,
-      detail: sanitized.detail,
-      buttons: sanitized.buttons ?? ['OK'],
-    });
-    return result.response;
-  });
+  handleWithFallback(
+    'dialog:message',
+    async (_event, options) => {
+      const sanitized = sanitizeMessageDialogOptions(options as MessageDialogOptions);
+      const result = await dialog.showMessageBox(mainWindow, {
+        type: sanitized.type ?? 'info',
+        title: sanitized.title ?? 'ShiroAni',
+        message: sanitized.message,
+        detail: sanitized.detail,
+        buttons: sanitized.buttons ?? ['OK'],
+      });
+      return result.response;
+    },
+    () => 0,
+    { schema: dialogMessageSchema }
+  );
 }
 
 /**

@@ -9,8 +9,9 @@ import { Server } from 'socket.io';
 import {
   createLogger,
   DiaryEvents,
-  type DiaryCreatePayload,
-  type DiaryUpdatePayload,
+  diaryCreatePayloadSchema,
+  diaryUpdatePayloadSchema,
+  diaryRemovePayloadSchema,
 } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
@@ -43,13 +44,15 @@ export class DiaryGateway {
   }
 
   @SubscribeMessage(DiaryEvents.CREATE)
-  handleCreate(@MessageBody() payload: DiaryCreatePayload) {
+  handleCreate(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'diary:create',
       defaultResult: { entry: null },
-      handler: async () => {
-        const entry = this.diaryService.createEntry(payload);
+      schema: diaryCreatePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const entry = this.diaryService.createEntry(parsed);
         this.server.emit(DiaryEvents.UPDATED, { entry, action: 'created' });
         return { entry };
       },
@@ -57,13 +60,15 @@ export class DiaryGateway {
   }
 
   @SubscribeMessage(DiaryEvents.UPDATE)
-  handleUpdate(@MessageBody() payload: DiaryUpdatePayload) {
+  handleUpdate(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'diary:update',
       defaultResult: { entry: null },
-      handler: async () => {
-        const { id, ...updates } = payload;
+      schema: diaryUpdatePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const { id, ...updates } = parsed;
         const entry = this.diaryService.updateEntry(id, updates);
         if (!entry) {
           return { entry: null, error: `Entry with id ${id} not found` };
@@ -75,17 +80,19 @@ export class DiaryGateway {
   }
 
   @SubscribeMessage(DiaryEvents.REMOVE)
-  handleRemove(@MessageBody() payload: { id: number }) {
+  handleRemove(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'diary:remove',
       defaultResult: { success: false },
-      handler: async () => {
-        const deleted = this.diaryService.removeEntry(payload.id);
+      schema: diaryRemovePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const deleted = this.diaryService.removeEntry(parsed.id);
         if (!deleted) {
-          return { success: false, error: `Entry with id ${payload.id} not found` };
+          return { success: false, error: `Entry with id ${parsed.id} not found` };
         }
-        this.server.emit(DiaryEvents.UPDATED, { id: payload.id, action: 'removed' });
+        this.server.emit(DiaryEvents.UPDATED, { id: parsed.id, action: 'removed' });
         return { success: true };
       },
     });

@@ -13,6 +13,23 @@ import {
 } from '@shiroani/shared';
 import { getLogsDir, createMainLogger } from '../logger';
 import { getBackendPort } from '../backend-port';
+import { handle, handleWithFallback } from './with-ipc-handler';
+import {
+  appGetPathSchema,
+  appGetVersionSchema,
+  appGetSystemInfoSchema,
+  appOpenLogsFolderSchema,
+  appClipboardWriteSchema,
+  appFetchImageBase64Schema,
+  appClipboardWriteImageSchema,
+  appSaveFileBinarySchema,
+  appGetAutoLaunchSchema,
+  appSetAutoLaunchSchema,
+  appGetBackendPortSchema,
+  appListLogFilesSchema,
+  appSetLogLevelSchema,
+  appReadLogFileSchema,
+} from './schemas';
 
 const logger = createMainLogger('IPC:App');
 
@@ -83,274 +100,331 @@ export function registerAppHandlers(): void {
     'temp',
   ]);
 
-  ipcMain.handle('app:get-path', (_event, name: Parameters<typeof app.getPath>[0]) => {
-    if (!ALLOWED_PATH_NAMES.has(name)) {
-      logger.warn(`[security] Blocked app:get-path for non-whitelisted name: "${name}"`);
-      return undefined;
-    }
-    logger.debug(`app:get-path invoked for "${name}"`);
-    return app.getPath(name);
-  });
+  handleWithFallback(
+    'app:get-path',
+    (_event, name) => {
+      if (!ALLOWED_PATH_NAMES.has(name)) {
+        logger.warn(`[security] Blocked app:get-path for non-whitelisted name: "${name}"`);
+        return undefined;
+      }
+      logger.debug(`app:get-path invoked for "${name}"`);
+      return app.getPath(name as Parameters<typeof app.getPath>[0]);
+    },
+    () => undefined,
+    { schema: appGetPathSchema }
+  );
 
-  ipcMain.handle('app:get-version', () => {
-    logger.debug('app:get-version invoked');
-    return app.getVersion();
-  });
+  handle(
+    'app:get-version',
+    () => {
+      logger.debug('app:get-version invoked');
+      return app.getVersion();
+    },
+    { schema: appGetVersionSchema }
+  );
 
-  ipcMain.handle('app:get-system-info', () => {
-    logger.debug('app:get-system-info invoked');
-    // getGPUFeatureStatus can throw very early in startup; guard so diagnostics
-    // still render a best-effort payload.
-    let gpuFeatureStatus: Record<string, string> | { error: string };
-    try {
-      gpuFeatureStatus = app.getGPUFeatureStatus() as unknown as Record<string, string>;
-    } catch (err) {
-      gpuFeatureStatus = { error: err instanceof Error ? err.message : String(err) };
-    }
-    return {
-      appVersion: app.getVersion(),
-      electronVersion: process.versions.electron ?? 'unknown',
-      chromeVersion: process.versions.chrome ?? 'unknown',
-      nodeVersion: process.versions.node ?? 'unknown',
+  handleWithFallback(
+    'app:get-system-info',
+    () => {
+      logger.debug('app:get-system-info invoked');
+      // getGPUFeatureStatus can throw very early in startup; guard so diagnostics
+      // still render a best-effort payload.
+      let gpuFeatureStatus: Record<string, string> | { error: string };
+      try {
+        gpuFeatureStatus = app.getGPUFeatureStatus() as unknown as Record<string, string>;
+      } catch (err) {
+        gpuFeatureStatus = { error: err instanceof Error ? err.message : String(err) };
+      }
+      return {
+        appVersion: app.getVersion(),
+        electronVersion: process.versions.electron ?? 'unknown',
+        chromeVersion: process.versions.chrome ?? 'unknown',
+        nodeVersion: process.versions.node ?? 'unknown',
+        osPlatform: process.platform,
+        osRelease: osRelease(),
+        arch: process.arch,
+        userDataPath: app.getPath('userData'),
+        logsPath: getLogsDir(),
+        gpuFeatureStatus,
+      };
+    },
+    () => ({
+      appVersion: 'unknown',
+      electronVersion: 'unknown',
+      chromeVersion: 'unknown',
+      nodeVersion: 'unknown',
       osPlatform: process.platform,
-      osRelease: osRelease(),
+      osRelease: 'unknown',
       arch: process.arch,
-      userDataPath: app.getPath('userData'),
-      logsPath: getLogsDir(),
-      gpuFeatureStatus,
-    };
-  });
+      userDataPath: '',
+      logsPath: '',
+      gpuFeatureStatus: { error: 'unavailable' } as Record<string, string> | { error: string },
+    }),
+    { schema: appGetSystemInfoSchema }
+  );
 
-  ipcMain.handle('app:open-logs-folder', async () => {
-    logger.debug('app:open-logs-folder invoked');
-    const logsPath = getLogsDir();
-    await shell.openPath(logsPath);
-  });
+  handle(
+    'app:open-logs-folder',
+    async () => {
+      logger.debug('app:open-logs-folder invoked');
+      const logsPath = getLogsDir();
+      await shell.openPath(logsPath);
+    },
+    { schema: appOpenLogsFolderSchema }
+  );
 
-  ipcMain.handle('app:clipboard-write', (_event, text: string) => {
-    if (typeof text !== 'string') {
-      throw new Error('clipboard-write expects a string');
-    }
-    clipboard.writeText(text);
-  });
+  handle(
+    'app:clipboard-write',
+    (_event, text) => {
+      clipboard.writeText(text);
+    },
+    { schema: appClipboardWriteSchema }
+  );
 
-  ipcMain.handle('app:fetch-image-base64', async (_event, url: string): Promise<string | null> => {
-    if (typeof url !== 'string') return null;
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return null;
-    }
-    if (parsed.protocol !== 'https:') return null;
+  handleWithFallback(
+    'app:fetch-image-base64',
+    async (_event, url): Promise<string | null> => {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        return null;
+      }
+      if (parsed.protocol !== 'https:') return null;
 
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) return null;
-      const buffer = Buffer.from(await res.arrayBuffer());
-      const contentType = res.headers.get('content-type') ?? 'image/jpeg';
-      return `data:${contentType};base64,${buffer.toString('base64')}`;
-    } catch (error) {
-      logger.warn(`Failed to fetch image: ${url}`, error);
-      return null;
-    }
-  });
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) return null;
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+        return `data:${contentType};base64,${buffer.toString('base64')}`;
+      } catch (error) {
+        logger.warn(`Failed to fetch image: ${url}`, error);
+        return null;
+      }
+    },
+    () => null,
+    { schema: appFetchImageBase64Schema }
+  );
 
-  ipcMain.handle('app:clipboard-write-image', (_event, pngBase64: string) => {
-    if (typeof pngBase64 !== 'string') {
-      throw new Error('clipboard-write-image expects a base64 PNG string');
-    }
-    const image = nativeImage.createFromBuffer(Buffer.from(pngBase64, 'base64'));
-    if (image.isEmpty()) {
-      throw new Error('Failed to create image from provided data');
-    }
-    clipboard.writeImage(image);
-  });
+  handle(
+    'app:clipboard-write-image',
+    (_event, pngBase64) => {
+      const image = nativeImage.createFromBuffer(Buffer.from(pngBase64, 'base64'));
+      if (image.isEmpty()) {
+        throw new Error('Failed to create image from provided data');
+      }
+      clipboard.writeImage(image);
+    },
+    { schema: appClipboardWriteImageSchema }
+  );
 
-  ipcMain.handle('app:save-file-binary', async (_event, filePath: string, base64Data: string) => {
-    if (typeof filePath !== 'string' || filePath.trim().length === 0) {
-      throw new Error('save-file-binary expects a non-empty file path');
-    }
-    if (typeof base64Data !== 'string') {
-      throw new Error('save-file-binary expects base64 data string');
-    }
-    const resolved = resolve(filePath);
-    const allowedDirs = [
-      app.getPath('documents'),
-      app.getPath('downloads'),
-      app.getPath('desktop'),
-      app.getPath('pictures'),
-    ];
-    const isAllowed = allowedDirs.some(dir => resolved.startsWith(dir + sep) || resolved === dir);
-    if (!isAllowed) {
-      logger.warn(`[security] Blocked save-file-binary outside allowed directories: ${resolved}`);
-      throw new Error('File path outside allowed directories');
-    }
-    await writeFile(resolved, Buffer.from(base64Data, 'base64'));
-    return { success: true };
-  });
+  handle(
+    'app:save-file-binary',
+    async (_event, filePath, base64Data) => {
+      const resolved = resolve(filePath);
+      const allowedDirs = [
+        app.getPath('documents'),
+        app.getPath('downloads'),
+        app.getPath('desktop'),
+        app.getPath('pictures'),
+      ];
+      const isAllowed = allowedDirs.some(dir => resolved.startsWith(dir + sep) || resolved === dir);
+      if (!isAllowed) {
+        logger.warn(`[security] Blocked save-file-binary outside allowed directories: ${resolved}`);
+        throw new Error('File path outside allowed directories');
+      }
+      await writeFile(resolved, Buffer.from(base64Data, 'base64'));
+      return { success: true };
+    },
+    { schema: appSaveFileBinarySchema }
+  );
 
-  ipcMain.handle('app:get-auto-launch', () => {
-    logger.debug('app:get-auto-launch invoked');
-    return app.getLoginItemSettings().openAtLogin;
-  });
+  handle(
+    'app:get-auto-launch',
+    () => {
+      logger.debug('app:get-auto-launch invoked');
+      return app.getLoginItemSettings().openAtLogin;
+    },
+    { schema: appGetAutoLaunchSchema }
+  );
 
-  ipcMain.handle('app:set-auto-launch', (_event, enabled: boolean) => {
-    logger.debug(`app:set-auto-launch invoked: ${enabled}`);
-    if (typeof enabled !== 'boolean') {
-      throw new Error('set-auto-launch expects a boolean');
-    }
-    app.setLoginItemSettings({ openAtLogin: enabled });
-    return app.getLoginItemSettings().openAtLogin;
-  });
+  handle(
+    'app:set-auto-launch',
+    (_event, enabled) => {
+      logger.debug(`app:set-auto-launch invoked: ${enabled}`);
+      app.setLoginItemSettings({ openAtLogin: enabled });
+      return app.getLoginItemSettings().openAtLogin;
+    },
+    { schema: appSetAutoLaunchSchema }
+  );
 
-  ipcMain.handle('app:get-backend-port', () => {
-    logger.debug('app:get-backend-port invoked');
-    return getBackendPort();
-  });
+  handle(
+    'app:get-backend-port',
+    () => {
+      logger.debug('app:get-backend-port invoked');
+      return getBackendPort();
+    },
+    { schema: appGetBackendPortSchema }
+  );
 
-  ipcMain.handle('app:list-log-files', async () => {
-    logger.debug('app:list-log-files invoked');
-    const logsDir = getLogsDir();
-    if (!existsSync(logsDir)) return [];
+  handleWithFallback(
+    'app:list-log-files',
+    async () => {
+      logger.debug('app:list-log-files invoked');
+      const logsDir = getLogsDir();
+      if (!existsSync(logsDir)) return [];
 
-    const entries = await readdir(logsDir);
-    const logFiles: { name: string; size: number; lastModified: number }[] = [];
+      const entries = await readdir(logsDir);
+      const logFiles: { name: string; size: number; lastModified: number }[] = [];
 
-    for (const entry of entries) {
-      if (!entry.startsWith(LOG_FILE_PREFIX)) continue;
-      if (!entry.endsWith('.log') && !entry.endsWith('.log.gz')) continue;
-      const fileStat = await stat(join(logsDir, entry));
-      if (!fileStat.isFile()) continue;
-      logFiles.push({
-        name: entry,
-        size: fileStat.size,
-        lastModified: fileStat.mtimeMs,
-      });
-    }
+      for (const entry of entries) {
+        if (!entry.startsWith(LOG_FILE_PREFIX)) continue;
+        if (!entry.endsWith('.log') && !entry.endsWith('.log.gz')) continue;
+        const fileStat = await stat(join(logsDir, entry));
+        if (!fileStat.isFile()) continue;
+        logFiles.push({
+          name: entry,
+          size: fileStat.size,
+          lastModified: fileStat.mtimeMs,
+        });
+      }
 
-    return logFiles.sort((a, b) => b.lastModified - a.lastModified);
-  });
+      return logFiles.sort((a, b) => b.lastModified - a.lastModified);
+    },
+    () => [],
+    { schema: appListLogFilesSchema }
+  );
 
-  ipcMain.handle('app:log-write', (_event, payload: unknown) => {
-    // Fire-and-forget from renderer perspective. Validate payload shape and
-    // silently drop invalid messages rather than throwing — a malformed log
-    // write must not propagate as an IPC rejection to the renderer.
-    if (!payload || typeof payload !== 'object') return;
-    const entry = payload as {
-      level?: unknown;
-      context?: unknown;
-      message?: unknown;
-      data?: unknown;
-    };
+  // app:log-write — MUST never throw back to the renderer. We deliberately do
+  // NOT attach a Zod schema here (BAD_REQUEST bypasses the fallback path);
+  // instead we keep the original permissive shape check and silently drop
+  // invalid payloads.
+  handleWithFallback(
+    'app:log-write',
+    (_event, payload: unknown) => {
+      if (!payload || typeof payload !== 'object') return;
+      const entry = payload as {
+        level?: unknown;
+        context?: unknown;
+        message?: unknown;
+        data?: unknown;
+      };
 
-    const rawLevel = typeof entry.level === 'string' ? entry.level.toLowerCase() : '';
-    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) return;
-    const level = rawLevel as AllowedLogLevel;
+      const rawLevel = typeof entry.level === 'string' ? entry.level.toLowerCase() : '';
+      if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) return;
+      const level = rawLevel as AllowedLogLevel;
 
-    if (typeof entry.context !== 'string' || entry.context.length === 0) return;
-    if (typeof entry.message !== 'string') return;
+      if (typeof entry.context !== 'string' || entry.context.length === 0) return;
+      if (typeof entry.message !== 'string') return;
 
-    const message = clampString(entry.message, RENDERER_LOG_MESSAGE_MAX);
-    const forwardLogger = getRendererForwardLogger(entry.context);
+      const message = clampString(entry.message, RENDERER_LOG_MESSAGE_MAX);
+      const forwardLogger = getRendererForwardLogger(entry.context);
 
-    if (entry.data === undefined) {
-      forwardLogger[level](message);
-    } else {
-      forwardLogger[level](message, clampSerializedData(entry.data));
-    }
-  });
+      if (entry.data === undefined) {
+        forwardLogger[level](message);
+      } else {
+        forwardLogger[level](message, clampSerializedData(entry.data));
+      }
+    },
+    () => undefined
+  );
 
-  ipcMain.handle('app:set-log-level', (_event, payload: unknown) => {
-    const requested =
-      payload && typeof payload === 'object' && 'level' in payload
-        ? (payload as { level: unknown }).level
-        : undefined;
-    const rawLevel = typeof requested === 'string' ? requested.toLowerCase() : '';
-    if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) {
-      return { ok: false, level: logLevelName(getLogLevel()) };
-    }
-    setLogLevel(rawLevel);
-    const current = logLevelName(getLogLevel());
-    logger.debug(`app:set-log-level → ${current}`);
-    return { ok: current === rawLevel, level: current };
-  });
+  handleWithFallback(
+    'app:set-log-level',
+    (_event, payload) => {
+      const requested = payload?.level;
+      const rawLevel = typeof requested === 'string' ? requested.toLowerCase() : '';
+      if (!ALLOWED_LOG_LEVELS.has(rawLevel as AllowedLogLevel)) {
+        return { ok: false, level: logLevelName(getLogLevel()) };
+      }
+      setLogLevel(rawLevel);
+      const current = logLevelName(getLogLevel());
+      logger.debug(`app:set-log-level → ${current}`);
+      return { ok: current === rawLevel, level: current };
+    },
+    () => ({ ok: false, level: logLevelName(getLogLevel()) }),
+    { schema: appSetLogLevelSchema }
+  );
 
-  ipcMain.handle('app:read-log-file', async (_event, fileName: string) => {
-    logger.debug(`app:read-log-file invoked for "${fileName}"`);
+  handle(
+    'app:read-log-file',
+    async (_event, fileName) => {
+      logger.debug(`app:read-log-file invoked for "${fileName}"`);
 
-    // Security: reject path traversal, null bytes, and invalid filenames.
-    // Allowlist matches both `.log` and `.log.gz` rotated siblings.
-    const isGzipped = typeof fileName === 'string' && fileName.endsWith('.log.gz');
-    const hasValidSuffix = typeof fileName === 'string' && (fileName.endsWith('.log') || isGzipped);
-    if (
-      typeof fileName !== 'string' ||
-      fileName.includes('\0') ||
-      fileName.includes('/') ||
-      fileName.includes('\\') ||
-      fileName.includes('..') ||
-      !fileName.startsWith(LOG_FILE_PREFIX) ||
-      !hasValidSuffix
-    ) {
-      throw new Error('Invalid log file name');
-    }
-
-    const filePath = join(getLogsDir(), fileName);
-
-    // For uncompressed `.log`, enforce the cap against on-disk size before
-    // reading. For `.log.gz`, the on-disk size is post-compression so we have
-    // to decompress first; the cap is then applied to the decompressed length
-    // and we truncate (with a trailing JSONL warn line) instead of rejecting.
-    let fileStat: Awaited<ReturnType<typeof stat>>;
-    try {
-      fileStat = await stat(filePath);
-    } catch (err: unknown) {
+      // Security: reject path traversal, null bytes, and invalid filenames.
+      // Allowlist matches both `.log` and `.log.gz` rotated siblings.
+      const isGzipped = fileName.endsWith('.log.gz');
+      const hasValidSuffix = fileName.endsWith('.log') || isGzipped;
       if (
-        err instanceof Error &&
-        'code' in err &&
-        (err as NodeJS.ErrnoException).code === 'ENOENT'
+        fileName.includes('\0') ||
+        fileName.includes('/') ||
+        fileName.includes('\\') ||
+        fileName.includes('..') ||
+        !fileName.startsWith(LOG_FILE_PREFIX) ||
+        !hasValidSuffix
       ) {
-        throw new Error('Log file not found', { cause: err });
+        throw new Error('Invalid log file name');
       }
-      throw err;
-    }
 
-    if (!isGzipped) {
-      if (fileStat.size > LOG_MAX_FILE_SIZE) {
-        throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+      const filePath = join(getLogsDir(), fileName);
+
+      // For uncompressed `.log`, enforce the cap against on-disk size before
+      // reading. For `.log.gz`, the on-disk size is post-compression so we have
+      // to decompress first; the cap is then applied to the decompressed length
+      // and we truncate (with a trailing JSONL warn line) instead of rejecting.
+      let fileStat: Awaited<ReturnType<typeof stat>>;
+      try {
+        fileStat = await stat(filePath);
+      } catch (err: unknown) {
+        if (
+          err instanceof Error &&
+          'code' in err &&
+          (err as NodeJS.ErrnoException).code === 'ENOENT'
+        ) {
+          throw new Error('Log file not found', { cause: err });
+        }
+        throw err;
       }
-      return readFile(filePath, 'utf-8');
-    }
 
-    // Compressed branch: gunzip, then enforce the cap on decompressed bytes.
-    const compressed = await readFile(filePath);
-    let decompressed: Buffer;
-    try {
-      decompressed = gunzipSync(compressed);
-    } catch (err) {
-      throw new Error('Failed to decompress log file', { cause: err });
-    }
+      if (!isGzipped) {
+        if (fileStat.size > LOG_MAX_FILE_SIZE) {
+          throw new Error(`Log file exceeds ${LOG_MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+        }
+        return readFile(filePath, 'utf-8');
+      }
 
-    if (decompressed.length <= LOG_MAX_FILE_SIZE) {
-      return decompressed.toString('utf-8');
-    }
+      // Compressed branch: gunzip, then enforce the cap on decompressed bytes.
+      const compressed = await readFile(filePath);
+      let decompressed: Buffer;
+      try {
+        decompressed = gunzipSync(compressed);
+      } catch (err) {
+        throw new Error('Failed to decompress log file', { cause: err });
+      }
 
-    const truncationNotice =
-      JSON.stringify({
-        level: 'warn',
-        context: 'LogFile',
-        message: `truncated at ${LOG_MAX_FILE_SIZE} bytes`,
-      }) + '\n';
-    // Reserve room for the notice so the total payload stays under the cap.
-    const noticeBytes = Buffer.byteLength(truncationNotice, 'utf-8');
-    const sliceLen = Math.max(0, LOG_MAX_FILE_SIZE - noticeBytes);
-    let head = decompressed.subarray(0, sliceLen).toString('utf-8');
-    // Don't leave a partial JSONL line dangling — chop back to the last `\n`
-    // so the caller still sees well-formed lines before the notice.
-    const lastNewline = head.lastIndexOf('\n');
-    if (lastNewline >= 0) head = head.slice(0, lastNewline + 1);
-    return head + truncationNotice;
-  });
+      if (decompressed.length <= LOG_MAX_FILE_SIZE) {
+        return decompressed.toString('utf-8');
+      }
+
+      const truncationNotice =
+        JSON.stringify({
+          level: 'warn',
+          context: 'LogFile',
+          message: `truncated at ${LOG_MAX_FILE_SIZE} bytes`,
+        }) + '\n';
+      // Reserve room for the notice so the total payload stays under the cap.
+      const noticeBytes = Buffer.byteLength(truncationNotice, 'utf-8');
+      const sliceLen = Math.max(0, LOG_MAX_FILE_SIZE - noticeBytes);
+      let head = decompressed.subarray(0, sliceLen).toString('utf-8');
+      // Don't leave a partial JSONL line dangling — chop back to the last `\n`
+      // so the caller still sees well-formed lines before the notice.
+      const lastNewline = head.lastIndexOf('\n');
+      if (lastNewline >= 0) head = head.slice(0, lastNewline + 1);
+      return head + truncationNotice;
+    },
+    { schema: appReadLogFileSchema }
+  );
 }
 
 /**

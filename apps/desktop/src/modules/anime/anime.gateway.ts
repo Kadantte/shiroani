@@ -1,6 +1,17 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
-import { AnimeEvents, createLogger } from '@shiroani/shared';
+import {
+  AnimeEvents,
+  createLogger,
+  animeSearchPayloadSchema,
+  animeGetDetailsPayloadSchema,
+  animeGetAiringPayloadSchema,
+  animeGetTrendingPayloadSchema,
+  animeGetPopularPayloadSchema,
+  animeGetSeasonalPayloadSchema,
+  animeGetRandomPayloadSchema,
+  animeGetUserProfilePayloadSchema,
+} from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
 import { handleGatewayRequest } from '../shared/gateway-handler';
@@ -18,94 +29,95 @@ export class AnimeGateway {
   }
 
   @SubscribeMessage(AnimeEvents.SEARCH)
-  async handleSearch(@MessageBody() payload: { query: string; page?: number }) {
+  async handleSearch(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:search — query="${payload.query}", page=${payload.page ?? 1}`,
+      action: 'anime:search',
       defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
-        const result = await this.animeService.searchAnime(payload.query, payload.page);
+      schema: animeSearchPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const result = await this.animeService.searchAnime(parsed.query, parsed.page);
         return { results: result.media, pageInfo: result.pageInfo };
       },
     });
   }
 
   @SubscribeMessage(AnimeEvents.GET_DETAILS)
-  async handleGetDetails(@MessageBody() payload: { anilistId: number }) {
+  async handleGetDetails(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-details — id=${payload.anilistId}`,
+      action: 'anime:get-details',
       defaultResult: { anime: null },
-      handler: async () => {
-        const anime = await this.animeService.getAnimeDetails(payload.anilistId);
+      schema: animeGetDetailsPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const anime = await this.animeService.getAnimeDetails(parsed.anilistId);
         return { anime };
       },
     });
   }
 
   @SubscribeMessage(AnimeEvents.GET_AIRING)
-  async handleGetAiring(
-    @MessageBody() payload: { startDate: string; endDate: string; page?: number }
-  ) {
+  async handleGetAiring(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-airing — ${payload.startDate} to ${payload.endDate}`,
+      action: 'anime:get-airing',
       defaultResult: { airingSchedules: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
-        const startDate = new Date(payload.startDate);
-        const endDate = new Date(payload.endDate);
-
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-          return {
-            airingSchedules: [],
-            pageInfo: EMPTY_PAGE_INFO,
-            error: 'Invalid date format. Use ISO 8601 strings.',
-          };
-        }
-
-        const result = await this.animeService.getAiringSchedule(startDate, endDate, payload.page);
+      schema: animeGetAiringPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const startDate = new Date(parsed.startDate);
+        const endDate = new Date(parsed.endDate);
+        const result = await this.animeService.getAiringSchedule(startDate, endDate, parsed.page);
         return { airingSchedules: result.airingSchedules, pageInfo: result.pageInfo };
       },
     });
   }
 
   @SubscribeMessage(AnimeEvents.GET_TRENDING)
-  async handleGetTrending(@MessageBody() payload: { page?: number }) {
+  async handleGetTrending(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-trending — page=${payload.page ?? 1}`,
+      action: 'anime:get-trending',
       defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
-        const result = await this.animeService.getTrending(payload.page);
+      schema: animeGetTrendingPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const result = await this.animeService.getTrending(parsed.page);
         return { results: result.media, pageInfo: result.pageInfo };
       },
     });
   }
 
   @SubscribeMessage(AnimeEvents.GET_POPULAR)
-  async handleGetPopular(@MessageBody() payload: { page?: number }) {
+  async handleGetPopular(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-popular — page=${payload.page ?? 1}`,
+      action: 'anime:get-popular',
       defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
-        const result = await this.animeService.getPopularThisSeason(payload.page);
+      schema: animeGetPopularPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const result = await this.animeService.getPopularThisSeason(parsed.page);
         return { results: result.media, pageInfo: result.pageInfo };
       },
     });
   }
 
   @SubscribeMessage(AnimeEvents.GET_SEASONAL)
-  async handleGetSeasonal(@MessageBody() payload: { year: number; season: string; page?: number }) {
+  async handleGetSeasonal(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-seasonal — ${payload.season} ${payload.year}`,
+      action: 'anime:get-seasonal',
       defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
+      schema: animeGetSeasonalPayloadSchema,
+      payload,
+      handler: async parsed => {
         const result = await this.animeService.getSeasonalAnime(
-          payload.year,
-          payload.season,
-          payload.page
+          parsed.year,
+          parsed.season,
+          parsed.page
         );
         return { results: result.media, pageInfo: result.pageInfo };
       },
@@ -113,23 +125,18 @@ export class AnimeGateway {
   }
 
   @SubscribeMessage(AnimeEvents.GET_RANDOM)
-  async handleGetRandom(
-    @MessageBody()
-    payload: {
-      includedGenres?: string[];
-      excludedGenres?: string[];
-      perPage?: number;
-    }
-  ) {
+  async handleGetRandom(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-random — include=[${(payload.includedGenres ?? []).join(',')}] exclude=[${(payload.excludedGenres ?? []).join(',')}]`,
+      action: 'anime:get-random',
       defaultResult: { results: [], pageInfo: EMPTY_PAGE_INFO },
-      handler: async () => {
+      schema: animeGetRandomPayloadSchema,
+      payload,
+      handler: async parsed => {
         const result = await this.animeService.getRandomByGenre(
-          payload.includedGenres,
-          payload.excludedGenres,
-          payload.perPage
+          parsed.includedGenres,
+          parsed.excludedGenres,
+          parsed.perPage
         );
         return { results: result.media, pageInfo: result.pageInfo };
       },
@@ -137,13 +144,15 @@ export class AnimeGateway {
   }
 
   @SubscribeMessage(AnimeEvents.GET_USER_PROFILE)
-  async handleGetUserProfile(@MessageBody() payload: { username: string }) {
+  async handleGetUserProfile(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
-      action: `anime:get-user-profile — username="${payload.username}"`,
+      action: 'anime:get-user-profile',
       defaultResult: { profile: null },
-      handler: async () => {
-        const profile = await this.animeService.getUserProfile(payload.username);
+      schema: animeGetUserProfilePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const profile = await this.animeService.getUserProfile(parsed.username);
         return { profile };
       },
     });

@@ -11,9 +11,9 @@ import {
   ImportExportEvents,
   LibraryEvents,
   DiaryEvents,
-  type ExportRequest,
+  exportRequestSchema,
+  importRequestSchema,
   type ExportResponse,
-  type ImportRequest,
   type ImportResponse,
   type ImportItemResult,
 } from '@shiroani/shared';
@@ -40,13 +40,15 @@ export class ImportExportGateway {
   }
 
   @SubscribeMessage(ImportExportEvents.EXPORT)
-  handleExport(@MessageBody() payload: ExportRequest) {
+  handleExport(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'data:export',
       defaultResult: { data: null, totalExported: 0 },
-      handler: async () => {
-        const data = this.importExportService.exportData(payload.type, payload.ids);
+      schema: exportRequestSchema,
+      payload,
+      handler: async parsed => {
+        const data = this.importExportService.exportData(parsed.type, parsed.ids);
         const totalExported = (data.data.library?.length ?? 0) + (data.data.diary?.length ?? 0);
         return { data, totalExported } as ExportResponse;
       },
@@ -54,12 +56,14 @@ export class ImportExportGateway {
   }
 
   @SubscribeMessage(ImportExportEvents.IMPORT)
-  handleImport(@MessageBody() payload: ImportRequest) {
+  handleImport(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'data:import',
       defaultResult: { results: [], totalImported: 0, totalSkipped: 0, totalErrors: 0 },
-      handler: async () => {
+      schema: importRequestSchema,
+      payload,
+      handler: async parsed => {
         const results: ImportItemResult[] = [];
         let totalImported = 0;
         let totalSkipped = 0;
@@ -70,11 +74,11 @@ export class ImportExportGateway {
         let hasDiary = false;
 
         // Import library entries
-        const libraryEntries = payload.data.data.library ?? [];
-        if ((payload.type === 'library' || payload.type === 'all') && libraryEntries.length > 0) {
+        const libraryEntries = parsed.data.data.library ?? [];
+        if ((parsed.type === 'library' || parsed.type === 'all') && libraryEntries.length > 0) {
           hasLibrary = true;
           for (const entry of libraryEntries) {
-            const result = this.importExportService.importLibraryEntry(entry, payload.strategy);
+            const result = this.importExportService.importLibraryEntry(entry, parsed.strategy);
             result.index = index;
 
             results.push(result);
@@ -90,11 +94,11 @@ export class ImportExportGateway {
         }
 
         // Import diary entries
-        const diaryEntries = payload.data.data.diary ?? [];
-        if ((payload.type === 'diary' || payload.type === 'all') && diaryEntries.length > 0) {
+        const diaryEntries = parsed.data.data.diary ?? [];
+        if ((parsed.type === 'diary' || parsed.type === 'all') && diaryEntries.length > 0) {
           hasDiary = true;
           for (const entry of diaryEntries) {
-            const result = this.importExportService.importDiaryEntry(entry, payload.strategy);
+            const result = this.importExportService.importDiaryEntry(entry, parsed.strategy);
             result.index = index;
 
             results.push(result);

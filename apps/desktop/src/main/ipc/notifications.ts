@@ -1,6 +1,5 @@
 import { ipcMain } from 'electron';
-import type { NotificationSettings, NotificationSubscription } from '@shiroani/shared';
-import { createMainLogger } from '../logger';
+import type { NotificationSettings } from '@shiroani/shared';
 import {
   getNotificationSettings,
   updateNotificationSettings,
@@ -10,66 +9,79 @@ import {
   toggleSubscription,
   isSubscribed,
 } from '../notification-service';
-
-const logger = createMainLogger('IPC:Notifications');
+import { handle, handleWithFallback } from './with-ipc-handler';
+import {
+  notificationsGetSettingsSchema,
+  notificationsUpdateSettingsSchema,
+  notificationsGetSubscriptionsSchema,
+  notificationsAddSubscriptionSchema,
+  notificationsRemoveSubscriptionSchema,
+  notificationsToggleSubscriptionSchema,
+  notificationsIsSubscribedSchema,
+} from './schemas';
 
 /**
  * Register notification IPC handlers
  */
 export function registerNotificationHandlers(): void {
-  ipcMain.handle('notifications:get-settings', () => {
-    return getNotificationSettings();
-  });
+  handleWithFallback(
+    'notifications:get-settings',
+    () => {
+      return getNotificationSettings();
+    },
+    () => undefined as unknown as NotificationSettings,
+    { schema: notificationsGetSettingsSchema }
+  );
 
-  ipcMain.handle(
+  handle(
     'notifications:update-settings',
-    (_event, updates: Partial<NotificationSettings>) => {
-      try {
-        return updateNotificationSettings(updates);
-      } catch (error) {
-        logger.error('Failed to update notification settings:', error);
-        throw error;
-      }
-    }
+    (_event, updates) => {
+      return updateNotificationSettings(updates);
+    },
+    { schema: notificationsUpdateSettingsSchema }
   );
 
-  ipcMain.handle('notifications:get-subscriptions', () => {
-    return getSubscriptions();
-  });
+  handleWithFallback(
+    'notifications:get-subscriptions',
+    () => {
+      return getSubscriptions();
+    },
+    () => [],
+    { schema: notificationsGetSubscriptionsSchema }
+  );
 
-  ipcMain.handle(
+  handle(
     'notifications:add-subscription',
-    (_event, subscription: NotificationSubscription) => {
-      try {
-        return addSubscription(subscription);
-      } catch (error) {
-        logger.error('Failed to add notification subscription:', error);
-        throw error;
-      }
-    }
+    (_event, subscription) => {
+      return addSubscription(subscription);
+    },
+    { schema: notificationsAddSubscriptionSchema }
   );
 
-  ipcMain.handle('notifications:remove-subscription', (_event, anilistId: number) => {
-    try {
+  handle(
+    'notifications:remove-subscription',
+    (_event, anilistId) => {
       return removeSubscription(anilistId);
-    } catch (error) {
-      logger.error('Failed to remove notification subscription:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: notificationsRemoveSubscriptionSchema }
+  );
 
-  ipcMain.handle('notifications:toggle-subscription', (_event, anilistId: number) => {
-    try {
+  handle(
+    'notifications:toggle-subscription',
+    (_event, anilistId) => {
       return toggleSubscription(anilistId);
-    } catch (error) {
-      logger.error('Failed to toggle notification subscription:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: notificationsToggleSubscriptionSchema }
+  );
 
-  ipcMain.handle('notifications:is-subscribed', (_event, anilistId: number) => {
-    return isSubscribed(anilistId);
-  });
+  handleWithFallback(
+    'notifications:is-subscribed',
+    (_event, anilistId) => {
+      return isSubscribed(anilistId);
+    },
+    () => false,
+    { schema: notificationsIsSubscribedSchema }
+  );
 }
 
 /**

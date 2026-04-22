@@ -37,3 +37,13 @@ export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';
 
 // Discord RPC handlers
 export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord-rpc';
+
+// IPC infrastructure
+export { handle, handleWithFallback, on } from './with-ipc-handler';
+export {
+  IpcError,
+  isIpcError,
+  LIBRARY_ERROR_CODES,
+  ANIME_ERROR_CODES,
+  VALIDATION_ERROR_CODES,
+} from './errors';

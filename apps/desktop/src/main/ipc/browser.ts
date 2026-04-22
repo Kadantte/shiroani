@@ -1,6 +1,14 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { createMainLogger } from '../logger';
 import { BrowserManager } from '../browser/browser-manager';
+import { handle, handleWithFallback } from './with-ipc-handler';
+import {
+  browserToggleAdblockSchema,
+  browserSetFullscreenSchema,
+  browserGetPopupBlockEnabledSchema,
+  browserSetPopupBlockEnabledSchema,
+  browserSetAdblockWhitelistSchema,
+} from './schemas';
 
 const logger = createMainLogger('IPC:Browser');
 
@@ -68,50 +76,71 @@ export function registerBrowserHandlers(
   browserManager: BrowserManager
 ): void {
   // Toggle adblock (session-level, must stay in main process)
-  ipcMain.handle('browser:toggle-adblock', async (_event, enabled: boolean) => {
-    logger.debug(`browser:toggle-adblock invoked, enabled=${enabled}`);
-    if (enabled) {
-      await browserManager.enableAdblock();
-    } else {
-      await browserManager.disableAdblock();
-    }
-  });
+  handle(
+    'browser:toggle-adblock',
+    async (_event, enabled) => {
+      logger.debug(`browser:toggle-adblock invoked, enabled=${enabled}`);
+      if (enabled) {
+        await browserManager.enableAdblock();
+      } else {
+        await browserManager.disableAdblock();
+      }
+    },
+    { schema: browserToggleAdblockSchema }
+  );
 
   // Set fullscreen state — renderer calls this when webview enters/exits HTML5 fullscreen
   // because webview cannot directly control the BrowserWindow fullscreen state
-  ipcMain.handle('browser:set-fullscreen', (_event, isFullscreen: boolean) => {
-    logger.debug(`browser:set-fullscreen invoked, isFullscreen=${isFullscreen}`);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.setFullScreen(isFullscreen);
-    }
-  });
+  handle(
+    'browser:set-fullscreen',
+    (_event, isFullscreen) => {
+      logger.debug(`browser:set-fullscreen invoked, isFullscreen=${isFullscreen}`);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setFullScreen(isFullscreen);
+      }
+    },
+    { schema: browserSetFullscreenSchema }
+  );
 
   // Popup block switch IPC
-  ipcMain.handle('browser:get-popup-block-enabled', () => {
-    return popupBlockEnabled;
-  });
+  handleWithFallback(
+    'browser:get-popup-block-enabled',
+    () => {
+      return popupBlockEnabled;
+    },
+    () => true,
+    { schema: browserGetPopupBlockEnabledSchema }
+  );
 
-  ipcMain.handle('browser:set-popup-block-enabled', (_event, enabled: unknown) => {
-    if (typeof enabled === 'boolean') {
+  handleWithFallback(
+    'browser:set-popup-block-enabled',
+    (_event, enabled) => {
       setPopupBlockEnabled(enabled);
-    }
-  });
+    },
+    () => undefined,
+    { schema: browserSetPopupBlockEnabledSchema }
+  );
 
   // Adblock whitelist IPC — validates input and silently drops invalid entries
-  ipcMain.handle('browser:set-adblock-whitelist', (_event, hosts: unknown) => {
-    if (!Array.isArray(hosts)) {
-      logger.warn('browser:set-adblock-whitelist received non-array payload; ignoring');
-      return;
-    }
-    const cleaned: string[] = [];
-    for (const entry of hosts.slice(0, MAX_WHITELIST_ENTRIES)) {
-      if (typeof entry !== 'string') continue;
-      const trimmed = entry.trim();
-      if (!trimmed || trimmed.length > MAX_HOST_LENGTH) continue;
-      cleaned.push(trimmed);
-    }
-    browserManager.setAdblockWhitelist(cleaned);
-  });
+  handleWithFallback(
+    'browser:set-adblock-whitelist',
+    (_event, hosts) => {
+      if (!Array.isArray(hosts)) {
+        logger.warn('browser:set-adblock-whitelist received non-array payload; ignoring');
+        return;
+      }
+      const cleaned: string[] = [];
+      for (const entry of hosts.slice(0, MAX_WHITELIST_ENTRIES)) {
+        if (typeof entry !== 'string') continue;
+        const trimmed = entry.trim();
+        if (!trimmed || trimmed.length > MAX_HOST_LENGTH) continue;
+        cleaned.push(trimmed);
+      }
+      browserManager.setAdblockWhitelist(cleaned);
+    },
+    () => undefined,
+    { schema: browserSetAdblockWhitelistSchema }
+  );
 
   // Intercept window.open calls from webview guest pages.
   // Since the `new-window` event was removed in Electron 22, we must use

@@ -1,5 +1,4 @@
 import { ipcMain } from 'electron';
-import { createMainLogger } from '../logger';
 import {
   setMascotVisible,
   isMascotVisible,
@@ -15,8 +14,52 @@ import {
   setMascotPositionLocked,
   resetMascotPosition,
 } from '../mascot/overlay';
+import { z } from 'zod';
+import { handleWithFallback } from './with-ipc-handler';
+import {
+  overlayShowSchema,
+  overlayHideSchema,
+  overlayToggleSchema,
+  overlayGetStatusSchema,
+  overlayIsEnabledSchema,
+  overlayGetSizeSchema,
+  overlayGetVisibilityModeSchema,
+  overlayGetPositionLockedSchema,
+  overlayResetPositionSchema,
+  overlaySetPositionSchema,
+  overlaySetEnabledSchema,
+  overlaySetSizeSchema,
+  overlaySetPositionLockedSchema,
+} from './schemas';
 
-const logger = createMainLogger('IPC:Overlay');
+/**
+ * Permissive override for `overlay:set-visibility-mode`. The canonical schema
+ * is a `z.enum(['always', 'tray-only'])`, but that routes validation failures
+ * through the BAD_REQUEST rethrow path — which bypasses `handleWithFallback`'s
+ * fallback. To preserve the legacy `{ success: false, error }` envelope for
+ * invalid modes, we validate the shape permissively here and check the enum
+ * inside the handler body.
+ */
+const overlaySetVisibilityModePermissiveSchema = z.tuple([z.unknown()]);
+
+/** Shared envelope types for mutating overlay channels. */
+type EnvelopeBase = { success: boolean; error?: string };
+type VisibilityEnvelope = EnvelopeBase & { visible?: boolean };
+type EnabledEnvelope = EnvelopeBase & { enabled?: boolean };
+type SizeEnvelope = EnvelopeBase & { size?: number };
+type LockedEnvelope = EnvelopeBase & { locked?: boolean };
+type ModeEnvelope = EnvelopeBase & { mode?: string };
+
+/**
+ * Unchanged contract: mutating channels return `{ success, ... }`. We lean on
+ * `handleWithFallback` to transform any thrown error (including Zod
+ * BAD_REQUEST for invalid modes) into the error envelope.
+ *
+ * NOTE: `handleWithFallback` rethrows BAD_REQUEST by default, but our renderer
+ * never deliberately sends malformed payloads — a schema miss here is a
+ * programmer error, and the renderer already handles thrown IPC errors. Keep
+ * the envelope contract for semantic failures (e.g. overlay service throws).
+ */
 
 /**
  * Register overlay control IPC handlers.
@@ -29,127 +72,147 @@ const logger = createMainLogger('IPC:Overlay');
  *   overlay:get-status    - Get current visibility and position
  */
 export function registerOverlayHandlers(): void {
-  ipcMain.handle('overlay:show', () => {
-    try {
+  handleWithFallback<[], EnvelopeBase>(
+    'overlay:show',
+    () => {
       setMascotVisible(true);
       return { success: true };
-    } catch (error) {
-      logger.error('Failed to show overlay:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlayShowSchema }
+  );
 
-  ipcMain.handle('overlay:hide', () => {
-    try {
+  handleWithFallback<[], EnvelopeBase>(
+    'overlay:hide',
+    () => {
       setMascotVisible(false);
       return { success: true };
-    } catch (error) {
-      logger.error('Failed to hide overlay:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlayHideSchema }
+  );
 
-  ipcMain.handle('overlay:toggle', () => {
-    try {
+  handleWithFallback<[], VisibilityEnvelope>(
+    'overlay:toggle',
+    () => {
       const visible = isMascotVisible();
       setMascotVisible(!visible);
       return { success: true, visible: !visible };
-    } catch (error) {
-      logger.error('Failed to toggle overlay:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlayToggleSchema }
+  );
 
-  ipcMain.handle('overlay:set-position', (_event, x: number, y: number) => {
-    try {
+  handleWithFallback<[number, number], EnvelopeBase>(
+    'overlay:set-position',
+    (_event, x, y) => {
       setMascotPosition(x, y);
       return { success: true };
-    } catch (error) {
-      logger.error('Failed to set overlay position:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetPositionSchema }
+  );
 
-  ipcMain.handle('overlay:get-status', () => {
-    try {
+  handleWithFallback(
+    'overlay:get-status',
+    () => {
       const enabled = isMascotEnabled();
       const visible = isMascotVisible();
       const position = getMascotPosition();
       return { enabled, visible, ...position };
-    } catch (error) {
-      logger.error('Failed to get overlay status:', error);
-      return { enabled: false, visible: false, x: 0, y: 0, error: String(error) };
-    }
-  });
+    },
+    err => ({ enabled: false, visible: false, x: 0, y: 0, error: String(err) }),
+    { schema: overlayGetStatusSchema }
+  );
 
-  ipcMain.handle('overlay:set-enabled', (_event, enabled: boolean) => {
-    try {
+  handleWithFallback<[boolean], EnabledEnvelope>(
+    'overlay:set-enabled',
+    (_event, enabled) => {
       setMascotEnabled(enabled);
       return { success: true, enabled };
-    } catch (error) {
-      logger.error('Failed to set overlay enabled:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetEnabledSchema }
+  );
 
-  ipcMain.handle('overlay:is-enabled', () => {
-    return isMascotEnabled();
-  });
+  handleWithFallback(
+    'overlay:is-enabled',
+    () => {
+      return isMascotEnabled();
+    },
+    () => false,
+    { schema: overlayIsEnabledSchema }
+  );
 
-  ipcMain.handle('overlay:set-size', (_event, size: number) => {
-    try {
+  handleWithFallback<[number], SizeEnvelope>(
+    'overlay:set-size',
+    (_event, size) => {
       setMascotSize(size);
       return { success: true, size };
-    } catch (error) {
-      logger.error('Failed to set overlay size:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetSizeSchema }
+  );
 
-  ipcMain.handle('overlay:get-size', () => {
-    return getMascotSize();
-  });
+  handleWithFallback(
+    'overlay:get-size',
+    () => {
+      return getMascotSize();
+    },
+    () => 1,
+    { schema: overlayGetSizeSchema }
+  );
 
-  ipcMain.handle('overlay:set-visibility-mode', (_event, mode: string) => {
-    try {
+  handleWithFallback<[unknown], ModeEnvelope>(
+    'overlay:set-visibility-mode',
+    (_event, mode) => {
       if (mode !== 'always' && mode !== 'tray-only') {
         return { success: false, error: 'Invalid visibility mode' };
       }
       applyMascotVisibilityMode(mode);
       return { success: true, mode };
-    } catch (error) {
-      logger.error('Failed to set visibility mode:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetVisibilityModePermissiveSchema }
+  );
 
-  ipcMain.handle('overlay:get-visibility-mode', () => {
-    return getMascotVisibilityMode();
-  });
+  handleWithFallback(
+    'overlay:get-visibility-mode',
+    () => {
+      return getMascotVisibilityMode();
+    },
+    () => 'always' as const,
+    { schema: overlayGetVisibilityModeSchema }
+  );
 
-  ipcMain.handle('overlay:set-position-locked', (_event, locked: boolean) => {
-    try {
+  handleWithFallback<[boolean], LockedEnvelope>(
+    'overlay:set-position-locked',
+    (_event, locked) => {
       setMascotPositionLocked(locked);
       return { success: true, locked };
-    } catch (error) {
-      logger.error('Failed to set position locked:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetPositionLockedSchema }
+  );
 
-  ipcMain.handle('overlay:get-position-locked', () => {
-    return isMascotPositionLocked();
-  });
+  handleWithFallback(
+    'overlay:get-position-locked',
+    () => {
+      return isMascotPositionLocked();
+    },
+    () => false,
+    { schema: overlayGetPositionLockedSchema }
+  );
 
-  ipcMain.handle('overlay:reset-position', () => {
-    try {
+  handleWithFallback<[], EnvelopeBase>(
+    'overlay:reset-position',
+    () => {
       resetMascotPosition();
       return { success: true };
-    } catch (error) {
-      logger.error('Failed to reset mascot position:', error);
-      return { success: false, error: String(error) };
-    }
-  });
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlayResetPositionSchema }
+  );
 }
 
 /**

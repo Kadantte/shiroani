@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { handleGatewayRequest } from '../gateway-handler';
 
 const mockLogger = {
@@ -63,5 +64,96 @@ describe('handleGatewayRequest', () => {
     });
 
     expect(mockLogger.info).toHaveBeenCalledWith('my action');
+  });
+
+  describe('with schema validation', () => {
+    const userSchema = z.object({
+      name: z.string().min(1),
+      age: z.number().int().nonnegative(),
+    });
+
+    it('passes parsed data to handler when schema succeeds', async () => {
+      const handler = jest.fn(async (parsed: { name: string; age: number }) => ({
+        greeting: `hi ${parsed.name}`,
+      }));
+
+      const result = await handleGatewayRequest({
+        logger: mockLogger,
+        action: 'greet',
+        defaultResult: { greeting: '' },
+        schema: userSchema,
+        payload: { name: 'Anya', age: 6 },
+        handler,
+      });
+
+      expect(handler).toHaveBeenCalledWith({ name: 'Anya', age: 6 });
+      expect(result).toEqual({ greeting: 'hi Anya' });
+      expect(mockLogger.warn).not.toHaveBeenCalled();
+      expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+
+    it('returns defaultResult with error and does NOT call handler when schema fails', async () => {
+      const handler = jest.fn(async () => ({ greeting: 'should not happen' }));
+
+      const result = await handleGatewayRequest({
+        logger: mockLogger,
+        action: 'greet',
+        defaultResult: { greeting: '' },
+        schema: userSchema,
+        payload: { name: '', age: -1 },
+        handler,
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ greeting: '' });
+      expect((result as { error: string }).error).toBeDefined();
+      expect(mockLogger.warn).toHaveBeenCalled();
+      expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+
+    it('joins multiple schema issues with "; "', async () => {
+      const result = await handleGatewayRequest({
+        logger: mockLogger,
+        action: 'greet',
+        defaultResult: { greeting: '' },
+        schema: userSchema,
+        payload: { name: 123, age: 'not-a-number' },
+        handler: async () => ({ greeting: 'unused' }),
+      });
+
+      const errorMessage = (result as { error: string }).error;
+      expect(errorMessage).toContain('; ');
+      // Two issues (name + age) → one separator between them.
+      expect(errorMessage.split('; ')).toHaveLength(2);
+    });
+
+    it('returns handler error when schema passes but handler throws', async () => {
+      const result = await handleGatewayRequest({
+        logger: mockLogger,
+        action: 'greet',
+        defaultResult: { greeting: '' },
+        schema: userSchema,
+        payload: { name: 'Loid', age: 35 },
+        handler: async () => {
+          throw new Error('downstream failure');
+        },
+      });
+
+      expect(result).toEqual({ greeting: '', error: 'downstream failure' });
+      expect(mockLogger.error).toHaveBeenCalledWith('Error greet:', expect.any(Error));
+    });
+
+    it('reports a (root) path when the payload itself is the wrong type', async () => {
+      const result = await handleGatewayRequest({
+        logger: mockLogger,
+        action: 'greet',
+        defaultResult: { greeting: '' },
+        schema: userSchema,
+        payload: 'not-an-object',
+        handler: async () => ({ greeting: 'unused' }),
+      });
+
+      expect((result as { error: string }).error).toContain('(root):');
+    });
   });
 });

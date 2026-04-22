@@ -6,7 +6,12 @@ import {
 } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { createLogger, ScheduleEvents } from '@shiroani/shared';
+import {
+  createLogger,
+  ScheduleEvents,
+  scheduleGetDailyPayloadSchema,
+  scheduleGetWeeklyPayloadSchema,
+} from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
 import { handleGatewayRequest } from '../shared/gateway-handler';
@@ -22,16 +27,15 @@ export class ScheduleGateway {
   }
 
   @SubscribeMessage(ScheduleEvents.GET_DAILY)
-  async handleGetDaily(
-    @MessageBody() payload: { date: string },
-    @ConnectedSocket() client: Socket
-  ) {
+  async handleGetDaily(@MessageBody() payload: unknown, @ConnectedSocket() client: Socket) {
     return handleGatewayRequest({
       logger,
-      action: `${ScheduleEvents.GET_DAILY} for date: ${payload.date}`,
-      defaultResult: { date: payload.date, entries: [] },
-      handler: async () => {
-        const result = await this.scheduleService.getDaily(payload.date);
+      action: ScheduleEvents.GET_DAILY,
+      defaultResult: { date: '', entries: [] },
+      schema: scheduleGetDailyPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const result = await this.scheduleService.getDaily(parsed.date);
         client.emit(ScheduleEvents.DAILY_RESULT, result);
         return result;
       },
@@ -39,16 +43,15 @@ export class ScheduleGateway {
   }
 
   @SubscribeMessage(ScheduleEvents.GET_WEEKLY)
-  async handleGetWeekly(
-    @MessageBody() payload: { startDate: string },
-    @ConnectedSocket() client: Socket
-  ) {
+  async handleGetWeekly(@MessageBody() payload: unknown, @ConnectedSocket() client: Socket) {
     return handleGatewayRequest({
       logger,
-      action: `${ScheduleEvents.GET_WEEKLY} from: ${payload.startDate}`,
+      action: ScheduleEvents.GET_WEEKLY,
       defaultResult: { schedule: {} },
-      handler: async () => {
-        const result = await this.scheduleService.getWeekly(payload.startDate);
+      schema: scheduleGetWeeklyPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const result = await this.scheduleService.getWeekly(parsed.startDate);
         client.emit(ScheduleEvents.WEEKLY_RESULT, result);
         return result;
       },

@@ -33,3 +33,6 @@ export * from './constants';
 
 // Logger
 export * from './logger';
+
+// Zod schemas (runtime validation for gateway payloads)
+export * from './schemas';

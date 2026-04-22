@@ -1,6 +1,8 @@
 import { ipcMain } from 'electron';
 import { createMainLogger } from '../logger';
 import { store } from '../store';
+import { handle, handleWithFallback } from './with-ipc-handler';
+import { storeGetSchema, storeSetSchema, storeDeleteSchema } from './schemas';
 
 const logger = createMainLogger('IPC:Store');
 
@@ -80,33 +82,46 @@ function isKeyAllowed(key: string): boolean {
  * Register electron-store IPC handlers
  */
 export function registerStoreHandlers(): void {
-  ipcMain.handle('store:get', (_event, key: string) => {
-    if (!isKeyAllowed(key)) {
-      logger.warn(`Blocked store:get for unauthorized key: ${key}`);
-      return undefined;
-    }
-    return store.get(key);
-  });
+  handleWithFallback(
+    'store:get',
+    (_event, key) => {
+      if (!isKeyAllowed(key)) {
+        logger.warn(`Blocked store:get for unauthorized key: ${key}`);
+        return undefined;
+      }
+      return store.get(key);
+    },
+    () => undefined,
+    { schema: storeGetSchema }
+  );
 
-  ipcMain.handle('store:set', (_event, key: string, value: unknown) => {
-    if (!isKeyAllowed(key)) {
-      logger.warn(`Blocked store:set for unauthorized key: ${key}`);
-      return;
-    }
-    const serialized = JSON.stringify(value);
-    if (serialized.length > 1_000_000) {
-      throw new Error('Value too large');
-    }
-    store.set(key, value);
-  });
+  handle(
+    'store:set',
+    (_event, key, value) => {
+      if (!isKeyAllowed(key)) {
+        logger.warn(`Blocked store:set for unauthorized key: ${key}`);
+        return;
+      }
+      const serialized = JSON.stringify(value);
+      if (serialized.length > 1_000_000) {
+        throw new Error('Value too large');
+      }
+      store.set(key, value);
+    },
+    { schema: storeSetSchema }
+  );
 
-  ipcMain.handle('store:delete', (_event, key: string) => {
-    if (!isKeyAllowed(key)) {
-      logger.warn(`Blocked store:delete for unauthorized key: ${key}`);
-      return;
-    }
-    store.delete(key);
-  });
+  handle(
+    'store:delete',
+    (_event, key) => {
+      if (!isKeyAllowed(key)) {
+        logger.warn(`Blocked store:delete for unauthorized key: ${key}`);
+        return;
+      }
+      store.delete(key);
+    },
+    { schema: storeDeleteSchema }
+  );
 }
 
 /**

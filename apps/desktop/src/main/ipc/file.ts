@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ipcMain, app } from 'electron';
 import { createMainLogger } from '../logger';
+import { handle } from './with-ipc-handler';
+import { fileWriteJsonSchema, fileReadJsonSchema } from './schemas';
 
 const logger = createMainLogger('IPC:File');
 
@@ -45,32 +47,24 @@ function validateJsonPath(filePath: unknown): asserts filePath is string {
  * Register file IPC handlers
  */
 export function registerFileHandlers(): void {
-  ipcMain.handle('file:write-json', async (_event, filePath: string, jsonString: string) => {
-    try {
+  handle(
+    'file:write-json',
+    async (_event, filePath, jsonString) => {
       validateJsonPath(filePath);
-
-      if (typeof jsonString !== 'string') {
-        throw new Error('Invalid data: jsonString must be a string');
-      }
-
       fs.writeFileSync(filePath, jsonString, 'utf-8');
       return { success: true };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error writing file';
-      throw new Error(message, { cause: error });
-    }
-  });
+    },
+    { schema: fileWriteJsonSchema }
+  );
 
-  ipcMain.handle('file:read-json', async (_event, filePath: string) => {
-    try {
+  handle(
+    'file:read-json',
+    async (_event, filePath) => {
       validateJsonPath(filePath);
-
       return fs.readFileSync(filePath, 'utf-8');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error reading file';
-      throw new Error(message, { cause: error });
-    }
-  });
+    },
+    { schema: fileReadJsonSchema }
+  );
 }
 
 /**

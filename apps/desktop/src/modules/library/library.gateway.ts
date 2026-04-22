@@ -9,9 +9,10 @@ import { Server } from 'socket.io';
 import {
   createLogger,
   LibraryEvents,
-  type AnimeStatus,
-  type LibraryAddPayload,
-  type LibraryUpdatePayload,
+  libraryGetAllPayloadSchema,
+  libraryAddPayloadSchema,
+  libraryUpdatePayloadSchema,
+  libraryRemovePayloadSchema,
 } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
@@ -31,26 +32,30 @@ export class LibraryGateway {
   }
 
   @SubscribeMessage(LibraryEvents.GET_ALL)
-  handleGetAll(@MessageBody() payload: { status?: AnimeStatus }) {
+  handleGetAll(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'library:get-all',
       defaultResult: { entries: [] },
-      handler: async () => {
-        const entries = this.libraryService.getAllEntries(payload?.status);
+      schema: libraryGetAllPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const entries = this.libraryService.getAllEntries(parsed?.status);
         return { entries };
       },
     });
   }
 
   @SubscribeMessage(LibraryEvents.ADD)
-  handleAdd(@MessageBody() payload: LibraryAddPayload) {
+  handleAdd(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'library:add',
       defaultResult: { entry: null },
-      handler: async () => {
-        const entry = this.libraryService.addEntry(payload);
+      schema: libraryAddPayloadSchema,
+      payload,
+      handler: async parsed => {
+        const entry = this.libraryService.addEntry(parsed);
         this.server.emit(LibraryEvents.UPDATED, { entry, action: 'added' });
         return { entry };
       },
@@ -58,13 +63,15 @@ export class LibraryGateway {
   }
 
   @SubscribeMessage(LibraryEvents.UPDATE)
-  handleUpdate(@MessageBody() payload: LibraryUpdatePayload) {
+  handleUpdate(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'library:update',
       defaultResult: { entry: null },
-      handler: async () => {
-        const { id, ...updates } = payload;
+      schema: libraryUpdatePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const { id, ...updates } = parsed;
         const entry = this.libraryService.updateEntry(id, updates);
         if (!entry) {
           return { entry: null, error: `Entry with id ${id} not found` };
@@ -89,17 +96,19 @@ export class LibraryGateway {
   }
 
   @SubscribeMessage(LibraryEvents.REMOVE)
-  handleRemove(@MessageBody() payload: { id: number }) {
+  handleRemove(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'library:remove',
       defaultResult: { success: false },
-      handler: async () => {
-        const deleted = this.libraryService.removeEntry(payload.id);
+      schema: libraryRemovePayloadSchema,
+      payload,
+      handler: async parsed => {
+        const deleted = this.libraryService.removeEntry(parsed.id);
         if (!deleted) {
-          return { success: false, error: `Entry with id ${payload.id} not found` };
+          return { success: false, error: `Entry with id ${parsed.id} not found` };
         }
-        this.server.emit(LibraryEvents.UPDATED, { id: payload.id, action: 'removed' });
+        this.server.emit(LibraryEvents.UPDATED, { id: parsed.id, action: 'removed' });
         return { success: true };
       },
     });

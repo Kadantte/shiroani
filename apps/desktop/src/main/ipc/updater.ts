@@ -1,6 +1,4 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import type { UpdateChannel } from '@shiroani/shared';
-import { createMainLogger } from '../logger';
 import {
   checkForUpdates,
   downloadUpdate,
@@ -8,60 +6,64 @@ import {
   getUpdateChannel,
   setUpdateChannel,
 } from '../updater';
-
-const logger = createMainLogger('IPC:Updater');
+import { handle, handleWithFallback } from './with-ipc-handler';
+import {
+  updaterCheckForUpdatesSchema,
+  updaterStartDownloadSchema,
+  updaterInstallNowSchema,
+  updaterGetChannelSchema,
+  updaterSetChannelSchema,
+} from './schemas';
 
 /**
  * Register updater IPC handlers
  */
 export function registerUpdaterHandlers(): void {
-  ipcMain.handle('updater:check-for-updates', async () => {
-    try {
+  handle(
+    'updater:check-for-updates',
+    async () => {
       return await checkForUpdates();
-    } catch (error) {
-      logger.error('Failed to check for updates:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: updaterCheckForUpdatesSchema }
+  );
 
-  ipcMain.handle('updater:start-download', async () => {
-    try {
+  handle(
+    'updater:start-download',
+    async () => {
       await downloadUpdate();
-    } catch (error) {
-      logger.error('Failed to start download:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: updaterStartDownloadSchema }
+  );
 
-  ipcMain.handle('updater:install-now', async () => {
-    try {
+  handle(
+    'updater:install-now',
+    async () => {
       quitAndInstall();
-    } catch (error) {
-      logger.error('Failed to quit and install:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: updaterInstallNowSchema }
+  );
 
-  ipcMain.handle('updater:get-channel', () => {
-    return getUpdateChannel();
-  });
+  handleWithFallback(
+    'updater:get-channel',
+    () => {
+      return getUpdateChannel();
+    },
+    () => 'stable' as const,
+    { schema: updaterGetChannelSchema }
+  );
 
-  ipcMain.handle('updater:set-channel', async (_event, channel: UpdateChannel) => {
-    try {
-      if (channel !== 'stable' && channel !== 'beta') {
-        throw new Error(`Invalid update channel: ${String(channel)}`);
-      }
+  handle(
+    'updater:set-channel',
+    async (_event, channel) => {
       const result = await setUpdateChannel(channel);
       // Broadcast to all windows
       for (const win of BrowserWindow.getAllWindows()) {
         win.webContents.send('updater:channel-changed', result);
       }
       return result;
-    } catch (error) {
-      logger.error('Failed to set update channel:', error);
-      throw error;
-    }
-  });
+    },
+    { schema: updaterSetChannelSchema }
+  );
 }
 
 /**

@@ -9,8 +9,8 @@ import { Server } from 'socket.io';
 import {
   createLogger,
   FeedEvents,
-  type FeedGetItemsPayload,
-  type FeedToggleSourcePayload,
+  feedGetItemsPayloadSchema,
+  feedToggleSourcePayloadSchema,
 } from '@shiroani/shared';
 import { CORS_CONFIG } from '../shared/cors.config';
 import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
@@ -30,13 +30,15 @@ export class FeedGateway {
   }
 
   @SubscribeMessage(FeedEvents.GET_ITEMS)
-  handleGetItems(@MessageBody() payload: FeedGetItemsPayload) {
+  handleGetItems(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'feed:get-items',
       defaultResult: { items: [], total: 0, hasMore: false },
-      handler: async () => {
-        return this.feedService.getItems(payload);
+      schema: feedGetItemsPayloadSchema,
+      payload,
+      handler: async parsed => {
+        return this.feedService.getItems(parsed);
       },
     });
   }
@@ -55,13 +57,15 @@ export class FeedGateway {
   }
 
   @SubscribeMessage(FeedEvents.TOGGLE_SOURCE)
-  handleToggleSource(@MessageBody() payload: FeedToggleSourcePayload) {
+  handleToggleSource(@MessageBody() payload: unknown) {
     return handleGatewayRequest({
       logger,
       action: 'feed:toggle-source',
       defaultResult: { sources: [] },
-      handler: async () => {
-        this.feedService.toggleSource(payload.id, payload.enabled);
+      schema: feedToggleSourcePayloadSchema,
+      payload,
+      handler: async parsed => {
+        this.feedService.toggleSource(parsed.id, parsed.enabled);
         const sources = this.feedService.getAllSources();
         this.server.emit(FeedEvents.SOURCES_RESULT, { sources });
         return { sources };
