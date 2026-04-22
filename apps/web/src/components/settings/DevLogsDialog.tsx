@@ -549,7 +549,7 @@ export function DevLogsDialog({ open, onOpenChange }: DevLogsDialogProps) {
             ref={listRef}
             onScroll={handleScroll}
             className={cn(
-              'max-h-[52vh] overflow-y-auto rounded-lg border border-border-glass bg-background/40',
+              'max-h-[52vh] overflow-x-hidden overflow-y-auto rounded-lg border border-border-glass bg-background/40',
               'font-mono text-[11px] leading-[1.55]'
             )}
           >
@@ -594,7 +594,7 @@ export function DevLogsDialog({ open, onOpenChange }: DevLogsDialogProps) {
                           {entry.timestamp.split('T')[1]?.slice(0, 12) ?? entry.timestamp}
                         </span>
                         <span className="shrink-0 text-muted-foreground/80">[{entry.context}]</span>
-                        <span className="flex-1 break-words text-foreground/90">
+                        <span className="min-w-0 flex-1 break-words text-foreground/90">
                           {entry.message}
                           {hasData && (
                             <button
@@ -616,7 +616,7 @@ export function DevLogsDialog({ open, onOpenChange }: DevLogsDialogProps) {
                         </span>
                       </div>
                       {hasData && isOpen && (
-                        <pre className="ml-[calc(2.5rem)] whitespace-pre-wrap break-words rounded border border-border-glass/60 bg-foreground/[0.03] p-2 text-[10.5px] text-muted-foreground">
+                        <pre className="ml-[calc(2.5rem)] max-w-full whitespace-pre-wrap break-all rounded border border-border-glass/60 bg-foreground/[0.03] p-2 text-[10.5px] text-muted-foreground">
                           {prettyPrintData(entry.data)}
                         </pre>
                       )}
