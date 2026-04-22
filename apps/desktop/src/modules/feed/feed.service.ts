@@ -1,161 +1,35 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { createHash } from 'crypto';
-import Parser from 'rss-parser';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   createLogger,
-  type FeedItem,
-  type FeedSource,
-  type FeedCategory,
-  type FeedLanguage,
+  DEFAULT_FEED_SOURCES,
   type FeedGetItemsPayload,
   type FeedGetItemsResult,
-  DEFAULT_FEED_SOURCES,
+  type FeedSource,
 } from '@shiroani/shared';
 import { DatabaseService } from '../database';
+import { FeedCacheService } from './feed-cache.service';
+import { rowToItem, rowToSource, type FeedItemRow, type FeedSourceRow } from './feed.types';
 
 const logger = createLogger('FeedService');
 
-// ============================================
-// RSS Parser custom item type
-// ============================================
-
-interface CustomItem {
-  mediaThumbnail?: { $?: { url?: string } };
-  mediaContent?: Array<{ $?: { url?: string; medium?: string } }>;
-  enclosure?:
-    | Array<{ $?: { url?: string; type?: string } }>
-    | { $?: { url?: string; type?: string } };
-  [key: string]: unknown;
-}
-
-// ============================================
-// Database row interfaces
-// ============================================
-
-interface FeedSourceRow {
-  id: number;
-  name: string;
-  url: string;
-  site_url: string;
-  category: string;
-  language: string;
-  color: string;
-  icon: string | null;
-  enabled: number; // SQLite boolean
-  poll_interval_minutes: number;
-  last_fetched_at: string | null;
-  last_etag: string | null;
-  consecutive_failures: number;
-  last_error: string | null;
-  created_at: string;
-}
-
-interface FeedItemRow {
-  id: number;
-  feed_source_id: number;
-  guid: string;
-  title: string;
-  description: string | null;
-  url: string;
-  author: string | null;
-  image_url: string | null;
-  published_at: string | null;
-  categories: string | null; // JSON array string
-  content_hash: string;
-  created_at: string;
-  // Joined fields from feed_sources
-  source_name?: string;
-  source_color?: string;
-  source_icon?: string | null;
-  source_category?: string;
-  source_language?: string;
-}
-
-// ============================================
-// Row-to-type mapping functions
-// ============================================
-
-function rowToSource(row: FeedSourceRow): FeedSource {
-  return {
-    id: row.id,
-    name: row.name,
-    url: row.url,
-    siteUrl: row.site_url,
-    category: row.category as FeedCategory,
-    language: row.language as FeedLanguage,
-    color: row.color,
-    icon: row.icon ?? undefined,
-    enabled: row.enabled === 1,
-    pollIntervalMinutes: row.poll_interval_minutes,
-    lastFetchedAt: row.last_fetched_at ?? undefined,
-    consecutiveFailures: row.consecutive_failures,
-    lastError: row.last_error ?? undefined,
-  };
-}
-
-function rowToItem(row: FeedItemRow): FeedItem {
-  return {
-    id: row.id,
-    feedSourceId: row.feed_source_id,
-    sourceName: row.source_name ?? '',
-    sourceColor: row.source_color ?? '#666',
-    sourceIcon: row.source_icon ?? undefined,
-    sourceCategory: (row.source_category ?? 'news') as FeedCategory,
-    sourceLanguage: (row.source_language ?? 'en') as FeedLanguage,
-    guid: row.guid,
-    title: row.title,
-    description: row.description ?? undefined,
-    url: row.url,
-    author: row.author ?? undefined,
-    imageUrl: row.image_url ?? undefined,
-    publishedAt: row.published_at ?? undefined,
-    categories: row.categories ? JSON.parse(row.categories) : [],
-    createdAt: row.created_at,
-  };
-}
-
-// ============================================
-// FeedService
-// ============================================
+// Re-export types/mappers so existing importers keep working.
+export { rowToItem, rowToSource };
+export type { FeedItemRow, FeedSourceRow };
 
 @Injectable()
-export class FeedService implements OnModuleInit, OnModuleDestroy {
-  private parser = new Parser<Record<string, unknown>, CustomItem>({
-    customFields: {
-      item: [
-        ['media:thumbnail', 'mediaThumbnail'],
-        ['media:content', 'mediaContent', { keepArray: true }],
-        ['enclosure', 'enclosure', { keepArray: true }],
-      ],
-    },
-    timeout: 30000,
-  });
-
-  private pollingTimer: ReturnType<typeof setInterval> | null = null;
-  private isPolling = false;
+export class FeedService implements OnModuleInit {
   private refreshAllPromise: Promise<number> | null = null;
 
-  constructor(private readonly databaseService: DatabaseService) {
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly cache: FeedCacheService
+  ) {
     logger.info('FeedService initialized');
   }
 
   onModuleInit(): void {
     this.seedDefaultSources();
-    this.startPolling();
   }
-
-  onModuleDestroy(): void {
-    if (this.pollingTimer) {
-      clearInterval(this.pollingTimer);
-      this.pollingTimer = null;
-    }
-    this.isPolling = false;
-    logger.info('Feed polling fully torn down');
-  }
-
-  // ============================================
-  // Public methods
-  // ============================================
 
   /** Seed default feed sources if the table is empty. */
   seedDefaultSources(): void {
@@ -163,33 +37,28 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
     const count = db.prepare('SELECT COUNT(*) as count FROM feed_sources').get() as {
       count: number;
     };
-
     if (count.count > 0) {
       logger.debug('Feed sources already seeded, skipping');
       return;
     }
-
-    const insert = db.prepare(`
-      INSERT INTO feed_sources (name, url, site_url, category, language, color, icon, poll_interval_minutes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const seedAll = db.transaction(() => {
-      for (const source of DEFAULT_FEED_SOURCES) {
+    const insert = db.prepare(
+      `INSERT INTO feed_sources (name, url, site_url, category, language, color, icon, poll_interval_minutes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    db.transaction(() => {
+      for (const s of DEFAULT_FEED_SOURCES) {
         insert.run(
-          source.name,
-          source.url,
-          source.siteUrl,
-          source.category,
-          source.language,
-          source.color,
-          source.icon ?? null,
-          source.pollIntervalMinutes
+          s.name,
+          s.url,
+          s.siteUrl,
+          s.category,
+          s.language,
+          s.color,
+          s.icon ?? null,
+          s.pollIntervalMinutes
         );
       }
-    });
-
-    seedAll();
+    })();
     logger.info(`Seeded ${DEFAULT_FEED_SOURCES.length} default feed sources`);
   }
 
@@ -214,57 +83,41 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
     const db = this.databaseService.db;
     const limit = Math.min(Math.max(Math.trunc(payload.limit ?? 50), 1), 100);
     const offset = Math.max(Math.trunc(payload.offset ?? 0), 0);
-
     const conditions: string[] = [];
     const params: (string | number)[] = [];
-
     if (payload.category && payload.category !== 'all') {
       conditions.push('fs.category = ?');
       params.push(payload.category);
     }
-
     if (payload.language && payload.language !== 'all') {
       conditions.push('fs.language = ?');
       params.push(payload.language);
     }
-
     if (payload.sourceId) {
       conditions.push('fi.feed_source_id = ?');
       params.push(payload.sourceId);
     }
-
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
     const countRow = db
       .prepare(
         `SELECT COUNT(*) as total FROM feed_items fi
-         JOIN feed_sources fs ON fi.feed_source_id = fs.id
-         ${whereClause}`
+         JOIN feed_sources fs ON fi.feed_source_id = fs.id ${whereClause}`
       )
       .get(...params) as { total: number };
-
-    const total = countRow.total;
-
     const rows = db
       .prepare(
-        `SELECT fi.*,
-                fs.name as source_name,
-                fs.color as source_color,
-                fs.icon as source_icon,
-                fs.category as source_category,
-                fs.language as source_language
+        `SELECT fi.*, fs.name as source_name, fs.color as source_color, fs.icon as source_icon,
+                fs.category as source_category, fs.language as source_language
          FROM feed_items fi
-         JOIN feed_sources fs ON fi.feed_source_id = fs.id
-         ${whereClause}
+         JOIN feed_sources fs ON fi.feed_source_id = fs.id ${whereClause}
          ORDER BY fi.published_at DESC, fi.created_at DESC
          LIMIT ? OFFSET ?`
       )
       .all(...params, limit, offset) as FeedItemRow[];
-
     return {
       items: rows.map(rowToItem),
-      total,
-      hasMore: offset + limit < total,
+      total: countRow.total,
+      hasMore: offset + limit < countRow.total,
     };
   }
 
@@ -274,9 +127,7 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
       logger.debug('Feed refresh already in progress, joining existing refresh');
       return this.refreshAllPromise;
     }
-
     this.refreshAllPromise = this.runRefreshAllFeeds();
-
     try {
       return await this.refreshAllPromise;
     } finally {
@@ -284,17 +135,19 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** True while a `refreshAllFeeds()` call is in flight. Used by the scheduler to back off. */
+  isFullRefreshInProgress(): boolean {
+    return this.refreshAllPromise !== null;
+  }
+
   private async runRefreshAllFeeds(): Promise<number> {
     const db = this.databaseService.db;
     const sources = db
       .prepare('SELECT * FROM feed_sources WHERE enabled = 1')
       .all() as FeedSourceRow[];
-
     logger.info(`Refreshing ${sources.length} enabled feed sources`);
-
     const results = await Promise.all(sources.map(source => this.fetchFeed(source)));
     const totalNew = results.reduce((sum, count) => sum + count, 0);
-
     logger.info(`Feed refresh complete: ${totalNew} new items`);
     return totalNew;
   }
@@ -302,222 +155,47 @@ export class FeedService implements OnModuleInit, OnModuleDestroy {
   /** Fetch a single RSS feed, insert new items, return count of new items. */
   async fetchFeed(source: FeedSourceRow): Promise<number> {
     const db = this.databaseService.db;
-
     try {
-      const feed = await this.parser.parseURL(source.url);
-
-      const insert = db.prepare(`
-        INSERT OR IGNORE INTO feed_items
+      const parsedItems = await this.cache.fetch(source.url);
+      const insert = db.prepare(
+        `INSERT OR IGNORE INTO feed_items
           (feed_source_id, guid, title, description, url, author, image_url, published_at, categories, content_hash)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
       let newCount = 0;
-
       const insertAll = db.transaction(() => {
-        for (const item of feed.items ?? []) {
-          const guid = item.guid ?? item.link ?? item.title ?? '';
-          if (!guid) continue;
-
-          const title = item.title ?? 'Untitled';
-          const url = item.link ?? '';
-          if (!url) continue;
-
-          const description = this.cleanDescription(
-            item.contentSnippet ?? item.content ?? item.summary ?? ''
-          );
-          const author = item.creator ?? item.author ?? null;
-          const imageUrl = this.extractImageUrl(item as CustomItem, item.content ?? item.summary);
-          const publishedAt =
-            item.isoDate ??
-            (item.pubDate && !Number.isNaN(Date.parse(item.pubDate))
-              ? new Date(item.pubDate).toISOString()
-              : null);
-          const categories = item.categories ? JSON.stringify(item.categories) : null;
-          const contentHash = this.generateContentHash(title, url);
-
+        for (const item of parsedItems) {
           const result = insert.run(
             source.id,
-            guid,
-            title,
-            description || null,
-            url,
-            author,
-            imageUrl,
-            publishedAt,
-            categories,
-            contentHash
+            item.guid,
+            item.title,
+            item.description,
+            item.url,
+            item.author,
+            item.imageUrl,
+            item.publishedAt,
+            item.categories,
+            item.contentHash
           );
-
-          if (result.changes > 0) {
-            newCount++;
-          }
+          if (result.changes > 0) newCount++;
         }
       });
-
       insertAll();
-
-      // Update source on success
       db.prepare(
-        `UPDATE feed_sources
-         SET last_fetched_at = datetime('now'),
-             consecutive_failures = 0,
-             last_error = NULL
-         WHERE id = ?`
+        `UPDATE feed_sources SET last_fetched_at = datetime('now'),
+           consecutive_failures = 0, last_error = NULL WHERE id = ?`
       ).run(source.id);
-
-      if (newCount > 0) {
-        logger.info(`Fetched ${newCount} new items from "${source.name}"`);
-      } else {
-        logger.debug(`No new items from "${source.name}"`);
-      }
-
+      if (newCount > 0) logger.info(`Fetched ${newCount} new items from "${source.name}"`);
+      else logger.debug(`No new items from "${source.name}"`);
       return newCount;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
       db.prepare(
-        `UPDATE feed_sources
-         SET last_fetched_at = datetime('now'),
-             consecutive_failures = consecutive_failures + 1,
-             last_error = ?
-         WHERE id = ?`
+        `UPDATE feed_sources SET last_fetched_at = datetime('now'),
+           consecutive_failures = consecutive_failures + 1, last_error = ? WHERE id = ?`
       ).run(errorMessage, source.id);
-
       logger.warn(`Failed to fetch feed "${source.name}": ${errorMessage}`);
       return 0;
-    }
-  }
-
-  // ============================================
-  // Private helper methods
-  // ============================================
-
-  /** Generate a SHA-256 content hash from title + url, truncated to 16 hex chars. */
-  private generateContentHash(title: string, url: string): string {
-    return createHash('sha256').update(`${title}${url}`).digest('hex').substring(0, 16);
-  }
-
-  /**
-   * Extract image URL from an RSS item.
-   * Tries: media:thumbnail, media:content, enclosure, then regex for <img> in content.
-   */
-  private extractImageUrl(item: CustomItem, htmlContent?: string | null): string | null {
-    // Try media:thumbnail
-    if (item.mediaThumbnail?.$?.url) {
-      return item.mediaThumbnail.$.url;
-    }
-
-    // Try media:content
-    if (Array.isArray(item.mediaContent)) {
-      for (const media of item.mediaContent) {
-        if (media.$?.url) {
-          return media.$.url;
-        }
-      }
-    }
-
-    // Try enclosure
-    if (item.enclosure) {
-      const enclosures = Array.isArray(item.enclosure) ? item.enclosure : [item.enclosure];
-      for (const enc of enclosures) {
-        if (enc.$?.url && enc.$?.type?.startsWith('image/')) {
-          return enc.$.url;
-        }
-      }
-    }
-
-    // Try regex for <img> tag in HTML content
-    if (htmlContent) {
-      const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-      if (imgMatch?.[1]) {
-        return imgMatch[1];
-      }
-    }
-
-    return null;
-  }
-
-  /** Strip HTML tags, decode common entities, and truncate to 500 chars. */
-  private cleanDescription(html: string): string {
-    if (!html) return '';
-
-    let text = html
-      // Remove HTML tags
-      .replace(/<[^>]+>/g, '')
-      // Decode common HTML entities
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-      .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
-      // Collapse whitespace
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (text.length > 500) {
-      text = text.substring(0, 497) + '...';
-    }
-
-    return text;
-  }
-
-  /** Start the background polling timer for already-fetched sources. */
-  private startPolling(): void {
-    this.pollingTimer = setInterval(() => {
-      void this.runPollCycle('feed poll');
-    }, 60_000);
-
-    logger.info('Feed polling started (60s interval for previously fetched sources)');
-  }
-
-  /** Run a single poll cycle, skipping if one is already in flight. */
-  private async runPollCycle(context: string): Promise<void> {
-    if (this.isPolling) return;
-    this.isPolling = true;
-    try {
-      await this.pollDueFeeds();
-    } catch (error) {
-      logger.error(`Error during ${context}:`, error);
-    } finally {
-      this.isPolling = false;
-    }
-  }
-
-  /** Find sources that are due for a refresh and fetch them. */
-  private async pollDueFeeds(): Promise<void> {
-    if (this.refreshAllPromise) {
-      logger.debug('Skipping due-feed poll because a full refresh is already in progress');
-      return;
-    }
-
-    const db = this.databaseService.db;
-
-    const dueSources = db
-      .prepare(
-        `SELECT * FROM feed_sources
-         WHERE enabled = 1
-           AND (
-             last_fetched_at IS NOT NULL
-             AND (julianday('now') - julianday(last_fetched_at)) * 24 * 60 >= poll_interval_minutes
-           )
-         ORDER BY last_fetched_at ASC`
-      )
-      .all() as FeedSourceRow[];
-
-    if (dueSources.length === 0) return;
-
-    logger.debug(`${dueSources.length} feed source(s) due for refresh`);
-
-    for (const source of dueSources) {
-      try {
-        await this.fetchFeed(source);
-      } catch (error) {
-        logger.error(`Error polling feed "${source.name}":`, error);
-      }
     }
   }
 }

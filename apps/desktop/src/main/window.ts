@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Menu, shell, session, type WebContents } from 'electron';
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
 import { logger } from './logger';
@@ -51,6 +52,7 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [cspDirectives.join('; ')],
+        'Referrer-Policy': ['no-referrer'],
       },
     });
   });
@@ -198,9 +200,19 @@ export async function createMainWindow(browserManager: BrowserManager): Promise<
   });
 
   // Block external URL navigation in renderer, open in system browser instead
+  const rendererFileUrl = isDev
+    ? null
+    : pathToFileURL(path.join(__dirname, '../renderer/index.html')).href;
+
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    const allowedOrigins = isDev ? [`http://localhost:${VITE_DEV_PORT}`] : ['file://'];
-    const isAllowed = allowedOrigins.some(origin => url.startsWith(origin));
+    let isAllowed: boolean;
+    try {
+      isAllowed = isDev
+        ? new URL(url).origin === `http://localhost:${VITE_DEV_PORT}`
+        : url === rendererFileUrl;
+    } catch {
+      isAllowed = false;
+    }
     if (!isAllowed) {
       event.preventDefault();
       if (isExternalUrlAllowed(url)) {

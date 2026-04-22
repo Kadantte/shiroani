@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { FeedService } from './feed.service';
+import { FeedCacheService } from './feed-cache.service';
 import { FeedGateway } from './feed.gateway';
+import { FeedParserService } from './feed-parser.service';
+import { FeedSchedulerService } from './feed-scheduler.service';
+import { FeedService } from './feed.service';
 
 @Module({
-  providers: [FeedService, FeedGateway],
+  providers: [FeedParserService, FeedCacheService, FeedService, FeedSchedulerService, FeedGateway],
   exports: [FeedService],
 })
 export class FeedModule {}
