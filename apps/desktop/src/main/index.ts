@@ -84,6 +84,27 @@ if (process.platform === 'win32') {
   app.setAppUserModelId(WINDOWS_APP_ID);
 }
 
+// Single-instance lock. Runs before any heavy setup so a second launch
+// quits immediately instead of spinning up Nest, browser manager, and
+// IPC handlers only to tear them down. Gated on `app.isPackaged` so dev
+// builds can coexist with an installed production copy. The
+// 'second-instance' listener is registered immediately after acquiring
+// the lock so any follow-up launches during module init are not missed.
+if (app.isPackaged) {
+  const gotSingleInstanceLock = app.requestSingleInstanceLock();
+  if (!gotSingleInstanceLock) {
+    console.warn('Another ShiroAni instance is already running; quitting this one.');
+    app.exit(0);
+  }
+
+  app.on('second-instance', () => {
+    logger.info('second-instance event received — focusing existing window');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      showMainWindow(mainWindow);
+    }
+  });
+}
+
 export let mainWindow: BrowserWindow | null = null;
 let nestApp: INestApplication | null = null;
 let isShuttingDown = false;
@@ -314,13 +335,6 @@ process.on('unhandledRejection', reason => {
   flushLogsSync();
 });
 
-app.on('second-instance', () => {
-  logger.info('second-instance event received — focusing existing window');
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    showMainWindow(mainWindow);
-  }
-});
-
 // Render-process gone (per app). `reason` drives severity — hard crashes,
 // OOM, launch failures, and integrity failures are errors; everything else
 // (killed, clean-exit, abnormal-exit, memory-eviction) is a warn.
@@ -404,16 +418,6 @@ app
       platform: process.platform,
     });
 
-    // Ensure only one instance of the app runs at a time. If another
-    // instance already holds the lock, log a warning and quit early; the
-    // first instance will focus its window via the 'second-instance'
-    // handler registered above.
-    const gotSingleInstanceLock = app.requestSingleInstanceLock();
-    if (!gotSingleInstanceLock) {
-      logger.warn('Another instance is already running; quitting this one.');
-      app.quit();
-      return;
-    }
     return bootstrap();
   })
   .catch(error => {
