@@ -1,5 +1,5 @@
 import { ElectronBlocker } from '@ghostery/adblocker-electron';
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
 import fetch from 'cross-fetch';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -30,6 +30,9 @@ const CACHE_FILENAME = 'adblock-engine-v3.bin';
 // YouTube breakage — refresh every 2h to stay close to upstream.
 const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
 
+// Abort live fetches that take too long so the fallback runs promptly.
+const FETCH_TIMEOUT_MS = 20_000;
+
 const ENGINE_CONFIG = {
   // Re-classify requests tagged `other` when the URL hints at the real type.
   // Fixes YouTube's `/youtubei/v1/player` XHRs missing `$xhr`-tagged filters.
@@ -48,13 +51,19 @@ const OBSERVABILITY_HOST_NEEDLES = [
   'doubleclick',
 ];
 
+type CosmeticIpc = {
+  onInjectCosmeticFilters(event: IpcMainInvokeEvent, url: string, msg: unknown): unknown;
+  onIsMutationObserverEnabled(event: IpcMainInvokeEvent): boolean;
+};
+
 let blocker: ElectronBlocker | null = null;
 let refreshTimer: NodeJS.Timeout | null = null;
+let isRefreshing = false;
 
 /** Track cosmetic filtering state per session to avoid double-registration */
 const cosmeticState = new WeakMap<
   Electron.Session,
-  { preloadScriptId: string; ipcRegistered: boolean }
+  { preloadScriptId: string; injectRegistered: boolean; mutationRegistered: boolean }
 >();
 
 function getCaching() {
@@ -65,32 +74,52 @@ function getCaching() {
   };
 }
 
-async function buildBlockerFromLiveLists(): Promise<ElectronBlocker> {
-  return ElectronBlocker.fromLists(fetch, FILTER_LIST_URLS, ENGINE_CONFIG, getCaching());
+/** fetch wrapper that aborts after FETCH_TIMEOUT_MS so slow upstreams don't hang init */
+function fetchWithTimeout(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+async function buildBlockerFromLiveLists(bypassCache = false): Promise<ElectronBlocker> {
+  const caching = getCaching();
+  // During scheduled refreshes we bypass the read side so fromLists always
+  // fetches fresh filter lists instead of returning the stale on-disk binary.
+  const effectiveCaching = bypassCache
+    ? { ...caching, read: () => Promise.reject(new Error('cache bypass')) }
+    : caching;
+  return ElectronBlocker.fromLists(
+    fetchWithTimeout,
+    FILTER_LIST_URLS,
+    ENGINE_CONFIG,
+    effectiveCaching
+  );
 }
 
 async function buildBlockerFromPrebuilt(): Promise<ElectronBlocker> {
   // NB: fromPrebuiltFull doesn't accept a Config (baked into the prebuilt
   // binary). The fallback therefore uses the library defaults — acceptable
   // because this path only runs when live fetch fails on a cold start.
-  return ElectronBlocker.fromPrebuiltFull(fetch, getCaching());
+  return ElectronBlocker.fromPrebuiltFull(fetchWithTimeout, getCaching());
 }
 
 export async function initializeAdblock(): Promise<ElectronBlocker> {
   logger.info('Initializing adblocker...');
 
+  let next: ElectronBlocker;
   try {
-    blocker = await buildBlockerFromLiveLists();
+    next = await buildBlockerFromLiveLists();
     logger.info(`Adblocker initialized from ${FILTER_LIST_URLS.length} live filter list(s)`);
   } catch (error) {
     logger.warn(
       'Failed to initialize from live filter lists; falling back to prebuilt snapshot:',
       error
     );
-    blocker = await buildBlockerFromPrebuilt();
+    next = await buildBlockerFromPrebuilt();
     logger.info('Adblocker initialized from prebuilt snapshot (fallback)');
   }
 
+  blocker = next;
   attachObservability(blocker);
   scheduleListRefresh();
   return blocker;
@@ -127,17 +156,23 @@ function scheduleListRefresh(): void {
   refreshTimer = setInterval(() => {
     void refreshFilterLists();
   }, REFRESH_INTERVAL_MS);
+  // Don't keep the Node event loop alive just for the refresh timer.
+  refreshTimer.unref();
 }
 
 async function refreshFilterLists(): Promise<void> {
+  if (isRefreshing) return;
+  isRefreshing = true;
   try {
     logger.info('Refreshing filter lists...');
-    const next = await buildBlockerFromLiveLists();
+    const next = await buildBlockerFromLiveLists(true);
     blocker = next;
     attachObservability(next);
     logger.info('Filter lists refreshed successfully');
   } catch (err) {
     logger.warn('Filter list refresh failed (will retry next interval):', err);
+  } finally {
+    isRefreshing = false;
   }
 }
 
@@ -177,21 +212,32 @@ export function enableCosmeticFiltering(session: Electron.Session): void {
     // Register IPC handlers (global, not per-session).
     // We proxy through the module-level `blocker` so that periodic list
     // refreshes (which replace the instance) are picked up automatically.
-    let ipcRegistered = false;
+    // Each handler is registered independently so a failure on one doesn't
+    // leave the other's cleanup state misreported.
+    let injectRegistered = false;
+    let mutationRegistered = false;
+
     try {
       ipcMain.handle('@ghostery/adblocker/inject-cosmetic-filters', (event, url, msg) =>
-        blocker ? (blocker as any).onInjectCosmeticFilters(event, url, msg) : undefined
+        blocker
+          ? (blocker as unknown as CosmeticIpc).onInjectCosmeticFilters(event, url, msg)
+          : undefined
       );
-      ipcMain.handle('@ghostery/adblocker/is-mutation-observer-enabled', event =>
-        blocker ? (blocker as any).onIsMutationObserverEnabled(event) : false
-      );
-      ipcRegistered = true;
+      injectRegistered = true;
     } catch {
-      // IPC handlers may already be registered from another session
-      ipcRegistered = false;
+      // IPC handler may already be registered from another session
     }
 
-    cosmeticState.set(session, { preloadScriptId, ipcRegistered });
+    try {
+      ipcMain.handle('@ghostery/adblocker/is-mutation-observer-enabled', event =>
+        blocker ? (blocker as unknown as CosmeticIpc).onIsMutationObserverEnabled(event) : false
+      );
+      mutationRegistered = true;
+    } catch {
+      // IPC handler may already be registered from another session
+    }
+
+    cosmeticState.set(session, { preloadScriptId, injectRegistered, mutationRegistered });
     logger.info('Cosmetic filtering enabled for session');
   } catch (error) {
     logger.warn('Failed to enable cosmetic filtering:', error);
@@ -212,9 +258,16 @@ export function disableCosmeticFiltering(session: Electron.Session): void {
     // May already be unregistered
   }
 
-  if (state.ipcRegistered) {
+  if (state.injectRegistered) {
     try {
       ipcMain.removeHandler('@ghostery/adblocker/inject-cosmetic-filters');
+    } catch {
+      // May already be removed
+    }
+  }
+
+  if (state.mutationRegistered) {
+    try {
       ipcMain.removeHandler('@ghostery/adblocker/is-mutation-observer-enabled');
     } catch {
       // May already be removed

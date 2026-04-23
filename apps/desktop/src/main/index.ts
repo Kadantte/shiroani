@@ -7,7 +7,7 @@ import { createMainWindow } from './window';
 import { cleanupIpcHandlers } from './ipc/register';
 import { logger, getLogPath, flushLogs, flushLogsSync } from './logger';
 import { initializeAutoUpdater } from './updater';
-import { initializeAdblock } from './adblock';
+import { initializeAdblock, shutdownAdblock } from './adblock';
 import { corsOriginCallback } from '../modules/shared/cors.config';
 import { NestLoggerAdapter } from '../modules/shared/nest-logger';
 import { LOCALHOST, setLoggerContext, makeCorrelationId } from '@shiroani/shared';
@@ -460,6 +460,7 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    await safeCleanup('adblock', () => shutdownAdblock(), logger);
     await safeCleanup('system tray', () => destroyTray(), logger);
     await safeCleanup('context menu', () => destroyContextMenu(), logger);
     await safeCleanup('mascot overlay', () => destroyMascotOverlay(), logger);
