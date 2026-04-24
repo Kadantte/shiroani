@@ -6,7 +6,7 @@ import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
 import { AppModule } from '../modules/app.module';
 import { createMainWindow } from './window';
 import { cleanupIpcHandlers } from './ipc/register';
-import { logger, getLogPath, flushLogs, flushLogsSync } from './logger';
+import { logger, getLogPath, flushLogs, flushLogsSync, fileTransport } from './logger';
 import { initializeAutoUpdater } from './updater';
 import { initializeAdblock, shutdownAdblock } from './adblock';
 import { corsOriginCallback } from '../modules/shared/cors.config';
@@ -126,7 +126,7 @@ async function bootstrapNestApp(): Promise<void> {
     logger.info('Creating NestJS application...');
     const dbPath = join(app.getPath('userData'), 'shiroani.db');
     nestApp = await NestFactory.create(AppModule.forRoot({ dbPath }), {
-      logger: new NestLoggerAdapter(),
+      logger: new NestLoggerAdapter(fileTransport),
       bufferLogs: true,
     });
     nestApp.flushLogs();
