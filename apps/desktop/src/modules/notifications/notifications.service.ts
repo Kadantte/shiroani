@@ -281,7 +281,7 @@ export class NotificationsService implements OnModuleDestroy {
       return allAiring;
     } catch (error) {
       logger.error('Failed to fetch schedule for notifications:', error);
-      return this.cachedSchedule ?? [];
+      return this.cachedSchedule ?? this.store.loadCachedSchedule();
     }
   }
 
@@ -296,13 +296,7 @@ export class NotificationsService implements OnModuleDestroy {
       return;
     }
 
-    const notifyIds = new Set<number>();
-    for (const entry of this.libraryService.getAllEntries('watching')) {
-      if (entry.anilistId) notifyIds.add(entry.anilistId);
-    }
-    for (const sub of settings.subscriptions) {
-      if (sub.enabled) notifyIds.add(sub.anilistId);
-    }
+    const notifyIds = this.getNotifyIds();
 
     if (notifyIds.size === 0) {
       logger.info('Skipping notification check: no anime to monitor');
@@ -321,7 +315,7 @@ export class NotificationsService implements OnModuleDestroy {
     const nowUnix = Math.floor(Date.now() / 1000);
     const leadTimeSeconds = settings.leadTimeMinutes * 60;
 
-    let notifiedCount = 0;
+    let dispatchCount = 0;
     for (const airing of airingData) {
       if (!notifyIds.has(airing.media.id)) continue;
 
@@ -331,13 +325,19 @@ export class NotificationsService implements OnModuleDestroy {
       const dedupeKey = `${airing.media.id}:${airing.episode}`;
       if (this.sentNotifications.has(dedupeKey)) continue;
 
-      this.sentNotifications.add(dedupeKey);
-      await this.host.showAiringNotification(airing, settings);
-      notifiedCount++;
+      dispatchCount++;
+      this.host
+        .showAiringNotification(airing, settings)
+        .then(() => {
+          this.sentNotifications.add(dedupeKey);
+        })
+        .catch(error => {
+          logger.warn(`Failed to dispatch notification for ${dedupeKey}:`, error);
+        });
     }
 
-    if (notifiedCount > 0) {
-      logger.info(`Notification check complete: ${notifiedCount} notification(s) sent`);
+    if (dispatchCount > 0) {
+      logger.info(`Notification check complete: ${dispatchCount} notification(s) dispatched`);
     }
 
     this.sentNotifications = pruneSentSet(this.sentNotifications);

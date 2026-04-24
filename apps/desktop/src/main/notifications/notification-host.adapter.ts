@@ -46,7 +46,7 @@ export class ElectronNotificationHost extends NotificationHostPort {
       title,
       body,
       ...(icon ? { icon } : {}),
-      silent: !settings.useSystemSound,
+      silent: settings.useSystemSound === false,
     });
 
     notification.on('click', () => {
@@ -104,17 +104,46 @@ function downloadImage(url: string): Promise<Electron.NativeImage | null> {
       return resolve(null);
     }
 
-    const timeout = setTimeout(() => {
-      req.destroy();
-      resolve(null);
-    }, 5000);
+    const SIZE_LIMIT = 5 * 1024 * 1024;
 
-    const req = https
+    // Shared handle so the timeout callback and the response data handler can
+    // each cancel the other without a circular const/let dependency.
+    const handle: {
+      req: ReturnType<typeof https.get> | null;
+      timeout: ReturnType<typeof setTimeout> | null;
+    } = {
+      req: null,
+      timeout: null,
+    };
+
+    const abort = (): void => {
+      handle.req?.destroy();
+      clearTimeout(handle.timeout ?? undefined);
+      resolve(null);
+    };
+
+    handle.timeout = setTimeout(abort, 5000);
+
+    handle.req = https
       .get(url, res => {
+        if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+          res.resume();
+          clearTimeout(handle.timeout ?? undefined);
+          return resolve(null);
+        }
+
+        let totalBytes = 0;
         const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('data', (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > SIZE_LIMIT) {
+            abort();
+            return;
+          }
+          chunks.push(chunk);
+        });
         res.on('end', () => {
-          clearTimeout(timeout);
+          clearTimeout(handle.timeout ?? undefined);
           try {
             const buffer = Buffer.concat(chunks);
             const image = nativeImage.createFromBuffer(buffer);
@@ -124,12 +153,12 @@ function downloadImage(url: string): Promise<Electron.NativeImage | null> {
           }
         });
         res.on('error', () => {
-          clearTimeout(timeout);
+          clearTimeout(handle.timeout ?? undefined);
           resolve(null);
         });
       })
       .on('error', () => {
-        clearTimeout(timeout);
+        clearTimeout(handle.timeout ?? undefined);
         resolve(null);
       });
   });

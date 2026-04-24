@@ -18,7 +18,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit(): void {
-    logger.info(`Opening database at ${this.dbPath}`);
+    logger.info('Opening database');
 
     this._db = new Database(this.dbPath);
 

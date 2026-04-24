@@ -35,25 +35,37 @@ export function initializeNotificationService(
     logger.error('Failed to resolve NotificationsService from Nest container:', error);
     return;
   }
-  notificationsService = service;
 
-  const host = nestApp.get(NotificationHostPort);
-  if (host instanceof ElectronNotificationHost) {
-    electronHost = host;
-    electronHost.setTargetWindow(mainWindow);
-  } else {
-    logger.warn('NotificationHostPort is not the Electron adapter; window binding skipped');
+  try {
+    const host = nestApp.get(NotificationHostPort);
+    let resolvedHost: ElectronNotificationHost | null = null;
+    if (host instanceof ElectronNotificationHost) {
+      resolvedHost = host;
+      resolvedHost.setTargetWindow(mainWindow);
+    } else {
+      logger.warn('NotificationHostPort is not the Electron adapter; window binding skipped');
+    }
+
+    service.initialize();
+
+    notificationsService = service;
+    electronHost = resolvedHost;
+  } catch (error) {
+    logger.error('Failed to initialize NotificationsService:', error);
+    notificationsService = null;
+    electronHost = null;
   }
-
-  service.initialize();
 }
 
 export async function cleanupNotificationService(): Promise<void> {
   if (!notificationsService) return;
-  await notificationsService.shutdown();
-  electronHost?.setTargetWindow(null);
-  electronHost = null;
-  notificationsService = null;
+  try {
+    await notificationsService.shutdown();
+  } finally {
+    electronHost?.setTargetWindow(null);
+    electronHost = null;
+    notificationsService = null;
+  }
 }
 
 // ========================================
