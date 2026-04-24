@@ -6,6 +6,12 @@ export const APP_LOGO_URL = `${import.meta.env.BASE_URL}shiro-chibi.svg`;
 /** Path to the thinking mascot pose (used on splash screen) */
 export const MASCOT_THINK_URL = `${import.meta.env.BASE_URL}chibi_think.png`;
 
+/** Path to the waving mascot pose (used on splash loading variant) */
+export const MASCOT_WAVE_URL = `${import.meta.env.BASE_URL}chibi_wave.png`;
+
+/** Path to the sleeping mascot pose (used on splash updating/error + ErrorBoundary) */
+export const MASCOT_SLEEP_URL = `${import.meta.env.BASE_URL}chibi_sleep.png`;
+
 export const STATUS_CONFIG: Record<
   AnimeStatus,
   { label: string; color: string; cssColor: string; cssBgColor: string }

@@ -10,7 +10,7 @@ export interface SpinnerRingProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Total ring diameter in px. Default 138 — wraps a 110px focal element with 14px inset. */
   size?: number;
   /** Theme token used for both ring arcs at different alphas. */
-  tone?: 'primary' | 'destructive';
+  tone?: 'primary' | 'destructive' | 'info';
   /** Freeze rotation. Used for the splash error state. */
   paused?: boolean;
   children?: React.ReactNode;
@@ -19,6 +19,7 @@ export interface SpinnerRingProps extends React.HTMLAttributes<HTMLDivElement> {
 const TONE_VAR: Record<NonNullable<SpinnerRingProps['tone']>, string> = {
   primary: '--primary',
   destructive: '--destructive',
+  info: '--status-info',
 };
 
 export function SpinnerRing({

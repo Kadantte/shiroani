@@ -1,15 +1,57 @@
-import { useEffect } from 'react';
-import { Download, ExternalLink, Loader2, Package, RefreshCw } from 'lucide-react';
-import { GITHUB_RELEASES_URL } from '@shiroani/shared';
+import { useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  Download,
+  ExternalLink,
+  Loader2,
+  Package,
+  RefreshCw,
+  Sparkles,
+} from 'lucide-react';
+import { GITHUB_RELEASES_URL, UPDATE_ERROR_RELEASE_PENDING } from '@shiroani/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { PillTag } from '@/components/ui/pill-tag';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { ProgressBar } from '@/components/shared/ProgressBar';
+import { CHANGELOG_RELEASES, CHANGELOG_CATEGORY_VARIANT } from '@/lib/changelog-entries';
 
 interface UpdatesSectionProps {
   version: string;
+}
+
+const BYTES_PER_MB = 1024 * 1024;
+
+/** Format bytes as `X.Y MB` with 1 decimal. */
+function formatMB(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0.0 MB';
+  return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`;
+}
+
+/**
+ * Lightweight relative-time formatter for recent events. We keep it inline
+ * rather than pulling in date-fns — all we need is "przed chwilą", "X min",
+ * "X godz.", or a raw clock time. Intl handles locale-aware clock formatting.
+ */
+function formatRelativeTime(epochMs: number | null): string | null {
+  if (!epochMs) return null;
+  const now = Date.now();
+  const diff = now - epochMs;
+  if (diff < 0) return null;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 30) return 'przed chwilą';
+  const min = Math.floor(sec / 60);
+  if (min < 1) return 'przed chwilą';
+  if (min < 60) return `${min} min temu`;
+  const hrs = Math.floor(min / 60);
+  if (hrs < 6) return `${hrs} godz. temu`;
+  // Older than ~6h — fall back to a clock time, prefixed with "dziś" when same day.
+  const then = new Date(epochMs);
+  const sameDay = new Date(now).toDateString() === then.toDateString();
+  const clock = then.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  return sameDay ? `dziś ${clock}` : then.toLocaleDateString('pl-PL');
 }
 
 export function UpdatesSection({ version }: UpdatesSectionProps) {
@@ -20,6 +62,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
     error,
     channel,
     isChannelSwitching,
+    lastCheckedAt,
     checkForUpdates,
     startDownload,
     installNow,
@@ -32,6 +75,15 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
     return cleanup;
   }, [initListeners]);
 
+  // Keep the "last checked" relative label fresh while the settings view
+  // is open — cheap: re-renders once a minute only while mounted.
+  const [, setNow] = useState(0);
+  useEffect(() => {
+    if (!lastCheckedAt) return;
+    const id = setInterval(() => setNow(n => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, [lastCheckedAt]);
+
   const isMac = window.electronAPI?.platform === 'darwin';
 
   const statusText = (() => {
@@ -42,12 +94,20 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
         return 'Sprawdzanie...';
       case 'available':
         return `Dostępna aktualizacja: ${updateInfo?.version ?? ''}`;
-      case 'downloading':
-        return `Pobieranie... ${progress ? `${Math.round(progress.percent)}%` : ''}`;
+      case 'downloading': {
+        if (progress && progress.total > 0) {
+          return `Pobieranie · ${formatMB(progress.transferred)}/${formatMB(progress.total)}`;
+        }
+        return progress ? `Pobieranie · ${Math.round(progress.percent)}%` : 'Pobieranie...';
+      }
       case 'ready':
         return 'Aktualizacja gotowa do instalacji';
-      case 'error':
+      case 'error': {
+        if (error === UPDATE_ERROR_RELEASE_PENDING) {
+          return 'Wydanie w toku — spróbuj za chwilę.';
+        }
         return `Błąd: ${error ?? 'Nieznany błąd'}`;
+      }
       default:
         return '';
     }
@@ -59,6 +119,8 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
     if (status === 'available' || status === 'downloading' || status === 'ready') return 'accent';
     return 'muted';
   })();
+
+  const lastCheckedLabel = formatRelativeTime(lastCheckedAt);
 
   const openReleasesPage = () => {
     if (window.electronAPI?.browser) {
@@ -85,7 +147,14 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
               {channel === 'beta' ? 'KANAŁ BETA' : 'KANAŁ STABILNY'}
             </p>
           </div>
-          <StatusPill tone={statusTone} text={statusText} />
+          <div className="flex flex-col gap-1">
+            <StatusPill tone={statusTone} text={statusText} />
+            {lastCheckedLabel && (
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                Ostatnie sprawdzenie: {lastCheckedLabel}
+              </p>
+            )}
+          </div>
         </div>
 
         {!isMac && (
@@ -165,10 +234,31 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
 
               {status === 'ready' && (
                 <Button size="sm" variant="outline" onClick={installNow}>
-                  Zainstaluj teraz
+                  Zainstaluj i uruchom ponownie
                 </Button>
               )}
             </div>
+
+            {/* Downgrade warning — shown when the available/downloaded update
+                would move the user to a lower version (e.g. switching from
+                beta back to stable). Tone matches --status-warning. */}
+            {updateInfo?.isDowngrade && (
+              <div
+                role="note"
+                className={cn(
+                  'flex items-start gap-2.5 rounded-lg border px-3 py-2 text-[12px] leading-relaxed',
+                  'border-[oklch(from_var(--status-warning)_l_c_h/0.35)]',
+                  'bg-[oklch(from_var(--status-warning)_l_c_h/0.08)]',
+                  'text-[var(--status-warning)]'
+                )}
+              >
+                <AlertTriangle className="size-4 flex-shrink-0 mt-px" />
+                <span>
+                  To jest <b className="font-semibold">cofnięcie wersji</b> — instalacja zastąpi
+                  Twoją obecną bibliotekę starszym formatem. Upewnij się, że masz kopię zapasową.
+                </span>
+              </div>
+            )}
 
             {/* Download progress */}
             {status === 'downloading' && progress && (
@@ -184,11 +274,74 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
           </div>
         )}
       </SettingsCard>
+
+      {/* Historia zmian preview — pill-tagged summary of the latest release.
+          Short (4 lines max) per mock L1006; full timeline lives in the
+          dedicated Changelog view. */}
+      <LatestReleaseHighlights />
     </div>
   );
 }
 
 // ── Helper components ───────────────────────────────────────────────
+
+function LatestReleaseHighlights() {
+  const latest = CHANGELOG_RELEASES[0];
+  if (!latest) return null;
+
+  // Flatten the release's categories into (variant, label, entry) triples,
+  // cap at 4 rows (mock: 4-line preview; full list lives in Changelog view).
+  const MAX_ROWS = 4;
+  const rows: Array<{ variant: ReturnType<typeof variantFor>; label: string; entry: string }> = [];
+  for (const cat of latest.categories) {
+    for (const entry of cat.entries) {
+      if (rows.length >= MAX_ROWS) break;
+      rows.push({ variant: variantFor(cat.kind), label: shortLabel(cat.label), entry });
+    }
+    if (rows.length >= MAX_ROWS) break;
+  }
+
+  return (
+    <SettingsCard
+      icon={Sparkles}
+      tone="gold"
+      title="Historia zmian"
+      subtitle="Co nowego w tej wersji."
+    >
+      <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary mb-2">
+        v{latest.version} — {latest.date}
+      </div>
+      <ul className="grid grid-cols-[auto_1fr] gap-x-2.5 gap-y-1.5 items-start text-[12.5px] leading-snug text-foreground/90">
+        {rows.map((row, i) => (
+          <li key={i} className="contents">
+            <PillTag
+              variant={row.variant}
+              className="w-full justify-center mt-[3px] !text-[8.5px] !px-1.5 !py-[2px]"
+            >
+              {row.label}
+            </PillTag>
+            <span>{row.entry}</span>
+          </li>
+        ))}
+      </ul>
+    </SettingsCard>
+  );
+}
+
+function variantFor(kind: keyof typeof CHANGELOG_CATEGORY_VARIANT) {
+  return CHANGELOG_CATEGORY_VARIANT[kind];
+}
+
+/** Shorten category labels so the pill stays compact. */
+function shortLabel(label: string): string {
+  const map: Record<string, string> = {
+    Nowości: 'Nowe',
+    Poprawki: 'Fix',
+    Dopracowania: 'Ulep.',
+    Bezpieczeństwo: 'Bezp.',
+  };
+  return map[label] ?? label;
+}
 
 function StatusPill({
   tone,
