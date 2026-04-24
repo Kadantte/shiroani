@@ -6,7 +6,7 @@ import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
 import { AppModule } from '../modules/app.module';
 import { createMainWindow } from './window';
 import { cleanupIpcHandlers } from './ipc/register';
-import { logger, getLogPath, flushLogs, flushLogsSync, fileTransport } from './logger';
+import { logger, getLogPath, flushLogs, flushLogsSync, fileTransport } from './logging/logger';
 import { initializeAutoUpdater } from './updater';
 import { initializeAdblock, shutdownAdblock } from './adblock';
 import { corsOriginCallback } from '../modules/shared/cors.config';
@@ -15,17 +15,20 @@ import { LOCALHOST, setLoggerContext, makeCorrelationId } from '@shiroani/shared
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
-import { initializeNotificationService, cleanupNotificationService } from './notification-service';
-import { ElectronNotificationHost } from './notification-host.adapter';
-import { ElectronNotificationStore } from './notification-store.adapter';
+import {
+  initializeNotificationService,
+  cleanupNotificationService,
+} from './notifications/notification-service';
+import { ElectronNotificationHost } from './notifications/notification-host.adapter';
+import { ElectronNotificationStore } from './notifications/notification-store.adapter';
 import { NotificationHostPort, NotificationStorePort } from '../modules/notifications';
-import { APP_ID as WINDOWS_APP_ID } from './win-scheduled-notifications';
+import { APP_ID as WINDOWS_APP_ID } from './notifications/win-scheduled-notifications';
 import {
   initializeDiscordRpc,
   cleanupDiscordRpc,
   onWindowBlur,
   onWindowFocus,
-} from './discord-rpc-service';
+} from './discord/discord-rpc-service';
 import { store } from './store';
 import { setPopupBlockEnabled } from './ipc/browser';
 import {

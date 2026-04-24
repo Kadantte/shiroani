@@ -8,7 +8,7 @@ import {
   removeSubscription,
   toggleSubscription,
   isSubscribed,
-} from '../notification-service';
+} from '../notifications/notification-service';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import {
   notificationsGetSettingsSchema,

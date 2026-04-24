@@ -11,7 +11,7 @@ import {
   getLogLevel,
   LogLevel,
 } from '@shiroani/shared';
-import { getLogsDir, createMainLogger } from '../logger';
+import { getLogsDir, createMainLogger } from '../logging/logger';
 import { getBackendPort } from '../backend-port';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import {

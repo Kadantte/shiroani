@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 import type { ZodType } from 'zod';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { IpcError } from './errors';
 
 const logger = createMainLogger('IPC');

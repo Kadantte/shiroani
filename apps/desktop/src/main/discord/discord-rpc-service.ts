@@ -1,9 +1,9 @@
 import { Client } from '@xhayper/discord-rpc';
 import { DEFAULT_DISCORD_TEMPLATES } from '@shiroani/shared';
 import type { DiscordRpcSettings, DiscordPresenceActivity } from '@shiroani/shared';
-import { store } from './store';
+import { store } from '../store';
 import { buildPresence } from './discord-presence-builder';
-import { createMainLogger } from './logger';
+import { createMainLogger } from '../logging/logger';
 
 const logger = createMainLogger('DiscordRpcService');
 

@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
-import { logger } from '../logger';
+import { logger } from '../logging/logger';
 import { store } from '../store';
 import { showContextMenu, setMenuSelectHandler, type MenuState } from './context-menu';
 import { handleOverlayAction } from './mascot-actions';

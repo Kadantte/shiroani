@@ -1,7 +1,7 @@
 import { app, BrowserWindow, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { logger } from '../logger';
+import { logger } from '../logging/logger';
 import { setMenuSelectHandler, isContextMenuVisible, hideContextMenu } from './context-menu';
 import { handleOverlayAction } from './mascot-actions';
 import { isMascotPositionLocked, registerPositionCallbacks } from './mascot-position';

@@ -1,5 +1,5 @@
 jest.mock('electron');
-jest.mock('../../logger', () => ({
+jest.mock('../../logging/logger', () => ({
   createMainLogger: () => ({
     info: jest.fn(),
     warn: jest.fn(),
@@ -17,7 +17,7 @@ const mockService = {
   toggleSubscription: jest.fn(),
   isSubscribed: jest.fn(),
 };
-jest.mock('../../notification-service', () => mockService);
+jest.mock('../../notifications/notification-service', () => mockService);
 
 import { ipcMain } from 'electron';
 import { registerNotificationHandlers, cleanupNotificationHandlers } from '../notifications';

@@ -1,5 +1,5 @@
 import { session, webContents } from 'electron';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { getBlocker, enableCosmeticFiltering, disableCosmeticFiltering } from '../adblock';
 import { fromElectronDetails } from '@ghostery/adblocker-electron';
 

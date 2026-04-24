@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { AiringAnime, NotificationSettings } from '@shiroani/shared';
-import { NotificationStorePort } from '../modules/notifications/notification-store.port';
-import { store } from './store';
+import { NotificationStorePort } from '../../modules/notifications/notification-store.port';
+import { store } from '../store';
 
 const STORE_KEY = 'notification-settings';
 const SENT_STORE_KEY = 'notification-sent';

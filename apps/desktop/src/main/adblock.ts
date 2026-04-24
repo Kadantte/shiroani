@@ -3,7 +3,7 @@ import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
 import fetch from 'cross-fetch';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { createMainLogger } from './logger';
+import { createMainLogger } from './logging/logger';
 
 const logger = createMainLogger('Adblock');
 

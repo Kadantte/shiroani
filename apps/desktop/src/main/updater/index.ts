@@ -5,8 +5,8 @@ import { UPDATE_ERROR_RELEASE_PENDING, DEFAULT_UPDATE_CHANNEL } from '@shiroani/
 import type { UpdateChannel } from '@shiroani/shared';
 import type { UpdateInfo as ElectronUpdateInfo } from 'electron-updater';
 import type { ProgressInfo } from 'electron-updater';
-import { store } from './store';
-import { attachUpdaterLogger, createMainLogger } from './logger';
+import { store } from '../store';
+import { attachUpdaterLogger, createMainLogger } from '../logging/logger';
 
 const logger = createMainLogger('AutoUpdater');
 

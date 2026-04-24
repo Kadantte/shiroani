@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { Notification, BrowserWindow, nativeImage } from 'electron';
 import https from 'https';
 import type { AiringAnime, NotificationSettings } from '@shiroani/shared';
-import { NotificationHostPort } from '../modules/notifications/notification-host.port';
-import { getTitle, buildNotificationBody } from '../modules/notifications/notification-logic';
+import { NotificationHostPort } from '../../modules/notifications/notification-host.port';
+import { getTitle, buildNotificationBody } from '../../modules/notifications/notification-logic';
 import {
   scheduleToastsOnQuit,
   clearScheduledToasts,
   logWindowsToastDiagnostics,
 } from './win-scheduled-notifications';
-import { createMainLogger } from './logger';
+import { createMainLogger } from '../logging/logger';
 
 const logger = createMainLogger('NotificationHostAdapter');
 

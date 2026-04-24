@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logging/logger';
 import { store } from '../store';
 import { registerVisibilitySetter } from './mascot-actions';
 import { clearPositionCallbacks } from './mascot-position';

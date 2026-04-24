@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { BrowserManager } from '../browser/browser-manager';
 import { isExternalUrlAllowed } from '../url-utils';
 import { handle, handleWithFallback } from './with-ipc-handler';

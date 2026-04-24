@@ -1,5 +1,5 @@
 jest.mock('electron');
-jest.mock('../../logger', () => ({
+jest.mock('../../logging/logger', () => ({
   createMainLogger: () => ({
     info: jest.fn(),
     warn: jest.fn(),

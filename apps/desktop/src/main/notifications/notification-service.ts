@@ -1,9 +1,9 @@
 import type { BrowserWindow } from 'electron';
 import type { INestApplication } from '@nestjs/common';
 import type { NotificationSettings, NotificationSubscription } from '@shiroani/shared';
-import { NotificationsService, NotificationHostPort } from '../modules/notifications';
+import { NotificationsService, NotificationHostPort } from '../../modules/notifications';
 import { ElectronNotificationHost } from './notification-host.adapter';
-import { createMainLogger } from './logger';
+import { createMainLogger } from '../logging/logger';
 
 const logger = createMainLogger('NotificationService');
 
