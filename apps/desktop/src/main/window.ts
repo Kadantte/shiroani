@@ -6,16 +6,28 @@ import { VITE_DEV_PORT } from '@shiroani/shared';
 import { logger } from './logger';
 import { getBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
+import { isExternalUrlAllowed } from './url-utils';
+
+// Re-export for callers that still pull it from `./window`. The actual
+// implementation lives in `./url-utils` so IPC modules can import it
+// without creating a `window.ts → ipc/register.ts → ipc/browser.ts →
+// window.ts` cycle.
+export { isExternalUrlAllowed };
 
 /**
  * Set Content Security Policy for the renderer process
  * This helps prevent XSS attacks and other injection vulnerabilities
  */
 function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
-  // Only apply CSP to the main renderer's own pages, not to webview content
+  // Only apply CSP to the main renderer's own pages, not to webview content.
+  // Packaged Windows paths look like `file:///C:/...` — the two-slash glob
+  // (`file://*`) does NOT reliably match those, which would silently disable
+  // the CSP on prod installs. `file:///*` matches both POSIX (`file:///home/...`)
+  // and Windows paths. A `<meta http-equiv="Content-Security-Policy">` tag in
+  // `apps/web/index.html` provides a defence-in-depth fallback.
   const urlFilter = isDev
     ? { urls: [`http://localhost:${VITE_DEV_PORT}/*`] }
-    : { urls: ['file://*'] };
+    : { urls: ['file:///*'] };
 
   session.defaultSession.webRequest.onHeadersReceived(urlFilter, (details, callback) => {
     // Build CSP directives
@@ -26,8 +38,10 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
         : "script-src 'self'",
       // Allow styles from same origin and inline (needed for CSS-in-JS)
       "style-src 'self' 'unsafe-inline'",
-      // Allow images from any HTTPS source (favicons, anime covers, user-browsed sites)
-      "img-src 'self' data: blob: shiroani-bg: https: http:",
+      // Allow images from any HTTPS source (favicons, anime covers, user-browsed sites).
+      // Plain `http:` is intentionally omitted — AniList + Google favicon service
+      // both use HTTPS, and webview content is served via its own session.
+      "img-src 'self' data: blob: shiroani-bg: https:",
       // Allow fonts from same origin
       "font-src 'self' data:",
       // Allow connections to localhost (WebSocket and API) and AniList GraphQL
@@ -56,17 +70,6 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       },
     });
   });
-}
-
-const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:']);
-
-export function isExternalUrlAllowed(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol);
-  } catch {
-    return false;
-  }
 }
 
 export async function createMainWindow(browserManager: BrowserManager): Promise<BrowserWindow> {

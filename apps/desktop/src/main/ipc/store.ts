@@ -20,6 +20,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.autoUpdate',
   'settings.adblockEnabled',
   'settings.uiFontScale',
+  'settings.displayName',
+  'settings.devMode',
   // Library bookmarks
   'library-bookmarks',
   // Update channel
@@ -60,9 +62,11 @@ const ALLOWED_STORE_KEYS = new Set([
 ]);
 
 /**
- * Check if a key is allowed (exact match or prefix match for nested keys)
+ * Check if a key is allowed for **reads** (exact match or prefix match for
+ * nested keys). Reads may target a leaf under an allowed subtree — e.g.
+ * reading `preferences.theme` when `preferences` is in the allowlist.
  */
-function isKeyAllowed(key: string): boolean {
+function isReadKeyAllowed(key: string): boolean {
   // Check exact match
   if (ALLOWED_STORE_KEYS.has(key)) {
     return true;
@@ -79,13 +83,26 @@ function isKeyAllowed(key: string): boolean {
 }
 
 /**
+ * Check if a key is allowed for **writes** — exact match only.
+ *
+ * The prefix-match used for reads would let a renderer set arbitrary subtrees
+ * under any allowed root (e.g. writing to `preferences.foo.bar` with no
+ * schema). Writes must target a key that was explicitly enumerated, so that
+ * each allowed write point is auditable and the payload shape is controlled
+ * by the owning slice of code.
+ */
+function isWriteKeyAllowed(key: string): boolean {
+  return ALLOWED_STORE_KEYS.has(key);
+}
+
+/**
  * Register electron-store IPC handlers
  */
 export function registerStoreHandlers(): void {
   handleWithFallback(
     'store:get',
     (_event, key) => {
-      if (!isKeyAllowed(key)) {
+      if (!isReadKeyAllowed(key)) {
         logger.warn(`Blocked store:get for unauthorized key: ${key}`);
         return undefined;
       }
@@ -98,7 +115,8 @@ export function registerStoreHandlers(): void {
   handle(
     'store:set',
     (_event, key, value) => {
-      if (!isKeyAllowed(key)) {
+      // Writes are exact-match only — see isWriteKeyAllowed for rationale.
+      if (!isWriteKeyAllowed(key)) {
         logger.warn(`Blocked store:set for unauthorized key: ${key}`);
         return;
       }
@@ -114,7 +132,9 @@ export function registerStoreHandlers(): void {
   handle(
     'store:delete',
     (_event, key) => {
-      if (!isKeyAllowed(key)) {
+      // Deletes mirror writes: only enumerated keys may be deleted, preventing
+      // a renderer from clearing arbitrary subtrees under an allowed root.
+      if (!isWriteKeyAllowed(key)) {
         logger.warn(`Blocked store:delete for unauthorized key: ${key}`);
         return;
       }
