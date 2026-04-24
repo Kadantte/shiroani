@@ -1,4 +1,4 @@
-import { Module, type DynamicModule } from '@nestjs/common';
+import { Module, type DynamicModule, type Provider } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './database';
 import { AnimeModule } from './anime';
@@ -7,10 +7,15 @@ import { ScheduleModule } from './schedule';
 import { DiaryModule } from './diary';
 import { ImportExportModule } from './import-export';
 import { FeedModule } from './feed';
+import { NotificationsModule } from './notifications';
 
 @Module({})
 export class AppModule {
-  static forRoot(options: { dbPath: string }): DynamicModule {
+  static forRoot(options: {
+    dbPath: string;
+    notificationHostProvider: Provider;
+    notificationStoreProvider: Provider;
+  }): DynamicModule {
     return {
       module: AppModule,
       imports: [
@@ -33,6 +38,10 @@ export class AppModule {
         DiaryModule,
         ImportExportModule,
         FeedModule,
+        NotificationsModule.forRoot({
+          hostProvider: options.notificationHostProvider,
+          storeProvider: options.notificationStoreProvider,
+        }),
       ],
     };
   }

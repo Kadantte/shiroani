@@ -16,6 +16,9 @@ import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
 import { initializeNotificationService, cleanupNotificationService } from './notification-service';
+import { ElectronNotificationHost } from './notification-host.adapter';
+import { ElectronNotificationStore } from './notification-store.adapter';
+import { NotificationHostPort, NotificationStorePort } from '../modules/notifications';
 import { APP_ID as WINDOWS_APP_ID } from './win-scheduled-notifications';
 import {
   initializeDiscordRpc,
@@ -125,10 +128,23 @@ async function bootstrapNestApp(): Promise<void> {
   try {
     logger.info('Creating NestJS application...');
     const dbPath = join(app.getPath('userData'), 'shiroani.db');
-    nestApp = await NestFactory.create(AppModule.forRoot({ dbPath }), {
-      logger: new NestLoggerAdapter(fileTransport),
-      bufferLogs: true,
-    });
+    nestApp = await NestFactory.create(
+      AppModule.forRoot({
+        dbPath,
+        notificationHostProvider: {
+          provide: NotificationHostPort,
+          useClass: ElectronNotificationHost,
+        },
+        notificationStoreProvider: {
+          provide: NotificationStorePort,
+          useClass: ElectronNotificationStore,
+        },
+      }),
+      {
+        logger: new NestLoggerAdapter(fileTransport),
+        bufferLogs: true,
+      }
+    );
     nestApp.flushLogs();
     logger.info('NestJS application created');
 
