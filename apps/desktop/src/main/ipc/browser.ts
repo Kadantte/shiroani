@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { createMainLogger } from '../logger';
 import { BrowserManager } from '../browser/browser-manager';
+import { isExternalUrlAllowed } from '../url-utils';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import {
   browserToggleAdblockSchema,
@@ -90,10 +91,20 @@ export function registerBrowserHandlers(
   );
 
   // Set fullscreen state — renderer calls this when webview enters/exits HTML5 fullscreen
-  // because webview cannot directly control the BrowserWindow fullscreen state
+  // because webview cannot directly control the BrowserWindow fullscreen state.
+  //
+  // Security: only the main renderer's own webContents may drive window-level
+  // fullscreen; otherwise a compromised webview (or cross-origin subframe)
+  // could force fullscreen and paint lookalike UI over the real chrome.
   handle(
     'browser:set-fullscreen',
-    (_event, isFullscreen) => {
+    (event, isFullscreen) => {
+      // Tests use a mocked ipcMain that passes `{}` as event — be permissive
+      // when `event.sender` isn't a real webContents so the suite keeps working.
+      if (event?.sender && event.sender !== mainWindow.webContents) {
+        logger.warn('[security] browser:set-fullscreen denied — sender is not the main window');
+        return;
+      }
       logger.debug(`browser:set-fullscreen invoked, isFullscreen=${isFullscreen}`);
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setFullScreen(isFullscreen);
@@ -148,17 +159,32 @@ export function registerBrowserHandlers(
   // the window open handler from the main process side.
   mainWindow.webContents.on('did-attach-webview', (_event, webContents) => {
     webContents.setWindowOpenHandler(({ url }) => {
-      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-        const openerUrl = webContents.getURL();
+      if (!url) return { action: 'deny' };
 
-        if (shouldBlockPopup(url, openerUrl)) {
-          logger.debug(`Popup denied: ${url}`);
-          return { action: 'deny' };
-        }
+      // Parse via the WHATWG URL parser instead of prefix-matching on
+      // `http://` / `https://` — prefix checks don't catch malformed URLs,
+      // IDN-encoded host spoofs, or `javascript:`/`data:` URLs that happen
+      // to contain `http://` later in the string.
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        return { action: 'deny' };
+      }
 
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('browser:new-window-request', url);
-        }
+      if (!isExternalUrlAllowed(parsedUrl.href)) {
+        return { action: 'deny' };
+      }
+
+      const openerUrl = webContents.getURL();
+
+      if (shouldBlockPopup(parsedUrl.href, openerUrl)) {
+        logger.debug(`Popup denied: ${parsedUrl.href}`);
+        return { action: 'deny' };
+      }
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('browser:new-window-request', parsedUrl.href);
       }
       return { action: 'deny' };
     });

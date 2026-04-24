@@ -2,7 +2,8 @@ import { ipcMain, dialog, app, protocol, net } from 'electron';
 import type { BrowserWindow } from 'electron';
 import { existsSync, mkdirSync } from 'fs';
 import { copyFile, unlink, stat } from 'fs/promises';
-import { join, extname } from 'path';
+import { join, extname, resolve, sep } from 'path';
+import { pathToFileURL } from 'url';
 import { randomUUID } from 'crypto';
 import { createMainLogger } from '../logger';
 import { handle, handleWithFallback } from './with-ipc-handler';
@@ -56,7 +57,13 @@ export function registerBackgroundProtocol(): void {
   protocol.handle('shiroani-bg', request => {
     const url = new URL(request.url);
     // URL looks like shiroani-bg://backgrounds/filename.png
-    const fileName = url.pathname.replace(/^\/+/, '');
+    // Decode so encoded separators don't bypass the shape check below.
+    let fileName: string;
+    try {
+      fileName = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
+    } catch {
+      return new Response('Forbidden', { status: 403 });
+    }
 
     // Security: reject path traversal
     if (!fileName || isUnsafeFileName(fileName)) {
@@ -70,14 +77,29 @@ export function registerBackgroundProtocol(): void {
       return new Response('Forbidden', { status: 403 });
     }
 
-    const filePath = join(getBackgroundsDir(), fileName);
+    const backgroundsDir = getBackgroundsDir();
+    const filePath = resolve(join(backgroundsDir, fileName));
+
+    // Containment check: even after the shape/extension guards, refuse to
+    // serve any path that doesn't resolve inside the backgrounds directory.
+    // Appending `sep` to the base prevents `backgroundsdir-evil/` from slipping
+    // past a plain `startsWith` check when the dir has a sibling with a
+    // similar prefix.
+    const baseDir = resolve(backgroundsDir) + sep;
+    if (!filePath.startsWith(baseDir)) {
+      logger.warn(`Blocked background request outside base dir: ${filePath}`);
+      return new Response('Forbidden', { status: 403 });
+    }
 
     if (!existsSync(filePath)) {
       return new Response('Not Found', { status: 404 });
     }
 
-    // Use net.fetch with file:// URL to serve the file
-    return net.fetch(`file://${filePath}`);
+    // Use `pathToFileURL` so Windows drive letters, spaces, and non-ASCII
+    // characters are encoded correctly. The previous `file://${filePath}`
+    // template relied on callers never using anything that needed escaping —
+    // fine in practice today but brittle to future refactors.
+    return net.fetch(pathToFileURL(filePath).href);
   });
 
   logger.info('Background protocol (shiroani-bg://) registered');

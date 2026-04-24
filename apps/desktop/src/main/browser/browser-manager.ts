@@ -65,6 +65,32 @@ export class BrowserManager {
   }
 
   /**
+   * Whether the top-frame for this request is an http/https page — i.e. the
+   * in-app browser tab is showing a real web site, not a local/app page
+   * (`file://`, `app://`, `shiroani-bg://`, `chrome://`, etc.).
+   *
+   * Used to scope iframe-unblocking: stripping `X-Frame-Options` and
+   * `frame-ancestors` only makes sense when the top-frame is a streaming-style
+   * site that wants to embed external video players. For any other top-frame
+   * (including the app's own renderer) we leave upstream framing protections
+   * intact, so a local/privileged page can't be silently framed by a subframe
+   * response.
+   */
+  private isWebTopFrame(webContentsId: number | undefined): boolean {
+    if (typeof webContentsId !== 'number' || webContentsId < 0) return false;
+    try {
+      const contents = webContents.fromId(webContentsId);
+      if (!contents || contents.isDestroyed()) return false;
+      const currentUrl = contents.getURL();
+      if (!currentUrl) return false;
+      const parsed = new URL(currentUrl);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Whether the top-frame hostname for this request is whitelisted (adblock off).
    */
   private isTopFrameWhitelisted(webContentsId: number | undefined): boolean {
@@ -134,9 +160,11 @@ export class BrowserManager {
       }
     );
 
-    // Allow media and clipboard permissions for browser tabs (needed for video players)
+    // Allow media and clipboard-write permissions for browser tabs (needed for
+    // video players). `clipboard-read` is intentionally NOT granted here — any
+    // visited site would otherwise be able to silently read the user's clipboard
+    // without a gesture. Sanitized writes are fine (copy buttons, share links).
     const allowedPermissions = new Set([
-      'clipboard-read',
       'clipboard-sanitized-write',
       'media',
       'mediaKeySystem',
@@ -195,9 +223,15 @@ export class BrowserManager {
     sess.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
       const responseHeaders = { ...details.responseHeaders } as Record<string, string[]>;
 
-      // Only strip framing restrictions for subframe responses — main frame
-      // responses should keep their original security headers intact.
-      if (details.resourceType === 'subFrame') {
+      // Only strip framing restrictions for subframe responses whose top-frame
+      // is a real http/https web page. This scopes the iframe-unblocking to
+      // streaming sites (the reason the override exists) and avoids weakening
+      // clickjacking protection for local/app pages (`file://`, `app://`, etc.)
+      // that could otherwise be silently framed by a subframe response.
+      const scopeFramingOverride =
+        details.resourceType === 'subFrame' && this.isWebTopFrame(details.webContentsId);
+
+      if (scopeFramingOverride) {
         for (const key of Object.keys(responseHeaders)) {
           const lower = key.toLowerCase();
           if (lower === 'x-frame-options') {
@@ -213,9 +247,14 @@ export class BrowserManager {
         }
       }
 
-      // Add permissive Permissions-Policy for video player features
+      // Permissions-Policy override — kept narrow. The video-playback features
+      // `autoplay`, `encrypted-media`, and `picture-in-picture` need to delegate
+      // to cross-origin player iframes. `fullscreen` is intentionally NOT set
+      // to `*` — it's too broad (any nested iframe could enter fullscreen and
+      // paint lookalike UI). The user-gesture + `fullscreen` permission in the
+      // session permission handler cover the legitimate use case.
       responseHeaders['Permissions-Policy'] = [
-        'autoplay=*, fullscreen=*, encrypted-media=*, picture-in-picture=*',
+        'autoplay=*, encrypted-media=*, picture-in-picture=*',
       ];
 
       // If adblock is enabled, also run the adblocker's CSP injection logic.
