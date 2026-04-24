@@ -1,4 +1,5 @@
 import { app, BrowserWindow, protocol } from 'electron';
+import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { type INestApplication } from '@nestjs/common';
 import { CustomIoAdapter } from '../modules/shared/custom-io-adapter';
@@ -123,7 +124,8 @@ function showMainWindow(win: BrowserWindow): void {
 async function bootstrapNestApp(): Promise<void> {
   try {
     logger.info('Creating NestJS application...');
-    nestApp = await NestFactory.create(AppModule, {
+    const dbPath = join(app.getPath('userData'), 'shiroani.db');
+    nestApp = await NestFactory.create(AppModule.forRoot({ dbPath }), {
       logger: new NestLoggerAdapter(),
       bufferLogs: true,
     });
