@@ -357,13 +357,26 @@ export function registerAppHandlers(): void {
           return null;
         }
 
-        const buffer = Buffer.from(await res.arrayBuffer());
-        if (buffer.length > FETCH_IMAGE_MAX_BYTES) {
-          logger.warn(
-            `[security] Blocked app:fetch-image-base64 oversized payload: ${buffer.length} bytes`
-          );
-          return null;
+        // Stream body with a running byte count so we never allocate more than
+        // FETCH_IMAGE_MAX_BYTES regardless of whether Content-Length was present.
+        if (!res.body) return null;
+        const reader = res.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let totalBytes = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          totalBytes += value.byteLength;
+          if (totalBytes > FETCH_IMAGE_MAX_BYTES) {
+            await reader.cancel();
+            logger.warn(
+              `[security] Blocked app:fetch-image-base64 oversized stream: >${FETCH_IMAGE_MAX_BYTES} bytes`
+            );
+            return null;
+          }
+          chunks.push(value);
         }
+        const buffer = Buffer.concat(chunks.map(c => Buffer.from(c)));
 
         // Strip any parameters from content-type (e.g. "image/jpeg; charset=x")
         // before echoing into the data URL — keeps the result canonical.
