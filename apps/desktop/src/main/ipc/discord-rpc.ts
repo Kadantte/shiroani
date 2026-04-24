@@ -5,7 +5,7 @@ import {
   updateDiscordRpcSettings,
   updateDiscordPresence,
   clearDiscordPresence,
-} from '../discord-rpc-service';
+} from '../discord/discord-rpc-service';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import {
   discordRpcGetSettingsSchema,

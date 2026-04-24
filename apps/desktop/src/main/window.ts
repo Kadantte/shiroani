@@ -3,7 +3,7 @@ import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { registerIpcHandlers } from './ipc/register';
 import { VITE_DEV_PORT } from '@shiroani/shared';
-import { logger } from './logger';
+import { logger } from './logging/logger';
 import { getBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { isExternalUrlAllowed } from './url-utils';

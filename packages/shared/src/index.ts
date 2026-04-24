@@ -19,6 +19,9 @@ export * from './types/feed';
 // System types
 export * from './types/system';
 
+// Electron API types (preload contract)
+export * from './types/electron-api';
+
 // Utilities
 export * from './utils';
 

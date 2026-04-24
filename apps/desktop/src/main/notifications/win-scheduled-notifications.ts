@@ -4,8 +4,8 @@ import {
   computeUpcomingNotifications,
   getTitle,
   buildNotificationBody,
-} from './notification-logic';
-import { createMainLogger } from './logger';
+} from '../../modules/notifications/notification-logic';
+import { createMainLogger } from '../logging/logger';
 
 const logger = createMainLogger('WinScheduledNotifications');
 

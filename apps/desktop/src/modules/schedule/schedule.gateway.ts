@@ -12,9 +12,9 @@ import {
   scheduleGetDailyPayloadSchema,
   scheduleGetWeeklyPayloadSchema,
 } from '@shiroani/shared';
-import { CORS_CONFIG } from '../shared/cors.config';
-import { WsThrottlerGuard } from '../shared/ws-throttler.guard';
-import { handleGatewayRequest } from '../shared/gateway-handler';
+import { CORS_CONFIG } from '../kernel/cors.config';
+import { WsThrottlerGuard } from '../kernel/ws-throttler.guard';
+import { handleGatewayRequest } from '../kernel/gateway-handler';
 import { ScheduleService } from './schedule.service';
 
 const logger = createLogger('ScheduleGateway');

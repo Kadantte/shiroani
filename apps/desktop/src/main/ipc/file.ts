@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ipcMain, app } from 'electron';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { handle } from './with-ipc-handler';
 import { fileWriteJsonSchema, fileReadJsonSchema } from './schemas';
 

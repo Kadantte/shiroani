@@ -1,6 +1,6 @@
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
 import * as path from 'path';
-import { logger } from './logger';
+import { logger } from './logging/logger';
 
 let tray: Tray | null = null;
 

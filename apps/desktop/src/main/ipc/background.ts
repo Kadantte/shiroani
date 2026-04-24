@@ -5,7 +5,7 @@ import { copyFile, unlink, stat } from 'fs/promises';
 import { join, extname, resolve, sep } from 'path';
 import { pathToFileURL } from 'url';
 import { randomUUID } from 'crypto';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import { backgroundPickSchema, backgroundRemoveSchema, backgroundGetUrlSchema } from './schemas';
 

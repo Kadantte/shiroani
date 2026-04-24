@@ -1,5 +1,5 @@
 jest.mock('electron');
-jest.mock('../../logger', () => ({
+jest.mock('../../logging/logger', () => ({
   createMainLogger: () => ({
     info: jest.fn(),
     warn: jest.fn(),
@@ -14,7 +14,7 @@ const mockService = {
   updateDiscordPresence: jest.fn(),
   clearDiscordPresence: jest.fn(),
 };
-jest.mock('../../discord-rpc-service', () => mockService);
+jest.mock('../../discord/discord-rpc-service', () => mockService);
 
 import { ipcMain } from 'electron';
 import { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from '../discord-rpc';

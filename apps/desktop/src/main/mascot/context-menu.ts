@@ -1,6 +1,6 @@
 import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
-import { logger } from '../logger';
+import { logger } from '../logging/logger';
 
 export interface MenuState {
   visible: boolean;

@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { store } from '../store';
 import { handle, handleWithFallback } from './with-ipc-handler';
 import { storeGetSchema, storeSetSchema, storeDeleteSchema } from './schemas';

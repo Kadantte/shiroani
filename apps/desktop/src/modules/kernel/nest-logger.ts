@@ -1,6 +1,8 @@
 import { LoggerService } from '@nestjs/common';
 import { createLogger, Logger } from '@shiroani/shared';
-import { fileTransport } from '../../main/logger';
+
+/** File transport signature: receives fully formatted log lines. */
+export type NestLoggerFileTransport = (message: string) => void;
 
 /**
  * NestJS LoggerService adapter that delegates to the shared logger.
@@ -10,15 +12,20 @@ import { fileTransport } from '../../main/logger';
  * as our application-level logs.
  *
  * NestJS convention: the last string argument in optionalParams is the context.
+ *
+ * The file transport is injected by the host (e.g. Electron main) at bootstrap
+ * so this module does not reverse-import from the Electron host layer.
  */
 export class NestLoggerAdapter implements LoggerService {
   private readonly loggers = new Map<string, Logger>();
+
+  constructor(private readonly fileTransport?: NestLoggerFileTransport) {}
 
   private getLogger(context?: string): Logger {
     const key = context ?? 'Nest';
     let logger = this.loggers.get(key);
     if (!logger) {
-      logger = createLogger(key, { fileTransport });
+      logger = createLogger(key, { fileTransport: this.fileTransport });
       this.loggers.set(key, logger);
     }
     return logger;

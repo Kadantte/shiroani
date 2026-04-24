@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { createMainLogger } from '../logger';
+import { createMainLogger } from '../logging/logger';
 import { handle, on } from './with-ipc-handler';
 import {
   windowMinimizeSchema,

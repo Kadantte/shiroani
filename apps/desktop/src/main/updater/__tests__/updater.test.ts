@@ -4,8 +4,8 @@ const mockStore = {
   get: jest.fn(() => 'stable'),
   set: jest.fn(),
 };
-jest.mock('../store', () => ({ store: mockStore }));
-jest.mock('../logger', () => ({
+jest.mock('../../store', () => ({ store: mockStore }));
+jest.mock('../../logging/logger', () => ({
   createMainLogger: () => ({
     info: jest.fn(),
     warn: jest.fn(),
@@ -61,14 +61,14 @@ describe('updater module', () => {
   });
 
   it('checkForUpdates returns { enabled: false } before init', async () => {
-    const { checkForUpdates } = await import('../updater');
+    const { checkForUpdates } = await import('..');
     const result = await checkForUpdates();
     expect(result.enabled).toBe(false);
   });
 
   it('initializeAutoUpdater does NOT enable in dev mode', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
     updater.initializeAutoUpdater(win, true);
@@ -78,7 +78,7 @@ describe('updater module', () => {
 
   it('initializeAutoUpdater disables on macOS', async () => {
     setPlatform('darwin');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
     updater.initializeAutoUpdater(win, false);
@@ -88,7 +88,7 @@ describe('updater module', () => {
 
   it('initializeAutoUpdater enables updater on linux in non-dev', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -101,7 +101,7 @@ describe('updater module', () => {
   it('applies beta channel when persisted', async () => {
     setPlatform('linux');
     mockStore.get.mockReturnValue('beta');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -112,7 +112,7 @@ describe('updater module', () => {
 
   it('forwards update-available event to renderer', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -133,7 +133,7 @@ describe('updater module', () => {
 
   it('forwards download-progress event to renderer', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -155,7 +155,7 @@ describe('updater module', () => {
 
   it('forwards update-downloaded event to renderer', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -176,7 +176,7 @@ describe('updater module', () => {
 
   it('maps .yml 404 error to RELEASE_PENDING sentinel', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -190,7 +190,7 @@ describe('updater module', () => {
 
   it('forwards generic error message to renderer', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();
@@ -203,7 +203,7 @@ describe('updater module', () => {
   });
 
   it('setUpdateChannel persists and applies beta', async () => {
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const result = await updater.setUpdateChannel('beta');
     expect(mockStore.set).toHaveBeenCalledWith('preferences.updateChannel', 'beta');
@@ -213,7 +213,7 @@ describe('updater module', () => {
   });
 
   it('setUpdateChannel persists and applies stable', async () => {
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     await updater.setUpdateChannel('stable');
     expect(mockStore.set).toHaveBeenCalledWith('preferences.updateChannel', 'stable');
@@ -222,14 +222,14 @@ describe('updater module', () => {
   });
 
   it('downloadUpdate delegates to autoUpdater', async () => {
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     await updater.downloadUpdate();
     expect(autoUpdater.downloadUpdate).toHaveBeenCalled();
   });
 
   it('quitAndInstall delegates to autoUpdater', async () => {
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     updater.quitAndInstall();
     expect(autoUpdater.quitAndInstall).toHaveBeenCalled();
@@ -237,7 +237,7 @@ describe('updater module', () => {
 
   it('initial check runs after 5s, periodic every hour', async () => {
     setPlatform('linux');
-    const updater = await import('../updater');
+    const updater = await import('..');
     const { autoUpdater } = getUpdaterMock();
     const { BrowserWindow } = getElectron();
     const win = new BrowserWindow();

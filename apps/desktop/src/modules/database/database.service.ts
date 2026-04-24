@@ -1,9 +1,8 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import Database from 'better-sqlite3';
-import { app } from 'electron';
-import { join } from 'path';
 import { createLogger } from '@shiroani/shared';
 import { runMigrations } from './migrations';
+import { DATABASE_PATH } from './database.tokens';
 
 const logger = createLogger('DatabaseService');
 
@@ -11,16 +10,17 @@ const logger = createLogger('DatabaseService');
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private _db!: Database.Database;
 
+  constructor(@Inject(DATABASE_PATH) private readonly dbPath: string) {}
+
   /** Expose the raw better-sqlite3 instance for other services. */
   get db(): Database.Database {
     return this._db;
   }
 
   onModuleInit(): void {
-    const dbPath = join(app.getPath('userData'), 'shiroani.db');
-    logger.info(`Opening database at ${dbPath}`);
+    logger.info('Opening database');
 
-    this._db = new Database(dbPath);
+    this._db = new Database(this.dbPath);
 
     // Performance and safety pragmas
     this._db.pragma('journal_mode = WAL');

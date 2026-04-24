@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logging/logger';
 import { isMascotPositionLocked, setMascotPositionLocked } from './mascot-position';
 
 type SetVisibleFn = (visible: boolean) => void;
