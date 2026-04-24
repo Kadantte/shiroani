@@ -1,5 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { createLogger } from '@shiroani/shared';
+import { MASCOT_SLEEP_URL } from '@/lib/constants';
+import { SpinnerRing } from '@/components/ui/spinner-ring';
+import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 
 const logger = createLogger('ErrorBoundary');
 
@@ -38,35 +41,89 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null });
   };
 
+  handleRestart = () => {
+    // TODO: wire a proper `electronAPI.app.relaunch` IPC once exposed in the
+    // preload — today the closest we can do from the renderer is a full
+    // reload of the current window. This is enough to unstick most stuck
+    // renderer trees without requiring the user to quit the app manually.
+    window.location.reload();
+  };
+
   render() {
     if (!this.state.hasError) {
       return this.props.children;
     }
 
+    const error = this.state.error;
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 bg-background text-foreground">
-        <img
-          src="/shiro-chibi.svg"
-          alt="Maskotka ShiroAni"
-          className="w-32 h-32 opacity-60 drop-shadow-lg"
+      <div className="relative flex-1 flex flex-col items-center justify-center gap-6 p-8 bg-background text-foreground overflow-hidden">
+        {/* Dual radial glow — matches splash-v5 ambient shell. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: [
+              'radial-gradient(ellipse 55% 40% at 25% 20%, var(--glow-1), transparent 60%)',
+              'radial-gradient(ellipse 50% 55% at 90% 95%, oklch(from var(--destructive) l c h / 0.18), transparent 55%)',
+            ].join(','),
+          }}
         />
-        <div className="text-center space-y-2 max-w-md">
-          <h2 className="text-lg font-semibold">Coś poszło nie tak</h2>
-          <p className="text-sm text-muted-foreground">
-            Wystąpił nieoczekiwany błąd. Spróbuj ponownie lub zrestartuj aplikację.
+
+        <KanjiWatermark kanji="失" position="tr" size={320} opacity={0.04} />
+
+        <div className="relative flex flex-col items-center gap-5 text-center">
+          <SpinnerRing size={180} tone="destructive">
+            <img
+              src={MASCOT_SLEEP_URL}
+              alt="Maskotka ShiroAni — śpi"
+              className="w-32 h-32 object-contain drop-shadow-lg"
+              draggable={false}
+            />
+          </SpinnerRing>
+
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="font-serif text-[32px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
+              Shiro<em className="italic text-destructive">Ani</em>
+            </div>
+            <div className="font-mono text-[10.5px] uppercase tracking-[0.28em] text-destructive/85">
+              coś poszło nie tak
+            </div>
+          </div>
+
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            Wystąpił nieoczekiwany błąd. Spróbuj wrócić do poprzedniego ekranu albo zrestartuj
+            aplikację.
           </p>
-          {this.state.error && (
-            <pre className="mt-3 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground text-left overflow-auto max-h-32">
-              {this.state.error.message}
-            </pre>
+
+          {error && (
+            <details className="group max-w-md w-full text-left">
+              <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:text-muted-foreground transition-colors select-none">
+                Szczegóły techniczne
+              </summary>
+              <pre className="mt-2 p-3 rounded-lg bg-muted/40 border border-border-glass text-xs text-muted-foreground overflow-auto max-h-40">
+                {error.message}
+              </pre>
+            </details>
           )}
+
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={this.handleRestart}
+              className="rounded-[7px] border border-foreground/10 bg-foreground/5 px-3.5 py-1.5 text-[11.5px] font-semibold text-foreground/85 hover:bg-foreground/10 cursor-pointer"
+            >
+              Zrestartuj aplikację
+            </button>
+            <button
+              type="button"
+              onClick={this.handleReset}
+              className="rounded-[7px] bg-primary px-3.5 py-1.5 text-[11.5px] font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer"
+            >
+              Spróbuj ponownie
+            </button>
+          </div>
         </div>
-        <button
-          onClick={this.handleReset}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Spróbuj ponownie
-        </button>
       </div>
     );
   }

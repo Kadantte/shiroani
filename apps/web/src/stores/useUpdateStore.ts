@@ -42,6 +42,18 @@ interface UpdateState {
   error: string | null;
   channel: UpdateChannel;
   isChannelSwitching: boolean;
+  /**
+   * Epoch ms of the last time the updater confirmed a check result
+   * (either `available` or `not-available`). Used by UpdatesSection to
+   * render the "last checked" hint.
+   */
+  lastCheckedAt: number | null;
+  /**
+   * True once the user clicked "install now" and we're about to hand off
+   * to `quitAndInstall`. The splash screen watches this flag and surfaces
+   * the updating variant (v3) for the brief window before the app exits.
+   */
+  isInstalling: boolean;
 }
 
 interface UpdateActions {
@@ -64,6 +76,8 @@ export const useUpdateStore = create<UpdateStore>()(
       error: null,
       channel: DEFAULT_UPDATE_CHANNEL,
       isChannelSwitching: false,
+      lastCheckedAt: null,
+      isInstalling: false,
 
       // Actions
       checkForUpdates: () => {
@@ -93,6 +107,12 @@ export const useUpdateStore = create<UpdateStore>()(
       },
 
       installNow: () => {
+        // Flip the splash trigger BEFORE the IPC call so the UI flips to
+        // the updating variant while electron-updater is tearing down.
+        // quitAndInstall is quick (usually <1s) — a dedicated "installing"
+        // status would be gilding the lily. We leave status untouched so
+        // any concurrent error still renders correctly.
+        set({ isInstalling: true }, undefined, 'update/installNowStart');
         callUpdaterAPI('install update', updater => updater.installNow());
       },
 
@@ -154,14 +174,18 @@ export const useUpdateStore = create<UpdateStore>()(
 
         const unsubAvailable = updater.onUpdateAvailable(info => {
           set(
-            { status: 'available', updateInfo: info, error: null },
+            { status: 'available', updateInfo: info, error: null, lastCheckedAt: Date.now() },
             undefined,
             'update/available'
           );
         });
 
         const unsubNotAvailable = updater.onUpdateNotAvailable(() => {
-          set({ status: 'idle', error: null }, undefined, 'update/notAvailable');
+          set(
+            { status: 'idle', error: null, lastCheckedAt: Date.now() },
+            undefined,
+            'update/notAvailable'
+          );
         });
 
         const unsubProgress = updater.onDownloadProgress(progress => {

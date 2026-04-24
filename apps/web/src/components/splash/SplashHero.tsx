@@ -1,46 +1,136 @@
-import { MASCOT_THINK_URL } from '@/lib/constants';
+import { MASCOT_WAVE_URL, MASCOT_SLEEP_URL } from '@/lib/constants';
 import { SpinnerRing } from '@/components/ui/spinner-ring';
 import { cn } from '@/lib/utils';
 
+export type SplashVariant = 'loading' | 'updating' | 'error';
+
 interface SplashHeroProps {
-  variant?: 'loading' | 'error';
+  variant?: SplashVariant;
   errorMessage?: string | null;
+  /**
+   * Optional target label shown under the wordmark for the `updating`
+   * variant (e.g. the incoming version string: `aktualizacja · v0.6.0`).
+   */
+  updatingTarget?: string | null;
 }
 
-export function SplashHero({ variant = 'loading', errorMessage }: SplashHeroProps) {
+type VariantConfig = {
+  tone: 'primary' | 'info' | 'destructive';
+  mascot: string;
+  /** Show the mascot pulse animation (disabled on updating / error per mock). */
+  animateMascot: boolean;
+  /** Render the rotating ring. Hidden on error per mock. */
+  showRing: boolean;
+  wordmarkEmClass: string;
+  subClass: string;
+  /** Default fallback sub text when the caller doesn't supply a target. */
+  defaultSub: string;
+};
+
+const VARIANT_CONFIG: Record<SplashVariant, VariantConfig> = {
+  loading: {
+    tone: 'primary',
+    mascot: MASCOT_WAVE_URL,
+    animateMascot: true,
+    showRing: true,
+    wordmarkEmClass: 'text-primary',
+    subClass: 'text-muted-foreground/80',
+    defaultSub: '白アニ · twoje anime',
+  },
+  updating: {
+    tone: 'info',
+    mascot: MASCOT_SLEEP_URL,
+    animateMascot: false,
+    showRing: true,
+    wordmarkEmClass: 'text-[var(--status-info)]',
+    subClass: 'text-[color:oklch(from_var(--status-info)_l_c_h/0.85)]',
+    defaultSub: 'aktualizacja · trwa instalacja',
+  },
+  error: {
+    tone: 'destructive',
+    mascot: MASCOT_SLEEP_URL,
+    animateMascot: false,
+    showRing: false,
+    wordmarkEmClass: 'text-destructive',
+    subClass: 'text-destructive/85',
+    defaultSub: 'brak połączenia · tryb offline',
+  },
+};
+
+/**
+ * Heuristic: does the error message look like a network / connection failure?
+ * We keep the "brak połączenia" sub only for those; everything else gets a
+ * generic "coś poszło nie tak" tagline so the mock's offline pill doesn't
+ * mislead users about the actual cause.
+ */
+function looksLikeNetworkError(message: string | null | undefined): boolean {
+  if (!message) return true; // no detail — safest to assume network
+  const m = message.toLowerCase();
+  return (
+    m.includes('network') ||
+    m.includes('fetch') ||
+    m.includes('connect') ||
+    m.includes('socket') ||
+    m.includes('econn') ||
+    m.includes('timeout') ||
+    m.includes('offline') ||
+    m.includes('port') ||
+    m.includes('backend')
+  );
+}
+
+export function SplashHero({ variant = 'loading', errorMessage, updatingTarget }: SplashHeroProps) {
+  const config = VARIANT_CONFIG[variant];
   const isError = variant === 'error';
+  const isUpdating = variant === 'updating';
+
+  const subText = (() => {
+    if (isError) {
+      return looksLikeNetworkError(errorMessage)
+        ? config.defaultSub
+        : 'coś poszło nie tak · spróbuj ponownie';
+    }
+    if (isUpdating && updatingTarget) return `aktualizacja · ${updatingTarget}`;
+    return config.defaultSub;
+  })();
+
+  const mascotImg = (
+    <img
+      src={config.mascot}
+      alt="Maskotka ShiroAni"
+      className={cn(
+        'w-36 h-36 object-contain drop-shadow-lg',
+        config.animateMascot && 'animate-[splash-pulse_2.4s_ease-in-out_infinite]'
+      )}
+      draggable={false}
+    />
+  );
+
   return (
     <div className="relative flex flex-col items-center justify-center gap-5 px-8 text-center animate-[splash-fade-up_0.8s_ease-out_both]">
-      <SpinnerRing size={200} tone={isError ? 'destructive' : 'primary'} paused={isError}>
-        <img
-          src={MASCOT_THINK_URL}
-          alt="Maskotka ShiroAni"
-          className={cn(
-            'w-36 h-36 object-contain drop-shadow-lg',
-            !isError && 'animate-[splash-pulse_2.4s_ease-in-out_infinite]'
-          )}
-          draggable={false}
-        />
-      </SpinnerRing>
+      {config.showRing ? (
+        <SpinnerRing size={200} tone={config.tone} paused={isError}>
+          {mascotImg}
+        </SpinnerRing>
+      ) : (
+        <div className="w-[200px] h-[200px] grid place-items-center">{mascotImg}</div>
+      )}
 
       <div className="flex flex-col items-center gap-1.5 animate-[splash-fade-up_0.8s_ease-out_0.2s_both]">
         <div className="font-serif text-[34px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
           Shiro
-          <em className={cn('italic', isError ? 'text-destructive' : 'text-primary')}>Ani</em>
+          <em className={cn('italic', config.wordmarkEmClass)}>Ani</em>
         </div>
-        <div
-          className={cn(
-            'font-mono text-[10.5px] uppercase tracking-[0.28em]',
-            isError ? 'text-destructive/85' : 'text-muted-foreground/80'
-          )}
-        >
-          {isError ? 'brak połączenia · tryb offline' : '白アニ · twoje anime'}
+        <div className={cn('font-mono text-[10.5px] uppercase tracking-[0.28em]', config.subClass)}>
+          {subText}
         </div>
       </div>
 
-      {isError && errorMessage && (
+      {isError && (
         <p className="max-w-sm text-sm leading-relaxed text-muted-foreground animate-[splash-fade-up_0.6s_ease-out_0.4s_both]">
-          {errorMessage}
+          {looksLikeNetworkError(errorMessage)
+            ? 'Nie możemy połączyć się z AniList. Spróbuj ponownie za chwilę.'
+            : 'Coś niespodziewanie przerwało uruchamianie aplikacji.'}
         </p>
       )}
     </div>
