@@ -111,9 +111,17 @@ export const useUpdateStore = create<UpdateStore>()(
         // the updating variant while electron-updater is tearing down.
         // quitAndInstall is quick (usually <1s) — a dedicated "installing"
         // status would be gilding the lily. We leave status untouched so
-        // any concurrent error still renders correctly.
+        // any concurrent error still renders correctly. If IPC fails we
+        // must reset isInstalling, otherwise the splash gets stuck on the
+        // updating variant forever (shouldDismiss waits on !isInstalling).
         set({ isInstalling: true }, undefined, 'update/installNowStart');
-        callUpdaterAPI('install update', updater => updater.installNow());
+        callUpdaterAPI('install update', updater => updater.installNow()).catch((err: Error) => {
+          set(
+            { isInstalling: false, status: 'error', error: err.message },
+            undefined,
+            'update/installNowError'
+          );
+        });
       },
 
       setChannel: (channel: UpdateChannel) => {

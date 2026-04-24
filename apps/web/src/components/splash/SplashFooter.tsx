@@ -4,8 +4,9 @@ import type { SplashVariant } from './SplashHero';
 
 /**
  * Structured status row used by the loading + updating variants. Renders as
- *   <dot> action · <b>target</b>   — metric
- * which matches the mock's `Synchronizacja · AniList` / `Pobieranie · 12.4/36.8 MB` layout.
+ *   <dot> action · <b>target</b>
+ * which matches the mock's `Synchronizacja · AniList` layout. Numeric detail
+ * (e.g. `12.4/36.8 MB`) belongs in `metaRight` on the footer, not here.
  * The footer still falls back to the plain rotating `message` prop when no
  * structured status is provided (keeps backward compat with the loading
  * variant's existing prose rotation).
@@ -13,7 +14,6 @@ import type { SplashVariant } from './SplashHero';
 export interface SplashStatusText {
   action: string;
   target?: string;
-  metric?: string;
 }
 
 interface SplashFooterProps {
@@ -56,7 +56,7 @@ export function SplashFooter({
   const isError = variant === 'error' || Boolean(error);
   const isUpdating = variant === 'updating';
   const showProgress = !isError;
-  const progressTone: 'primary' | 'muted' = 'primary';
+  const progressTone: 'primary' | 'info' = isUpdating ? 'info' : 'primary';
 
   // Render the structured status row when provided, else fall back to the
   // rotating-prose mode used by the original loading splash.
@@ -84,10 +84,7 @@ export function SplashFooter({
             value={progressValue}
             thickness={2}
             tone={progressTone}
-            className={cn(
-              'rounded-none bg-foreground/5',
-              isUpdating && '[&>div]:!bg-[var(--status-info)]'
-            )}
+            className="rounded-none bg-foreground/5"
           />
         ))}
 

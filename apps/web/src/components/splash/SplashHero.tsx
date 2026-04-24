@@ -62,21 +62,33 @@ const VARIANT_CONFIG: Record<SplashVariant, VariantConfig> = {
  * We keep the "brak połączenia" sub only for those; everything else gets a
  * generic "coś poszło nie tak" tagline so the mock's offline pill doesn't
  * mislead users about the actual cause.
+ *
+ * Tokens are chosen to be narrow enough that ordinary words like "report",
+ * "import", or "backend_id" don't trigger a false network classification.
  */
+const NETWORK_SUBSTRINGS = [
+  'network',
+  'fetch',
+  'socket',
+  'econn',
+  'enotfound',
+  'enetunreach',
+  'etimedout',
+  'unreachable',
+  'offline',
+  'timeout',
+];
+const NETWORK_REGEXES = [
+  /\bconnect(ion|ed|ing)?\b/, // "connection", "connecting" — not "reconnected-log" substrings
+  /\bport\b/, // word-boundary so "reports" / "import" don't match
+  /\bbackend\b/,
+];
+
 function looksLikeNetworkError(message: string | null | undefined): boolean {
   if (!message) return true; // no detail — safest to assume network
   const m = message.toLowerCase();
-  return (
-    m.includes('network') ||
-    m.includes('fetch') ||
-    m.includes('connect') ||
-    m.includes('socket') ||
-    m.includes('econn') ||
-    m.includes('timeout') ||
-    m.includes('offline') ||
-    m.includes('port') ||
-    m.includes('backend')
-  );
+  if (NETWORK_SUBSTRINGS.some(token => m.includes(token))) return true;
+  return NETWORK_REGEXES.some(rx => rx.test(m));
 }
 
 export function SplashHero({ variant = 'loading', errorMessage, updatingTarget }: SplashHeroProps) {
@@ -109,7 +121,7 @@ export function SplashHero({ variant = 'loading', errorMessage, updatingTarget }
   return (
     <div className="relative flex flex-col items-center justify-center gap-5 px-8 text-center animate-[splash-fade-up_0.8s_ease-out_both]">
       {config.showRing ? (
-        <SpinnerRing size={200} tone={config.tone} paused={isError}>
+        <SpinnerRing size={200} tone={config.tone}>
           {mascotImg}
         </SpinnerRing>
       ) : (

@@ -13,7 +13,7 @@ export interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
   /** When true, primary glow is rendered under the filled track */
   glow?: boolean;
   /** Override the fill colour */
-  tone?: 'primary' | 'muted';
+  tone?: 'primary' | 'muted' | 'info';
   /** Render a sliding gradient instead of a determinate fill. Used for splash + other "unknown duration" loads. */
   indeterminate?: boolean;
 }
@@ -29,8 +29,14 @@ export function ProgressBar({
   ...props
 }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, value));
-  const fillClass = tone === 'primary' ? 'bg-primary' : 'bg-muted-foreground/60';
-  const toneVar = tone === 'primary' ? '--primary' : '--muted-foreground';
+  const fillClass =
+    tone === 'primary'
+      ? 'bg-primary'
+      : tone === 'info'
+        ? 'bg-[var(--status-info)]'
+        : 'bg-muted-foreground/60';
+  const toneVar =
+    tone === 'primary' ? '--primary' : tone === 'info' ? '--status-info' : '--muted-foreground';
   return (
     <div
       className={cn('relative w-full overflow-hidden rounded-full bg-foreground/8', className)}
