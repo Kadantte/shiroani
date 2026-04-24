@@ -312,29 +312,44 @@ export function registerAppHandlers(): void {
       }
 
       try {
-        const res = await fetch(url, {
-          signal: AbortSignal.timeout(FETCH_IMAGE_TIMEOUT_MS),
-          redirect: 'follow',
-        });
-        if (!res.ok) return null;
-
-        // Post-redirect host re-check: the fetch may have followed a redirect
-        // out of the allowlist. `res.url` reflects the final URL.
-        try {
-          const finalUrl = new URL(res.url);
+        // Manual redirect loop: validate every Location hop before following so
+        // a redirecting CDN can never coerce the main process into probing a
+        // private host (the redirect: 'follow' path makes the hop request
+        // before we can inspect the destination).
+        const MAX_REDIRECTS = 5;
+        let currentUrl = url;
+        let res!: Response;
+        for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+          res = await fetch(currentUrl, {
+            signal: AbortSignal.timeout(FETCH_IMAGE_TIMEOUT_MS),
+            redirect: 'manual',
+          });
+          if (res.status < 300 || res.status >= 400) break;
+          const location = res.headers.get('location');
+          if (!location) return null;
+          let nextUrl: URL;
+          try {
+            nextUrl = new URL(location, currentUrl);
+          } catch {
+            return null;
+          }
           if (
-            finalUrl.protocol !== 'https:' ||
-            isPrivateHostLiteral(finalUrl.hostname) ||
-            !isAllowedImageHost(finalUrl.hostname)
+            nextUrl.protocol !== 'https:' ||
+            isPrivateHostLiteral(nextUrl.hostname) ||
+            !isAllowedImageHost(nextUrl.hostname)
           ) {
             logger.warn(
-              `[security] Blocked app:fetch-image-base64 post-redirect host: ${finalUrl.hostname}`
+              `[security] Blocked app:fetch-image-base64 redirect to disallowed host: ${nextUrl.hostname}`
             );
             return null;
           }
-        } catch {
-          return null;
+          if (hop === MAX_REDIRECTS) {
+            logger.warn('[security] Blocked app:fetch-image-base64 redirect chain too long');
+            return null;
+          }
+          currentUrl = nextUrl.href;
         }
+        if (!res.ok) return null;
 
         // Content-Type must declare an image. Rejects HTML/JSON/etc. that
         // a misconfigured allowlisted host might serve.

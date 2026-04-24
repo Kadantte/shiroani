@@ -247,14 +247,14 @@ export class BrowserManager {
         }
       }
 
-      // Permissions-Policy override — kept narrow. The video-playback features
-      // `autoplay`, `encrypted-media`, and `picture-in-picture` need to delegate
-      // to cross-origin player iframes. `fullscreen` is intentionally NOT set
-      // to `*` — it's too broad (any nested iframe could enter fullscreen and
-      // paint lookalike UI). The user-gesture + `fullscreen` permission in the
-      // session permission handler cover the legitimate use case.
+      // Permissions-Policy override — fullscreen=* is required because the
+      // HTTP-level Permissions-Policy header takes precedence over iframe
+      // allow="fullscreen" attributes, so omitting it breaks cross-origin video
+      // player embeds (YouTube, Crunchyroll players, etc.) that call
+      // requestFullscreen(). The session permission handler's user-gesture gate
+      // is the practical guard against abuse here.
       responseHeaders['Permissions-Policy'] = [
-        'autoplay=*, encrypted-media=*, picture-in-picture=*',
+        'autoplay=*, fullscreen=*, encrypted-media=*, picture-in-picture=*',
       ];
 
       // If adblock is enabled, also run the adblocker's CSP injection logic.
