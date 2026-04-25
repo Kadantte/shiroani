@@ -27,6 +27,7 @@ jobs:
       web: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.web == 'true' }}
       desktop: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.desktop == 'true' }}
       bot: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.bot == 'true' }}
+      landing: ${{ steps.filter.outputs.root == 'true' || steps.filter.outputs.ci == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.landing == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -56,11 +57,17 @@ jobs:
               - 'apps/desktop/**'
             bot:
               - 'apps/bot/**'
+              - 'Dockerfile.bot'
+              - 'docker-compose.yml'
+            landing:
+              - 'apps/landing/**'
+              - 'packages/changelog/**'
+              - 'Dockerfile.landing'
 
   lint:
     name: Lint
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.landing == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -150,10 +157,31 @@ jobs:
       - name: Run bot tests
         run: pnpm --filter @shiroani/bot test
 
+  landing:
+    name: Landing Check
+    needs: [changes]
+    if: needs.changes.outputs.landing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Astro check
+        run: pnpm --filter @shiroani/landing run check
+
+      - name: Build landing site
+        run: pnpm --filter @shiroani/landing run build
+
   ci-result:
     name: CI Result
     if: always()
-    needs: [lint, typecheck, test-web, test-desktop, test-bot]
+    needs: [lint, typecheck, test-web, test-desktop, test-bot, landing]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI outcome
