@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "paths": {
       "@shiroani/shared": ["../../packages/shared/dist"],
-      "@shiroani/shared/*": ["../../packages/shared/dist/*"]
+      "@shiroani/shared/*": ["../../packages/shared/dist/*"],
+      "conf": ["../../node_modules/conf/dist/source"]
     }
   },
   "include": ["src/**/*", "test/**/*"],
