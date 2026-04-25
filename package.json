@@ -35,7 +35,7 @@
       "brace-expansion@<1.1.13": "1.1.13",
       "brace-expansion@>=2.0.0 <2.0.3": "2.0.3",
       "smol-toml": ">=1.6.1",
-      "electron": ">=40.8.5 <41",
+      "electron": ">=41.3.0 <42",
       "@nestjs/core": ">=11.1.18 <12",
       "astro>vite": ">=7.3.2 <8",
       "defu": ">=6.1.5 <7"
