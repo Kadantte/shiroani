@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # skip husky install on CI
+  HUSKY: 0
+
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -16,16 +20,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Setup
+        uses: ./.github/actions/setup
 
       - name: Run security audit
         run: pnpm audit --audit-level=high
