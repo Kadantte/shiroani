@@ -117,9 +117,9 @@ export const windowOpenDevtoolsSchema = z.tuple([]);
 // Dialog channels
 // ============================================================================
 
-export const dialogOpenDirectorySchema = z.tuple([z.unknown().optional()]);
-export const dialogOpenFileSchema = z.tuple([z.unknown().optional()]);
-export const dialogSaveFileSchema = z.tuple([z.unknown().optional()]);
+export const dialogOpenDirectorySchema = z.tuple([z.unknown()]);
+export const dialogOpenFileSchema = z.tuple([z.unknown()]);
+export const dialogSaveFileSchema = z.tuple([z.unknown()]);
 export const dialogMessageSchema = z.tuple([messageDialogOptionsSchema]);
 
 // ============================================================================
@@ -127,7 +127,7 @@ export const dialogMessageSchema = z.tuple([messageDialogOptionsSchema]);
 // ============================================================================
 
 export const storeGetSchema = z.tuple([z.string().min(1)]);
-export const storeSetSchema = z.tuple([z.string().min(1), z.unknown()]);
+export const storeSetSchema = z.tuple([z.string().min(1), z.unknown().nonoptional()]);
 export const storeDeleteSchema = z.tuple([z.string().min(1)]);
 
 // ============================================================================
