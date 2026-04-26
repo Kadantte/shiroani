@@ -42,6 +42,6 @@ export default defineConfig(
     },
   },
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/release/**', '**/*.js'],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/release/**', '**/*.js', '**/.astro/**'],
   }
 );

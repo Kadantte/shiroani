@@ -3,6 +3,8 @@ import {
   BookOpen,
   Calendar,
   Compass,
+  GripHorizontal,
+  GripVertical,
   History,
   NotebookPen,
   Rss,
@@ -12,7 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
-import { useDockDrag } from '@/hooks/useDockDrag';
+import { useDockDrag, type DockDragHandlers } from '@/hooks/useDockDrag';
 import { APP_LOGO_URL } from '@/lib/constants';
 import { ALL_NAV_ITEMS, ALWAYS_VISIBLE_VIEWS, type NavItem } from '@/lib/nav-items';
 
@@ -309,6 +311,66 @@ function getPillStyle(
   };
 }
 
+// ── Drag handle sub-component ─────────────────────────────────────
+
+interface DockDragHandleProps {
+  vertical: boolean;
+  showLabels: boolean;
+  draggable: boolean;
+  isDragging: boolean;
+  dragHandlers: DockDragHandlers;
+  hasVisibleItems: boolean;
+}
+
+function DockDragHandle({
+  vertical,
+  showLabels,
+  draggable,
+  isDragging,
+  dragHandlers,
+  hasVisibleItems,
+}: DockDragHandleProps) {
+  if (!draggable) return null;
+
+  const GripIcon = vertical ? GripHorizontal : GripVertical;
+
+  // Size matches getDockMetrics slot dimensions exactly
+  const buttonClass = cn(
+    'relative z-[1] flex items-center justify-center flex-shrink-0 touch-none',
+    vertical ? (showLabels ? 'w-12 h-6' : 'size-10') : showLabels ? 'h-12 w-6' : 'size-10',
+    showLabels ? 'rounded-xl' : 'rounded-full',
+    'transition-[color,background-color] duration-150',
+    'text-muted-foreground/50',
+    'hover:text-foreground hover:bg-foreground/5 hover:cursor-grab',
+    'active:cursor-grabbing active:bg-foreground/10',
+    isDragging && 'text-primary bg-primary/15',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card'
+  );
+
+  const dividerClass = cn(
+    'flex-shrink-0 bg-border-glass/50',
+    vertical ? 'h-px self-stretch my-0.5' : 'w-px self-stretch mx-0.5'
+  );
+
+  return (
+    <>
+      {hasVisibleItems && <span aria-hidden="true" className={dividerClass} />}
+      <button
+        type="button"
+        aria-label="Przesuń dock"
+        title="Przesuń dock"
+        className={buttonClass}
+        onPointerDown={dragHandlers.onPointerDown}
+        onPointerMove={dragHandlers.onPointerMove}
+        onPointerUp={dragHandlers.onPointerUp}
+        onPointerCancel={dragHandlers.onPointerCancel}
+      >
+        <GripIcon className="w-3.5 h-3.5" />
+      </button>
+    </>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────
 
 interface NavigationDockProps {
@@ -444,12 +506,19 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
     // Collapsed: show only the logo
     return (
       <nav aria-label="Nawigacja główna">
-        <div
+        <button
+          type="button"
+          aria-label="Rozwiń nawigację"
           style={dockStyle}
           onMouseEnter={handleMouseEnter}
           onPointerDown={draggable ? dragHandlers.onPointerDown : undefined}
           onPointerMove={draggable ? dragHandlers.onPointerMove : undefined}
           onPointerUp={draggable ? dragHandlers.onPointerUp : undefined}
+          onPointerCancel={draggable ? dragHandlers.onPointerCancel : undefined}
+          onClick={() => {
+            if (dragHandlers.hasDraggedRef.current) return;
+            setExpanded(true);
+          }}
           className={cn(
             'flex items-center justify-center',
             'w-10 h-10 rounded-full',
@@ -458,7 +527,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             'backdrop-blur-[18px]',
             'animate-[dock-expand_450ms_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none',
             EXPAND_ORIGINS[edge],
-            draggable && 'cursor-grab active:cursor-grabbing',
+            draggable && 'cursor-grab active:cursor-grabbing touch-none',
             'transition-shadow duration-300 ease-out',
             'hover:scale-110 hover:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.55)]',
             hasBg ? 'bg-black/45' : 'bg-card/70'
@@ -470,7 +539,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             draggable={false}
             className="w-6 h-6 object-contain"
           />
-        </div>
+        </button>
       </nav>
     );
   }
@@ -483,9 +552,6 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
       onMouseLeave={handleMouseLeave}
     >
       <div
-        onPointerDown={draggable ? dragHandlers.onPointerDown : undefined}
-        onPointerMove={draggable ? dragHandlers.onPointerMove : undefined}
-        onPointerUp={draggable ? dragHandlers.onPointerUp : undefined}
         onAnimationEnd={e => {
           handleAnimationEnd(e);
           if (justSnapped && e.animationName === 'dock-snap') {
@@ -497,9 +563,8 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           'border border-border-glass',
           'shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]',
           'backdrop-blur-[18px]',
-          draggable && 'cursor-grab active:cursor-grabbing',
-          'touch-none select-none',
-          isDragging && 'opacity-80 scale-95',
+          'select-none',
+          isDragging && 'opacity-95',
           justSnapped &&
             'animate-[dock-snap_500ms_cubic-bezier(0.34,1.56,0.64,1)_both] motion-reduce:animate-none',
           !justSnapped && getAnimationClass(),
@@ -543,6 +608,15 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             }}
           />
         ))}
+
+        <DockDragHandle
+          vertical={vertical}
+          showLabels={showLabels}
+          draggable={draggable}
+          isDragging={isDragging}
+          dragHandlers={dragHandlers}
+          hasVisibleItems={visibleItems.length > 0}
+        />
       </div>
     </nav>
   );
