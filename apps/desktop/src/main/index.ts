@@ -128,6 +128,33 @@ function showMainWindow(win: BrowserWindow): void {
   win.focus();
 }
 
+const appStatsPowerHandlers = {
+  suspend: () => {
+    appStatsTracker.flush();
+    appStatsTracker.pause('suspend');
+  },
+  resume: () => appStatsTracker.resume('resume'),
+  lockScreen: () => {
+    appStatsTracker.flush();
+    appStatsTracker.pause('lock-screen');
+  },
+  unlockScreen: () => appStatsTracker.resume('unlock-screen'),
+};
+
+function registerAppStatsPowerListeners(): void {
+  powerMonitor.on('suspend', appStatsPowerHandlers.suspend);
+  powerMonitor.on('resume', appStatsPowerHandlers.resume);
+  powerMonitor.on('lock-screen', appStatsPowerHandlers.lockScreen);
+  powerMonitor.on('unlock-screen', appStatsPowerHandlers.unlockScreen);
+}
+
+function unregisterAppStatsPowerListeners(): void {
+  powerMonitor.off('suspend', appStatsPowerHandlers.suspend);
+  powerMonitor.off('resume', appStatsPowerHandlers.resume);
+  powerMonitor.off('lock-screen', appStatsPowerHandlers.lockScreen);
+  powerMonitor.off('unlock-screen', appStatsPowerHandlers.unlockScreen);
+}
+
 async function bootstrapNestApp(): Promise<void> {
   try {
     logger.info('Creating NestJS application...');
@@ -349,16 +376,7 @@ async function bootstrap(): Promise<void> {
   // Start local "time spent in ShiroAni" tracker. Power events hard-cut the
   // session so locked / suspended time is never counted.
   appStatsTracker.start(mainWindow);
-  powerMonitor.on('suspend', () => {
-    appStatsTracker.flush();
-    appStatsTracker.pause('suspend');
-  });
-  powerMonitor.on('resume', () => appStatsTracker.resume('resume'));
-  powerMonitor.on('lock-screen', () => {
-    appStatsTracker.flush();
-    appStatsTracker.pause('lock-screen');
-  });
-  powerMonitor.on('unlock-screen', () => appStatsTracker.resume('unlock-screen'));
+  registerAppStatsPowerListeners();
 
   // Create system tray icon
   try {
@@ -505,7 +523,14 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
-    await safeCleanup('app stats tracker', () => appStatsTracker.stop(), logger);
+    await safeCleanup(
+      'app stats tracker',
+      () => {
+        unregisterAppStatsPowerListeners();
+        appStatsTracker.stop();
+      },
+      logger
+    );
     await safeCleanup('adblock', () => shutdownAdblock(), logger);
     await safeCleanup('system tray', () => destroyTray(), logger);
     await safeCleanup('context menu', () => destroyContextMenu(), logger);

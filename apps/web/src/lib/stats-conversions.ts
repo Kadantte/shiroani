@@ -118,7 +118,7 @@ export function buildHeroLine(snapshot: AppStatsSnapshot): HeroLine {
   }
 
   return {
-    primary: `Spędziłeś tu ${formatPolishDuration(open)} — to ${formatYardstick(active, yardstick)}`,
+    primary: `Spędziłeś tu ${formatPolishDuration(open)} — to ${formatYardstick(open, yardstick)}`,
     secondary: `Aktywnie ${formatPolishDuration(active)} · ${formatPolishDuration(watch)} z anime`,
   };
 }

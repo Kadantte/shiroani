@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AppStatsSnapshot } from '@shiroani/shared';
 import { formatPolishDuration } from '@/lib/stats-conversions';
@@ -174,10 +173,9 @@ function formatTooltipDate(date: Date): string {
  *    portals are mount-on-demand, so the off-screen DOM cost is constant.
  */
 export function ActivityHeatmap({ snapshot, weeks = 12, metric = 'active' }: ActivityHeatmapProps) {
-  const data = useMemo(
-    () => buildHeatmap(snapshot.byDay, weeks, metric),
-    [snapshot.byDay, weeks, metric]
-  );
+  // 84 cells × cheap arithmetic — useMemo wouldn't help since `snapshot.byDay`
+  // is a fresh object reference on every store refresh.
+  const data = buildHeatmap(snapshot.byDay, weeks, metric);
 
   return (
     <TooltipProvider delayDuration={120}>

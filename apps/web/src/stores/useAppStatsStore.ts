@@ -43,22 +43,32 @@ export const useAppStatsStore = create<AppStatsStore>()(
         if (!IS_ELECTRON || !window.electronAPI?.appStats) return;
         if (get().isLoading) return;
         set({ isLoading: true }, undefined, 'app-stats/fetching');
-        const snapshot = await window.electronAPI.appStats.getSnapshot();
-        set(
-          { snapshot, isLoading: false, lastFetchedAt: Date.now() },
-          undefined,
-          'app-stats/loaded'
-        );
+        try {
+          const snapshot = await window.electronAPI.appStats.getSnapshot();
+          set(
+            { snapshot, isLoading: false, lastFetchedAt: Date.now() },
+            undefined,
+            'app-stats/loaded'
+          );
+        } catch (err) {
+          console.error('[app-stats] refresh failed', err);
+          set({ isLoading: false }, undefined, 'app-stats/error');
+        }
       },
 
       reset: async () => {
         if (!IS_ELECTRON || !window.electronAPI?.appStats) return;
-        const snapshot = await window.electronAPI.appStats.reset();
-        set(
-          { snapshot, isLoading: false, lastFetchedAt: Date.now() },
-          undefined,
-          'app-stats/reset'
-        );
+        try {
+          const snapshot = await window.electronAPI.appStats.reset();
+          set(
+            { snapshot, isLoading: false, lastFetchedAt: Date.now() },
+            undefined,
+            'app-stats/reset'
+          );
+        } catch (err) {
+          console.error('[app-stats] reset failed', err);
+          set({ isLoading: false }, undefined, 'app-stats/error');
+        }
       },
     }),
     { name: 'app-stats' }
@@ -66,9 +76,15 @@ export const useAppStatsStore = create<AppStatsStore>()(
 );
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let pollSubscribers = 0;
 
-/** Start the 60s polling loop. Idempotent; safe to call from multiple mounts. */
+/**
+ * Start the 60s polling loop. Subscriber-counted so concurrent consumers
+ * (sidebar, in-app stats panel) don't tear down each other's polling on
+ * unmount — the timer only stops when the last subscriber leaves.
+ */
 export function startAppStatsPolling(): void {
+  pollSubscribers += 1;
   if (pollTimer) return;
   void useAppStatsStore.getState().refresh();
   pollTimer = setInterval(() => {
@@ -77,7 +93,8 @@ export function startAppStatsPolling(): void {
 }
 
 export function stopAppStatsPolling(): void {
-  if (pollTimer) {
+  pollSubscribers = Math.max(0, pollSubscribers - 1);
+  if (pollSubscribers === 0 && pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;
   }

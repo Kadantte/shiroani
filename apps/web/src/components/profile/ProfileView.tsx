@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User, RefreshCw, ExternalLink, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,13 @@ import { ProfileShareDialog } from './ProfileShareDialog';
 import { InAppStatsPanel } from './InAppStatsPanel';
 
 type ProfileTab = 'anilist' | 'app';
+
+const TAB_IDS: Record<ProfileTab, { tab: string; panel: string }> = {
+  anilist: { tab: 'profile-tab-anilist', panel: 'profile-panel-anilist' },
+  app: { tab: 'profile-tab-app', panel: 'profile-panel-app' },
+};
+
+const TAB_ORDER: ProfileTab[] = ['anilist', 'app'];
 
 /**
  * Top-level Profile view. Renders the editorial `.vh`-style header and
@@ -115,7 +122,12 @@ export function ProfileView() {
           <KanjiWatermark kanji="我" position="br" size={280} opacity={0.03} />
         </div>
 
-        <div className="relative z-[1] h-full flex flex-col">
+        <div
+          className="relative z-[1] h-full flex flex-col"
+          role="tabpanel"
+          id={TAB_IDS[tab].panel}
+          aria-labelledby={TAB_IDS[tab].tab}
+        >
           {tab === 'app' ? (
             <InAppStatsPanel />
           ) : !username && !isLoading ? (
@@ -147,39 +159,73 @@ export function ProfileView() {
 }
 
 function TabSwitcher({ tab, onChange }: { tab: ProfileTab; onChange: (next: ProfileTab) => void }) {
+  const refs = useRef<Record<ProfileTab, HTMLButtonElement | null>>({ anilist: null, app: null });
+
+  const onArrow = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const idx = TAB_ORDER.indexOf(tab);
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
+    const next = TAB_ORDER[(idx + delta + TAB_ORDER.length) % TAB_ORDER.length];
+    onChange(next);
+    refs.current[next]?.focus();
+  };
+
   return (
     <div
       role="tablist"
       aria-label="Źródło statystyk profilu"
+      onKeyDown={onArrow}
       className={cn(
         'inline-flex items-center gap-0.5 p-0.5 rounded-lg',
         'bg-foreground/5 border border-foreground/10'
       )}
     >
-      <TabButton active={tab === 'anilist'} onClick={() => onChange('anilist')}>
+      <TabButton
+        ref={el => {
+          refs.current.anilist = el;
+        }}
+        id={TAB_IDS.anilist.tab}
+        controls={TAB_IDS.anilist.panel}
+        active={tab === 'anilist'}
+        onClick={() => onChange('anilist')}
+      >
         Z AniList
       </TabButton>
-      <TabButton active={tab === 'app'} onClick={() => onChange('app')}>
+      <TabButton
+        ref={el => {
+          refs.current.app = el;
+        }}
+        id={TAB_IDS.app.tab}
+        controls={TAB_IDS.app.panel}
+        active={tab === 'app'}
+        onClick={() => onChange('app')}
+      >
         W aplikacji
       </TabButton>
     </div>
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
+interface TabButtonProps {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
-}) {
+  id: string;
+  controls: string;
+  ref?: React.Ref<HTMLButtonElement>;
+}
+
+function TabButton({ active, onClick, children, id, controls, ref }: TabButtonProps) {
   return (
     <button
+      ref={ref}
       type="button"
       role="tab"
+      id={id}
+      aria-controls={controls}
       aria-selected={active}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
         'h-7 px-3 rounded-md text-[11.5px] font-medium tracking-[-0.01em] transition-colors',

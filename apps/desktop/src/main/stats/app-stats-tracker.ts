@@ -153,8 +153,9 @@ function isNextDay(prev: string, curr: string): boolean {
 }
 
 function trimByDay(byDay: Record<string, AppStatsDayBucket>): Record<string, AppStatsDayBucket> {
-  const keys = Object.keys(byDay).sort();
+  const keys = Object.keys(byDay);
   if (keys.length <= MAX_DAY_BUCKETS) return byDay;
+  keys.sort();
   const drop = keys.length - MAX_DAY_BUCKETS;
   const next: Record<string, AppStatsDayBucket> = {};
   for (let i = drop; i < keys.length; i++) {
@@ -261,12 +262,16 @@ class AppStatsTracker {
     logger.debug(`isWatchingAnime → ${watching}`);
   }
 
-  /** Snapshot for IPC. Returns a defensive copy. */
+  /** Snapshot for IPC. Returns a defensive deep copy of byDay buckets. */
   getSnapshot(): AppStatsSnapshot {
+    const byDay: Record<string, AppStatsDayBucket> = {};
+    for (const [key, bucket] of Object.entries(this.snapshot.byDay)) {
+      byDay[key] = { ...bucket };
+    }
     return {
       ...this.snapshot,
       totals: { ...this.snapshot.totals },
-      byDay: { ...this.snapshot.byDay },
+      byDay,
       currentStreak: { ...this.snapshot.currentStreak },
       longestStreak: { ...this.snapshot.longestStreak },
     };

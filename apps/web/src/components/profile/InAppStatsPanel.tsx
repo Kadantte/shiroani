@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import {
   useAppStatsStore,
 } from '@/stores/useAppStatsStore';
 import { buildHeroLine, daysSinceCreated, formatPolishDuration } from '@/lib/stats-conversions';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ActivityHeatmap } from './ActivityHeatmap';
 
 /**
@@ -18,6 +19,7 @@ import { ActivityHeatmap } from './ActivityHeatmap';
 export function InAppStatsPanel() {
   const snapshot = useAppStatsStore(s => s.snapshot);
   const reset = useAppStatsStore(s => s.reset);
+  const [resetOpen, setResetOpen] = useState(false);
 
   useEffect(() => {
     startAppStatsPolling();
@@ -29,15 +31,6 @@ export function InAppStatsPanel() {
   const days = daysSinceCreated(snapshot);
   const hero = buildHeroLine(snapshot);
   const { totals } = snapshot;
-
-  const handleReset = () => {
-    if (
-      typeof window !== 'undefined' &&
-      window.confirm('Na pewno wyczyścić wszystkie lokalne statystyki? Nie da się tego cofnąć.')
-    ) {
-      void reset();
-    }
-  };
 
   return (
     <div className="flex-1 overflow-y-auto px-7 pt-6 pb-24 flex flex-col gap-6">
@@ -67,7 +60,7 @@ export function InAppStatsPanel() {
         <CounterCard
           label="Otwarta aplikacja"
           value={formatPolishDuration(totals.appOpenSeconds)}
-          sub="łącznie z minimalizacją"
+          sub="kiedy okno jest na ekranie"
         />
         <CounterCard
           label="Aktywnie"
@@ -115,7 +108,7 @@ export function InAppStatsPanel() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleReset}
+          onClick={() => setResetOpen(true)}
           className={cn(
             'h-9 gap-2 px-3 text-[12px] font-medium',
             'text-muted-foreground hover:bg-destructive/15 hover:text-destructive'
@@ -128,6 +121,18 @@ export function InAppStatsPanel() {
           Wszystko liczy się lokalnie — żaden licznik nie opuszcza twojego komputera.
         </p>
       </section>
+
+      <ConfirmDialog
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        title="Wyczyścić statystyki?"
+        description="Wszystkie lokalne liczniki czasu zostaną usunięte. Nie da się tego cofnąć."
+        confirmLabel="Wyczyść"
+        onConfirm={() => {
+          void reset();
+          setResetOpen(false);
+        }}
+      />
     </div>
   );
 }

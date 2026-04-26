@@ -59,9 +59,6 @@ const ALLOWED_STORE_KEYS = new Set([
   // Feed bookmarks and read state (mirrored from renderer for cross-window access)
   'shiroani:feed-bookmarks',
   'shiroani:feedReadIds',
-  // Local "time spent in ShiroAni" tracker (main process owns the writes;
-  // renderer reads via dedicated app-stats:* IPC channels, not store:get)
-  'app-stats',
 ]);
 
 /**
