@@ -138,4 +138,48 @@ describe('NavigationDock', () => {
       expect(screen.queryByText(label)).not.toBeInTheDocument();
     }
   });
+
+  it('renders drag handle when draggable=true', () => {
+    useDockStore.setState({ draggable: true });
+    render(<NavigationDock hasBg={false} />);
+
+    const handle = screen.getByRole('button', { name: 'Przesuń dock' });
+    expect(handle).toBeInTheDocument();
+  });
+
+  it('does not render drag handle when draggable=false', () => {
+    useDockStore.setState({ draggable: false });
+    render(<NavigationDock hasBg={false} />);
+
+    expect(screen.queryByRole('button', { name: 'Przesuń dock' })).not.toBeInTheDocument();
+  });
+
+  it('drag handle has correct aria-label', () => {
+    useDockStore.setState({ draggable: true });
+    render(<NavigationDock hasBg={false} />);
+
+    const handle = screen.getByRole('button', { name: 'Przesuń dock' });
+    expect(handle).toHaveAttribute('aria-label', 'Przesuń dock');
+  });
+
+  it('clicking a nav item does not set isDragging', async () => {
+    useDockStore.setState({ draggable: true, isDragging: false });
+    const { user } = render(<NavigationDock hasBg={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Dziennik' }));
+
+    expect(useDockStore.getState().isDragging).toBe(false);
+  });
+
+  it('collapsed-mode logo is a button that calls setExpanded', async () => {
+    const setExpanded = vi.fn();
+    useDockStore.setState({ autoHide: true, isExpanded: false, setExpanded } as any);
+    const { user } = render(<NavigationDock hasBg={false} />);
+
+    const logoButton = screen.getByRole('button', { name: 'Rozwiń nawigację' });
+    expect(logoButton).toBeInTheDocument();
+
+    await user.click(logoButton);
+    expect(setExpanded).toHaveBeenCalledWith(true);
+  });
 });

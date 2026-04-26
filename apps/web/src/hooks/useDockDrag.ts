@@ -62,10 +62,26 @@ export function useDockDrag() {
     containerRef.current = null;
   }, []);
 
+  const onPointerCancel = useCallback((e: React.PointerEvent) => {
+    if (!startPos.current) return;
+
+    if (hasDragged.current) {
+      const el = e.currentTarget as HTMLElement;
+      el.releasePointerCapture?.(e.pointerId);
+    }
+
+    useDockStore.setState({ isDragging: false, dragPosition: null });
+    startPos.current = null;
+    hasDragged.current = false;
+    pointerIdRef.current = null;
+    containerRef.current = null;
+  }, []);
+
   return {
     onPointerDown,
     onPointerMove,
     onPointerUp,
+    onPointerCancel,
     /** Check after pointerUp whether the interaction was a drag (to suppress click) */
     hasDraggedRef: hasDragged,
   };
