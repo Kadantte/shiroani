@@ -154,14 +154,6 @@ describe('NavigationDock', () => {
     expect(screen.queryByRole('button', { name: 'Przesuń dock' })).not.toBeInTheDocument();
   });
 
-  it('drag handle has correct aria-label', () => {
-    useDockStore.setState({ draggable: true });
-    render(<NavigationDock hasBg={false} />);
-
-    const handle = screen.getByRole('button', { name: 'Przesuń dock' });
-    expect(handle).toHaveAttribute('aria-label', 'Przesuń dock');
-  });
-
   it('clicking a nav item does not set isDragging', async () => {
     useDockStore.setState({ draggable: true, isDragging: false });
     const { user } = render(<NavigationDock hasBg={false} />);

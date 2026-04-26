@@ -70,6 +70,7 @@ export function useDockDrag() {
       el.releasePointerCapture?.(e.pointerId);
     }
 
+    // Cancel reverts to pre-drag position (no snapToEdge), unlike onPointerUp which commits.
     useDockStore.setState({ isDragging: false, dragPosition: null });
     startPos.current = null;
     hasDragged.current = false;
@@ -86,3 +87,8 @@ export function useDockDrag() {
     hasDraggedRef: hasDragged,
   };
 }
+
+export type DockDragHandlers = Pick<
+  ReturnType<typeof useDockDrag>,
+  'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel'
+>;

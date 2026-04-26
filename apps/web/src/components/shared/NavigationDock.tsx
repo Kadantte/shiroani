@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAppStore, type ActiveView } from '@/stores/useAppStore';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
-import { useDockDrag } from '@/hooks/useDockDrag';
+import { useDockDrag, type DockDragHandlers } from '@/hooks/useDockDrag';
 import { APP_LOGO_URL } from '@/lib/constants';
 import { ALL_NAV_ITEMS, ALWAYS_VISIBLE_VIEWS, type NavItem } from '@/lib/nav-items';
 
@@ -318,12 +318,7 @@ interface DockDragHandleProps {
   showLabels: boolean;
   draggable: boolean;
   isDragging: boolean;
-  dragHandlers: {
-    onPointerDown: (e: React.PointerEvent) => void;
-    onPointerMove: (e: React.PointerEvent) => void;
-    onPointerUp: (e: React.PointerEvent) => void;
-    onPointerCancel: (e: React.PointerEvent) => void;
-  };
+  dragHandlers: DockDragHandlers;
   hasVisibleItems: boolean;
 }
 
@@ -341,7 +336,7 @@ function DockDragHandle({
 
   // Size matches getDockMetrics slot dimensions exactly
   const buttonClass = cn(
-    'relative z-[1] flex items-center justify-center flex-shrink-0',
+    'relative z-[1] flex items-center justify-center flex-shrink-0 touch-none',
     vertical ? (showLabels ? 'w-12 h-6' : 'size-10') : showLabels ? 'h-12 w-6' : 'size-10',
     showLabels ? 'rounded-xl' : 'rounded-full',
     'transition-[color,background-color] duration-150',
@@ -532,7 +527,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
             'backdrop-blur-[18px]',
             'animate-[dock-expand_450ms_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none',
             EXPAND_ORIGINS[edge],
-            draggable && 'cursor-grab active:cursor-grabbing',
+            draggable && 'cursor-grab active:cursor-grabbing touch-none',
             'transition-shadow duration-300 ease-out',
             'hover:scale-110 hover:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.55)]',
             hasBg ? 'bg-black/45' : 'bg-card/70'
@@ -568,7 +563,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           'border border-border-glass',
           'shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]',
           'backdrop-blur-[18px]',
-          'touch-none select-none',
+          'select-none',
           isDragging && 'opacity-95',
           justSnapped &&
             'animate-[dock-snap_500ms_cubic-bezier(0.34,1.56,0.64,1)_both] motion-reduce:animate-none',
