@@ -232,6 +232,14 @@ export const discordRpcUpdateSettingsSchema = z.tuple([discordRpcSettingsPartial
 export const discordRpcUpdatePresenceSchema = z.tuple([discordPresenceActivitySchema]);
 export const discordRpcClearPresenceSchema = z.tuple([]);
 
+// ============================================================================
+// App stats channels
+// ============================================================================
+
+export const appStatsGetSnapshotSchema = z.tuple([]);
+export const appStatsSetWatchingAnimeSchema = z.tuple([z.boolean()]);
+export const appStatsResetSchema = z.tuple([]);
+
 // Re-export shared-type schemas for handlers that compose them elsewhere.
 export {
   messageDialogOptionsSchema,

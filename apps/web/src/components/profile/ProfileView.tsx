@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User, RefreshCw, ExternalLink, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,16 @@ import { ProfileSetup } from './ProfileSetup';
 import { ProfileSkeleton } from './ProfileSkeleton';
 import { ProfileDashboard } from './ProfileDashboard';
 import { ProfileShareDialog } from './ProfileShareDialog';
+import { InAppStatsPanel } from './InAppStatsPanel';
+
+type ProfileTab = 'anilist' | 'app';
+
+const TAB_IDS: Record<ProfileTab, { tab: string; panel: string }> = {
+  anilist: { tab: 'profile-tab-anilist', panel: 'profile-panel-anilist' },
+  app: { tab: 'profile-tab-app', panel: 'profile-panel-app' },
+};
+
+const TAB_ORDER: ProfileTab[] = ['anilist', 'app'];
 
 /**
  * Top-level Profile view. Renders the editorial `.vh`-style header and
@@ -31,6 +41,7 @@ export function ProfileView() {
   const clearProfile = useProfileStore(s => s.clearProfile);
 
   const [shareOpen, setShareOpen] = useState(false);
+  const [tab, setTab] = useState<ProfileTab>('anilist');
 
   useEffect(() => {
     initFromStore();
@@ -39,13 +50,17 @@ export function ProfileView() {
 
   const statsEmpty = profile && profile.statistics.count === 0;
 
-  const subtitle = profile
-    ? `AniList · @${profile.name.toLowerCase()}`
-    : username
-      ? `AniList · @${username.toLowerCase()}`
-      : 'Podłącz konto AniList, żeby zobaczyć statystyki';
+  const subtitle =
+    tab === 'app'
+      ? 'Lokalnie · czas spędzony w ShiroAni'
+      : profile
+        ? `AniList · @${profile.name.toLowerCase()}`
+        : username
+          ? `AniList · @${username.toLowerCase()}`
+          : 'Podłącz konto AniList, żeby zobaczyć statystyki';
 
   const canShare = Boolean(profile && !statsEmpty);
+  const isAniListTab = tab === 'anilist';
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
@@ -55,7 +70,8 @@ export function ProfileView() {
         subtitle={subtitle}
         actions={
           <>
-            {profile && (
+            <TabSwitcher tab={tab} onChange={setTab} />
+            {isAniListTab && profile && (
               <TooltipButton
                 variant="ghost"
                 size="icon"
@@ -69,7 +85,7 @@ export function ProfileView() {
                 <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
               </TooltipButton>
             )}
-            {canShare && (
+            {isAniListTab && canShare && (
               <TooltipButton
                 variant="ghost"
                 size="icon"
@@ -82,7 +98,7 @@ export function ProfileView() {
                 <Share2 className="w-3.5 h-3.5" />
               </TooltipButton>
             )}
-            {profile?.siteUrl && (
+            {isAniListTab && profile?.siteUrl && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -106,8 +122,15 @@ export function ProfileView() {
           <KanjiWatermark kanji="我" position="br" size={280} opacity={0.03} />
         </div>
 
-        <div className="relative z-[1] h-full flex flex-col">
-          {!username && !isLoading ? (
+        <div
+          className="relative z-[1] h-full flex flex-col"
+          role="tabpanel"
+          id={TAB_IDS[tab].panel}
+          aria-labelledby={TAB_IDS[tab].tab}
+        >
+          {tab === 'app' ? (
+            <InAppStatsPanel />
+          ) : !username && !isLoading ? (
             <ProfileSetup />
           ) : isLoading && !profile ? (
             <ProfileSkeleton />
@@ -132,5 +155,86 @@ export function ProfileView() {
         <ProfileShareDialog open={shareOpen} onOpenChange={setShareOpen} profile={profile} />
       )}
     </div>
+  );
+}
+
+function TabSwitcher({ tab, onChange }: { tab: ProfileTab; onChange: (next: ProfileTab) => void }) {
+  const refs = useRef<Record<ProfileTab, HTMLButtonElement | null>>({ anilist: null, app: null });
+
+  const onArrow = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const idx = TAB_ORDER.indexOf(tab);
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
+    const next = TAB_ORDER[(idx + delta + TAB_ORDER.length) % TAB_ORDER.length];
+    onChange(next);
+    refs.current[next]?.focus();
+  };
+
+  return (
+    <div
+      role="tablist"
+      aria-label="Źródło statystyk profilu"
+      onKeyDown={onArrow}
+      className={cn(
+        'inline-flex items-center gap-0.5 p-0.5 rounded-lg',
+        'bg-foreground/5 border border-foreground/10'
+      )}
+    >
+      <TabButton
+        ref={el => {
+          refs.current.anilist = el;
+        }}
+        id={TAB_IDS.anilist.tab}
+        controls={TAB_IDS.anilist.panel}
+        active={tab === 'anilist'}
+        onClick={() => onChange('anilist')}
+      >
+        Z AniList
+      </TabButton>
+      <TabButton
+        ref={el => {
+          refs.current.app = el;
+        }}
+        id={TAB_IDS.app.tab}
+        controls={TAB_IDS.app.panel}
+        active={tab === 'app'}
+        onClick={() => onChange('app')}
+      >
+        W aplikacji
+      </TabButton>
+    </div>
+  );
+}
+
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  id: string;
+  controls: string;
+  ref?: React.Ref<HTMLButtonElement>;
+}
+
+function TabButton({ active, onClick, children, id, controls, ref }: TabButtonProps) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      role="tab"
+      id={id}
+      aria-controls={controls}
+      aria-selected={active}
+      tabIndex={active ? 0 : -1}
+      onClick={onClick}
+      className={cn(
+        'h-7 px-3 rounded-md text-[11.5px] font-medium tracking-[-0.01em] transition-colors',
+        active
+          ? 'bg-primary/20 text-primary'
+          : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+      )}
+    >
+      {children}
+    </button>
   );
 }

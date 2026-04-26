@@ -15,6 +15,7 @@ import type {
   DiscordRpcSettings,
   DiscordPresenceActivity,
 } from './anime';
+import type { AppStatsSnapshot } from './stats';
 
 /**
  * Structured log entry forwarded from the renderer → main via `app:log-write`.
@@ -144,6 +145,17 @@ export interface ElectronAPI {
     updateSettings: (updates: Partial<DiscordRpcSettings>) => Promise<DiscordRpcSettings>;
     updatePresence: (activity: DiscordPresenceActivity) => Promise<void>;
     clearPresence: () => Promise<void>;
+  };
+  appStats: {
+    /** Current snapshot of local time-spent counters. */
+    getSnapshot: () => Promise<AppStatsSnapshot>;
+    /**
+     * Tell the tracker whether the active browser tab is currently on a
+     * recognized anime site. Drives `animeWatchSeconds`.
+     */
+    setWatchingAnime: (watching: boolean) => Promise<void>;
+    /** Wipe all local stats. Returns the fresh (zeroed) snapshot. */
+    reset: () => Promise<AppStatsSnapshot>;
   };
   overlay: {
     show: () => Promise<{ success: boolean }>;

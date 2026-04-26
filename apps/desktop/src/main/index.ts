@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol } from 'electron';
+import { app, BrowserWindow, powerMonitor, protocol } from 'electron';
 import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { type INestApplication } from '@nestjs/common';
@@ -46,6 +46,7 @@ import {
 import { isMascotEnabled } from './mascot/overlay-state';
 import { createTray, destroyTray } from './tray';
 import { safeCleanup } from './cleanup-utils';
+import { appStatsTracker } from './stats/app-stats-tracker';
 
 // Override Electron's default User-Agent so "Electron/<version>" and the app
 // name never leak in request headers — some subframe/worker requests bypass
@@ -125,6 +126,33 @@ function showMainWindow(win: BrowserWindow): void {
   }
   win.show();
   win.focus();
+}
+
+const appStatsPowerHandlers = {
+  suspend: () => {
+    appStatsTracker.flush();
+    appStatsTracker.pause('suspend');
+  },
+  resume: () => appStatsTracker.resume('resume'),
+  lockScreen: () => {
+    appStatsTracker.flush();
+    appStatsTracker.pause('lock-screen');
+  },
+  unlockScreen: () => appStatsTracker.resume('unlock-screen'),
+};
+
+function registerAppStatsPowerListeners(): void {
+  powerMonitor.on('suspend', appStatsPowerHandlers.suspend);
+  powerMonitor.on('resume', appStatsPowerHandlers.resume);
+  powerMonitor.on('lock-screen', appStatsPowerHandlers.lockScreen);
+  powerMonitor.on('unlock-screen', appStatsPowerHandlers.unlockScreen);
+}
+
+function unregisterAppStatsPowerListeners(): void {
+  powerMonitor.off('suspend', appStatsPowerHandlers.suspend);
+  powerMonitor.off('resume', appStatsPowerHandlers.resume);
+  powerMonitor.off('lock-screen', appStatsPowerHandlers.lockScreen);
+  powerMonitor.off('unlock-screen', appStatsPowerHandlers.unlockScreen);
 }
 
 async function bootstrapNestApp(): Promise<void> {
@@ -231,6 +259,15 @@ function setupWindowDependentServices(win: BrowserWindow): void {
   // Discord RPC idle detection on window blur/focus
   win.on('blur', () => onWindowBlur());
   win.on('focus', () => onWindowFocus());
+
+  // Re-bind the tracker on activate so the new BrowserWindow is observed.
+  // Safe to call before tracker.start() — it just stashes the reference.
+  appStatsTracker.setMainWindow(win);
+
+  // Flush time-spent stats whenever the window goes off-screen so a crash
+  // before the next 60s tick still preserves recent activity.
+  win.on('hide', () => appStatsTracker.flush());
+  win.on('minimize', () => appStatsTracker.flush());
 }
 
 async function bootstrap(): Promise<void> {
@@ -335,6 +372,11 @@ async function bootstrap(): Promise<void> {
 
   // Set up window-dependent services and event listeners
   setupWindowDependentServices(mainWindow);
+
+  // Start local "time spent in ShiroAni" tracker. Power events hard-cut the
+  // session so locked / suspended time is never counted.
+  appStatsTracker.start(mainWindow);
+  registerAppStatsPowerListeners();
 
   // Create system tray icon
   try {
@@ -481,6 +523,14 @@ app.on('before-quit', event => {
   isShuttingDown = true;
 
   (async () => {
+    await safeCleanup(
+      'app stats tracker',
+      () => {
+        unregisterAppStatsPowerListeners();
+        appStatsTracker.stop();
+      },
+      logger
+    );
     await safeCleanup('adblock', () => shutdownAdblock(), logger);
     await safeCleanup('system tray', () => destroyTray(), logger);
     await safeCleanup('context menu', () => destroyContextMenu(), logger);

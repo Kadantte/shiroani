@@ -55,6 +55,13 @@ export const useAppStore = create<AppStore>()(
             window.electronAPI.discordRpc.updatePresence({ view });
           }
         }
+
+        // animeWatchSeconds should only tick while the user is on the browser
+        // view watching anime. Leaving the browser pauses the counter; entering
+        // it lets the next anime-detection update flip it back on.
+        if (IS_ELECTRON && view !== 'browser') {
+          window.electronAPI?.appStats?.setWatchingAnime(false);
+        }
       },
     }),
     { name: 'app' }
