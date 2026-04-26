@@ -182,7 +182,10 @@ export function ThemeEditorDialog({
 
       setName(makeDefaultName(cloneLabel));
       setIsDark(sourceOption?.isDark ?? true);
-      setBaseTheme((cloneFromTheme || 'dark') as BuiltInTheme);
+      const isBuiltIn = cloneFromTheme && themeOptions.some(o => o.value === cloneFromTheme);
+      setBaseTheme(
+        isBuiltIn ? (cloneFromTheme as BuiltInTheme) : sourceOption?.isDark ? 'plum' : 'haiku'
+      );
 
       const extracted = extractThemeVariables(sourceTheme);
       setVariables({ ...extracted });

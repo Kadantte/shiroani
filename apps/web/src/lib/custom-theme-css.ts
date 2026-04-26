@@ -106,48 +106,32 @@ export function removeCustomThemeCSS(themeId: string): void {
 /**
  * Extract all theme CSS variable values from a given theme class.
  *
- * Temporarily applies the theme class to a hidden element, reads all
- * 71 variables via getComputedStyle, then cleans up.
+ * Snapshots root.className, replaces it with only themeClass, reads variables,
+ * then restores the original className — ensuring runtime-injected custom-theme
+ * stylesheets (scoped to :root.themeId) don't shadow the requested theme's values.
  *
  * @param themeClass - The CSS class name of the theme to extract from
  * @returns Record mapping variable name (without --) to its computed value
  */
 export function extractThemeVariables(themeClass: string): Record<string, string> {
-  // Create a hidden element with the theme class applied
-  const probe = document.createElement('div');
-  probe.className = themeClass;
-  probe.style.position = 'absolute';
-  probe.style.width = '0';
-  probe.style.height = '0';
-  probe.style.overflow = 'hidden';
-  probe.style.pointerEvents = 'none';
-  document.body.appendChild(probe);
-
-  // We need the theme class on a root-like element for :root.themeClass selectors.
-  // The actual variables are defined on :root, so we read from documentElement
-  // after temporarily adding the class.
   const root = document.documentElement;
-  const hadClass = root.classList.contains(themeClass);
+  const previousClassName = root.className;
 
-  if (!hadClass) {
-    root.classList.add(themeClass);
-  }
+  root.className = themeClass;
 
-  const computed = getComputedStyle(root);
-  const variables: Record<string, string> = {};
+  try {
+    const computed = getComputedStyle(root);
+    const variables: Record<string, string> = {};
 
-  for (const name of THEME_VARIABLE_NAMES) {
-    const value = computed.getPropertyValue(`--${name}`).trim();
-    if (value) {
-      variables[name] = value;
+    for (const name of THEME_VARIABLE_NAMES) {
+      const value = computed.getPropertyValue(`--${name}`).trim();
+      if (value) {
+        variables[name] = value;
+      }
     }
-  }
 
-  // Clean up
-  if (!hadClass) {
-    root.classList.remove(themeClass);
+    return variables;
+  } finally {
+    root.className = previousClassName;
   }
-  probe.remove();
-
-  return variables;
 }
