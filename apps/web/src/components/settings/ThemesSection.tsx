@@ -21,7 +21,6 @@ import { ThemeSwatch } from '@/components/shared/theme/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { ThemeGrid } from '@/components/shared/theme/ThemeGrid';
-import { PillTag } from '@/components/ui/pill-tag';
 import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
 import { UI_FONT_SCALE_PRESETS, type Theme } from '@shiroani/shared';
@@ -119,7 +118,6 @@ export function ThemesSection() {
               );
             })}
           </div>
-          <PillTag variant="accent">Aktualna skala: {Math.round(uiFontScale * 100)}%</PillTag>
         </div>
 
         {IS_MAC && (

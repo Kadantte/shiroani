@@ -559,7 +559,7 @@ export function NavigationDock({ hasBg }: NavigationDockProps) {
           }
         }}
         className={cn(
-          'relative flex items-center gap-[4px] rounded-full',
+          'relative flex items-center gap-1 rounded-full',
           'border border-border-glass',
           'shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]',
           'backdrop-blur-[18px]',
