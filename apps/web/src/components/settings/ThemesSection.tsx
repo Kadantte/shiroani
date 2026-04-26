@@ -21,6 +21,7 @@ import { ThemeSwatch } from '@/components/shared/theme/ThemeSwatch';
 import { ThemeEditorDialog } from '@/components/settings/ThemeEditorDialog';
 import { SettingsCard } from '@/components/settings/SettingsCard';
 import { ThemeGrid } from '@/components/shared/theme/ThemeGrid';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { IS_MAC } from '@/lib/platform';
 import { cn } from '@/lib/utils';
 import { UI_FONT_SCALE_PRESETS, type Theme } from '@shiroani/shared';
@@ -35,6 +36,7 @@ export function ThemesSection() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editThemeId, setEditThemeId] = useState<string | undefined>();
   const [cloneFromTheme, setCloneFromTheme] = useState<string | undefined>();
+  const [themeToDelete, setThemeToDelete] = useState<{ id: string; label: string } | null>(null);
 
   const handleCreateNew = useCallback(() => {
     setEditThemeId(undefined);
@@ -54,17 +56,20 @@ export function ThemesSection() {
     setEditorOpen(true);
   }, []);
 
-  const handleDeleteTheme = useCallback(
-    (themeId: string) => {
-      if (theme === themeId) {
-        setTheme('dark');
-      }
-      removeCustomThemeCSS(themeId);
-      deleteTheme(themeId);
-      toast.success('Usunięto motyw');
-    },
-    [theme, setTheme, deleteTheme]
-  );
+  const requestDeleteTheme = useCallback((id: string, label: string) => {
+    setThemeToDelete({ id, label });
+  }, []);
+
+  const confirmDeleteTheme = useCallback(() => {
+    if (!themeToDelete) return;
+    if (theme === themeToDelete.id) {
+      setTheme('dark');
+    }
+    removeCustomThemeCSS(themeToDelete.id);
+    deleteTheme(themeToDelete.id);
+    toast.success('Usunięto motyw');
+    setThemeToDelete(null);
+  }, [themeToDelete, theme, setTheme, deleteTheme]);
 
   const customThemeOptions = getAllThemeOptions(customThemes).filter(t => t.isCustom);
   const clearPreview = useCallback(() => setPreviewTheme(null), [setPreviewTheme]);
@@ -165,7 +170,7 @@ export function ThemesSection() {
                   onPreview={setPreviewTheme}
                   onPreviewEnd={clearPreview}
                   onEdit={() => handleEditTheme(opt.value)}
-                  onDelete={() => handleDeleteTheme(opt.value)}
+                  onDelete={() => requestDeleteTheme(opt.value, opt.label)}
                   onExport={() => exportTheme(opt.value)}
                 />
               ))}
@@ -227,6 +232,14 @@ export function ThemesSection() {
         onOpenChange={setEditorOpen}
         editThemeId={editThemeId}
         cloneFromTheme={cloneFromTheme}
+      />
+
+      <ConfirmDialog
+        open={themeToDelete !== null}
+        onOpenChange={o => !o && setThemeToDelete(null)}
+        title="Usunąć motyw?"
+        description={`Motyw „${themeToDelete?.label ?? ''}" zostanie trwale usunięty. Nie da się tego cofnąć.`}
+        onConfirm={confirmDeleteTheme}
       />
     </div>
   );
@@ -291,7 +304,7 @@ function CustomThemeSwatchWrapper({
         <button
           onClick={e => {
             e.stopPropagation();
-            if (window.confirm('Czy na pewno chcesz usunąć ten motyw?')) onDelete();
+            onDelete();
           }}
           className="flex h-6 w-6 items-center justify-center rounded border border-border-glass bg-background/85 backdrop-blur-sm transition-colors hover:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Usuń motyw"
