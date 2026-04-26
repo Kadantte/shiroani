@@ -138,7 +138,7 @@ export function UpdatesSection({ version }: UpdatesSectionProps) {
         title="Wersja aplikacji"
         subtitle={isMac ? 'Aktualna wersja ShiroAni.' : 'Aktualna wersja i kanał aktualizacji.'}
       >
-        <div className="flex flex-wrap items-end gap-6 pb-3.5 border-b border-border-glass/60">
+        <div className="flex flex-wrap items-center gap-6 pb-3.5 border-b border-border-glass/60">
           <div>
             <p className="font-serif font-extrabold text-[44px] leading-none tracking-[-0.04em] text-foreground tabular-nums">
               {version || '...'}
