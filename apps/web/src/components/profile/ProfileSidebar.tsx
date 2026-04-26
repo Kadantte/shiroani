@@ -1,7 +1,15 @@
+import { useEffect } from 'react';
 import { User, RefreshCw, Share2, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { UserProfile } from '@shiroani/shared';
+import { pluralize } from '@shiroani/shared';
+import {
+  startAppStatsPolling,
+  stopAppStatsPolling,
+  useAppStatsStore,
+} from '@/stores/useAppStatsStore';
+import { daysSinceCreated } from '@/lib/stats-conversions';
 import { formatDays, formatDaysLabel, formatScore } from './profile-constants';
 
 interface ProfileSidebarProps {
@@ -27,6 +35,16 @@ export function ProfileSidebar({
   onDisconnect,
 }: ProfileSidebarProps) {
   const { statistics: stats } = profile;
+  const appStatsSnapshot = useAppStatsStore(s => s.snapshot);
+
+  // Keep the sidebar badge ("Aktywny od X dni") alive without depending on the
+  // ProfileView mounting the in-app stats tab first.
+  useEffect(() => {
+    startAppStatsPolling();
+    return () => {
+      stopAppStatsPolling();
+    };
+  }, []);
 
   const memberSince = profile.createdAt
     ? new Date(profile.createdAt * 1000).toLocaleDateString('pl-PL', {
@@ -34,6 +52,8 @@ export function ProfileSidebar({
         month: 'long',
       })
     : null;
+
+  const daysActive = appStatsSnapshot.createdAt ? daysSinceCreated(appStatsSnapshot) : 0;
 
   return (
     <aside className="w-[280px] shrink-0 border-r border-border-glass overflow-y-auto px-5 pt-6 pb-20 flex flex-col">
@@ -86,6 +106,21 @@ export function ProfileSidebar({
         </div>
         {memberSince && (
           <div className="mt-2 text-[10.5px] text-muted-foreground/70">od {memberSince}</div>
+        )}
+        {daysActive > 0 && (
+          <div
+            className={cn(
+              'mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full',
+              'bg-primary/15 border border-primary/30',
+              'font-mono text-[9.5px] tracking-[0.1em] uppercase text-primary'
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className="w-[5px] h-[5px] rounded-full bg-primary shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h)]"
+            />
+            W ShiroAni · {pluralize(daysActive, 'dzień', 'dni', 'dni')}
+          </div>
         )}
       </div>
 

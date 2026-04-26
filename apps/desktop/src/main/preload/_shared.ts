@@ -66,6 +66,10 @@ export const ALLOWED_IPC_CHANNELS: ReadonlySet<string> = new Set([
   'discord-rpc:update-settings',
   'discord-rpc:update-presence',
   'discord-rpc:clear-presence',
+  // app stats (local time-spent tracking)
+  'app-stats:get-snapshot',
+  'app-stats:set-watching-anime',
+  'app-stats:reset',
   // overlay
   'overlay:show',
   'overlay:hide',

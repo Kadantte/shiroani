@@ -10,6 +10,9 @@ import { ProfileSetup } from './ProfileSetup';
 import { ProfileSkeleton } from './ProfileSkeleton';
 import { ProfileDashboard } from './ProfileDashboard';
 import { ProfileShareDialog } from './ProfileShareDialog';
+import { InAppStatsPanel } from './InAppStatsPanel';
+
+type ProfileTab = 'anilist' | 'app';
 
 /**
  * Top-level Profile view. Renders the editorial `.vh`-style header and
@@ -31,6 +34,7 @@ export function ProfileView() {
   const clearProfile = useProfileStore(s => s.clearProfile);
 
   const [shareOpen, setShareOpen] = useState(false);
+  const [tab, setTab] = useState<ProfileTab>('anilist');
 
   useEffect(() => {
     initFromStore();
@@ -39,13 +43,17 @@ export function ProfileView() {
 
   const statsEmpty = profile && profile.statistics.count === 0;
 
-  const subtitle = profile
-    ? `AniList · @${profile.name.toLowerCase()}`
-    : username
-      ? `AniList · @${username.toLowerCase()}`
-      : 'Podłącz konto AniList, żeby zobaczyć statystyki';
+  const subtitle =
+    tab === 'app'
+      ? 'Lokalnie · czas spędzony w ShiroAni'
+      : profile
+        ? `AniList · @${profile.name.toLowerCase()}`
+        : username
+          ? `AniList · @${username.toLowerCase()}`
+          : 'Podłącz konto AniList, żeby zobaczyć statystyki';
 
   const canShare = Boolean(profile && !statsEmpty);
+  const isAniListTab = tab === 'anilist';
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in relative">
@@ -55,7 +63,8 @@ export function ProfileView() {
         subtitle={subtitle}
         actions={
           <>
-            {profile && (
+            <TabSwitcher tab={tab} onChange={setTab} />
+            {isAniListTab && profile && (
               <TooltipButton
                 variant="ghost"
                 size="icon"
@@ -69,7 +78,7 @@ export function ProfileView() {
                 <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
               </TooltipButton>
             )}
-            {canShare && (
+            {isAniListTab && canShare && (
               <TooltipButton
                 variant="ghost"
                 size="icon"
@@ -82,7 +91,7 @@ export function ProfileView() {
                 <Share2 className="w-3.5 h-3.5" />
               </TooltipButton>
             )}
-            {profile?.siteUrl && (
+            {isAniListTab && profile?.siteUrl && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -107,7 +116,9 @@ export function ProfileView() {
         </div>
 
         <div className="relative z-[1] h-full flex flex-col">
-          {!username && !isLoading ? (
+          {tab === 'app' ? (
+            <InAppStatsPanel />
+          ) : !username && !isLoading ? (
             <ProfileSetup />
           ) : isLoading && !profile ? (
             <ProfileSkeleton />
@@ -132,5 +143,52 @@ export function ProfileView() {
         <ProfileShareDialog open={shareOpen} onOpenChange={setShareOpen} profile={profile} />
       )}
     </div>
+  );
+}
+
+function TabSwitcher({ tab, onChange }: { tab: ProfileTab; onChange: (next: ProfileTab) => void }) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Źródło statystyk profilu"
+      className={cn(
+        'inline-flex items-center gap-0.5 p-0.5 rounded-lg',
+        'bg-foreground/5 border border-foreground/10'
+      )}
+    >
+      <TabButton active={tab === 'anilist'} onClick={() => onChange('anilist')}>
+        Z AniList
+      </TabButton>
+      <TabButton active={tab === 'app'} onClick={() => onChange('app')}>
+        W aplikacji
+      </TabButton>
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        'h-7 px-3 rounded-md text-[11.5px] font-medium tracking-[-0.01em] transition-colors',
+        active
+          ? 'bg-primary/20 text-primary'
+          : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+      )}
+    >
+      {children}
+    </button>
   );
 }

@@ -139,3 +139,22 @@ export const screen = {
     bounds: { x: 0, y: 0, width: 1920, height: 1080 },
   })),
 };
+
+const powerMonitorListeners = new Map<string, Array<() => void>>();
+export const powerMonitor = {
+  getSystemIdleState: jest.fn((_idleThresholdSeconds: number) => 'active' as const),
+  getSystemIdleTime: jest.fn(() => 0),
+  on: jest.fn((event: string, handler: () => void) => {
+    const list = powerMonitorListeners.get(event) ?? [];
+    list.push(handler);
+    powerMonitorListeners.set(event, list);
+  }),
+  removeAllListeners: jest.fn((event?: string) => {
+    if (event) powerMonitorListeners.delete(event);
+    else powerMonitorListeners.clear();
+  }),
+  __emit: (event: string) => powerMonitorListeners.get(event)?.forEach(l => l()),
+  __reset: () => {
+    powerMonitorListeners.clear();
+  },
+};

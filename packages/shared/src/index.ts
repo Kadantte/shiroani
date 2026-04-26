@@ -19,6 +19,9 @@ export * from './types/feed';
 // System types
 export * from './types/system';
 
+// Local app stats types
+export * from './types/stats';
+
 // Electron API types (preload contract)
 export * from './types/electron-api';
 

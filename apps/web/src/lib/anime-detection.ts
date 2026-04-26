@@ -152,4 +152,8 @@ export function updateAnimePresence(
     : { view: 'browser', siteName };
 
   window.electronAPI?.discordRpc?.updatePresence(activity);
+
+  // Drive the local "anime watch" counter so animeWatchSeconds increments
+  // only while the active tab is on a recognized anime site.
+  window.electronAPI?.appStats?.setWatchingAnime(detection !== null);
 }

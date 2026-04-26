@@ -38,6 +38,9 @@ export { registerOverlayHandlers, cleanupOverlayHandlers } from './overlay';
 // Discord RPC handlers
 export { registerDiscordRpcHandlers, cleanupDiscordRpcHandlers } from './discord-rpc';
 
+// App stats handlers
+export { registerAppStatsHandlers, cleanupAppStatsHandlers } from './app-stats';
+
 // IPC infrastructure
 export { handle, handleWithFallback, on } from './with-ipc-handler';
 export {
