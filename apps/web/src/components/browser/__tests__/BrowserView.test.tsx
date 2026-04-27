@@ -52,13 +52,26 @@ vi.stubGlobal('crypto', {
 import { useBrowserStore } from '@/stores/useBrowserStore';
 import { BrowserView } from '@/components/browser/BrowserView';
 
-function getPaneEl(paneId: string): HTMLElement {
-  const el = document.querySelector<HTMLElement>(`[data-pane-id="${paneId}"]`);
-  if (!el) throw new Error(`pane wrapper for ${paneId} not found`);
-  return el;
+function getPaneWebview(paneId: string): HTMLElement {
+  const container = document.querySelector<HTMLElement>(`[data-pane-id="${paneId}"]`);
+  if (!container) throw new Error(`pane container for ${paneId} not found`);
+  const webview = container.querySelector<HTMLElement>('webview');
+  if (!webview) throw new Error(`webview for ${paneId} not found`);
+  return webview;
 }
 
-describe('BrowserView — webview survival', () => {
+function parentChain(el: HTMLElement): HTMLElement[] {
+  const chain: HTMLElement[] = [];
+  let cur: HTMLElement | null = el.parentElement;
+  while (cur) {
+    chain.push(cur);
+    if (cur === document.body) break;
+    cur = cur.parentElement;
+  }
+  return chain;
+}
+
+describe('BrowserView — webview DOM stability', () => {
   beforeEach(() => {
     uuidCounter = 0;
     electronStoreData.clear();
@@ -78,50 +91,64 @@ describe('BrowserView — webview survival', () => {
     useBrowserStore.getState().openTab('https://b.com');
   });
 
-  it('preserves each pane wrapper across split, unsplit and closeFocusedPane', () => {
+  it('keeps each <webview> DOM node and parent chain stable across split, unsplit and closeFocusedPane', () => {
     render(<BrowserView />);
 
     const [tabA, tabB] = useBrowserStore.getState().tabs;
     const aId = tabA.id;
     const bId = tabB.id;
 
-    const beforeA = getPaneEl(aId);
-    const beforeB = getPaneEl(bId);
+    const beforeWebviewA = getPaneWebview(aId);
+    const beforeWebviewB = getPaneWebview(bId);
+    const beforeChainA = parentChain(beforeWebviewA);
+    const beforeChainB = parentChain(beforeWebviewB);
+
+    const assertStable = (
+      label: string,
+      paneId: string,
+      before: HTMLElement,
+      beforeChain: HTMLElement[]
+    ) => {
+      const after = getPaneWebview(paneId);
+      // Same DOM node — never recreated.
+      expect(after, `${label}: ${paneId} webview node identity`).toBe(before);
+      // Same parent — never reparented.
+      expect(after.parentElement, `${label}: ${paneId} immediate parent`).toBe(
+        before.parentElement
+      );
+      // Same full chain — Electron <webview> fires disconnectedCallback on
+      // any ancestor change, so the entire chain to <body> must be unchanged.
+      const afterChain = parentChain(after);
+      expect(afterChain, `${label}: ${paneId} full parent chain`).toEqual(beforeChain);
+    };
 
     // splitTabs — top-level shape collapses two leaf tabs into one split tab
     act(() => {
       useBrowserStore.getState().splitTabs(aId, bId);
     });
-
-    const afterSplitA = getPaneEl(aId);
-    const afterSplitB = getPaneEl(bId);
-    expect(afterSplitA).toBe(beforeA);
-    expect(afterSplitB).toBe(beforeB);
+    assertStable('after splitTabs', aId, beforeWebviewA, beforeChainA);
+    assertStable('after splitTabs', bId, beforeWebviewB, beforeChainB);
 
     // unsplitTab — split collapses back to two adjacent leaves
     const splitId = useBrowserStore.getState().tabs[0].id;
     act(() => {
       useBrowserStore.getState().unsplitTab(splitId);
     });
+    assertStable('after unsplitTab', aId, beforeWebviewA, beforeChainA);
+    assertStable('after unsplitTab', bId, beforeWebviewB, beforeChainB);
 
-    const afterUnsplitA = getPaneEl(aId);
-    const afterUnsplitB = getPaneEl(bId);
-    expect(afterUnsplitA).toBe(beforeA);
-    expect(afterUnsplitB).toBe(beforeB);
-
-    // Re-split, then closeFocusedPane — the surviving pane keeps its wrapper.
+    // Re-split, then closeFocusedPane — the surviving pane keeps its DOM.
     act(() => {
       useBrowserStore.getState().splitTabs(aId, bId);
     });
-    // The active pane after split is the target leaf (https://b.com on the
-    // left). closeFocusedPane closes that pane and promotes the survivor.
     act(() => {
       useBrowserStore.getState().closeFocusedPane();
     });
 
     const survivorId = useBrowserStore.getState().activePaneId!;
     expect(survivorId === aId || survivorId === bId).toBe(true);
-    const afterCloseSurvivor = getPaneEl(survivorId);
-    expect(afterCloseSurvivor).toBe(survivorId === aId ? beforeA : beforeB);
+    const survivorBefore = survivorId === aId ? beforeWebviewA : beforeWebviewB;
+    const survivorChain = survivorId === aId ? beforeChainA : beforeChainB;
+    assertStable('after closeFocusedPane', survivorId, survivorBefore, survivorChain);
   });
 });
