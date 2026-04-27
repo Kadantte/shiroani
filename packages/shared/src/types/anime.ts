@@ -174,7 +174,8 @@ export interface AnimeDetail {
   };
 }
 
-export interface BrowserTab {
+export interface BrowserLeafNode {
+  kind: 'leaf';
   id: string;
   url: string;
   title: string;
@@ -183,6 +184,24 @@ export interface BrowserTab {
   canGoBack: boolean;
   canGoForward: boolean;
 }
+
+export interface BrowserSplitNode {
+  kind: 'split';
+  id: string;
+  orientation: 'horizontal' | 'vertical';
+  /** Fraction of the group occupied by `left`, in [0, 1]. */
+  ratio: number;
+  left: BrowserNode;
+  right: BrowserNode;
+}
+
+export type BrowserNode = BrowserLeafNode | BrowserSplitNode;
+
+/**
+ * Legacy alias for the leaf shape. Kept so callers can migrate incrementally;
+ * a `BrowserTab` value is structurally a leaf without the discriminator.
+ */
+export type BrowserTab = Omit<BrowserLeafNode, 'kind'>;
 
 // ============================================
 // Library Payloads
