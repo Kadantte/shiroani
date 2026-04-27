@@ -16,6 +16,16 @@ vi.mock('@/lib/platform', () => ({
 // In-memory electron-store double so persistence can be observed in tests.
 const electronStoreData = new Map<string, unknown>();
 vi.mock('@/lib/electron-store', () => ({
+  createDebouncedPersist: (key: string, delayMs: number = 500) => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    return (value: unknown) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        electronStoreData.set(key, value);
+      }, delayMs);
+    };
+  },
   electronStoreGet: vi.fn(async (key: string) => electronStoreData.get(key)),
   electronStoreSet: vi.fn(async (key: string, value: unknown) => {
     electronStoreData.set(key, value);

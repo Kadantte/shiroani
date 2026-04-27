@@ -3,7 +3,8 @@
 **Date:** 2026-04-27
 **Agent:** kirei-perf
 **Scope:** Performance impact of the split-view tabs feature on the embedded browser. Static analysis only — no runtime profiling, no app launch.
-**Branch:** `feat/browser-split-view` (11 commits on top of master). Tests pass (40/40 in `useBrowserStore.test.ts`); typecheck clean.
+**Branch snapshot reviewed:** `feat/browser-split-view` at commit `392c655` (point-in-time analysis). Tests pass (40/40 in `useBrowserStore.test.ts`); typecheck clean.
+**Note:** This report is a historical snapshot. Subsequent commits on the branch may have changed the conclusions — verify against the current PR head before acting on the recommendations below.
 
 ---
 
@@ -191,4 +192,4 @@ Single pass, O(persisted-tab-count). For a user with 50 saved tabs that's 50 typ
 
 ## Go / No-go
 
-**No-go for merge as-is.** The C1 webview-unmount issue defeats the feature's primary use case (persistent side-by-side viewing). Every other finding is fine, accepted, or worth-doing-soon, but C1 is fundamental to the value proposition the architect specced out — splits aren't "safe to use during a video" if they restart the video. Land the slot-key fix (or portal equivalent) plus a webview-survival test, ship the W1-W3 quick wins if cheap, and re-review. The `splitTabsEnabled` toggle defaults to `true` per the architect's recommendation; keep it true after C1 is fixed, but consider flipping to false on the first user-facing release until C1 is verified on macOS Apple Silicon.
+**No-go at snapshot time** (commit `392c655`). The C1 webview-unmount issue defeats the feature's primary use case (persistent side-by-side viewing). Every other finding is fine, accepted, or worth-doing-soon, but C1 is fundamental to the value proposition the architect specced out — splits aren't "safe to use during a video" if they restart the video. Land the slot-key fix (or portal equivalent) plus a webview-survival test, ship the W1-W3 quick wins if cheap, and re-review. The `splitTabsEnabled` toggle defaults to `true` per the architect's recommendation; keep it true after C1 is fixed, but consider flipping to false on the first user-facing release until C1 is verified on macOS Apple Silicon.

@@ -332,6 +332,10 @@ export const useBrowserStore = create<BrowserStore>()(
       // ── Split / unsplit ─────────────────────────────────────────
 
       splitTabs: (sourceTabId: string, targetTabId: string) => {
+        // Honour the user's setting at the store boundary, not just in the UI.
+        // A stale or async caller (e.g. drag started before the toggle flipped)
+        // can still reach this action; this guard makes the off-state final.
+        if (!get().splitTabsEnabled) return;
         if (sourceTabId === targetTabId) return;
         const { tabs, activeTabId } = get();
 
@@ -400,30 +404,20 @@ export const useBrowserStore = create<BrowserStore>()(
         const clamped = Math.min(0.8, Math.max(0.2, ratio));
         const { tabs } = get();
 
-        // Locate the single tab that contains the target split, then rewrite
-        // only that subtree. Other tabs pass through by reference so their
-        // selectors don't see a spurious change on every drag-end.
-        let tabIndex = -1;
-        let split: BrowserSplitNode | null = null;
+        // Single-pass walk: find + rewrite in one traversal. Each tab is
+        // probed at the root; if the split is inside, the recursion returns
+        // either an updated subtree or an `unchanged` marker (ratio already
+        // matches). Tabs that don't contain the split skip after the first
+        // descent and pass through by reference.
         for (let i = 0; i < tabs.length; i++) {
-          const found = findSplitInTree(tabs[i], splitNodeId);
-          if (found) {
-            tabIndex = i;
-            split = found;
-            break;
-          }
+          const result = applySplitRatio(tabs[i], splitNodeId, clamped);
+          if (!result) continue;
+          if (result.kind === 'unchanged') return;
+          const next = tabs.slice();
+          next[i] = result.node;
+          set({ tabs: next }, undefined, 'browser/setSplitRatio');
+          return;
         }
-        if (!split || split.ratio === clamped) return;
-
-        const updatedRoot = replaceNode(tabs[tabIndex], splitNodeId, {
-          ...split,
-          ratio: clamped,
-        });
-        if (!updatedRoot) return;
-
-        const next = tabs.slice();
-        next[tabIndex] = updatedRoot;
-        set({ tabs: next }, undefined, 'browser/setSplitRatio');
       },
 
       focusPane: (paneId: string) => {
@@ -546,12 +540,29 @@ export const useBrowserStore = create<BrowserStore>()(
         set({ splitTabsEnabled: enabled }, undefined, 'browser/setSplitTabsEnabled');
         // When the feature is disabled, flatten any open splits into adjacent
         // tabs so the user is not left with a UI they can no longer manage.
+        // Build the flat list deterministically via collectLeaves rather than
+        // looping unsplitTab — unsplitTab is focus-biased and single-pass, so
+        // it can leave nested splits intact or evict leaves in reversed order.
         if (!enabled) {
-          const { tabs } = get();
-          for (const tab of tabs) {
-            if (tab.kind === 'split') {
-              get().unsplitTab(tab.id);
+          const { tabs, activePaneId } = get();
+          const hasSplits = tabs.some(t => t.kind === 'split');
+          if (hasSplits) {
+            const flat: BrowserLeafNode[] = [];
+            for (const tab of tabs) {
+              for (const leaf of collectLeaves(tab)) flat.push(leaf);
             }
+            const stillFocused = activePaneId ? flat.find(l => l.id === activePaneId) : undefined;
+            const newActive = stillFocused ?? flat[0] ?? null;
+            set(
+              {
+                tabs: flat,
+                activeTabId: newActive?.id ?? null,
+                activePaneId: newActive?.id ?? null,
+              },
+              undefined,
+              'browser/setSplitTabsEnabled:flatten'
+            );
+            get().persistTabs();
           }
         }
         try {
@@ -744,11 +755,32 @@ function migratePersistedTabs(
   return { tabs, activeIndex };
 }
 
-/** Helper used by setSplitRatio — finds the SplitNode by id within a subtree. */
-function findSplitInTree(node: BrowserNode, id: string): BrowserSplitNode | null {
+/**
+ * Single-pass split-ratio update. Returns `null` when the split id is not in
+ * this subtree (caller keeps searching), `{ kind: 'unchanged' }` when the
+ * split was found but the ratio already matches (caller stops without a
+ * state mutation), or `{ kind: 'updated', node }` with a structurally-shared
+ * rewrite of the subtree.
+ */
+type SplitRatioResult = { kind: 'unchanged' } | { kind: 'updated'; node: BrowserNode } | null;
+
+function applySplitRatio(node: BrowserNode, id: string, ratio: number): SplitRatioResult {
   if (node.kind === 'leaf') return null;
-  if (node.id === id) return node;
-  return findSplitInTree(node.left, id) ?? findSplitInTree(node.right, id);
+  if (node.id === id) {
+    if (node.ratio === ratio) return { kind: 'unchanged' };
+    return { kind: 'updated', node: { ...node, ratio } };
+  }
+  const left = applySplitRatio(node.left, id, ratio);
+  if (left) {
+    if (left.kind === 'unchanged') return left;
+    return { kind: 'updated', node: { ...node, left: left.node } };
+  }
+  const right = applySplitRatio(node.right, id, ratio);
+  if (right) {
+    if (right.kind === 'unchanged') return right;
+    return { kind: 'updated', node: { ...node, right: right.node } };
+  }
+  return null;
 }
 
 /**

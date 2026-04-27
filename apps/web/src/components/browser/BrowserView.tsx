@@ -54,6 +54,11 @@ interface PaneRendererProps {
   onSplitterStart: () => void;
   onSplitterEnd: () => void;
   onPaneClick: (paneId: string) => void;
+  /**
+   * Per-leaf new-tab navigate. Scoped to a single pane so a NewTabPage in
+   * one half of a split doesn't clobber the URL of the other half.
+   */
+  onNewTabNavigate: (paneId: string, url: string) => void;
 }
 
 /**
@@ -70,6 +75,19 @@ const PANE_SLOT_ATTR = 'data-pane-slot';
 function collectLeaves(node: BrowserNode): BrowserLeafNode[] {
   if (node.kind === 'leaf') return [node];
   return [...collectLeaves(node.left), ...collectLeaves(node.right)];
+}
+
+/**
+ * Slot key for a top-level tab — the id of its leftmost leaf. Stable across
+ * split/unsplit transitions: when leaves A and B merge into a split, the
+ * combined slot keeps the left leaf's id (matching the old A wrapper); when
+ * a split unsplits, the survivor wrapper still carries the leftmost leaf's
+ * id so React's reconciler reuses it. Webview lifetime is owned by the
+ * portal layer below, but a stable wrapper key avoids unmounting the slot
+ * subtree (and the layout-effect work that re-runs on every churn).
+ */
+function slotKeyForTab(node: BrowserNode): string {
+  return node.kind === 'leaf' ? node.id : slotKeyForTab(node.left);
 }
 
 function PaneChrome({ leaf, parentSplitId }: { leaf: BrowserLeafNode; parentSplitId: string }) {
@@ -105,14 +123,12 @@ function PaneChrome({ leaf, parentSplitId }: { leaf: BrowserLeafNode; parentSpli
 }
 
 function renderNode(props: PaneRendererProps): JSX.Element {
-  const { node, activePaneId, parentSplitId, onPaneClick } = props;
+  const { node, activePaneId, parentSplitId, onPaneClick, onNewTabNavigate } = props;
 
   if (node.kind === 'leaf') {
-    if (isNewTabUrl(node.url)) {
-      return <div key={node.id} className="absolute inset-0" />;
-    }
     const isFocused = node.id === activePaneId;
     const showChrome = parentSplitId !== null;
+    const isNewTab = isNewTabUrl(node.url);
     return (
       <div
         key={node.id}
@@ -126,8 +142,14 @@ function renderNode(props: PaneRendererProps): JSX.Element {
       >
         {showChrome && <PaneChrome leaf={node} parentSplitId={parentSplitId} />}
         <div className="relative flex-1 overflow-hidden">
-          {/* Measurement target only — the webview overlay reads this rect. */}
-          <div {...{ [PANE_SLOT_ATTR]: node.id }} className="absolute inset-0" />
+          {isNewTab ? (
+            // Render NewTabPage inside the leaf so split panes stay scoped:
+            // sending one half home/new-tab doesn't cover the other half.
+            <NewTabPage onNavigate={url => onNewTabNavigate(node.id, url)} />
+          ) : (
+            // Measurement target only — the webview overlay reads this rect.
+            <div {...{ [PANE_SLOT_ATTR]: node.id }} className="absolute inset-0" />
+          )}
         </div>
       </div>
     );
@@ -137,7 +159,8 @@ function renderNode(props: PaneRendererProps): JSX.Element {
 }
 
 function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Element {
-  const { activePaneId, onSplitterStart, onSplitterEnd, resizing, onPaneClick } = props;
+  const { activePaneId, onSplitterStart, onSplitterEnd, resizing, onPaneClick, onNewTabNavigate } =
+    props;
   const direction = split.orientation;
   const leftPercent = Math.max(20, Math.min(80, split.ratio * 100));
   const rightPercent = 100 - leftPercent;
@@ -167,6 +190,7 @@ function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Ele
           onSplitterStart,
           onSplitterEnd,
           onPaneClick,
+          onNewTabNavigate,
         })}
       </ResizablePanel>
       <ResizableHandle
@@ -184,6 +208,7 @@ function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Ele
           onSplitterStart,
           onSplitterEnd,
           onPaneClick,
+          onNewTabNavigate,
         })}
       </ResizablePanel>
     </ResizablePanelGroup>
@@ -202,6 +227,7 @@ export function BrowserView() {
   const activeTabId = useBrowserStore(s => s.activeTabId);
   const activePaneId = useBrowserStore(s => s.activePaneId);
   const splitTabsEnabled = useBrowserStore(s => s.splitTabsEnabled);
+  const isAddressBarFocused = useBrowserStore(s => s.isAddressBarFocused);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   const [urlInput, setUrlInput] = useState('');
@@ -278,22 +304,20 @@ export function BrowserView() {
 
   // Sync URL input with active pane URL (show empty for new tab page)
   useEffect(() => {
-    if (activePane && !useBrowserStore.getState().isAddressBarFocused) {
+    if (activePane && !isAddressBarFocused) {
       setUrlInput(isNewTabUrl(activePane.url) ? '' : activePane.url);
     }
-  }, [activePane?.url, activePane?.id]);
+  }, [activePane?.url, activePane?.id, isAddressBarFocused]);
 
   const isActivePaneNewTab = activePane ? isNewTabUrl(activePane.url) : false;
 
-  // When navigating from the new tab page, update the focused leaf to swap in a webview
-  const handleNewTabNavigate = useCallback(
-    (url: string) => {
-      if (!activePane) return;
-      const { updateTabState } = useBrowserStore.getState();
-      updateTabState(activePane.id, { url, isLoading: true });
-    },
-    [activePane]
-  );
+  // When navigating from a NewTabPage, swap that specific leaf into a webview.
+  // Scoped to a paneId rather than the active pane so a NewTabPage rendered in
+  // one half of a split doesn't accidentally redirect the other pane.
+  const handleNewTabNavigate = useCallback((paneId: string, url: string) => {
+    const { updateTabState } = useBrowserStore.getState();
+    updateTabState(paneId, { url, isLoading: true });
+  }, []);
 
   // Home button: go back to new tab page
   const handleGoHome = useCallback(() => {
@@ -499,7 +523,7 @@ export function BrowserView() {
           <>
             {tabs.map(tab => (
               <div
-                key={tab.id}
+                key={slotKeyForTab(tab)}
                 className={cn('absolute inset-0', tab.id === activeTabId ? 'block' : 'hidden')}
               >
                 {renderNode({
@@ -510,6 +534,7 @@ export function BrowserView() {
                   onSplitterStart: handleSplitterStart,
                   onSplitterEnd: handleSplitterEnd,
                   onPaneClick: handlePaneClick,
+                  onNewTabNavigate: handleNewTabNavigate,
                 })}
               </div>
             ))}
@@ -523,11 +548,6 @@ export function BrowserView() {
               aria-hidden="true"
               className="absolute inset-0 pointer-events-none"
             />
-            {isActivePaneNewTab && (
-              <div className="absolute inset-0 z-10">
-                <NewTabPage onNavigate={handleNewTabNavigate} />
-              </div>
-            )}
           </>
         )}
       </div>

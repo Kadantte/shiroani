@@ -40,17 +40,30 @@ const MERGE_PREFIX = 'merge:';
  * merge-zone droppable ids is captured once per drag (recomputed only when
  * the tab list changes), so the per-pointer-move check is O(1) Set.has and
  * doesn't allocate strings on every frame.
+ *
+ * Per-frame allocation budget: a single sortable-only `droppableContainers`
+ * array on the closestCenter fallback. The merge-hit path lazily builds an
+ * array only when at least one merge zone is under the pointer, so the
+ * common case (no merge zones) skips array allocation entirely.
  */
 function makeSplitAwareCollisionDetection(mergeIds: Set<string>): CollisionDetection {
+  if (mergeIds.size === 0) {
+    return closestCenter;
+  }
   return args => {
-    const within = pointerWithin(args).filter(c => mergeIds.has(String(c.id)));
-    if (within.length > 0) return within;
+    const pointerHits = pointerWithin(args);
+    let mergeHits: typeof pointerHits | null = null;
+    for (const hit of pointerHits) {
+      if (mergeIds.has(String(hit.id))) {
+        (mergeHits ??= []).push(hit);
+      }
+    }
+    if (mergeHits) return mergeHits;
 
-    const sortableArgs = {
+    return closestCenter({
       ...args,
       droppableContainers: args.droppableContainers.filter(c => !mergeIds.has(String(c.id))),
-    };
-    return closestCenter(sortableArgs);
+    });
   };
 }
 
