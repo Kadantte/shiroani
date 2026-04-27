@@ -398,19 +398,32 @@ export const useBrowserStore = create<BrowserStore>()(
 
       setSplitRatio: (splitNodeId: string, ratio: number) => {
         const clamped = Math.min(0.8, Math.max(0.2, ratio));
-        set(
-          state => ({
-            tabs: state.tabs.map(tab => {
-              const replaced = replaceNode(tab, splitNodeId, {
-                ...(findSplitInTree(tab, splitNodeId) as BrowserSplitNode),
-                ratio: clamped,
-              });
-              return replaced ?? tab;
-            }),
-          }),
-          undefined,
-          'browser/setSplitRatio'
-        );
+        const { tabs } = get();
+
+        // Locate the single tab that contains the target split, then rewrite
+        // only that subtree. Other tabs pass through by reference so their
+        // selectors don't see a spurious change on every drag-end.
+        let tabIndex = -1;
+        let split: BrowserSplitNode | null = null;
+        for (let i = 0; i < tabs.length; i++) {
+          const found = findSplitInTree(tabs[i], splitNodeId);
+          if (found) {
+            tabIndex = i;
+            split = found;
+            break;
+          }
+        }
+        if (!split || split.ratio === clamped) return;
+
+        const updatedRoot = replaceNode(tabs[tabIndex], splitNodeId, {
+          ...split,
+          ratio: clamped,
+        });
+        if (!updatedRoot) return;
+
+        const next = tabs.slice();
+        next[tabIndex] = updatedRoot;
+        set({ tabs: next }, undefined, 'browser/setSplitRatio');
       },
 
       focusPane: (paneId: string) => {
