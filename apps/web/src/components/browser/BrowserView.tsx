@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { Globe, Columns2 } from 'lucide-react';
 import {
@@ -52,6 +53,22 @@ interface PaneRendererProps {
   onSplitterStart: () => void;
   onSplitterEnd: () => void;
   onPaneClick: (paneId: string) => void;
+}
+
+/**
+ * Slot marker rendered at every leaf position in the tree. The actual
+ * `<BrowserWebview>` for a pane lives in a stable wrapper kept off-screen
+ * (see `BrowserView`). After every render, a layout effect moves each
+ * wrapper into the slot DOM node carrying the matching `data-pane-slot`,
+ * preserving webview DOM identity across split / unsplit / closeFocusedPane
+ * transitions even though the surrounding React tree changes shape.
+ */
+const PANE_SLOT_ATTR = 'data-pane-slot';
+
+/** Walk a tree and collect every leaf in render order (left then right). */
+function collectLeaves(node: BrowserNode): BrowserLeafNode[] {
+  if (node.kind === 'leaf') return [node];
+  return [...collectLeaves(node.left), ...collectLeaves(node.right)];
 }
 
 function PaneChrome({ leaf, parentSplitId }: { leaf: BrowserLeafNode; parentSplitId: string }) {
@@ -108,7 +125,13 @@ function renderNode(props: PaneRendererProps): JSX.Element {
       >
         {showChrome && <PaneChrome leaf={node} parentSplitId={parentSplitId} />}
         <div className="relative flex-1 overflow-hidden">
-          <BrowserWebview paneId={node.id} initialUrl={node.url} isActive />
+          {/*
+           * Empty slot — the pane's <BrowserWebview> is mounted once in a
+           * hidden root and re-parented here imperatively after every render.
+           * This keeps the webview DOM node alive across split / unsplit /
+           * close-pane transitions, which would otherwise unmount it.
+           */}
+          <div {...{ [PANE_SLOT_ATTR]: node.id }} className="absolute inset-0" />
           {resizing && (
             <div className="pointer-events-auto absolute inset-0 z-20" aria-hidden="true" />
           )}
@@ -300,6 +323,79 @@ export function BrowserView() {
   const handleSplitterStart = useCallback(() => setIsResizing(true), []);
   const handleSplitterEnd = useCallback(() => setIsResizing(false), []);
 
+  // Flat list of every leaf currently in the tree, deduplicated by paneId.
+  // Each leaf gets one persistently-mounted wrapper in the hidden root below;
+  // tree-level slot divs reference these wrappers and we move them into place
+  // after every render. Skips new-tab leaves — they show NewTabPage instead.
+  const liveLeaves = useMemo(() => {
+    const seen = new Set<string>();
+    const out: BrowserLeafNode[] = [];
+    for (const tab of tabs) {
+      for (const leaf of collectLeaves(tab)) {
+        if (seen.has(leaf.id) || isNewTabUrl(leaf.url)) continue;
+        seen.add(leaf.id);
+        out.push(leaf);
+      }
+    }
+    return out;
+  }, [tabs]);
+
+  const hiddenRootRef = useRef<HTMLDivElement>(null);
+
+  // Per-pane container DOM nodes. Created lazily, kept alive for the pane's
+  // whole lifetime, and physically re-parented between slots and the hidden
+  // root via appendChild. React renders <BrowserWebview> into them via
+  // portals — React's reconciler only sees the portal target as the parent,
+  // so moving the container in DOM is invisible to React and never triggers
+  // a remount of the contained webview. Containers are owned by a ref so
+  // their identity is stable across BrowserView re-renders.
+  const paneContainersRef = useRef(new Map<string, HTMLDivElement>());
+
+  const getOrCreatePaneContainer = useCallback((paneId: string): HTMLDivElement => {
+    let el = paneContainersRef.current.get(paneId);
+    if (!el) {
+      el = document.createElement('div');
+      el.setAttribute('data-pane-id', paneId);
+      el.style.width = '100%';
+      el.style.height = '100%';
+      paneContainersRef.current.set(paneId, el);
+    }
+    return el;
+  }, []);
+
+  // Drop containers for panes that no longer exist anywhere in the tree.
+  useEffect(() => {
+    const live = new Set(liveLeaves.map(l => l.id));
+    for (const [paneId, el] of paneContainersRef.current) {
+      if (!live.has(paneId)) {
+        el.remove();
+        paneContainersRef.current.delete(paneId);
+      }
+    }
+  }, [liveLeaves]);
+
+  // After every render, walk each pane container and move it into the slot
+  // div whose data-pane-slot matches (or the hidden root if no slot exists).
+  // appendChild moves the node without removing/recreating it, which is what
+  // keeps the contained <webview> DOM identity intact.
+  useLayoutEffect(() => {
+    const hidden = hiddenRootRef.current;
+    if (!hidden) return;
+    const root = hidden.ownerDocument ?? document;
+    const slots = new Map<string, HTMLElement>();
+    for (const slot of root.querySelectorAll<HTMLElement>(`[${PANE_SLOT_ATTR}]`)) {
+      const id = slot.getAttribute(PANE_SLOT_ATTR);
+      if (id) slots.set(id, slot);
+    }
+    for (const leaf of liveLeaves) {
+      const container = getOrCreatePaneContainer(leaf.id);
+      const target = slots.get(leaf.id) ?? hidden;
+      if (container.parentElement !== target) {
+        target.appendChild(container);
+      }
+    }
+  });
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Tab bar — hidden during HTML5 fullscreen */}
@@ -377,6 +473,33 @@ export function BrowserView() {
         url={activePane?.url ?? ''}
         title={activePane?.title ?? ''}
       />
+
+      {/*
+       * Hidden parking root: pane containers live here whenever no tree slot
+       * is currently mounted for them (e.g. a pane in a non-active tab whose
+       * slot hasn't rendered yet). The layout effect above re-parents each
+       * container into its slot once the slot exists.
+       */}
+      <div
+        ref={hiddenRootRef}
+        aria-hidden="true"
+        style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+      />
+
+      {/*
+       * One <BrowserWebview> per live pane, portaled into the pane's
+       * imperatively-managed container. React sees the portal target as the
+       * parent, so the container can be moved between DOM positions without
+       * disturbing the rendered webview. The webview only unmounts when the
+       * leaf disappears from the tab tree entirely.
+       */}
+      {liveLeaves.map(leaf =>
+        createPortal(
+          <BrowserWebview paneId={leaf.id} initialUrl={leaf.url} isActive />,
+          getOrCreatePaneContainer(leaf.id),
+          leaf.id
+        )
+      )}
     </div>
   );
 }
