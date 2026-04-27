@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { BrowserLeafNode, BrowserNode } from '@shiroani/shared';
 import { useBrowserStore } from '../useBrowserStore';
 
@@ -11,6 +11,18 @@ vi.mock('@/components/browser/webviewRefs', () => ({
 // Mock platform
 vi.mock('@/lib/platform', () => ({
   IS_ELECTRON: false,
+}));
+
+// In-memory electron-store double so persistence can be observed in tests.
+const electronStoreData = new Map<string, unknown>();
+vi.mock('@/lib/electron-store', () => ({
+  electronStoreGet: vi.fn(async (key: string) => electronStoreData.get(key)),
+  electronStoreSet: vi.fn(async (key: string, value: unknown) => {
+    electronStoreData.set(key, value);
+  }),
+  electronStoreDelete: vi.fn(async (key: string) => {
+    electronStoreData.delete(key);
+  }),
 }));
 
 // Provide crypto.randomUUID for jsdom
@@ -42,6 +54,7 @@ describe('useBrowserStore', () => {
       splitTabsEnabled: true,
       isFullScreen: false,
     });
+    electronStoreData.clear();
     uuidCounter = 0;
   });
 
@@ -299,6 +312,268 @@ describe('useBrowserStore', () => {
       const { tabs } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
       expect(expectLeaf(tabs[0]).url).toBe('shiroani://newtab');
+    });
+  });
+
+  // ── Split / unsplit / focus ──────────────────────────────────
+
+  describe('splitTabs', () => {
+    it('replaces the target tab with a split containing target on the left and source on the right', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+
+      store.splitTabs(aId, bId);
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs).toHaveLength(1);
+      const split = tabs[0];
+      if (split.kind !== 'split') throw new Error('expected split');
+      expect(expectLeaf(split.left).url).toBe('https://b.com');
+      expect(expectLeaf(split.right).url).toBe('https://a.com');
+      expect(split.ratio).toBe(0.5);
+    });
+
+    it('focuses the target leaf in the new split', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+
+      store.splitTabs(aId, bId);
+
+      const { tabs, activeTabId, activePaneId } = useBrowserStore.getState();
+      const split = tabs[0];
+      if (split.kind !== 'split') throw new Error('expected split');
+      expect(activeTabId).toBe(split.id);
+      expect(activePaneId).toBe(expectLeaf(split.left).id);
+    });
+
+    it('is a no-op when source equals target', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      const [aId] = useBrowserStore.getState().tabs.map(t => t.id);
+
+      store.splitTabs(aId, aId);
+
+      expect(useBrowserStore.getState().tabs).toHaveLength(1);
+      expect(useBrowserStore.getState().tabs[0].kind).toBe('leaf');
+    });
+
+    it('preserves a third sibling tab when splitting two tabs', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      store.openTab('https://c.com');
+      const [aId, bId, cId] = useBrowserStore.getState().tabs.map(t => t.id);
+
+      store.splitTabs(aId, bId);
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs).toHaveLength(2);
+      expect(tabs[1].id).toBe(cId);
+    });
+  });
+
+  describe('unsplitTab', () => {
+    it('replaces the split with the focused leaf and pushes the other to a new adjacent tab', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+
+      const splitId = useBrowserStore.getState().tabs[0].id;
+      store.unsplitTab(splitId);
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs).toHaveLength(2);
+      // The focused leaf was the target (https://b.com) which sits on the left
+      expect(expectLeaf(tabs[0]).url).toBe('https://b.com');
+      expect(expectLeaf(tabs[1]).url).toBe('https://a.com');
+    });
+
+    it('makes the kept leaf the active tab and pane', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+      const splitId = useBrowserStore.getState().tabs[0].id;
+
+      store.unsplitTab(splitId);
+
+      const { tabs, activeTabId, activePaneId } = useBrowserStore.getState();
+      expect(activeTabId).toBe(tabs[0].id);
+      expect(activePaneId).toBe(tabs[0].id);
+    });
+  });
+
+  describe('focusPane', () => {
+    it('updates activeTabId and activePaneId together', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+
+      const split = useBrowserStore.getState().tabs[0];
+      if (split.kind !== 'split') throw new Error('expected split');
+      const rightLeafId = expectLeaf(split.right).id;
+
+      store.focusPane(rightLeafId);
+
+      const { activeTabId, activePaneId } = useBrowserStore.getState();
+      expect(activeTabId).toBe(split.id);
+      expect(activePaneId).toBe(rightLeafId);
+    });
+
+    it('is a no-op for an unknown pane id', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      const before = useBrowserStore.getState().activePaneId;
+
+      store.focusPane('does-not-exist');
+
+      expect(useBrowserStore.getState().activePaneId).toBe(before);
+    });
+  });
+
+  describe('closeFocusedPane', () => {
+    it('closes the whole tab when the focused pane is a top-level leaf', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+
+      store.closeFocusedPane();
+
+      expect(useBrowserStore.getState().tabs).toHaveLength(1);
+      expect(expectLeaf(useBrowserStore.getState().tabs[0]).url).toBe('https://a.com');
+    });
+
+    it('flattens a split into the surviving leaf when one pane is closed', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+
+      // Active pane is the left leaf (https://b.com after the swap).
+      store.closeFocusedPane();
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs).toHaveLength(1);
+      const leaf = expectLeaf(tabs[0]);
+      // The surviving pane was the source (https://a.com)
+      expect(leaf.url).toBe('https://a.com');
+    });
+  });
+
+  describe('setSplitRatio', () => {
+    it('clamps the ratio to [0.2, 0.8]', () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+      const splitId = useBrowserStore.getState().tabs[0].id;
+
+      store.setSplitRatio(splitId, 0.05);
+      const lower = useBrowserStore.getState().tabs[0];
+      if (lower.kind !== 'split') throw new Error('expected split');
+      expect(lower.ratio).toBe(0.2);
+
+      store.setSplitRatio(splitId, 0.95);
+      const upper = useBrowserStore.getState().tabs[0];
+      if (upper.kind !== 'split') throw new Error('expected split');
+      expect(upper.ratio).toBe(0.8);
+    });
+  });
+
+  // ── Persistence ──────────────────────────────────────────────
+
+  describe('persistTabs', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('flattens splits to two adjacent leaves on disk', async () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+
+      store.persistTabs();
+      await vi.runAllTimersAsync();
+
+      const persisted = electronStoreData.get('browser-tabs') as {
+        tabs: Array<{ url: string; title: string }>;
+        activeIndex: number;
+      };
+      expect(persisted.tabs.map(t => t.url)).toEqual(['https://b.com', 'https://a.com']);
+      expect(persisted.activeIndex).toBe(0);
+    });
+
+    it('points activeIndex at the persisted slot of the focused pane', async () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+      const [aId, bId] = useBrowserStore.getState().tabs.map(t => t.id);
+      store.splitTabs(aId, bId);
+
+      // Focus the right (source) pane
+      const split = useBrowserStore.getState().tabs[0];
+      if (split.kind !== 'split') throw new Error('expected split');
+      store.focusPane(expectLeaf(split.right).id);
+
+      store.persistTabs();
+      await vi.runAllTimersAsync();
+
+      const persisted = electronStoreData.get('browser-tabs') as {
+        tabs: Array<{ url: string; title: string }>;
+        activeIndex: number;
+      };
+      expect(persisted.activeIndex).toBe(1);
+    });
+
+    it('round-trips a flat tab list back through restoreTabs', async () => {
+      const store = useBrowserStore.getState();
+      store.openTab('https://a.com');
+      store.openTab('https://b.com');
+
+      store.persistTabs();
+      await vi.runAllTimersAsync();
+
+      // Wipe in-memory store and rehydrate from electronStore
+      useBrowserStore.setState({ tabs: [], activeTabId: null, activePaneId: null });
+      await useBrowserStore.getState().restoreTabs();
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs.map(t => expectLeaf(t).url)).toEqual(['https://a.com', 'https://b.com']);
+    });
+
+    it('drops malformed entries during restoreTabs without crashing', async () => {
+      electronStoreData.set('browser-tabs', {
+        tabs: [
+          { url: 'https://valid.com', title: 'ok' },
+          { url: '' },
+          null,
+          { title: 'no url' },
+          { url: 'https://other.com', title: 'good' },
+        ],
+        activeIndex: 0,
+      });
+
+      await useBrowserStore.getState().restoreTabs();
+
+      const tabs = useBrowserStore.getState().tabs;
+      expect(tabs.map(t => expectLeaf(t).url)).toEqual(['https://valid.com', 'https://other.com']);
     });
   });
 });
