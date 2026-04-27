@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Globe } from 'lucide-react';
+import { Globe, Columns2 } from 'lucide-react';
 import {
   isNewTabUrl,
   NEW_TAB_URL,
+  type BrowserLeafNode,
   type BrowserNode,
   type BrowserSplitNode,
 } from '@shiroani/shared';
@@ -16,6 +17,7 @@ import { NewTabPage } from '@/components/browser/NewTabPage';
 import { useBrowserInit } from '@/components/browser/useBrowserInit';
 import { unregisterWebview } from '@/components/browser/webviewRefs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { TooltipButton } from '@/components/ui/tooltip-button';
 import { cn } from '@/lib/utils';
 
 // Actions are stable references — extract once outside render cycle
@@ -29,11 +31,19 @@ const {
   goForward,
   reload,
   splitTabs,
+  unsplitTab,
+  closeFocusedPane,
 } = useBrowserStore.getState();
 
 interface PaneRendererProps {
   node: BrowserNode;
   activePaneId: string | null;
+  /**
+   * Id of the enclosing SplitNode, or null when this leaf sits at the top
+   * level. Drives whether the per-pane chrome bar with the unsplit button
+   * is rendered.
+   */
+  parentSplitId: string | null;
   /**
    * When true, the splitter is being dragged. Webview pointer events are
    * neutralised so the drag doesn't get swallowed by the guest content.
@@ -44,29 +54,65 @@ interface PaneRendererProps {
   onPaneClick: (paneId: string) => void;
 }
 
+function PaneChrome({ leaf, parentSplitId }: { leaf: BrowserLeafNode; parentSplitId: string }) {
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2 h-[22px] px-2 shrink-0',
+        'bg-[oklch(from_var(--card)_l_c_h/0.55)] border-b border-border-glass',
+        'text-[11px] text-muted-foreground'
+      )}
+    >
+      {leaf.favicon ? (
+        <img src={leaf.favicon} alt="" className="w-3 h-3 shrink-0 rounded-[2px]" />
+      ) : (
+        <Globe className="w-3 h-3 shrink-0 opacity-60" />
+      )}
+      <span className="truncate flex-1">{leaf.title || 'Nowa karta'}</span>
+      <TooltipButton
+        variant="ghost"
+        size="icon"
+        className="size-5 rounded-sm text-muted-foreground hover:text-foreground"
+        onClick={e => {
+          e.stopPropagation();
+          unsplitTab(parentSplitId);
+        }}
+        tooltip="Rozdziel"
+        tooltipSide="bottom"
+      >
+        <Columns2 className="w-3 h-3" />
+      </TooltipButton>
+    </div>
+  );
+}
+
 function renderNode(props: PaneRendererProps): JSX.Element {
-  const { node, activePaneId, resizing, onPaneClick } = props;
+  const { node, activePaneId, parentSplitId, resizing, onPaneClick } = props;
 
   if (node.kind === 'leaf') {
     if (isNewTabUrl(node.url)) {
       return <div key={node.id} className="absolute inset-0" />;
     }
     const isFocused = node.id === activePaneId;
+    const showChrome = parentSplitId !== null;
     return (
       <div
         key={node.id}
         role="region"
-        aria-label="Panel przeglądarki"
+        aria-label={showChrome ? 'Panel przeglądarki' : 'Karta przeglądarki'}
         onMouseDownCapture={() => onPaneClick(node.id)}
         className={cn(
-          'relative h-full w-full overflow-hidden',
-          isFocused && 'ring-1 ring-inset ring-primary/40'
+          'relative h-full w-full overflow-hidden flex flex-col',
+          isFocused && showChrome && 'ring-1 ring-inset ring-primary/40'
         )}
       >
-        <BrowserWebview paneId={node.id} initialUrl={node.url} isActive />
-        {resizing && (
-          <div className="pointer-events-auto absolute inset-0 z-20" aria-hidden="true" />
-        )}
+        {showChrome && <PaneChrome leaf={node} parentSplitId={parentSplitId} />}
+        <div className="relative flex-1 overflow-hidden">
+          <BrowserWebview paneId={node.id} initialUrl={node.url} isActive />
+          {resizing && (
+            <div className="pointer-events-auto absolute inset-0 z-20" aria-hidden="true" />
+          )}
+        </div>
       </div>
     );
   }
@@ -100,6 +146,7 @@ function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Ele
         {renderNode({
           node: split.left,
           activePaneId,
+          parentSplitId: split.id,
           resizing,
           onSplitterStart,
           onSplitterEnd,
@@ -116,6 +163,7 @@ function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Ele
         {renderNode({
           node: split.right,
           activePaneId,
+          parentSplitId: split.id,
           resizing,
           onSplitterStart,
           onSplitterEnd,
@@ -157,8 +205,7 @@ export function BrowserView() {
   const handleShortcut = useCallback(
     (input: { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean }) => {
       if (input.ctrl && input.key === 'w') {
-        const { activeTabId: id } = useBrowserStore.getState();
-        if (id) closeTab(id);
+        closeFocusedPane();
       } else if (input.ctrl && input.key === 't') {
         openTab();
       } else if (input.ctrl && input.key === 'Tab') {
@@ -310,6 +357,7 @@ export function BrowserView() {
                 {renderNode({
                   node: tab,
                   activePaneId,
+                  parentSplitId: null,
                   resizing: isResizing,
                   onSplitterStart: handleSplitterStart,
                   onSplitterEnd: handleSplitterEnd,
