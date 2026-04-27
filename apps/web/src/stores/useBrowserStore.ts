@@ -28,6 +28,8 @@ interface BrowserState {
   adblockWhitelist: string[];
   /** Whether to restore the previous session's tabs on app start. */
   restoreTabsOnStartup: boolean;
+  /** Whether dragging a tab onto another opens them side by side. */
+  splitTabsEnabled: boolean;
   isFullScreen: boolean;
 }
 
@@ -53,6 +55,7 @@ interface BrowserActions {
   addAdblockDomain: (host: string) => void;
   removeAdblockDomain: (host: string) => void;
   setRestoreTabsOnStartup: (enabled: boolean) => void;
+  setSplitTabsEnabled: (enabled: boolean) => Promise<void>;
   splitTabs: (sourceTabId: string, targetTabId: string) => void;
   unsplitTab: (splitNodeId: string) => void;
   setSplitRatio: (splitNodeId: string, ratio: number) => void;
@@ -164,6 +167,7 @@ async function persistBrowserSettings(updates: {
   popupBlockEnabled?: boolean;
   adblockWhitelist?: string[];
   restoreTabsOnStartup?: boolean;
+  splitTabsEnabled?: boolean;
 }): Promise<void> {
   const existing = (await electronStoreGet<Record<string, unknown>>('browser-settings')) ?? {};
   await electronStoreSet('browser-settings', { ...existing, ...updates });
@@ -181,6 +185,7 @@ export const useBrowserStore = create<BrowserStore>()(
       popupBlockEnabled: true,
       adblockWhitelist: [],
       restoreTabsOnStartup: true,
+      splitTabsEnabled: true,
       isFullScreen: false,
 
       // ── Tab CRUD (all local now) ────────────────────────────────
@@ -523,6 +528,27 @@ export const useBrowserStore = create<BrowserStore>()(
         }
       },
 
+      setSplitTabsEnabled: async (enabled: boolean) => {
+        const previous = get().splitTabsEnabled;
+        set({ splitTabsEnabled: enabled }, undefined, 'browser/setSplitTabsEnabled');
+        // When the feature is disabled, flatten any open splits into adjacent
+        // tabs so the user is not left with a UI they can no longer manage.
+        if (!enabled) {
+          const { tabs } = get();
+          for (const tab of tabs) {
+            if (tab.kind === 'split') {
+              get().unsplitTab(tab.id);
+            }
+          }
+        }
+        try {
+          await persistBrowserSettings({ splitTabsEnabled: enabled });
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist splitTabsEnabled', err);
+          set({ splitTabsEnabled: previous }, undefined, 'browser/setSplitTabsEnabled:revert');
+        }
+      },
+
       removeAdblockDomain: (host: string) => {
         const normalized = normalizeWhitelistHost(host);
         if (!normalized) return;
@@ -577,6 +603,7 @@ export const useBrowserStore = create<BrowserStore>()(
           popupBlockMode?: string;
           adblockWhitelist?: unknown;
           restoreTabsOnStartup?: boolean;
+          splitTabsEnabled?: boolean;
         }>('browser-settings');
 
         if (settings) {
@@ -602,6 +629,10 @@ export const useBrowserStore = create<BrowserStore>()(
 
           if (typeof settings.restoreTabsOnStartup === 'boolean') {
             set({ restoreTabsOnStartup: settings.restoreTabsOnStartup });
+          }
+
+          if (typeof settings.splitTabsEnabled === 'boolean') {
+            set({ splitTabsEnabled: settings.splitTabsEnabled });
           }
 
           // Restore + push whitelist to main

@@ -160,6 +160,7 @@ function SortableTab({
   wasDragging,
   isMergeTarget,
   isDraggingThisTab,
+  splitEnabled,
 }: {
   tab: BrowserTab;
   isActive: boolean;
@@ -169,17 +170,18 @@ function SortableTab({
   wasDragging: boolean;
   isMergeTarget: boolean;
   isDraggingThisTab: boolean;
+  splitEnabled: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tab.id,
   });
 
   // Inner droppable covers the centre of the tab so dropping there triggers
-  // a split rather than a reorder. Disabled for the tab being dragged so the
-  // tab cannot merge into itself.
+  // a split rather than a reorder. Disabled when the feature toggle is off
+  // and for the tab being dragged so the tab cannot merge into itself.
   const { setNodeRef: setMergeRef } = useDroppable({
     id: `${MERGE_PREFIX}${tab.id}`,
-    disabled: isDraggingThisTab,
+    disabled: !splitEnabled || isDraggingThisTab,
   });
 
   const style = {
@@ -347,6 +349,7 @@ export function BrowserTabBar({
                   isSplit={node.kind === 'split'}
                   isMergeTarget={mergeTargetId === node.id}
                   isDraggingThisTab={activeDragId === node.id}
+                  splitEnabled={!!onSplitTabs}
                   onSelect={() => onSelectTab(node.id)}
                   onClose={e => {
                     e.stopPropagation();

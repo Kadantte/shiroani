@@ -185,6 +185,7 @@ export function BrowserView() {
   const tabs = useBrowserStore(useShallow(s => s.tabs));
   const activeTabId = useBrowserStore(s => s.activeTabId);
   const activePaneId = useBrowserStore(s => s.activePaneId);
+  const splitTabsEnabled = useBrowserStore(s => s.splitTabsEnabled);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   const [urlInput, setUrlInput] = useState('');
@@ -310,7 +311,7 @@ export function BrowserView() {
           onCloseTab={closeTab}
           onNewTab={() => openTab()}
           onReorderTabs={reorderTabs}
-          onSplitTabs={splitTabs}
+          onSplitTabs={splitTabsEnabled ? splitTabs : undefined}
         />
       )}
 
