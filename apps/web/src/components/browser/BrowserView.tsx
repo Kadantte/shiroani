@@ -19,8 +19,17 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { cn } from '@/lib/utils';
 
 // Actions are stable references — extract once outside render cycle
-const { openTab, closeTab, switchTab, reorderTabs, navigate, goBack, goForward, reload } =
-  useBrowserStore.getState();
+const {
+  openTab,
+  closeTab,
+  switchTab,
+  reorderTabs,
+  navigate,
+  goBack,
+  goForward,
+  reload,
+  splitTabs,
+} = useBrowserStore.getState();
 
 interface PaneRendererProps {
   node: BrowserNode;
@@ -254,6 +263,7 @@ export function BrowserView() {
           onCloseTab={closeTab}
           onNewTab={() => openTab()}
           onReorderTabs={reorderTabs}
+          onSplitTabs={splitTabs}
         />
       )}
 

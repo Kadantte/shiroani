@@ -1,14 +1,18 @@
 import { useState, useCallback } from 'react';
-import { Loader2, Globe, X, Plus } from 'lucide-react';
+import { Loader2, Globe, X, Plus, Columns2 } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
   PointerSensor,
+  closestCenter,
+  pointerWithin,
+  useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -24,12 +28,32 @@ interface BrowserTabBarProps {
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
   onReorderTabs: (activeId: string, overId: string) => void;
+  onSplitTabs?: (sourceId: string, targetId: string) => void;
 }
+
+const MERGE_PREFIX = 'merge:';
+
+/**
+ * Pointer-aware collision detection: prefer the merge zone the cursor is over
+ * (so dropping in the inner 60% of a tab triggers a split) and fall back to
+ * closestCenter against the sortable tabs (so dropping near a gap reorders).
+ */
+const splitAwareCollisionDetection: CollisionDetection = args => {
+  const within = pointerWithin(args).filter(c => String(c.id).startsWith(MERGE_PREFIX));
+  if (within.length > 0) return within;
+
+  const sortableArgs = {
+    ...args,
+    droppableContainers: args.droppableContainers.filter(
+      c => !String(c.id).startsWith(MERGE_PREFIX)
+    ),
+  };
+  return closestCenter(sortableArgs);
+};
 
 /**
  * Derive the chip-friendly leaf representation for a top-level node. Splits
- * surface their first leaf so the strip still has a favicon and title until
- * chunk #6 introduces explicit split visuals.
+ * surface their first leaf so the strip still has a favicon and title.
  */
 function nodeToChipLeaf(node: BrowserNode): BrowserTab & { id: string } {
   if (node.kind === 'leaf') {
@@ -46,19 +70,25 @@ function nodeToChipLeaf(node: BrowserNode): BrowserTab & { id: string } {
  *  - Rounded-top tabs (8px 8px 0 0) with favicon + title + close
  *  - Active tab gains a primary-tinted bg and subtle top-border glow
  *  - Close button appears on hover (and always on active)
+ *  - Inner 60% of each tab acts as a "merge" droppable — dropping a tab there
+ *    creates a side-by-side split via `onSplitTabs`.
  */
 
 /** Presentational tab component used for the drag overlay */
 function TabContent({
   tab,
   isActive,
+  isSplit,
   onClose,
   isDragOverlay = false,
+  isMergeTarget = false,
 }: {
   tab: BrowserTab;
   isActive: boolean;
+  isSplit?: boolean;
   onClose?: (e: React.MouseEvent) => void;
   isDragOverlay?: boolean;
+  isMergeTarget?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -76,7 +106,8 @@ function TabContent({
               'shadow-[inset_0_1px_0_oklch(from_var(--primary)_l_c_h/0.35)]',
             ].join(' ')
           : 'text-muted-foreground/90 border border-transparent hover:bg-foreground/[0.04] hover:text-foreground/90',
-        isDragOverlay && 'shadow-lg ring-1 ring-primary/30 opacity-90'
+        isDragOverlay && 'shadow-lg ring-1 ring-primary/30 opacity-90',
+        isMergeTarget && 'ring-1 ring-primary/60 bg-primary/[0.08]'
       )}
     >
       {tab.isLoading ? (
@@ -92,6 +123,15 @@ function TabContent({
         <Globe className="w-3 h-3 shrink-0 opacity-70" />
       )}
       <span className="truncate flex-1">{tab.title || 'Nowa karta'}</span>
+      {isSplit && !isMergeTarget && (
+        <Columns2 className="w-3 h-3 shrink-0 text-primary/70" aria-label="Karta dzielona" />
+      )}
+      {isMergeTarget && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-1 left-1/2 w-px bg-primary/70"
+        />
+      )}
       {onClose && (
         <button
           onClick={onClose}
@@ -110,22 +150,36 @@ function TabContent({
   );
 }
 
-/** Sortable wrapper for each tab */
+/** Sortable wrapper for each tab, with an inner merge droppable. */
 function SortableTab({
   tab,
   isActive,
+  isSplit,
   onSelect,
   onClose,
   wasDragging,
+  isMergeTarget,
+  isDraggingThisTab,
 }: {
   tab: BrowserTab;
   isActive: boolean;
+  isSplit: boolean;
   onSelect: () => void;
   onClose: (e: React.MouseEvent) => void;
   wasDragging: boolean;
+  isMergeTarget: boolean;
+  isDraggingThisTab: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tab.id,
+  });
+
+  // Inner droppable covers the centre of the tab so dropping there triggers
+  // a split rather than a reorder. Disabled for the tab being dragged so the
+  // tab cannot merge into itself.
+  const { setNodeRef: setMergeRef } = useDroppable({
+    id: `${MERGE_PREFIX}${tab.id}`,
+    disabled: isDraggingThisTab,
   });
 
   const style = {
@@ -158,7 +212,7 @@ function SortableTab({
       {...attributes}
       {...listeners}
       className={cn(
-        'cursor-pointer transition-all duration-150 flex items-end',
+        'relative cursor-pointer transition-all duration-150 flex items-end',
         isDragging && 'z-10'
       )}
       role="tab"
@@ -167,7 +221,19 @@ function SortableTab({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
-      <TabContent tab={tab} isActive={isActive} onClose={onClose} />
+      <TabContent
+        tab={tab}
+        isActive={isActive}
+        isSplit={isSplit}
+        onClose={onClose}
+        isMergeTarget={isMergeTarget}
+      />
+      {/* Inner 60% merge target — sits above the tab content but below the close button */}
+      <div
+        ref={setMergeRef}
+        aria-hidden="true"
+        className="absolute inset-y-0 left-[20%] right-[20%] pointer-events-none"
+      />
     </div>
   );
 }
@@ -179,8 +245,10 @@ export function BrowserTabBar({
   onCloseTab,
   onNewTab,
   onReorderTabs,
+  onSplitTabs,
 }: BrowserTabBarProps) {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
   const [wasDragging, setWasDragging] = useState(false);
 
   // Use PointerSensor with a distance activation constraint so that
@@ -201,25 +269,46 @@ export function BrowserTabBar({
     setWasDragging(true);
   }, []);
 
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const overId = event.over?.id;
+    if (typeof overId === 'string' && overId.startsWith(MERGE_PREFIX)) {
+      setMergeTargetId(overId.slice(MERGE_PREFIX.length));
+    } else {
+      setMergeTargetId(null);
+    }
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveDragId(null);
+      setMergeTargetId(null);
 
-      if (over && active.id !== over.id) {
-        onReorderTabs(active.id as string, over.id as string);
+      if (!over) {
+        requestAnimationFrame(() => setWasDragging(false));
+        return;
       }
 
-      // Reset wasDragging flag after a short delay to allow click suppression
-      requestAnimationFrame(() => {
-        setWasDragging(false);
-      });
+      const overId = over.id as string;
+      const activeId = active.id as string;
+
+      if (overId.startsWith(MERGE_PREFIX)) {
+        const targetId = overId.slice(MERGE_PREFIX.length);
+        if (targetId !== activeId && onSplitTabs) {
+          onSplitTabs(activeId, targetId);
+        }
+      } else if (activeId !== overId) {
+        onReorderTabs(activeId, overId);
+      }
+
+      requestAnimationFrame(() => setWasDragging(false));
     },
-    [onReorderTabs]
+    [onReorderTabs, onSplitTabs]
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveDragId(null);
+    setMergeTargetId(null);
     requestAnimationFrame(() => {
       setWasDragging(false);
     });
@@ -236,9 +325,10 @@ export function BrowserTabBar({
     >
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={splitAwareCollisionDetection}
         modifiers={[restrictToHorizontalAxis]}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
@@ -254,6 +344,9 @@ export function BrowserTabBar({
                   key={node.id}
                   tab={chipLeaf}
                   isActive={node.id === activeTabId}
+                  isSplit={node.kind === 'split'}
+                  isMergeTarget={mergeTargetId === node.id}
+                  isDraggingThisTab={activeDragId === node.id}
                   onSelect={() => onSelectTab(node.id)}
                   onClose={e => {
                     e.stopPropagation();
