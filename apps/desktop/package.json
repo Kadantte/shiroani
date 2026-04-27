@@ -27,7 +27,7 @@
     "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "@ghostery/adblocker-electron": "^2.14.1",
+    "@ghostery/adblocker-electron": "^2.14.2",
     "@ghostery/adblocker-electron-preload": "^2.14.1",
     "@nestjs/common": "^11.1.19",
     "@nestjs/core": "^11.1.19",
