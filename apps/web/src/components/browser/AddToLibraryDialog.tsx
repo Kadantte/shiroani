@@ -59,10 +59,10 @@ export function AddToLibraryDialog({ open, onOpenChange, url, title }: AddToLibr
       setCoverImage('');
       transition({ step: 'ready' });
 
-      // Auto-fetch metadata (cover, title, episodes) from the current tab
-      const activeTabId = useBrowserStore.getState().activeTabId;
-      if (activeTabId) {
-        const webview = getWebview(activeTabId);
+      // Auto-fetch metadata (cover, title, episodes) from the focused pane
+      const activePaneId = useBrowserStore.getState().activePaneId;
+      if (activePaneId) {
+        const webview = getWebview(activePaneId);
         if (webview) {
           transition({ step: 'fetching' });
           webview

@@ -54,7 +54,7 @@ function renderNode(props: PaneRendererProps): JSX.Element {
           isFocused && 'ring-1 ring-inset ring-primary/40'
         )}
       >
-        <BrowserWebview tabId={node.id} initialUrl={node.url} isActive />
+        <BrowserWebview paneId={node.id} initialUrl={node.url} isActive />
         {resizing && (
           <div className="pointer-events-auto absolute inset-0 z-20" aria-hidden="true" />
         )}
