@@ -6,7 +6,7 @@ import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
 import { normalizeUrl, normalizeWhitelistHost } from '@/lib/url-utils';
 import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
-import { updateAnimePresence } from '@/lib/anime-detection';
+import { updateAnimePresenceDebounced } from '@/lib/anime-detection';
 
 const logger = createLogger('BrowserStore');
 
@@ -261,7 +261,7 @@ export const useBrowserStore = create<BrowserStore>()(
         // switching from an anime tab to a non-anime tab whose URL/title
         // doesn't change leaves `setWatchingAnime(true)` stuck and
         // `animeWatchSeconds` keeps incrementing for the wrong tab.
-        updateAnimePresence(paneId);
+        updateAnimePresenceDebounced(paneId);
       },
 
       reorderTabs: (activeId: string, overId: string) => {
@@ -431,7 +431,7 @@ export const useBrowserStore = create<BrowserStore>()(
         const tab = findTabContainingPane(tabs, paneId);
         if (!tab) return;
         set({ activeTabId: tab.id, activePaneId: paneId }, undefined, 'browser/focusPane');
-        updateAnimePresence(paneId);
+        updateAnimePresenceDebounced(paneId);
       },
 
       closeFocusedPane: () => {

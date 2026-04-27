@@ -157,3 +157,26 @@ export function updateAnimePresence(
   // only while the active tab is on a recognized anime site.
   window.electronAPI?.appStats?.setWatchingAnime(detection !== null);
 }
+
+/**
+ * Trailing-edge debounce wrapper around `updateAnimePresence` for focus-change
+ * call sites (switchTab, focusPane). Quick alternation between panes A and B
+ * would otherwise spam Discord's RPC client past its rate limit and leave
+ * stale activity sticking; coalescing the call ensures the latest focused
+ * pane wins. Non-focus paths (did-navigate, page-title-updated) keep calling
+ * `updateAnimePresence` directly so URL/title changes still fire immediately.
+ */
+const PRESENCE_DEBOUNCE_MS = 350;
+let presenceTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingPaneId: string | null = null;
+
+export function updateAnimePresenceDebounced(paneId: string): void {
+  pendingPaneId = paneId;
+  if (presenceTimer) return;
+  presenceTimer = setTimeout(() => {
+    presenceTimer = null;
+    const id = pendingPaneId;
+    pendingPaneId = null;
+    if (id !== null) updateAnimePresence(id);
+  }, PRESENCE_DEBOUNCE_MS);
+}
