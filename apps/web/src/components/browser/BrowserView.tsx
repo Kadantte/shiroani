@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Globe } from 'lucide-react';
-import { isNewTabUrl, NEW_TAB_URL } from '@shiroani/shared';
+import {
+  isNewTabUrl,
+  NEW_TAB_URL,
+  type BrowserNode,
+  type BrowserSplitNode,
+} from '@shiroani/shared';
 import { findLeafById, useBrowserStore } from '@/stores/useBrowserStore';
 import { AddToLibraryDialog } from '@/components/browser/AddToLibraryDialog';
 import { BrowserTabBar } from '@/components/browser/BrowserTabBar';
@@ -10,14 +15,113 @@ import { BrowserWebview } from '@/components/browser/BrowserWebview';
 import { NewTabPage } from '@/components/browser/NewTabPage';
 import { useBrowserInit } from '@/components/browser/useBrowserInit';
 import { unregisterWebview } from '@/components/browser/webviewRefs';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { cn } from '@/lib/utils';
 
 // Actions are stable references — extract once outside render cycle
 const { openTab, closeTab, switchTab, reorderTabs, navigate, goBack, goForward, reload } =
   useBrowserStore.getState();
 
+interface PaneRendererProps {
+  node: BrowserNode;
+  activePaneId: string | null;
+  /**
+   * When true, the splitter is being dragged. Webview pointer events are
+   * neutralised so the drag doesn't get swallowed by the guest content.
+   */
+  resizing: boolean;
+  onSplitterStart: () => void;
+  onSplitterEnd: () => void;
+  onPaneClick: (paneId: string) => void;
+}
+
+function renderNode(props: PaneRendererProps): JSX.Element {
+  const { node, activePaneId, resizing, onPaneClick } = props;
+
+  if (node.kind === 'leaf') {
+    if (isNewTabUrl(node.url)) {
+      return <div key={node.id} className="absolute inset-0" />;
+    }
+    const isFocused = node.id === activePaneId;
+    return (
+      <div
+        key={node.id}
+        role="region"
+        aria-label="Panel przeglądarki"
+        onMouseDownCapture={() => onPaneClick(node.id)}
+        className={cn(
+          'relative h-full w-full overflow-hidden',
+          isFocused && 'ring-1 ring-inset ring-primary/40'
+        )}
+      >
+        <BrowserWebview tabId={node.id} initialUrl={node.url} isActive />
+        {resizing && (
+          <div className="pointer-events-auto absolute inset-0 z-20" aria-hidden="true" />
+        )}
+      </div>
+    );
+  }
+
+  return renderSplit(node, props);
+}
+
+function renderSplit(split: BrowserSplitNode, props: PaneRendererProps): JSX.Element {
+  const { activePaneId, onSplitterStart, onSplitterEnd, resizing, onPaneClick } = props;
+  const direction = split.orientation;
+  const leftPercent = Math.max(20, Math.min(80, split.ratio * 100));
+  const rightPercent = 100 - leftPercent;
+  const leftPanelId = `${split.id}-l`;
+  const rightPanelId = `${split.id}-r`;
+
+  const handleLayoutChanged = (layout: Record<string, number>) => {
+    const leftSize = layout[leftPanelId];
+    if (typeof leftSize !== 'number') return;
+    useBrowserStore.getState().setSplitRatio(split.id, leftSize / 100);
+  };
+
+  return (
+    <ResizablePanelGroup
+      key={split.id}
+      id={split.id}
+      orientation={direction}
+      onLayoutChanged={handleLayoutChanged}
+      className="h-full w-full"
+    >
+      <ResizablePanel id={leftPanelId} defaultSize={leftPercent} minSize={20}>
+        {renderNode({
+          node: split.left,
+          activePaneId,
+          resizing,
+          onSplitterStart,
+          onSplitterEnd,
+          onPaneClick,
+        })}
+      </ResizablePanel>
+      <ResizableHandle
+        withHandle
+        onPointerDownCapture={onSplitterStart}
+        onPointerUp={onSplitterEnd}
+        onPointerCancel={onSplitterEnd}
+      />
+      <ResizablePanel id={rightPanelId} defaultSize={rightPercent} minSize={20}>
+        {renderNode({
+          node: split.right,
+          activePaneId,
+          resizing,
+          onSplitterStart,
+          onSplitterEnd,
+          onPaneClick,
+        })}
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  );
+}
+
 /**
  * BrowserView: The main embedded browser interface.
- * Renders <webview> elements for each tab, controlled via CSS visibility.
+ * Renders each top-level tab as a stacked layer (kept mounted across switches
+ * to preserve webview state). Within a tab, the tree is rendered recursively —
+ * leaves render <BrowserWebview>, splits render a ResizablePanelGroup.
  */
 export function BrowserView() {
   // Granular selectors: only re-render when these specific slices change
@@ -28,6 +132,7 @@ export function BrowserView() {
 
   const [urlInput, setUrlInput] = useState('');
   const [isAddToLibraryOpen, setIsAddToLibraryOpen] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const activePane = activePaneId ? findLeafById(tabs, activePaneId) : null;
 
@@ -131,6 +236,13 @@ export function BrowserView() {
     });
   }, [activePane]);
 
+  const handlePaneClick = useCallback((paneId: string) => {
+    useBrowserStore.getState().focusPane(paneId);
+  }, []);
+
+  const handleSplitterStart = useCallback(() => setIsResizing(true), []);
+  const handleSplitterEnd = useCallback(() => setIsResizing(false), []);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Tab bar — hidden during HTML5 fullscreen */}
@@ -164,7 +276,7 @@ export function BrowserView() {
         />
       )}
 
-      {/* Webview container — renders all tabs, CSS controls visibility */}
+      {/* Tab content — every tab stays mounted to preserve webview state */}
       <div
         className={`flex-1 relative overflow-hidden ${isActivePaneNewTab ? '' : 'bg-background'}`}
       >
@@ -175,26 +287,26 @@ export function BrowserView() {
           </div>
         ) : (
           <>
-            {/* New tab page overlay — shown when active pane is a new tab */}
             {isActivePaneNewTab && (
               <div className="absolute inset-0 z-10">
                 <NewTabPage onNavigate={handleNewTabNavigate} />
               </div>
             )}
-            {/* Webviews — only top-level leaves render here in chunk 3.
-                Splits become a recursive renderer in chunk 4. */}
-            {tabs.map(tab => {
-              if (tab.kind !== 'leaf') return null;
-              if (isNewTabUrl(tab.url)) return null;
-              return (
-                <BrowserWebview
-                  key={tab.id}
-                  tabId={tab.id}
-                  initialUrl={tab.url}
-                  isActive={tab.id === activeTabId}
-                />
-              );
-            })}
+            {tabs.map(tab => (
+              <div
+                key={tab.id}
+                className={cn('absolute inset-0', tab.id === activeTabId ? 'block' : 'hidden')}
+              >
+                {renderNode({
+                  node: tab,
+                  activePaneId,
+                  resizing: isResizing,
+                  onSplitterStart: handleSplitterStart,
+                  onSplitterEnd: handleSplitterEnd,
+                  onPaneClick: handlePaneClick,
+                })}
+              </div>
+            ))}
           </>
         )}
       </div>
