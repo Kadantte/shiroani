@@ -19,16 +19,16 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.16",
+    "@nestjs/common": "^11.1.19",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.18",
+    "@nestjs/core": "^11.1.19",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@shiroani/shared": "workspace:*",
     "discord.js": "^14.22.1",
-    "ioredis": "^5.7.0",
-    "necord": "^6.11.0",
-    "nestjs-pino": "^4.3.0",
+    "ioredis": "^5.10.1",
+    "necord": "^6.13.0",
+    "nestjs-pino": "^4.6.1",
     "pg": "^8.16.0",
     "pino": "^10.3.1",
     "pino-pretty": "^13.0.0",
@@ -37,9 +37,9 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.16",
+    "@nestjs/testing": "^11.1.19",
     "@swc-node/register": "^1.11.1",
-    "@swc/core": "^1.15.18",
+    "@swc/core": "^1.15.32",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.15.4",
