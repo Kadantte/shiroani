@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useLibraryStore } from '@/stores/useLibraryStore';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { getActivePane } from '@/stores/useBrowserStore';
 import { toast } from 'sonner';
 import type { AnimeEntry, AnimeStatus } from '@shiroani/shared';
 import { STATUS_OPTIONS, STATUS_CONFIG } from '@/lib/constants';
@@ -95,17 +95,16 @@ export function AnimeDetailModal({ entry, open, onOpenChange }: AnimeDetailModal
   const handleUpdateUrl = useCallback(() => {
     if (!entry) return;
 
-    const browserState = useBrowserStore.getState();
-    const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
+    const activePane = getActivePane();
 
-    if (!activeTab?.url) {
+    if (!activePane?.url) {
       toast.error('Nie ma otwartej karty w przeglądarce');
       return;
     }
 
-    setResumeUrl(activeTab.url);
+    setResumeUrl(activePane.url);
     toast.success('Link zaktualizowany', {
-      description: activeTab.url,
+      description: activePane.url,
     });
   }, [entry, setResumeUrl]);
 

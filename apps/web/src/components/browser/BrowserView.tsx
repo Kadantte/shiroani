@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Globe } from 'lucide-react';
 import { isNewTabUrl, NEW_TAB_URL } from '@shiroani/shared';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { findLeafById, useBrowserStore } from '@/stores/useBrowserStore';
 import { AddToLibraryDialog } from '@/components/browser/AddToLibraryDialog';
 import { BrowserTabBar } from '@/components/browser/BrowserTabBar';
 import { BrowserToolbar } from '@/components/browser/BrowserToolbar';
@@ -23,12 +23,13 @@ export function BrowserView() {
   // Granular selectors: only re-render when these specific slices change
   const tabs = useBrowserStore(useShallow(s => s.tabs));
   const activeTabId = useBrowserStore(s => s.activeTabId);
+  const activePaneId = useBrowserStore(s => s.activePaneId);
   const isFullScreen = useBrowserStore(s => s.isFullScreen);
 
   const [urlInput, setUrlInput] = useState('');
   const [isAddToLibraryOpen, setIsAddToLibraryOpen] = useState(false);
 
-  const activeTab = tabs.find(t => t.id === activeTabId);
+  const activePane = activePaneId ? findLeafById(tabs, activePaneId) : null;
 
   // Tab restoration on mount
   useBrowserInit();
@@ -97,38 +98,38 @@ export function BrowserView() {
     return () => cleanup?.();
   }, [handleShortcut]);
 
-  // Sync URL input with active tab URL (show empty for new tab page)
+  // Sync URL input with active pane URL (show empty for new tab page)
   useEffect(() => {
-    if (activeTab && !useBrowserStore.getState().isAddressBarFocused) {
-      setUrlInput(isNewTabUrl(activeTab.url) ? '' : activeTab.url);
+    if (activePane && !useBrowserStore.getState().isAddressBarFocused) {
+      setUrlInput(isNewTabUrl(activePane.url) ? '' : activePane.url);
     }
-  }, [activeTab?.url, activeTab?.id]);
+  }, [activePane?.url, activePane?.id]);
 
-  const isActiveTabNewTab = activeTab ? isNewTabUrl(activeTab.url) : false;
+  const isActivePaneNewTab = activePane ? isNewTabUrl(activePane.url) : false;
 
-  // When navigating from the new tab page, update tab state to swap in a webview
+  // When navigating from the new tab page, update the focused leaf to swap in a webview
   const handleNewTabNavigate = useCallback(
     (url: string) => {
-      if (!activeTab) return;
+      if (!activePane) return;
       const { updateTabState } = useBrowserStore.getState();
-      updateTabState(activeTab.id, { url, isLoading: true });
+      updateTabState(activePane.id, { url, isLoading: true });
     },
-    [activeTab]
+    [activePane]
   );
 
   // Home button: go back to new tab page
   const handleGoHome = useCallback(() => {
-    if (!activeTab) return;
+    if (!activePane) return;
     const { updateTabState } = useBrowserStore.getState();
-    unregisterWebview(activeTab.id);
-    updateTabState(activeTab.id, {
+    unregisterWebview(activePane.id);
+    updateTabState(activePane.id, {
       url: NEW_TAB_URL,
       title: 'Nowa karta',
       isLoading: false,
       canGoBack: false,
       canGoForward: false,
     });
-  }, [activeTab]);
+  }, [activePane]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
@@ -149,10 +150,10 @@ export function BrowserView() {
         <BrowserToolbar
           urlInput={urlInput}
           onUrlInputChange={setUrlInput}
-          canGoBack={activeTab?.canGoBack ?? false}
-          canGoForward={activeTab?.canGoForward ?? false}
-          isLoading={activeTab?.isLoading ?? false}
-          hasActiveTab={!!activeTab}
+          canGoBack={activePane?.canGoBack ?? false}
+          canGoForward={activePane?.canGoForward ?? false}
+          isLoading={activePane?.isLoading ?? false}
+          hasActiveTab={!!activePane}
           onGoBack={goBack}
           onGoForward={goForward}
           onReload={reload}
@@ -165,7 +166,7 @@ export function BrowserView() {
 
       {/* Webview container — renders all tabs, CSS controls visibility */}
       <div
-        className={`flex-1 relative overflow-hidden ${isActiveTabNewTab ? '' : 'bg-background'}`}
+        className={`flex-1 relative overflow-hidden ${isActivePaneNewTab ? '' : 'bg-background'}`}
       >
         {tabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
@@ -174,23 +175,26 @@ export function BrowserView() {
           </div>
         ) : (
           <>
-            {/* New tab page overlay — shown when active tab is a new tab */}
-            {isActiveTabNewTab && (
+            {/* New tab page overlay — shown when active pane is a new tab */}
+            {isActivePaneNewTab && (
               <div className="absolute inset-0 z-10">
                 <NewTabPage onNavigate={handleNewTabNavigate} />
               </div>
             )}
-            {/* Webviews — skip rendering for tabs with new tab URL */}
-            {tabs.map(tab =>
-              isNewTabUrl(tab.url) ? null : (
+            {/* Webviews — only top-level leaves render here in chunk 3.
+                Splits become a recursive renderer in chunk 4. */}
+            {tabs.map(tab => {
+              if (tab.kind !== 'leaf') return null;
+              if (isNewTabUrl(tab.url)) return null;
+              return (
                 <BrowserWebview
                   key={tab.id}
                   tabId={tab.id}
                   initialUrl={tab.url}
                   isActive={tab.id === activeTabId}
                 />
-              )
-            )}
+              );
+            })}
           </>
         )}
       </div>
@@ -199,8 +203,8 @@ export function BrowserView() {
       <AddToLibraryDialog
         open={isAddToLibraryOpen}
         onOpenChange={setIsAddToLibraryOpen}
-        url={activeTab?.url ?? ''}
-        title={activeTab?.title ?? ''}
+        url={activePane?.url ?? ''}
+        title={activePane?.title ?? ''}
       />
     </div>
   );

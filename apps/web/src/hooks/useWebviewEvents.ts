@@ -1,5 +1,5 @@
 import { useEffect, type RefObject } from 'react';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { findLeafById, useBrowserStore } from '@/stores/useBrowserStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import {
   registerWebview,
@@ -112,8 +112,8 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
       try {
         const currentUrl = el.getURL();
         const currentTitle = el.getTitle();
-        const tab = useBrowserStore.getState().tabs.find(t => t.id === tabId);
-        useQuickAccessStore.getState().recordVisit(currentUrl, currentTitle, tab?.favicon);
+        const leaf = findLeafById(useBrowserStore.getState().tabs, tabId);
+        useQuickAccessStore.getState().recordVisit(currentUrl, currentTitle, leaf?.favicon);
       } catch {
         // Non-critical — skip tracking
       }

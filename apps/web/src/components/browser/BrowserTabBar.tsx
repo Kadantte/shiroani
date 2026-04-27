@@ -15,15 +15,29 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import { cn } from '@/lib/utils';
 import { TooltipButton } from '@/components/ui/tooltip-button';
-import type { BrowserTab } from '@shiroani/shared';
+import type { BrowserNode, BrowserTab } from '@shiroani/shared';
 
 interface BrowserTabBarProps {
-  tabs: BrowserTab[];
+  tabs: BrowserNode[];
   activeTabId: string | null;
   onSelectTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
   onReorderTabs: (activeId: string, overId: string) => void;
+}
+
+/**
+ * Derive the chip-friendly leaf representation for a top-level node. Splits
+ * surface their first leaf so the strip still has a favicon and title until
+ * chunk #6 introduces explicit split visuals.
+ */
+function nodeToChipLeaf(node: BrowserNode): BrowserTab & { id: string } {
+  if (node.kind === 'leaf') {
+    return node;
+  }
+  let cursor: BrowserNode = node;
+  while (cursor.kind === 'split') cursor = cursor.left;
+  return { ...cursor, id: node.id };
 }
 
 /**
@@ -179,7 +193,8 @@ export function BrowserTabBar({
     })
   );
 
-  const activeDragTab = activeDragId ? (tabs.find(t => t.id === activeDragId) ?? null) : null;
+  const activeDragNode = activeDragId ? (tabs.find(t => t.id === activeDragId) ?? null) : null;
+  const activeDragTab = activeDragNode ? nodeToChipLeaf(activeDragNode) : null;
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
@@ -232,19 +247,22 @@ export function BrowserTabBar({
           className="flex items-end gap-[2px] flex-1 min-w-0 overflow-x-auto scrollbar-hide"
         >
           <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
-            {tabs.map(tab => (
-              <SortableTab
-                key={tab.id}
-                tab={tab}
-                isActive={tab.id === activeTabId}
-                onSelect={() => onSelectTab(tab.id)}
-                onClose={e => {
-                  e.stopPropagation();
-                  onCloseTab(tab.id);
-                }}
-                wasDragging={wasDragging}
-              />
-            ))}
+            {tabs.map(node => {
+              const chipLeaf = nodeToChipLeaf(node);
+              return (
+                <SortableTab
+                  key={node.id}
+                  tab={chipLeaf}
+                  isActive={node.id === activeTabId}
+                  onSelect={() => onSelectTab(node.id)}
+                  onClose={e => {
+                    e.stopPropagation();
+                    onCloseTab(node.id);
+                  }}
+                  wasDragging={wasDragging}
+                />
+              );
+            })}
           </SortableContext>
 
           {/* New tab button — circle, sits inline next to last tab */}

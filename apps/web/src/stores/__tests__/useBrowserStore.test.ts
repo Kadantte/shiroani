@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { BrowserLeafNode, BrowserNode } from '@shiroani/shared';
 import { useBrowserStore } from '../useBrowserStore';
 
 // Mock webviewRefs — must be before importing the store
@@ -18,12 +19,21 @@ vi.stubGlobal('crypto', {
   randomUUID: () => `tab-${++uuidCounter}`,
 });
 
+/** Narrow a tree node to a leaf, failing the test if the node is a split. */
+function expectLeaf(node: BrowserNode | undefined): BrowserLeafNode {
+  if (!node || node.kind !== 'leaf') {
+    throw new Error(`expected leaf node, got ${node?.kind ?? 'undefined'}`);
+  }
+  return node;
+}
+
 describe('useBrowserStore', () => {
   beforeEach(() => {
     // Reset store state before each test
     useBrowserStore.setState({
       tabs: [],
       activeTabId: null,
+      activePaneId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
       popupBlockEnabled: true,
@@ -42,11 +52,12 @@ describe('useBrowserStore', () => {
 
       const { tabs, activeTabId } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
-      expect(tabs[0].title).toBe('Nowa karta');
-      expect(tabs[0].isLoading).toBe(false); // new tab page doesn't load
-      expect(tabs[0].canGoBack).toBe(false);
-      expect(tabs[0].canGoForward).toBe(false);
-      expect(activeTabId).toBe(tabs[0].id);
+      const leaf = expectLeaf(tabs[0]);
+      expect(leaf.title).toBe('Nowa karta');
+      expect(leaf.isLoading).toBe(false); // new tab page doesn't load
+      expect(leaf.canGoBack).toBe(false);
+      expect(leaf.canGoForward).toBe(false);
+      expect(activeTabId).toBe(leaf.id);
     });
 
     it('creates a tab with a custom URL', () => {
@@ -54,7 +65,7 @@ describe('useBrowserStore', () => {
 
       const { tabs } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
-      expect(tabs[0].url).toBe('https://example.com');
+      expect(expectLeaf(tabs[0]).url).toBe('https://example.com');
     });
 
     it('sets the new tab as active', () => {
@@ -79,7 +90,7 @@ describe('useBrowserStore', () => {
 
       const { tabs } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
-      expect(tabs[0].url).toBe('https://b.com');
+      expect(expectLeaf(tabs[0]).url).toBe('https://b.com');
     });
 
     it('activates next tab when closing active tab', () => {
@@ -155,10 +166,10 @@ describe('useBrowserStore', () => {
         isLoading: false,
       });
 
-      const tab = useBrowserStore.getState().tabs[0];
-      expect(tab.title).toBe('Updated Title');
-      expect(tab.url).toBe('https://updated.com');
-      expect(tab.isLoading).toBe(false);
+      const leaf = expectLeaf(useBrowserStore.getState().tabs[0]);
+      expect(leaf.title).toBe('Updated Title');
+      expect(leaf.url).toBe('https://updated.com');
+      expect(leaf.isLoading).toBe(false);
     });
 
     it('does not affect other tabs', () => {
@@ -168,7 +179,7 @@ describe('useBrowserStore', () => {
       const firstTabId = useBrowserStore.getState().tabs[0].id;
       useBrowserStore.getState().updateTabState(firstTabId, { title: 'Changed' });
 
-      expect(useBrowserStore.getState().tabs[1].title).toBe('Nowa karta');
+      expect(expectLeaf(useBrowserStore.getState().tabs[1]).title).toBe('Nowa karta');
     });
   });
 
@@ -286,7 +297,7 @@ describe('useBrowserStore', () => {
 
       const { tabs } = useBrowserStore.getState();
       expect(tabs).toHaveLength(1);
-      expect(tabs[0].url).toBe('shiroani://newtab');
+      expect(expectLeaf(tabs[0]).url).toBe('shiroani://newtab');
     });
   });
 });
