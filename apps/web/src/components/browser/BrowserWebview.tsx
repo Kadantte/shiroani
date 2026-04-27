@@ -16,19 +16,19 @@ const HIDDEN_STYLE: React.CSSProperties = {
 };
 
 interface BrowserWebviewProps {
-  tabId: string;
+  paneId: string;
   initialUrl: string;
   isActive: boolean;
 }
 
 const BrowserWebviewInner = function BrowserWebview({
-  tabId,
+  paneId,
   initialUrl,
   isActive,
 }: BrowserWebviewProps) {
   const webviewRef = useRef<WebviewElement | null>(null);
 
-  useWebviewEvents(webviewRef, tabId);
+  useWebviewEvents(webviewRef, paneId);
 
   return (
     <webview

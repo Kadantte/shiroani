@@ -1,8 +1,8 @@
 import { IS_ELECTRON } from '@/lib/platform';
 import { hostFromUrl } from '@/lib/url-utils';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { findLeafById, useBrowserStore } from '@/stores/useBrowserStore';
 import { useAppStore } from '@/stores/useAppStore';
-import type { BrowserTab, DiscordPresenceActivity } from '@shiroani/shared';
+import type { BrowserNode, DiscordPresenceActivity } from '@shiroani/shared';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -118,27 +118,27 @@ function detectYoutube(parsed: URL, pageTitle: string): AnimeDetection | null {
  * a lib utility to store internals.
  */
 export function updateAnimePresence(
-  tabId: string,
-  tabs?: BrowserTab[],
-  activeTabId?: string | null,
+  paneId: string,
+  tabs?: BrowserNode[],
+  activePaneId?: string | null,
   activeView?: string
 ): void {
   if (!IS_ELECTRON) return;
 
   const _tabs = tabs ?? useBrowserStore.getState().tabs;
-  const _activeTabId =
-    activeTabId !== undefined ? activeTabId : useBrowserStore.getState().activeTabId;
+  const _activePaneId =
+    activePaneId !== undefined ? activePaneId : useBrowserStore.getState().activePaneId;
   const _activeView = activeView ?? useAppStore.getState().activeView;
 
-  // Only update for the active tab while the browser view is visible
-  if (tabId !== _activeTabId || _activeView !== 'browser') return;
+  // Only update for the focused pane while the browser view is visible
+  if (paneId !== _activePaneId || _activeView !== 'browser') return;
 
-  const tab = _tabs.find(t => t.id === tabId);
-  if (!tab) return;
+  const leaf = findLeafById(_tabs, paneId);
+  if (!leaf) return;
 
-  const detection = detectAnimeFromUrl(tab.url, tab.title);
+  const detection = detectAnimeFromUrl(leaf.url, leaf.title);
 
-  const siteName = hostFromUrl(tab.url) ?? undefined;
+  const siteName = hostFromUrl(leaf.url) ?? undefined;
 
   const activity: DiscordPresenceActivity = detection
     ? {
@@ -156,4 +156,27 @@ export function updateAnimePresence(
   // Drive the local "anime watch" counter so animeWatchSeconds increments
   // only while the active tab is on a recognized anime site.
   window.electronAPI?.appStats?.setWatchingAnime(detection !== null);
+}
+
+/**
+ * Trailing-edge debounce wrapper around `updateAnimePresence` for focus-change
+ * call sites (switchTab, focusPane). Quick alternation between panes A and B
+ * would otherwise spam Discord's RPC client past its rate limit and leave
+ * stale activity sticking; coalescing the call ensures the latest focused
+ * pane wins. Non-focus paths (did-navigate, page-title-updated) keep calling
+ * `updateAnimePresence` directly so URL/title changes still fire immediately.
+ */
+const PRESENCE_DEBOUNCE_MS = 350;
+let presenceTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingPaneId: string | null = null;
+
+export function updateAnimePresenceDebounced(paneId: string): void {
+  pendingPaneId = paneId;
+  if (presenceTimer) return;
+  presenceTimer = setTimeout(() => {
+    presenceTimer = null;
+    const id = pendingPaneId;
+    pendingPaneId = null;
+    if (id !== null) updateAnimePresence(id);
+  }, PRESENCE_DEBOUNCE_MS);
 }

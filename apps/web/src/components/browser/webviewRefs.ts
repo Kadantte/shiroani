@@ -1,5 +1,9 @@
 /**
- * Shared registry of webview element references by tab ID.
+ * Shared registry of webview element references by pane ID.
+ *
+ * A pane id is the leaf id of a BrowserNode in `useBrowserStore.tabs`. For
+ * non-split tabs the pane id equals the tab id; for split tabs each child
+ * leaf has its own id.
  *
  * Consumers:
  * - BrowserWebview: registers/unregisters on mount/unmount
@@ -26,14 +30,14 @@ export type WebviewElement = HTMLElement & {
 
 const webviewRefs = new Map<string, WebviewElement>();
 
-export function registerWebview(tabId: string, el: WebviewElement): void {
-  webviewRefs.set(tabId, el);
+export function registerWebview(paneId: string, el: WebviewElement): void {
+  webviewRefs.set(paneId, el);
 }
 
-export function unregisterWebview(tabId: string): void {
-  webviewRefs.delete(tabId);
+export function unregisterWebview(paneId: string): void {
+  webviewRefs.delete(paneId);
 }
 
-export function getWebview(tabId: string): WebviewElement | undefined {
-  return webviewRefs.get(tabId);
+export function getWebview(paneId: string): WebviewElement | undefined {
+  return webviewRefs.get(paneId);
 }

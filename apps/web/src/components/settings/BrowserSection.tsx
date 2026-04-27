@@ -24,6 +24,8 @@ export function BrowserSection() {
   const removeAdblockDomain = useBrowserStore(state => state.removeAdblockDomain);
   const restoreTabsOnStartup = useBrowserStore(state => state.restoreTabsOnStartup);
   const setRestoreTabsOnStartup = useBrowserStore(state => state.setRestoreTabsOnStartup);
+  const splitTabsEnabled = useBrowserStore(state => state.splitTabsEnabled);
+  const setSplitTabsEnabled = useBrowserStore(state => state.setSplitTabsEnabled);
   const trackFrequentSites = useQuickAccessStore(state => state.trackFrequentSites);
   const setTrackFrequentSites = useQuickAccessStore(state => state.setTrackFrequentSites);
 
@@ -169,6 +171,14 @@ export function BrowserSection() {
           description="Zapamiętuje otwarte karty między sesjami."
           checked={restoreTabsOnStartup}
           onCheckedChange={setRestoreTabsOnStartup}
+        />
+
+        <SettingsToggleRow
+          id="browser-split-tabs-label"
+          title="Karty dzielone"
+          description="Przeciągnij kartę na drugą, żeby otworzyć je obok siebie."
+          checked={splitTabsEnabled}
+          onCheckedChange={setSplitTabsEnabled}
         />
 
         <SettingsToggleRow

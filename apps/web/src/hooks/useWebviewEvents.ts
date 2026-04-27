@@ -1,5 +1,5 @@
 import { useEffect, type RefObject } from 'react';
-import { useBrowserStore } from '@/stores/useBrowserStore';
+import { findLeafById, useBrowserStore } from '@/stores/useBrowserStore';
 import { useQuickAccessStore } from '@/stores/useQuickAccessStore';
 import {
   registerWebview,
@@ -49,7 +49,12 @@ const IFRAME_PATCH_SCRIPT = `
 })();
 `;
 
-export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, tabId: string) {
+/**
+ * Wires the per-leaf <webview> events into the store. The argument is a
+ * leaf id (which equals the tab id for non-split tabs); it identifies which
+ * leaf in the BrowserNode tree this webview belongs to.
+ */
+export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, paneId: string) {
   useEffect(() => {
     const el = webviewRef.current;
     if (!el) return;
@@ -57,7 +62,7 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
     const { updateTabState } = useBrowserStore.getState();
 
     // Register immediately so other code can access the webview ref before dom-ready
-    registerWebview(tabId, el);
+    registerWebview(paneId, el);
 
     const onDomReady = () => {
       el.executeJavaScript(IFRAME_PATCH_SCRIPT).catch(() => {});
@@ -65,44 +70,44 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
 
     const onDidNavigate = (e: Event) => {
       const detail = e as WebviewNavigateEvent;
-      updateTabState(tabId, {
+      updateTabState(paneId, {
         url: detail.url,
         canGoBack: el.canGoBack(),
         canGoForward: el.canGoForward(),
       });
-      updateAnimePresence(tabId);
+      updateAnimePresence(paneId);
     };
 
     const onDidNavigateInPage = (e: Event) => {
       const detail = e as WebviewNavigateInPageEvent;
       if (detail.isMainFrame === false) return;
-      updateTabState(tabId, {
+      updateTabState(paneId, {
         url: detail.url,
         canGoBack: el.canGoBack(),
         canGoForward: el.canGoForward(),
       });
-      updateAnimePresence(tabId);
+      updateAnimePresence(paneId);
     };
 
     const onPageTitleUpdated = (e: Event) => {
       const detail = e as WebviewTitleEvent;
-      updateTabState(tabId, { title: detail.title });
-      updateAnimePresence(tabId);
+      updateTabState(paneId, { title: detail.title });
+      updateAnimePresence(paneId);
     };
 
     const onPageFaviconUpdated = (e: Event) => {
       const detail = e as WebviewFaviconEvent;
       if (detail.favicons?.length > 0) {
-        updateTabState(tabId, { favicon: detail.favicons[0] });
+        updateTabState(paneId, { favicon: detail.favicons[0] });
       }
     };
 
     const onDidStartLoading = () => {
-      updateTabState(tabId, { isLoading: true });
+      updateTabState(paneId, { isLoading: true });
     };
 
     const onDidStopLoading = () => {
-      updateTabState(tabId, {
+      updateTabState(paneId, {
         isLoading: false,
         canGoBack: el.canGoBack(),
         canGoForward: el.canGoForward(),
@@ -112,8 +117,8 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
       try {
         const currentUrl = el.getURL();
         const currentTitle = el.getTitle();
-        const tab = useBrowserStore.getState().tabs.find(t => t.id === tabId);
-        useQuickAccessStore.getState().recordVisit(currentUrl, currentTitle, tab?.favicon);
+        const leaf = findLeafById(useBrowserStore.getState().tabs, paneId);
+        useQuickAccessStore.getState().recordVisit(currentUrl, currentTitle, leaf?.favicon);
       } catch {
         // Non-critical — skip tracking
       }
@@ -122,7 +127,7 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
     const onDidFailLoad = (e: Event) => {
       const detail = e as WebviewFailLoadEvent;
       if (detail.errorCode === -3) return; // Aborted (harmless redirect)
-      updateTabState(tabId, { isLoading: false });
+      updateTabState(paneId, { isLoading: false });
     };
 
     const onEnterFullscreen = () => {
@@ -149,7 +154,7 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
 
     // Cleanup
     return () => {
-      unregisterWebview(tabId);
+      unregisterWebview(paneId);
       el.removeEventListener('dom-ready', onDomReady);
       el.removeEventListener('did-navigate', onDidNavigate);
       el.removeEventListener('did-navigate-in-page', onDidNavigateInPage);
@@ -161,5 +166,5 @@ export function useWebviewEvents(webviewRef: RefObject<WebviewElement | null>, t
       el.removeEventListener('enter-html-full-screen', onEnterFullscreen);
       el.removeEventListener('leave-html-full-screen', onLeaveFullscreen);
     };
-  }, [tabId]);
+  }, [paneId]);
 }

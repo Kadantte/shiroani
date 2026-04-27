@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { BrowserTab } from '@shiroani/shared';
+import type { BrowserLeafNode, BrowserNode, BrowserSplitNode, BrowserTab } from '@shiroani/shared';
 import { createLogger, NEW_TAB_URL } from '@shiroani/shared';
 import { getWebview, unregisterWebview } from '@/components/browser/webviewRefs';
 import { normalizeUrl, normalizeWhitelistHost } from '@/lib/url-utils';
 import { electronStoreGet, electronStoreSet, electronStoreDelete } from '@/lib/electron-store';
-import { updateAnimePresence } from '@/lib/anime-detection';
+import { updateAnimePresenceDebounced } from '@/lib/anime-detection';
 
 const logger = createLogger('BrowserStore');
 
@@ -14,8 +14,13 @@ const logger = createLogger('BrowserStore');
 const MAX_ADBLOCK_WHITELIST_ENTRIES = 500;
 
 interface BrowserState {
-  tabs: BrowserTab[];
+  tabs: BrowserNode[];
   activeTabId: string | null;
+  /**
+   * Identifier of the focused leaf within the active tab. For a flat tab this
+   * equals the tab id; for a split tab it points at one of the child leaves.
+   */
+  activePaneId: string | null;
   isAddressBarFocused: boolean;
   adblockEnabled: boolean;
   popupBlockEnabled: boolean;
@@ -23,6 +28,8 @@ interface BrowserState {
   adblockWhitelist: string[];
   /** Whether to restore the previous session's tabs on app start. */
   restoreTabsOnStartup: boolean;
+  /** Whether dragging a tab onto another opens them side by side. */
+  splitTabsEnabled: boolean;
   isFullScreen: boolean;
 }
 
@@ -35,7 +42,11 @@ interface BrowserActions {
   goBack: () => void;
   goForward: () => void;
   reload: () => void;
-  updateTabState: (tabId: string, updates: Partial<BrowserTab>) => void;
+  /**
+   * Patch a leaf within the tab tree. The `paneId` is the leaf id; it equals
+   * the tab id for non-split tabs.
+   */
+  updateTabState: (paneId: string, updates: Partial<BrowserTab>) => void;
   setAddressBarFocused: (focused: boolean) => void;
   setAdblockEnabled: (enabled: boolean) => void;
   toggleAdblock: () => void;
@@ -44,6 +55,12 @@ interface BrowserActions {
   addAdblockDomain: (host: string) => void;
   removeAdblockDomain: (host: string) => void;
   setRestoreTabsOnStartup: (enabled: boolean) => void;
+  setSplitTabsEnabled: (enabled: boolean) => Promise<void>;
+  splitTabs: (sourceTabId: string, targetTabId: string) => void;
+  unsplitTab: (splitNodeId: string) => void;
+  setSplitRatio: (splitNodeId: string, ratio: number) => void;
+  focusPane: (paneId: string) => void;
+  closeFocusedPane: () => void;
   persistTabs: () => void;
   restoreTabs: () => Promise<void>;
 }
@@ -54,6 +71,93 @@ type BrowserStore = BrowserState & BrowserActions;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 const PERSIST_DEBOUNCE_MS = 1000;
 
+// ── Tree helpers ─────────────────────────────────────────────────
+
+/** First leaf encountered in a depth-first walk — used to seed activePaneId. */
+function firstLeaf(node: BrowserNode): BrowserLeafNode {
+  return node.kind === 'leaf' ? node : firstLeaf(node.left);
+}
+
+/** Find a leaf with the given id anywhere in the tree, or null. */
+function findLeaf(node: BrowserNode, id: string): BrowserLeafNode | null {
+  if (node.kind === 'leaf') return node.id === id ? node : null;
+  return findLeaf(node.left, id) ?? findLeaf(node.right, id);
+}
+
+/** Walk a list of top-level tabs and return the leaf matching `id`, or null. */
+export function findLeafById(tabs: BrowserNode[], id: string): BrowserLeafNode | null {
+  for (const tab of tabs) {
+    const leaf = findLeaf(tab, id);
+    if (leaf) return leaf;
+  }
+  return null;
+}
+
+/** Find the top-level tab that contains the given pane id. */
+function findTabContainingPane(tabs: BrowserNode[], paneId: string): BrowserNode | null {
+  for (const tab of tabs) {
+    if (findLeaf(tab, paneId)) return tab;
+  }
+  return null;
+}
+
+/** Map every leaf in a node by paneId, replacing it with the result of `fn`. */
+function mapLeaves(node: BrowserNode, fn: (leaf: BrowserLeafNode) => BrowserLeafNode): BrowserNode {
+  if (node.kind === 'leaf') return fn(node);
+  const left = mapLeaves(node.left, fn);
+  const right = mapLeaves(node.right, fn);
+  if (left === node.left && right === node.right) return node;
+  return { ...node, left, right };
+}
+
+/** Rewrite a single leaf in a node, returning a structurally-shared tree. */
+function updateLeaf(node: BrowserNode, paneId: string, updates: Partial<BrowserTab>): BrowserNode {
+  return mapLeaves(node, leaf => (leaf.id === paneId ? { ...leaf, ...updates } : leaf));
+}
+
+/** Locate the parent split (if any) of a given child node id within `tabs`. */
+function findParentSplit(
+  tabs: BrowserNode[],
+  childId: string
+): { parent: BrowserSplitNode; tabIndex: number } | null {
+  function walk(
+    node: BrowserNode,
+    tabIndex: number
+  ): { parent: BrowserSplitNode; tabIndex: number } | null {
+    if (node.kind === 'leaf') return null;
+    if (node.left.id === childId || node.right.id === childId) {
+      return { parent: node, tabIndex };
+    }
+    return walk(node.left, tabIndex) ?? walk(node.right, tabIndex);
+  }
+  for (let i = 0; i < tabs.length; i++) {
+    const found = walk(tabs[i], i);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** Replace a node anywhere in the tree by id. Returns the new root or `null` if not found. */
+function replaceNode(
+  node: BrowserNode,
+  targetId: string,
+  replacement: BrowserNode
+): BrowserNode | null {
+  if (node.id === targetId) return replacement;
+  if (node.kind === 'leaf') return null;
+  const left = replaceNode(node.left, targetId, replacement);
+  if (left) return { ...node, left };
+  const right = replaceNode(node.right, targetId, replacement);
+  if (right) return { ...node, right };
+  return null;
+}
+
+/** Collect every leaf in a node (used by closeTab to unregister webviews). */
+function collectLeaves(node: BrowserNode): BrowserLeafNode[] {
+  if (node.kind === 'leaf') return [node];
+  return [...collectLeaves(node.left), ...collectLeaves(node.right)];
+}
+
 /**
  * Persist the browser-settings slice (adblock toggle, popup switch, whitelist)
  * back to electron-store, merging with whatever else lives under that key.
@@ -63,6 +167,7 @@ async function persistBrowserSettings(updates: {
   popupBlockEnabled?: boolean;
   adblockWhitelist?: string[];
   restoreTabsOnStartup?: boolean;
+  splitTabsEnabled?: boolean;
 }): Promise<void> {
   const existing = (await electronStoreGet<Record<string, unknown>>('browser-settings')) ?? {};
   await electronStoreSet('browser-settings', { ...existing, ...updates });
@@ -74,11 +179,13 @@ export const useBrowserStore = create<BrowserStore>()(
       // State
       tabs: [],
       activeTabId: null,
+      activePaneId: null,
       isAddressBarFocused: false,
       adblockEnabled: true,
       popupBlockEnabled: true,
       adblockWhitelist: [],
       restoreTabsOnStartup: true,
+      splitTabsEnabled: true,
       isFullScreen: false,
 
       // ── Tab CRUD (all local now) ────────────────────────────────
@@ -87,7 +194,8 @@ export const useBrowserStore = create<BrowserStore>()(
         const targetUrl = typeof url === 'string' ? url : NEW_TAB_URL;
         const tabId = crypto.randomUUID();
 
-        const newTab: BrowserTab = {
+        const newTab: BrowserLeafNode = {
+          kind: 'leaf',
           id: tabId,
           url: targetUrl,
           title: 'Nowa karta',
@@ -100,6 +208,7 @@ export const useBrowserStore = create<BrowserStore>()(
           state => ({
             tabs: [...state.tabs, newTab],
             activeTabId: tabId,
+            activePaneId: tabId,
           }),
           undefined,
           'browser/openTab'
@@ -113,31 +222,46 @@ export const useBrowserStore = create<BrowserStore>()(
         const index = tabs.findIndex(t => t.id === tabId);
         if (index === -1) return;
 
-        // Unregister webview ref immediately
-        unregisterWebview(tabId);
+        // Unregister webview refs for every leaf inside the closed tab
+        for (const leaf of collectLeaves(tabs[index])) {
+          unregisterWebview(leaf.id);
+        }
 
         const newTabs = tabs.filter(t => t.id !== tabId);
-        let newActiveId = activeTabId;
+        let newActiveTabId = activeTabId;
+        let newActivePaneId: string | null = get().activePaneId;
 
         if (activeTabId === tabId) {
           if (newTabs.length > 0) {
-            newActiveId = newTabs[Math.min(index, newTabs.length - 1)].id;
+            const next = newTabs[Math.min(index, newTabs.length - 1)];
+            newActiveTabId = next.id;
+            newActivePaneId = firstLeaf(next).id;
           } else {
-            newActiveId = null;
+            newActiveTabId = null;
+            newActivePaneId = null;
           }
         }
 
-        set({ tabs: newTabs, activeTabId: newActiveId }, undefined, 'browser/closeTab');
+        set(
+          { tabs: newTabs, activeTabId: newActiveTabId, activePaneId: newActivePaneId },
+          undefined,
+          'browser/closeTab'
+        );
         get().persistTabs();
       },
 
       switchTab: (tabId: string) => {
-        set({ activeTabId: tabId }, undefined, 'browser/switchTab');
-        // Re-evaluate anime detection on the newly-active tab. Without this,
+        const { tabs } = get();
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        const paneId = firstLeaf(tab).id;
+        set({ activeTabId: tabId, activePaneId: paneId }, undefined, 'browser/switchTab');
+        // Re-evaluate anime detection on the newly-focused pane. Without this,
         // switching from an anime tab to a non-anime tab whose URL/title
         // doesn't change leaves `setWatchingAnime(true)` stuck and
         // `animeWatchSeconds` keeps incrementing for the wrong tab.
-        updateAnimePresence(tabId);
+        updateAnimePresenceDebounced(paneId);
       },
 
       reorderTabs: (activeId: string, overId: string) => {
@@ -154,55 +278,188 @@ export const useBrowserStore = create<BrowserStore>()(
       // ── Navigation (calls webview methods directly) ─────────────
 
       navigate: (url: string) => {
-        const { activeTabId, updateTabState } = get();
-        if (!activeTabId) return;
+        const { activePaneId, updateTabState } = get();
+        if (!activePaneId) return;
 
         const normalizedUrl = normalizeUrl(url);
-        const webview = getWebview(activeTabId);
+        const webview = getWebview(activePaneId);
 
         if (!webview) {
           // No webview (e.g., new tab page) — update state to trigger webview mount
-          updateTabState(activeTabId, { url: normalizedUrl, isLoading: true });
+          updateTabState(activePaneId, { url: normalizedUrl, isLoading: true });
           return;
         }
 
         webview.loadURL(normalizedUrl).catch((err: Error) => {
-          logger.error(`Failed to navigate tab ${activeTabId}:`, err.message);
+          logger.error(`Failed to navigate pane ${activePaneId}:`, err.message);
         });
       },
 
       goBack: () => {
-        const { activeTabId } = get();
-        if (!activeTabId) return;
-        getWebview(activeTabId)?.goBack();
+        const { activePaneId } = get();
+        if (!activePaneId) return;
+        getWebview(activePaneId)?.goBack();
       },
 
       goForward: () => {
-        const { activeTabId } = get();
-        if (!activeTabId) return;
-        getWebview(activeTabId)?.goForward();
+        const { activePaneId } = get();
+        if (!activePaneId) return;
+        getWebview(activePaneId)?.goForward();
       },
 
       reload: () => {
-        const { activeTabId } = get();
-        if (!activeTabId) return;
-        getWebview(activeTabId)?.reload();
+        const { activePaneId } = get();
+        if (!activePaneId) return;
+        getWebview(activePaneId)?.reload();
       },
 
       // ── State updates ───────────────────────────────────────────
 
-      updateTabState: (tabId: string, updates: Partial<BrowserTab>) => {
+      updateTabState: (paneId: string, updates: Partial<BrowserTab>) => {
         set(
           state => ({
-            tabs: state.tabs.map(t => (t.id === tabId ? { ...t, ...updates } : t)),
+            tabs: state.tabs.map(tab => updateLeaf(tab, paneId, updates)),
           }),
           undefined,
           'browser/updateTabState'
         );
-        // Debounced persistence when tab state changes (URL, title, etc.)
+        // Debounced persistence when a leaf's URL or title changes.
         if (updates.url || updates.title) {
           get().persistTabs();
         }
+      },
+
+      // ── Split / unsplit ─────────────────────────────────────────
+
+      splitTabs: (sourceTabId: string, targetTabId: string) => {
+        // Honour the user's setting at the store boundary, not just in the UI.
+        // A stale or async caller (e.g. drag started before the toggle flipped)
+        // can still reach this action; this guard makes the off-state final.
+        if (!get().splitTabsEnabled) return;
+        if (sourceTabId === targetTabId) return;
+        const { tabs, activeTabId } = get();
+
+        const sourceIndex = tabs.findIndex(t => t.id === sourceTabId);
+        const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+        if (sourceIndex === -1 || targetIndex === -1) return;
+
+        const source = tabs[sourceIndex];
+        const target = tabs[targetIndex];
+
+        const splitNode: BrowserSplitNode = {
+          kind: 'split',
+          id: crypto.randomUUID(),
+          orientation: 'horizontal',
+          ratio: 0.5,
+          left: target,
+          right: source,
+        };
+
+        // Remove the source tab from its old slot, replace target in place.
+        const next = tabs.filter((_, i) => i !== sourceIndex);
+        const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        next[adjustedTargetIndex] = splitNode;
+
+        // Active tab becomes the split if either the source or the target was active.
+        const wasActive = activeTabId === sourceTabId || activeTabId === targetTabId;
+        const newActiveTabId = wasActive ? splitNode.id : activeTabId;
+        const newActivePaneId = wasActive ? firstLeaf(target).id : get().activePaneId;
+
+        set(
+          { tabs: next, activeTabId: newActiveTabId, activePaneId: newActivePaneId },
+          undefined,
+          'browser/splitTabs'
+        );
+        get().persistTabs();
+      },
+
+      unsplitTab: (splitNodeId: string) => {
+        const { tabs, activePaneId } = get();
+        const tabIndex = tabs.findIndex(t => t.id === splitNodeId);
+        if (tabIndex === -1) return;
+        const node = tabs[tabIndex];
+        if (node.kind !== 'split') return;
+
+        // Keep the focused leaf in place; evict the other to a new top-level tab.
+        const focusedIsLeft = activePaneId !== null && findLeaf(node.left, activePaneId) !== null;
+        const keep = focusedIsLeft ? node.left : node.right;
+        const evict = focusedIsLeft ? node.right : node.left;
+
+        const next = [...tabs];
+        next[tabIndex] = keep;
+        next.splice(tabIndex + 1, 0, evict);
+
+        const newActiveTabId = keep.id;
+        const newActivePaneId = firstLeaf(keep).id;
+
+        set(
+          { tabs: next, activeTabId: newActiveTabId, activePaneId: newActivePaneId },
+          undefined,
+          'browser/unsplitTab'
+        );
+        get().persistTabs();
+      },
+
+      setSplitRatio: (splitNodeId: string, ratio: number) => {
+        const clamped = Math.min(0.8, Math.max(0.2, ratio));
+        const { tabs } = get();
+
+        // Single-pass walk: find + rewrite in one traversal. Each tab is
+        // probed at the root; if the split is inside, the recursion returns
+        // either an updated subtree or an `unchanged` marker (ratio already
+        // matches). Tabs that don't contain the split skip after the first
+        // descent and pass through by reference.
+        for (let i = 0; i < tabs.length; i++) {
+          const result = applySplitRatio(tabs[i], splitNodeId, clamped);
+          if (!result) continue;
+          if (result.kind === 'unchanged') return;
+          const next = tabs.slice();
+          next[i] = result.node;
+          set({ tabs: next }, undefined, 'browser/setSplitRatio');
+          return;
+        }
+      },
+
+      focusPane: (paneId: string) => {
+        const { tabs } = get();
+        const tab = findTabContainingPane(tabs, paneId);
+        if (!tab) return;
+        set({ activeTabId: tab.id, activePaneId: paneId }, undefined, 'browser/focusPane');
+        updateAnimePresenceDebounced(paneId);
+      },
+
+      closeFocusedPane: () => {
+        const { tabs, activePaneId, activeTabId } = get();
+        if (!activePaneId || !activeTabId) return;
+
+        const parent = findParentSplit(tabs, activePaneId);
+        if (!parent) {
+          // Pane has no split parent — focused pane is a top-level leaf, close the tab.
+          get().closeTab(activeTabId);
+          return;
+        }
+
+        const { parent: split, tabIndex } = parent;
+        const survivor = split.left.id === activePaneId ? split.right : split.left;
+
+        unregisterWebview(activePaneId);
+
+        const tab = tabs[tabIndex];
+        const newTab =
+          tab.id === split.id ? survivor : (replaceNode(tab, split.id, survivor) ?? tab);
+
+        const next = [...tabs];
+        next[tabIndex] = newTab;
+
+        const newActiveTabId = newTab.id;
+        const newActivePaneId = firstLeaf(newTab).id;
+
+        set(
+          { tabs: next, activeTabId: newActiveTabId, activePaneId: newActivePaneId },
+          undefined,
+          'browser/closeFocusedPane'
+        );
+        get().persistTabs();
       },
 
       setAddressBarFocused: (focused: boolean) => {
@@ -278,6 +535,44 @@ export const useBrowserStore = create<BrowserStore>()(
         }
       },
 
+      setSplitTabsEnabled: async (enabled: boolean) => {
+        const previous = get().splitTabsEnabled;
+        set({ splitTabsEnabled: enabled }, undefined, 'browser/setSplitTabsEnabled');
+        // When the feature is disabled, flatten any open splits into adjacent
+        // tabs so the user is not left with a UI they can no longer manage.
+        // Build the flat list deterministically via collectLeaves rather than
+        // looping unsplitTab — unsplitTab is focus-biased and single-pass, so
+        // it can leave nested splits intact or evict leaves in reversed order.
+        if (!enabled) {
+          const { tabs, activePaneId } = get();
+          const hasSplits = tabs.some(t => t.kind === 'split');
+          if (hasSplits) {
+            const flat: BrowserLeafNode[] = [];
+            for (const tab of tabs) {
+              for (const leaf of collectLeaves(tab)) flat.push(leaf);
+            }
+            const stillFocused = activePaneId ? flat.find(l => l.id === activePaneId) : undefined;
+            const newActive = stillFocused ?? flat[0] ?? null;
+            set(
+              {
+                tabs: flat,
+                activeTabId: newActive?.id ?? null,
+                activePaneId: newActive?.id ?? null,
+              },
+              undefined,
+              'browser/setSplitTabsEnabled:flatten'
+            );
+            get().persistTabs();
+          }
+        }
+        try {
+          await persistBrowserSettings({ splitTabsEnabled: enabled });
+        } catch (err) {
+          logger.warn('useBrowserStore: failed to persist splitTabsEnabled', err);
+          set({ splitTabsEnabled: previous }, undefined, 'browser/setSplitTabsEnabled:revert');
+        }
+      },
+
       removeAdblockDomain: (host: string) => {
         const normalized = normalizeWhitelistHost(host);
         if (!normalized) return;
@@ -300,23 +595,40 @@ export const useBrowserStore = create<BrowserStore>()(
 
         if (persistTimer) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
-          const { tabs, activeTabId } = get();
-          const filtered = tabs.filter(t => t.url && t.url !== 'about:blank');
+          const { tabs, activePaneId } = get();
+          // Splits flatten to two adjacent leaves on disk: across a restart,
+          // the user sees two regular tabs side-by-side in the strip rather
+          // than a re-hydrated split. Session state (the split structure)
+          // is intentionally not preserved.
+          const flat: Array<{ url: string; title: string; isActive: boolean }> = [];
+          for (const tab of tabs) {
+            const leaves = collectLeaves(tab).filter(l => l.url && l.url !== 'about:blank');
+            for (const leaf of leaves) {
+              flat.push({
+                url: leaf.url,
+                title: leaf.title,
+                isActive: leaf.id === activePaneId,
+              });
+            }
+          }
 
-          if (filtered.length === 0) {
+          if (flat.length === 0) {
             electronStoreDelete('browser-tabs');
             return;
           }
 
-          const activeIndex = activeTabId ? filtered.findIndex(t => t.id === activeTabId) : 0;
+          const activeIndex = Math.max(
+            0,
+            flat.findIndex(t => t.isActive)
+          );
 
           const state = {
-            tabs: filtered.map(t => ({ url: t.url, title: t.title })),
-            activeIndex: Math.max(0, activeIndex),
+            tabs: flat.map(({ url, title }) => ({ url, title })),
+            activeIndex,
           };
 
           electronStoreSet('browser-tabs', state);
-          logger.debug(`Persisted ${filtered.length} tab(s)`);
+          logger.debug(`Persisted ${flat.length} tab(s)`);
         }, PERSIST_DEBOUNCE_MS);
       },
 
@@ -329,6 +641,7 @@ export const useBrowserStore = create<BrowserStore>()(
           popupBlockMode?: string;
           adblockWhitelist?: unknown;
           restoreTabsOnStartup?: boolean;
+          splitTabsEnabled?: boolean;
         }>('browser-settings');
 
         if (settings) {
@@ -356,6 +669,10 @@ export const useBrowserStore = create<BrowserStore>()(
             set({ restoreTabsOnStartup: settings.restoreTabsOnStartup });
           }
 
+          if (typeof settings.splitTabsEnabled === 'boolean') {
+            set({ splitTabsEnabled: settings.splitTabsEnabled });
+          }
+
           // Restore + push whitelist to main
           if (Array.isArray(settings.adblockWhitelist)) {
             const cleaned = Array.from(
@@ -374,13 +691,12 @@ export const useBrowserStore = create<BrowserStore>()(
         // Restore tabs (unless the user disabled session restore)
         if (!get().restoreTabsOnStartup) return;
 
-        const saved = await electronStoreGet<{
-          tabs: Array<{ url: string; title: string }>;
-          activeIndex: number;
-        }>('browser-tabs');
+        const saved = await electronStoreGet<unknown>('browser-tabs');
+        const migrated = migratePersistedTabs(saved);
 
-        if (saved?.tabs?.length) {
-          const restoredTabs: BrowserTab[] = saved.tabs.map(t => ({
+        if (migrated && migrated.tabs.length > 0) {
+          const restoredTabs: BrowserNode[] = migrated.tabs.map(t => ({
+            kind: 'leaf',
             id: crypto.randomUUID(),
             url: t.url,
             title: t.title || 'Nowa karta',
@@ -389,12 +705,14 @@ export const useBrowserStore = create<BrowserStore>()(
             canGoForward: false,
           }));
 
-          const activeIndex = Math.min(saved.activeIndex, restoredTabs.length - 1);
+          const activeIndex = Math.min(migrated.activeIndex, restoredTabs.length - 1);
+          const activeNode = restoredTabs[Math.max(0, activeIndex)];
 
           set(
             {
               tabs: restoredTabs,
-              activeTabId: restoredTabs[Math.max(0, activeIndex)]?.id ?? null,
+              activeTabId: activeNode?.id ?? null,
+              activePaneId: activeNode ? firstLeaf(activeNode).id : null,
             },
             undefined,
             'browser/restoreTabs'
@@ -407,3 +725,75 @@ export const useBrowserStore = create<BrowserStore>()(
     { name: 'browser' }
   )
 );
+
+/**
+ * Validate and normalise the persisted browser-tabs payload. Defensive: any
+ * unexpected shape from a future version (or a corrupted entry) is dropped
+ * rather than crashing the restore. Splits were never persisted, so the
+ * incoming shape is always a flat array even after the chunk-9 schema update.
+ */
+function migratePersistedTabs(
+  raw: unknown
+): { tabs: Array<{ url: string; title: string }>; activeIndex: number } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as { tabs?: unknown; activeIndex?: unknown };
+  if (!Array.isArray(candidate.tabs)) return null;
+
+  const tabs: Array<{ url: string; title: string }> = [];
+  for (const entry of candidate.tabs) {
+    if (!entry || typeof entry !== 'object') continue;
+    const e = entry as { url?: unknown; title?: unknown };
+    if (typeof e.url !== 'string' || e.url.length === 0) continue;
+    tabs.push({ url: e.url, title: typeof e.title === 'string' ? e.title : '' });
+  }
+
+  const activeIndex =
+    typeof candidate.activeIndex === 'number' && Number.isFinite(candidate.activeIndex)
+      ? candidate.activeIndex
+      : 0;
+
+  return { tabs, activeIndex };
+}
+
+/**
+ * Single-pass split-ratio update. Returns `null` when the split id is not in
+ * this subtree (caller keeps searching), `{ kind: 'unchanged' }` when the
+ * split was found but the ratio already matches (caller stops without a
+ * state mutation), or `{ kind: 'updated', node }` with a structurally-shared
+ * rewrite of the subtree.
+ */
+type SplitRatioResult = { kind: 'unchanged' } | { kind: 'updated'; node: BrowserNode } | null;
+
+function applySplitRatio(node: BrowserNode, id: string, ratio: number): SplitRatioResult {
+  if (node.kind === 'leaf') return null;
+  if (node.id === id) {
+    if (node.ratio === ratio) return { kind: 'unchanged' };
+    return { kind: 'updated', node: { ...node, ratio } };
+  }
+  const left = applySplitRatio(node.left, id, ratio);
+  if (left) {
+    if (left.kind === 'unchanged') return left;
+    return { kind: 'updated', node: { ...node, left: left.node } };
+  }
+  const right = applySplitRatio(node.right, id, ratio);
+  if (right) {
+    if (right.kind === 'unchanged') return right;
+    return { kind: 'updated', node: { ...node, right: right.node } };
+  }
+  return null;
+}
+
+/**
+ * Resolve the currently-focused leaf from the store, or `null` when no tab is
+ * active. Consumers that need URL/title from the active surface should read
+ * from the leaf rather than the top-level tab.
+ */
+export function getActivePane(): BrowserLeafNode | null {
+  const { tabs, activePaneId } = useBrowserStore.getState();
+  if (!activePaneId) return null;
+  for (const tab of tabs) {
+    const leaf = findLeaf(tab, activePaneId);
+    if (leaf) return leaf;
+  }
+  return null;
+}

@@ -42,9 +42,9 @@ export const useAppStore = create<AppStore>()(
         if (IS_ELECTRON && window.electronAPI?.discordRpc) {
           if (view === 'browser') {
             // When navigating back to browser, restore anime-specific presence
-            const activeTabId = useBrowserStore.getState().activeTabId;
-            if (activeTabId) {
-              updateAnimePresence(activeTabId);
+            const activePaneId = useBrowserStore.getState().activePaneId;
+            if (activePaneId) {
+              updateAnimePresence(activePaneId);
             } else {
               window.electronAPI.discordRpc.updatePresence({ view });
             }
