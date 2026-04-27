@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Loader2, Globe, X, Plus, Columns2 } from 'lucide-react';
 import {
   DndContext,
@@ -34,22 +34,25 @@ interface BrowserTabBarProps {
 const MERGE_PREFIX = 'merge:';
 
 /**
- * Pointer-aware collision detection: prefer the merge zone the cursor is over
- * (so dropping in the inner 60% of a tab triggers a split) and fall back to
- * closestCenter against the sortable tabs (so dropping near a gap reorders).
+ * Build a pointer-aware collision detector that prefers the merge zone the
+ * cursor is over (so dropping in the inner 60% of a tab triggers a split)
+ * and falls back to closestCenter against the sortable tabs. The set of
+ * merge-zone droppable ids is captured once per drag (recomputed only when
+ * the tab list changes), so the per-pointer-move check is O(1) Set.has and
+ * doesn't allocate strings on every frame.
  */
-const splitAwareCollisionDetection: CollisionDetection = args => {
-  const within = pointerWithin(args).filter(c => String(c.id).startsWith(MERGE_PREFIX));
-  if (within.length > 0) return within;
+function makeSplitAwareCollisionDetection(mergeIds: Set<string>): CollisionDetection {
+  return args => {
+    const within = pointerWithin(args).filter(c => mergeIds.has(String(c.id)));
+    if (within.length > 0) return within;
 
-  const sortableArgs = {
-    ...args,
-    droppableContainers: args.droppableContainers.filter(
-      c => !String(c.id).startsWith(MERGE_PREFIX)
-    ),
+    const sortableArgs = {
+      ...args,
+      droppableContainers: args.droppableContainers.filter(c => !mergeIds.has(String(c.id))),
+    };
+    return closestCenter(sortableArgs);
   };
-  return closestCenter(sortableArgs);
-};
+}
 
 /**
  * Derive the chip-friendly leaf representation for a top-level node. Splits
@@ -318,6 +321,15 @@ export function BrowserTabBar({
 
   const tabIds = tabs.map(t => t.id);
 
+  // Memoize the merge-zone id set + the collision detector so the per-frame
+  // pointer-move check during a drag does Set.has lookups instead of
+  // allocating strings via startsWith on every droppable.
+  const collisionDetection = useMemo(() => {
+    const mergeIds = new Set<string>();
+    for (const tab of tabs) mergeIds.add(`${MERGE_PREFIX}${tab.id}`);
+    return makeSplitAwareCollisionDetection(mergeIds);
+  }, [tabs]);
+
   return (
     <div
       className={cn(
@@ -327,7 +339,7 @@ export function BrowserTabBar({
     >
       <DndContext
         sensors={sensors}
-        collisionDetection={splitAwareCollisionDetection}
+        collisionDetection={collisionDetection}
         modifiers={[restrictToHorizontalAxis]}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
