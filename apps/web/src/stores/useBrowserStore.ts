@@ -571,26 +571,40 @@ export const useBrowserStore = create<BrowserStore>()(
 
         if (persistTimer) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
-          const { tabs, activeTabId } = get();
-          // Splits collapse to their first leaf in the persisted shape — see chunk #9.
-          const flatLeaves: BrowserLeafNode[] = tabs.map(firstLeaf);
-          const filtered = flatLeaves.filter(t => t.url && t.url !== 'about:blank');
+          const { tabs, activePaneId } = get();
+          // Splits flatten to two adjacent leaves on disk: across a restart,
+          // the user sees two regular tabs side-by-side in the strip rather
+          // than a re-hydrated split. Session state (the split structure)
+          // is intentionally not preserved.
+          const flat: Array<{ url: string; title: string; isActive: boolean }> = [];
+          for (const tab of tabs) {
+            const leaves = collectLeaves(tab).filter(l => l.url && l.url !== 'about:blank');
+            for (const leaf of leaves) {
+              flat.push({
+                url: leaf.url,
+                title: leaf.title,
+                isActive: leaf.id === activePaneId,
+              });
+            }
+          }
 
-          if (filtered.length === 0) {
+          if (flat.length === 0) {
             electronStoreDelete('browser-tabs');
             return;
           }
 
-          const activeTopId = activeTabId ? tabs.findIndex(t => t.id === activeTabId) : 0;
-          const activeIndex = activeTopId >= 0 ? activeTopId : 0;
+          const activeIndex = Math.max(
+            0,
+            flat.findIndex(t => t.isActive)
+          );
 
           const state = {
-            tabs: filtered.map(t => ({ url: t.url, title: t.title })),
-            activeIndex: Math.max(0, activeIndex),
+            tabs: flat.map(({ url, title }) => ({ url, title })),
+            activeIndex,
           };
 
           electronStoreSet('browser-tabs', state);
-          logger.debug(`Persisted ${filtered.length} tab(s)`);
+          logger.debug(`Persisted ${flat.length} tab(s)`);
         }, PERSIST_DEBOUNCE_MS);
       },
 
@@ -653,13 +667,11 @@ export const useBrowserStore = create<BrowserStore>()(
         // Restore tabs (unless the user disabled session restore)
         if (!get().restoreTabsOnStartup) return;
 
-        const saved = await electronStoreGet<{
-          tabs: Array<{ url: string; title: string }>;
-          activeIndex: number;
-        }>('browser-tabs');
+        const saved = await electronStoreGet<unknown>('browser-tabs');
+        const migrated = migratePersistedTabs(saved);
 
-        if (saved?.tabs?.length) {
-          const restoredTabs: BrowserNode[] = saved.tabs.map(t => ({
+        if (migrated && migrated.tabs.length > 0) {
+          const restoredTabs: BrowserNode[] = migrated.tabs.map(t => ({
             kind: 'leaf',
             id: crypto.randomUUID(),
             url: t.url,
@@ -669,7 +681,7 @@ export const useBrowserStore = create<BrowserStore>()(
             canGoForward: false,
           }));
 
-          const activeIndex = Math.min(saved.activeIndex, restoredTabs.length - 1);
+          const activeIndex = Math.min(migrated.activeIndex, restoredTabs.length - 1);
           const activeNode = restoredTabs[Math.max(0, activeIndex)];
 
           set(
@@ -689,6 +701,35 @@ export const useBrowserStore = create<BrowserStore>()(
     { name: 'browser' }
   )
 );
+
+/**
+ * Validate and normalise the persisted browser-tabs payload. Defensive: any
+ * unexpected shape from a future version (or a corrupted entry) is dropped
+ * rather than crashing the restore. Splits were never persisted, so the
+ * incoming shape is always a flat array even after the chunk-9 schema update.
+ */
+function migratePersistedTabs(
+  raw: unknown
+): { tabs: Array<{ url: string; title: string }>; activeIndex: number } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as { tabs?: unknown; activeIndex?: unknown };
+  if (!Array.isArray(candidate.tabs)) return null;
+
+  const tabs: Array<{ url: string; title: string }> = [];
+  for (const entry of candidate.tabs) {
+    if (!entry || typeof entry !== 'object') continue;
+    const e = entry as { url?: unknown; title?: unknown };
+    if (typeof e.url !== 'string' || e.url.length === 0) continue;
+    tabs.push({ url: e.url, title: typeof e.title === 'string' ? e.title : '' });
+  }
+
+  const activeIndex =
+    typeof candidate.activeIndex === 'number' && Number.isFinite(candidate.activeIndex)
+      ? candidate.activeIndex
+      : 0;
+
+  return { tabs, activeIndex };
+}
 
 /** Helper used by setSplitRatio — finds the SplitNode by id within a subtree. */
 function findSplitInTree(node: BrowserNode, id: string): BrowserSplitNode | null {
