@@ -49,6 +49,85 @@ export interface Release {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: '0.7.0',
+    date: '27 kwietnia 2026',
+    shortDate: '27.04.2026',
+    title: 'Statystyki w aplikacji, blokowanie reklam na żywo i odświeżony system aktualizacji',
+    description:
+      'Sporo nowości: profil dostał zakładkę „W aplikacji" z licznikami czasu i 12-tygodniową siatką aktywności, blokada reklam pobiera teraz listy filtrów uBlock Origin na żywo (mocno pomaga na YouTubie), a sekcje aktualizacji i błędów dostały nowy wygląd. Do tego solidne hartowanie bezpieczeństwa, aktualizacja silnika do Electron 41.3.0 i wiele bumpów zależności.',
+    type: 'major',
+    latest: true,
+    categories: [
+      {
+        kind: 'feature',
+        label: 'Statystyki użycia',
+        entries: [
+          'Nowa zakładka „W aplikacji" w profilu z trzema licznikami: ile czasu masz aplikację otwartą, ile aktywnie z niej korzystasz i ile spędziłeś na oglądaniu anime',
+          '12-tygodniowa siatka aktywności w stylu GitHuba — od razu widać kiedy korzystasz z aplikacji najczęściej',
+          'Aktualna i najdłuższa seria dni z aktywnością obok siatki, plus odznaka „Aktywny od X dni" w pasku bocznym profilu',
+          'Liczniki zatrzymują się gdy komputer śpi, jest zablokowany ekran lub aplikacja jest schowana — nie liczą czasu który nie należy do Ciebie',
+          'Wszystko jest lokalne, nic nie wychodzi poza Twoje urządzenie. W razie potrzeby przycisk „Wyczyść statystyki" wymaże dane',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Nowy wygląd aktualizacji i błędów',
+        entries: [
+          'Ekran startowy ma teraz osobny wariant przy instalacji aktualizacji (znak 新, niebieski pierścień, śpiąca maskotka) oraz przy błędzie (znak 失)',
+          'Sekcja Aktualizacje pokazuje kiedy ostatnio sprawdzaliśmy oraz dokładny postęp pobierania w megabajtach',
+          'Ekran błędu został kompletnie przeprojektowany w spójnym stylu z resztą aplikacji',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Wbudowana przeglądarka',
+        entries: [
+          'Blokada reklam pobiera teraz listy filtrów uBlock Origin na żywo i odświeża je co 2 godziny — zauważalna poprawa na YouTubie, gdzie reklamy przebijają się rzadziej',
+          'Silnik adblocka został dostrojony pod nowsze typy żądań YouTube oraz zaawansowane reguły kosmetyczne',
+          'Discord Rich Presence zawsze pokazuje przycisk z linkiem do strony ShiroAni',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Dopracowania interfejsu',
+        entries: [
+          'Dock nawigacyjny ma teraz osobny uchwyt do przeciągania na końcu paska — koniec z przypadkowym chwytaniem ikon przy klikaniu. Uchwyt znika gdy przeciąganie jest wyłączone w Ustawieniach → Dock',
+          'Dock zwinięty do logo można rozwinąć dotykiem lub klawiaturą — wcześniej działało tylko myszą',
+          'Usuwanie własnego motywu pyta teraz o potwierdzenie w eleganckim oknie z nazwą motywu, zamiast w surowym alercie systemowym',
+        ],
+      },
+      {
+        kind: 'security',
+        label: 'Bezpieczeństwo',
+        entries: [
+          'Hartowanie warstwy IPC: pobieranie obrazków sprawdza listę dozwolonych domen i blokuje sieci wewnętrzne (zabezpieczenie przed SSRF), zapis do magazynu wymaga dokładnego dopasowania klucza, dziennik logów ma limit szybkości',
+          'Wbudowana przeglądarka straciła uprawnienie do schowka, weryfikacja przekierowań działa poprawniej, a polityki uprawnień zostały zaostrzone',
+          'Nawigacja głównego okna oraz wewnętrzny schemat shiroani-bg:// sprawdzają adresy bardziej rygorystycznie',
+          'Aktualizacja silnika Electron 40 → 41.3.0 oraz pakietów z zaadresowanymi lukami zabezpieczeń (axios, undici, h3, picomatch i inne)',
+        ],
+      },
+      {
+        kind: 'fix',
+        label: 'Poprawki',
+        entries: [
+          'Edytor motywów: bazowy preset można znów wybrać po otwarciu „Nowy motyw" gdy aktywny jest własny motyw',
+          'Aktywna ikona w docku trzyma się środka także po zmianie skali czcionek',
+          'Drugie uruchomienie aplikacji od razu kończy się i przywraca pierwsze okno, zamiast najpierw wczytywać moduły',
+          'Drobne poprawki wizualne w sekcji aktualizacji (wyśrodkowanie odznaki statusu)',
+        ],
+      },
+      {
+        kind: 'polish',
+        label: 'Stabilność i porządki',
+        entries: [
+          'Zaktualizowane silniki i zależności: Electron 41.3.0, Vite 8, zod 4, lucide-react 1 (mniejszy pakiet ikon o ~32%), tailwindcss 4.2.4 i wiele innych',
+          'Porządki w architekturze procesu głównego: powiadomienia i warstwa preload zostały podzielone na mniejsze, dobrze odseparowane moduły, co ułatwi kolejne funkcje',
+          'Dependabot pilnuje codziennie aktualizacji bezpieczeństwa, a CI sprawdza również stronę i bota przy każdym pull requeście',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.6.2',
     date: '22 kwietnia 2026',
     shortDate: '22.04.2026',
@@ -56,7 +135,6 @@ export const RELEASES: readonly Release[] = [
     description:
       'Szybka poprawka przywracająca logowanie do AniList we wbudowanej przeglądarce. Przy okazji w ustawieniach pojawiła się nowa sekcja Rodzina, w której można poznać siostrzane aplikacje — Shiranami i KireiManga.',
     type: 'minor',
-    latest: true,
     categories: [
       {
         kind: 'feature',
