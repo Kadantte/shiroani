@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  AlertCircle,
   Calendar,
   CalendarDays,
   ChevronLeft,
@@ -15,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { ViewHeader } from '@/components/shared/ViewHeader';
+import { AniListErrorState } from '@/components/shared/AniListErrorState';
 import { useScheduleStore } from '@/stores/useScheduleStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -234,13 +234,7 @@ export function ScheduleView() {
               <TimetableViewSkeleton />
             )
           ) : error ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-              <AlertCircle className="w-10 h-10 text-destructive/60" />
-              <p className="text-sm text-center max-w-xs">{error}</p>
-              <Button variant="outline" size="sm" onClick={handleRetry}>
-                Spróbuj ponownie
-              </Button>
-            </div>
+            <AniListErrorState error={error} onRetry={handleRetry} className="flex-1" />
           ) : viewMode === 'daily' ? (
             <DailyView entries={todayEntries} day={selectedDay} onAnimeClick={handleAnimeClick} />
           ) : viewMode === 'weekly' ? (

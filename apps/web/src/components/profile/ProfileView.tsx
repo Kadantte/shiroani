@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipButton } from '@/components/ui/tooltip-button';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { ViewHeader } from '@/components/shared/ViewHeader';
+import { AniListErrorState } from '@/components/shared/AniListErrorState';
 import { useProfileStore, startProfileRefresh } from '@/stores/useProfileStore';
 import { ProfileSetup } from './ProfileSetup';
 import { ProfileSkeleton } from './ProfileSkeleton';
@@ -36,6 +37,7 @@ export function ProfileView() {
   const username = useProfileStore(s => s.username);
   const profile = useProfileStore(s => s.profile);
   const isLoading = useProfileStore(s => s.isLoading);
+  const error = useProfileStore(s => s.error);
   const initFromStore = useProfileStore(s => s.initFromStore);
   const fetchProfile = useProfileStore(s => s.fetchProfile);
   const clearProfile = useProfileStore(s => s.clearProfile);
@@ -147,6 +149,8 @@ export function ProfileView() {
                 </Button>
               </div>
             </div>
+          ) : error && !profile ? (
+            <AniListErrorState error={error} onRetry={() => fetchProfile()} />
           ) : null}
         </div>
       </div>

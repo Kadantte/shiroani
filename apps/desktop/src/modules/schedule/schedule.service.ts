@@ -28,8 +28,9 @@ export class ScheduleService {
       logger.debug(`Found ${entries.length} airing anime for ${date}`);
       return { date, entries };
     } catch (error) {
-      logger.error(`Failed to fetch daily schedule for ${date}: ${extractErrorMessage(error)}`);
-      return { date, entries: [], error: 'Failed to fetch schedule' };
+      const msg = extractErrorMessage(error);
+      logger.error(`Failed to fetch daily schedule for ${date}: ${msg}`);
+      return { date, entries: [], error: msg };
     }
   }
 
@@ -79,8 +80,9 @@ export class ScheduleService {
       logger.debug(`Found ${totalEntries} airing anime for week starting ${startDate}`);
       return { schedule };
     } catch (error) {
-      logger.error(`Failed to fetch weekly schedule: ${extractErrorMessage(error)}`);
-      return { schedule: {}, error: 'Failed to fetch weekly schedule' };
+      const msg = extractErrorMessage(error);
+      logger.error(`Failed to fetch weekly schedule: ${msg}`);
+      return { schedule: {}, error: msg };
     }
   }
 }

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { Compass, SearchX, X, Loader2, RefreshCw } from 'lucide-react';
+import { Compass, SearchX, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { AniListErrorState } from '@/components/shared/AniListErrorState';
 import { KanjiWatermark } from '@/components/shared/KanjiWatermark';
 import { ViewHeader } from '@/components/shared/ViewHeader';
 import { DiscoverCard } from '@/components/discover/DiscoverCard';
@@ -273,13 +273,7 @@ export function DiscoverView() {
 
             {/* Error state */}
             {!isRandomMode && error && !showLoading && (
-              <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-                <p className="text-sm text-center max-w-xs">{error}</p>
-                <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 text-xs">
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Spróbuj ponownie
-                </Button>
-              </div>
+              <AniListErrorState error={error} onRetry={handleRetry} />
             )}
 
             {/* Loading state — only show skeleton on initial load (no items yet) */}

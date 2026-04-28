@@ -1,8 +1,8 @@
 import { memo, useCallback } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { AniListErrorState } from '@/components/shared/AniListErrorState';
 import { useDiscoverStore, type DiscoverMedia } from '@/stores/useDiscoverStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { RandomFiltersPanel } from './random/RandomFiltersPanel';
@@ -66,15 +66,7 @@ export const RandomDiscoveryPanel = memo(function RandomDiscoveryPanel({
   }, []);
 
   if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-        <p className="text-sm text-center max-w-xs">{error}</p>
-        <Button variant="outline" size="sm" onClick={onError} className="gap-2 text-xs">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Spróbuj ponownie
-        </Button>
-      </div>
-    );
+    return <AniListErrorState error={error} onRetry={onError} />;
   }
 
   return (
