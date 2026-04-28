@@ -37,7 +37,7 @@ export function InAppStatsPanel() {
       {/* ── Hero block ─────────────────────────────────────── */}
       <section
         className={cn(
-          'relative px-6 py-5 rounded-2xl border border-border-glass overflow-hidden',
+          'relative px-6 py-6 rounded-2xl border border-border-glass overflow-hidden',
           'bg-gradient-to-br from-primary/[0.08] via-foreground/[0.02] to-foreground/[0.04]'
         )}
       >
@@ -49,7 +49,7 @@ export function InAppStatsPanel() {
           {hero.primary}
         </h2>
         <p className="mt-2 text-[13px] text-foreground/75">{hero.secondary}</p>
-        <div className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mt-4 pt-3 border-t border-border-glass/40 font-mono text-[10.5px] uppercase tracking-[0.18em] text-foreground/60">
           {pluralize(days, 'dzień', 'dni', 'dni')} z ShiroAni ·{' '}
           {pluralize(totals.sessionCount, 'sesja', 'sesje', 'sesji')}
         </div>
