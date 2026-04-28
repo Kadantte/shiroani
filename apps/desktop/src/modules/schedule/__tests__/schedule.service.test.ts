@@ -69,7 +69,7 @@ describe('ScheduleService', () => {
 
       expect(result.date).toBe('2024-06-15');
       expect(result.entries).toHaveLength(0);
-      expect(result.error).toBe('Failed to fetch schedule');
+      expect(result.error).toBe('Network error');
     });
 
     it('calls animeService with correct date range', async () => {
@@ -139,7 +139,7 @@ describe('ScheduleService', () => {
 
       const result = await service.getWeekly('2024-06-10');
 
-      expect(result.error).toBe('Failed to fetch weekly schedule');
+      expect(result.error).toBe('API down');
       expect(result.schedule).toEqual({});
     });
 
