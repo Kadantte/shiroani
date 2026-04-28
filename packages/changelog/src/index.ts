@@ -49,6 +49,48 @@ export interface Release {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: '0.8.0',
+    date: '28 kwietnia 2026',
+    shortDate: '28.04.2026',
+    title: 'Podzielone karty w przeglądarce i czytelniejsze błędy AniList',
+    description:
+      'Wbudowana przeglądarka uczy się nowej sztuczki: można teraz otworzyć dwie strony obok siebie w jednej karcie — wystarczy przeciągnąć kartę na bok, żeby utworzyć drugi panel. Idealne do oglądania odcinka i jednoczesnego sprawdzania AniList. Do tego ekrany Profilu, Harmonogramu i Odkrywaj nie pokazują już pustej strony, gdy AniList ma awarię — zamiast tego widać czytelny komunikat z powodem problemu.',
+    type: 'minor',
+    latest: true,
+    categories: [
+      {
+        kind: 'feature',
+        label: 'Podzielone karty w przeglądarce',
+        entries: [
+          'Karty w przeglądarce można teraz dzielić na dwa panele obok siebie — przeciągnij kartę na lewą lub prawą krawędź drugiej karty, a powstanie podział z dwoma niezależnymi widokami',
+          'Każdy panel ma własny pasek nawigacji (cofnij, odśwież, adres) i działa jak osobna karta — można oglądać odcinek po jednej stronie i przeglądać AniList po drugiej',
+          'Szerokość paneli regulowana suwakiem między nimi, a układ przetrwa restart aplikacji',
+          'Skrót Ctrl+W zamyka aktywny panel zamiast całej karty, a w menu pojawia się opcja „Połącz z powrotem", aby wrócić do pojedynczego widoku',
+          'Funkcja jest opcjonalna — można ją włączyć w Ustawieniach → Przeglądarka',
+        ],
+      },
+      {
+        kind: 'feature',
+        label: 'Czytelniejsze błędy AniList',
+        entries: [
+          'Profil, Harmonogram, Odkrywaj i panel losowych propozycji pokazują teraz wyraźny komunikat, gdy AniList jest niedostępny, zamiast pustej strony lub cichego błędu',
+          'Aplikacja rozpoznaje trzy najczęstsze przypadki: AniList wyłączył tymczasowo swoje API, przekroczono limit zapytań oraz brak połączenia z internetem',
+          'Każdy komunikat ma przycisk „Spróbuj ponownie", więc nie trzeba ręcznie odświeżać widoku',
+        ],
+      },
+      {
+        kind: 'polish',
+        label: 'Stabilność i wydajność',
+        entries: [
+          'Otwarte strony w przeglądarce zachowują swój stan podczas dzielenia, łączenia i zamykania paneli — żaden odtwarzacz nie startuje od nowa',
+          'Discord Rich Presence aktualizuje się płynniej przy przełączaniu paneli, bez zbędnych odświeżeń',
+          'Drobne optymalizacje przeciągania kart i suwaka między panelami, dzięki którym animacje pozostają płynne nawet przy wielu otwartych kartach',
+          'Aktualizacje zależności w grupie produkcyjnej i deweloperskiej',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.7.0',
     date: '27 kwietnia 2026',
     shortDate: '27.04.2026',
@@ -56,7 +98,6 @@ export const RELEASES: readonly Release[] = [
     description:
       'Sporo nowości: profil dostał zakładkę „W aplikacji" z licznikami czasu i 12-tygodniową siatką aktywności, blokada reklam pobiera teraz listy filtrów uBlock Origin na żywo (mocno pomaga na YouTubie), a sekcje aktualizacji i błędów dostały nowy wygląd. Do tego solidne hartowanie bezpieczeństwa, aktualizacja silnika do Electron 41.3.0 i wiele bumpów zależności.',
     type: 'major',
-    latest: true,
     categories: [
       {
         kind: 'feature',
