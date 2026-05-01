@@ -15,6 +15,7 @@ import { LOCALHOST, setLoggerContext, makeCorrelationId } from '@shiroani/shared
 import { setBackendPort } from './backend-port';
 import { BrowserManager } from './browser/browser-manager';
 import { registerBackgroundProtocol } from './ipc/background';
+import { registerMascotSpriteProtocol } from './ipc/sprite';
 import {
   initializeNotificationService,
   cleanupNotificationService,
@@ -62,11 +63,27 @@ const osSlug =
       : 'Windows NT 10.0; Win64; x64';
 app.userAgentFallback = `Mozilla/5.0 (${osSlug}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
 
-// Register custom protocol scheme for background images.
+// Register custom protocol schemes for serving user-supplied assets from
+// `userData`. Both schemes share the same privilege envelope so the renderer
+// can load images with parity to plain HTTPS sources.
+//
+// `shiroani-bg://`     — custom background images
+// `shiroani-mascot://` — user-uploaded mascot sprites
+//
 // Must be called before app.ready.
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'shiroani-bg',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: false,
+      stream: true,
+    },
+  },
+  {
+    scheme: 'shiroani-mascot',
     privileges: {
       standard: true,
       secure: true,
@@ -282,8 +299,9 @@ async function bootstrap(): Promise<void> {
     logger.info('[security] Running in development mode -- fuses not applied (build-time only)');
   }
 
-  // Register custom protocol for serving background images from userData
+  // Register custom protocols for serving user-supplied assets from userData
   registerBackgroundProtocol();
+  registerMascotSpriteProtocol();
 
   await bootstrapNestApp();
   browserManager.init();

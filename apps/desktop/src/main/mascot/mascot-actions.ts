@@ -21,12 +21,6 @@ export function registerVisibilitySetter(fn: SetVisibleFn): void {
 function focusMainWindow(mainWindow: BrowserWindow | null): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
 
-  if (process.platform === 'darwin') {
-    if (app.isHidden()) {
-      app.show();
-    }
-    app.focus({ steal: true });
-  }
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }

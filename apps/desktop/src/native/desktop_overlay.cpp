@@ -16,9 +16,11 @@
 
 #include "desktop_overlay.h"
 
+#include <algorithm>
 #include <cmath>
-#include <string>
 #include <cstring>
+#include <string>
+#include <vector>
 // Windows extensions for GET_X_LPARAM / GET_Y_LPARAM
 #include <windowsx.h>
 
@@ -51,6 +53,7 @@ static const UINT WM_CHANGE_POS    = WM_USER + 101;
 static const UINT WM_CHANGE_VIS    = WM_USER + 102;
 static const UINT WM_DESTROY_OVL   = WM_USER + 103;
 static const UINT WM_CHANGE_SIZE   = WM_USER + 104;
+static const UINT WM_CHANGE_ANIM_EN = WM_USER + 105;
 
 static const UINT ANIM_TIMER_ID    = 1;
 static const int  ALPHA_THRESHOLD  = 20;
@@ -78,11 +81,29 @@ static const UINT IDM_OPEN_SETTINGS  = 40014;
 // Structs for cross-thread data
 // ============================================================================
 
+/**
+ * Scale mode for fitting a user-supplied sprite into the square render
+ * surface. Mirrors CSS object-fit on the renderer side so the Settings
+ * preview and the live overlay stay visually consistent.
+ */
+enum class ScaleMode {
+    Contain,  // preserve aspect, letterbox transparently
+    Cover,    // preserve aspect, crop to fill
+    Stretch   // ignore aspect (legacy fits-to-square)
+};
+
+static ScaleMode ParseScaleMode(const std::string& s) {
+    if (s == "stretch") return ScaleMode::Stretch;
+    if (s == "cover")   return ScaleMode::Cover;
+    return ScaleMode::Contain;
+}
+
 struct AnimChangeData {
     std::wstring sheetPath;
     int frameCount;
     int frameWidth;
     int intervalMs;
+    ScaleMode scaleMode;
 };
 
 struct OverlayInitParams {
@@ -94,6 +115,7 @@ struct OverlayInitParams {
     int frameHeight;
     int frameCount;
     int intervalMs;
+    ScaleMode scaleMode;
     HANDLE initEvent;
     bool   success;
 };
@@ -111,6 +133,11 @@ static int                  g_displaySize   = 128;   // Current display size (wi
 static BYTE*                g_alphaBuffer   = NULL;
 static bool                 g_visible       = true;
 static bool                 g_positionLocked = false;
+// When false the bob animation is suppressed: the 60fps timer is killed,
+// RenderFrame() draws once at the resting position, and there is no CPU cost
+// beyond what the user spent enabling the toggle.
+static bool                 g_animationEnabled = true;
+static ScaleMode            g_scaleMode      = ScaleMode::Contain;
 static HANDLE               g_overlayThread = NULL;
 static DWORD                g_overlayThreadId = 0;
 static ULONG_PTR            g_gdiplusToken  = 0;
@@ -164,6 +191,30 @@ static bool LoadBaseImage(const std::wstring& path) {
         delete newImage;
         return false;
     }
+
+    // Multi-frame inputs (animated GIF, multi-page TIFF, animated WEBP) come
+    // back with a frame dimension we can address. We deliberately render only
+    // the first frame — animation playback is out of scope for the layered
+    // window's UpdateLayeredWindow loop. Failure here is non-fatal: the image
+    // already has its first frame loaded by the Bitmap constructor, so we
+    // fall through silently and the static sprite still renders correctly.
+    UINT frameDimCount = newImage->GetFrameDimensionsCount();
+    if (frameDimCount > 0) {
+        std::vector<GUID> dimensionIds(frameDimCount);
+        if (newImage->GetFrameDimensionsList(dimensionIds.data(), frameDimCount) == Gdiplus::Ok) {
+            // GetFrameCount returns 0 on failure (per MSDN); treat that the
+            // same as a single-frame image and skip the SelectActiveFrame call.
+            UINT frameCount = newImage->GetFrameCount(&dimensionIds[0]);
+            if (frameCount > 1) {
+                Gdiplus::Status frameStatus =
+                    newImage->SelectActiveFrame(&dimensionIds[0], 0);
+                // Don't bail out on failure — the constructor's default frame
+                // is still valid. Just leave g_baseImage pointing at it.
+                (void)frameStatus;
+            }
+        }
+    }
+
     if (g_baseImage) delete g_baseImage;
     if (g_scaledImage) { delete g_scaledImage; g_scaledImage = NULL; }
     g_baseImage = newImage;
@@ -172,7 +223,14 @@ static bool LoadBaseImage(const std::wstring& path) {
 }
 
 /**
- * Rebuild the cached scaled image from the base image at the current display size.
+ * Rebuild the cached scaled image from the base image at the current display
+ * size. The destination is always a square (matching the layered window),
+ * but how the source maps into that square depends on `g_scaleMode`:
+ *
+ *   - Contain: preserve aspect ratio; transparent letterbox.
+ *   - Cover:   preserve aspect ratio; crop the source to fill the square.
+ *   - Stretch: ignore aspect ratio (the legacy fits-to-square behaviour).
+ *
  * Also updates the alpha buffer for hit testing.
  */
 static void RebuildScaledImage() {
@@ -186,9 +244,56 @@ static void RebuildScaledImage() {
     g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
     g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+
+    const UINT srcW = g_baseImage->GetWidth();
+    const UINT srcH = g_baseImage->GetHeight();
+    const int  dstSize = g_displaySize;
+
+    if (srcW == 0 || srcH == 0) {
+        UpdateAlphaBuffer();
+        return;
+    }
+
+    // Compute destination rect (in pixels) and source rect (in pixels) from
+    // the chosen scale mode. Destination always lands inside [0, dstSize].
+    Gdiplus::Rect dstRect(0, 0, dstSize, dstSize);
+    Gdiplus::Rect srcRect(0, 0, (INT)srcW, (INT)srcH);
+
+    if (g_scaleMode == ScaleMode::Contain) {
+        const double scale = std::min(
+            static_cast<double>(dstSize) / static_cast<double>(srcW),
+            static_cast<double>(dstSize) / static_cast<double>(srcH)
+        );
+        const int drawW = std::max(1, (int)round(srcW * scale));
+        const int drawH = std::max(1, (int)round(srcH * scale));
+        const int drawX = (dstSize - drawW) / 2;
+        const int drawY = (dstSize - drawH) / 2;
+        dstRect = Gdiplus::Rect(drawX, drawY, drawW, drawH);
+    } else if (g_scaleMode == ScaleMode::Cover) {
+        // Crop the source so its scaled aspect matches the square. We solve for
+        // the source rect that, scaled uniformly, exactly covers the square.
+        // The crop dimension is min(srcW, srcH) which is always >= 1 thanks to
+        // the (srcW == 0 || srcH == 0) guard above; the std::max(1, ...)
+        // clamps are belt-and-braces against pathological inputs (1x1, 1x2)
+        // so DrawImage never sees a degenerate source rect.
+        const double srcAspect = static_cast<double>(srcW) / static_cast<double>(srcH);
+        if (srcAspect > 1.0) {
+            // Wider than tall — crop horizontally
+            const int cropW = std::max(1, (int)round(srcH));
+            const int cropX = std::max(0, ((int)srcW - cropW) / 2);
+            srcRect = Gdiplus::Rect(cropX, 0, cropW, (INT)srcH);
+        } else if (srcAspect < 1.0) {
+            const int cropH = std::max(1, (int)round(srcW));
+            const int cropY = std::max(0, ((int)srcH - cropH) / 2);
+            srcRect = Gdiplus::Rect(0, cropY, (INT)srcW, cropH);
+        }
+        // else: already square, leave srcRect as full image
+    }
+    // Stretch falls through with full source -> full destination.
+
     g.DrawImage(g_baseImage,
-        Gdiplus::Rect(0, 0, g_displaySize, g_displaySize),
-        0, 0, g_baseImage->GetWidth(), g_baseImage->GetHeight(),
+        dstRect,
+        srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height,
         Gdiplus::UnitPixel);
 
     UpdateAlphaBuffer();
@@ -229,12 +334,17 @@ static void UpdateAlphaBuffer() {
 static void RenderFrame() {
     if (!g_overlayHwnd || !g_scaledImage) return;
 
-    // Compute bobbing offset from elapsed time
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    double elapsed = (double)(now.QuadPart - g_animStart.QuadPart) / (double)g_perfFreq.QuadPart;
-    double phase = (elapsed / BOB_PERIOD_SEC) * 2.0 * PI;
-    int bobOffset = (int)round(BOB_AMPLITUDE * sin(phase));
+    // Compute bobbing offset from elapsed time. When the user has disabled
+    // the animation we render at phase 0 so the sprite sits at its resting
+    // position (still vertically centred via the bob headroom).
+    int bobOffset = 0;
+    if (g_animationEnabled) {
+        LARGE_INTEGER now;
+        QueryPerformanceCounter(&now);
+        double elapsed = (double)(now.QuadPart - g_animStart.QuadPart) / (double)g_perfFreq.QuadPart;
+        double phase = (elapsed / BOB_PERIOD_SEC) * 2.0 * PI;
+        bobOffset = (int)round(BOB_AMPLITUDE * sin(phase));
+    }
 
     // The window is sized with extra vertical room for the bob
     int bufW = g_displaySize;
@@ -473,6 +583,7 @@ static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         case WM_CHANGE_ANIM: {
             AnimChangeData* data = reinterpret_cast<AnimChangeData*>(lParam);
             if (data) {
+                g_scaleMode = data->scaleMode;
                 LoadBaseImage(data->sheetPath);
                 RenderFrame();
                 delete data;
@@ -499,6 +610,26 @@ static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 ShowWindow(g_overlayHwnd, SW_HIDE);
                 g_visible = false;
             }
+            return 0;
+        }
+
+        case WM_CHANGE_ANIM_EN: {
+            bool enabled = (wParam != 0);
+            if (enabled == g_animationEnabled) return 0;
+            g_animationEnabled = enabled;
+            if (enabled) {
+                // Reset the phase so the bob restarts smoothly from rest
+                // instead of jumping to whatever sin(t) happens to be when
+                // the user re-enables it.
+                QueryPerformanceCounter(&g_animStart);
+                SetTimer(g_overlayHwnd, ANIM_TIMER_ID, ANIM_INTERVAL_MS, NULL);
+            } else {
+                KillTimer(g_overlayHwnd, ANIM_TIMER_ID);
+            }
+            // Force one paint so the static frame appears immediately
+            // (when disabling) or the next bob frame lands ASAP (when
+            // re-enabling — the timer's first tick is still ANIM_INTERVAL_MS away).
+            RenderFrame();
             return 0;
         }
 
@@ -646,8 +777,9 @@ static DWORD WINAPI OverlayThreadProc(LPVOID param) {
         SetEvent(initParams->initEvent); return 1;
     }
 
-    // Store display size
+    // Store display size and the initial scale mode before LoadBaseImage runs
     g_displaySize = initParams->frameWidth;
+    g_scaleMode = initParams->scaleMode;
 
     // Calculate initial position
     int posX = initParams->x;
@@ -754,6 +886,14 @@ Napi::Value CreateOverlay(const Napi::CallbackInfo& info) {
     int frameWidth   = opts.Get("frameWidth").As<Napi::Number>().Int32Value();
     int frameHeight  = opts.Get("frameHeight").As<Napi::Number>().Int32Value();
 
+    // scaleMode is optional — older callers (and the legacy default-sprite
+    // path) leave it unset, in which case we default to Contain so non-square
+    // images don't get silently stretched.
+    ScaleMode scaleMode = ScaleMode::Contain;
+    if (opts.Has("scaleMode") && opts.Get("scaleMode").IsString()) {
+        scaleMode = ParseScaleMode(opts.Get("scaleMode").As<Napi::String>().Utf8Value());
+    }
+
     OverlayInitParams initParams;
     initParams.spritePath = Utf8ToWide(spritePath);
     initParams.iconPath   = Utf8ToWide(iconPath);
@@ -763,6 +903,7 @@ Napi::Value CreateOverlay(const Napi::CallbackInfo& info) {
     initParams.frameHeight = frameHeight;
     initParams.frameCount  = 1;
     initParams.intervalMs  = ANIM_INTERVAL_MS;
+    initParams.scaleMode   = scaleMode;
     initParams.initEvent   = CreateEvent(NULL, TRUE, FALSE, NULL);
     initParams.success     = false;
 
@@ -833,11 +974,21 @@ Napi::Value SetAnimation(const Napi::CallbackInfo& info) {
     Napi::Object opts = info[0].As<Napi::Object>();
     std::string sheetPath = opts.Get("sheetPath").As<Napi::String>().Utf8Value();
 
+    // scaleMode optional; preserve the live mode when the renderer omits it
+    // (e.g. the live-overlay sprite swap that follows a successful pick uses
+    // the persisted mode, but this also keeps backward compat with any
+    // older Win32 callers in tests).
+    ScaleMode scaleMode = g_scaleMode;
+    if (opts.Has("scaleMode") && opts.Get("scaleMode").IsString()) {
+        scaleMode = ParseScaleMode(opts.Get("scaleMode").As<Napi::String>().Utf8Value());
+    }
+
     AnimChangeData* data = new AnimChangeData();
     data->sheetPath = Utf8ToWide(sheetPath);
     data->frameCount = 1;
     data->frameWidth = g_displaySize;
     data->intervalMs = ANIM_INTERVAL_MS;
+    data->scaleMode = scaleMode;
 
     if (g_overlayHwnd) {
         PostMessage(g_overlayHwnd, WM_CHANGE_ANIM, 0, reinterpret_cast<LPARAM>(data));
@@ -887,6 +1038,19 @@ Napi::Value SetSize(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
+Napi::Value SetAnimationEnabled(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    if (info.Length() < 1 || !info[0].IsBoolean()) {
+        Napi::TypeError::New(env, "Expected (enabled: boolean)").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    bool enabled = info[0].As<Napi::Boolean>().Value();
+    if (g_overlayHwnd) {
+        PostMessage(g_overlayHwnd, WM_CHANGE_ANIM_EN, enabled ? 1 : 0, 0);
+    }
+    return env.Undefined();
+}
+
 Napi::Value SetPositionLocked(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if (info.Length() < 1 || !info[0].IsBoolean()) {
@@ -926,6 +1090,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("setSize",        Napi::Function::New(env, Overlay::SetSize));
     exports.Set("setCallback",        Napi::Function::New(env, Overlay::SetCallback));
     exports.Set("setPositionLocked",  Napi::Function::New(env, Overlay::SetPositionLocked));
+    exports.Set("setAnimationEnabled", Napi::Function::New(env, Overlay::SetAnimationEnabled));
     return exports;
 }
 

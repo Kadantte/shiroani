@@ -13,6 +13,8 @@ import {
   isMascotPositionLocked,
   setMascotPositionLocked,
   resetMascotPosition,
+  isMascotAnimationEnabled,
+  setMascotAnimationEnabled,
 } from '../mascot/overlay';
 import { z } from 'zod';
 import { handleWithFallback } from './with-ipc-handler';
@@ -30,6 +32,8 @@ import {
   overlaySetEnabledSchema,
   overlaySetSizeSchema,
   overlaySetPositionLockedSchema,
+  overlaySetAnimationEnabledSchema,
+  overlayGetAnimationEnabledSchema,
 } from './schemas';
 
 /**
@@ -49,6 +53,7 @@ type EnabledEnvelope = EnvelopeBase & { enabled?: boolean };
 type SizeEnvelope = EnvelopeBase & { size?: number };
 type LockedEnvelope = EnvelopeBase & { locked?: boolean };
 type ModeEnvelope = EnvelopeBase & { mode?: string };
+type AnimationEnabledEnvelope = EnvelopeBase & { enabled?: boolean };
 
 /**
  * Unchanged contract: mutating channels return `{ success, ... }`. We lean on
@@ -204,6 +209,23 @@ export function registerOverlayHandlers(): void {
     { schema: overlayGetPositionLockedSchema }
   );
 
+  handleWithFallback<[boolean], AnimationEnabledEnvelope>(
+    'overlay:set-animation-enabled',
+    (_event, enabled) => {
+      setMascotAnimationEnabled(enabled);
+      return { success: true, enabled };
+    },
+    err => ({ success: false, error: String(err) }),
+    { schema: overlaySetAnimationEnabledSchema }
+  );
+
+  handleWithFallback(
+    'overlay:get-animation-enabled',
+    () => isMascotAnimationEnabled(),
+    () => true,
+    { schema: overlayGetAnimationEnabledSchema }
+  );
+
   handleWithFallback<[], EnvelopeBase>(
     'overlay:reset-position',
     () => {
@@ -233,4 +255,6 @@ export function cleanupOverlayHandlers(): void {
   ipcMain.removeHandler('overlay:set-position-locked');
   ipcMain.removeHandler('overlay:get-position-locked');
   ipcMain.removeHandler('overlay:reset-position');
+  ipcMain.removeHandler('overlay:set-animation-enabled');
+  ipcMain.removeHandler('overlay:get-animation-enabled');
 }

@@ -10,6 +10,10 @@ import {
   getMascotVisibilityMode,
   getSavedPosition,
   savePosition,
+  getActiveSpritePath,
+  getActiveSpriteScaleMode,
+  isMascotAnimationEnabled,
+  type MascotSpriteScaleMode,
   MASCOT_FRAME_COUNT,
   MASCOT_ANIM_INTERVAL,
 } from './overlay-state';
@@ -27,6 +31,7 @@ interface OverlayAddon {
     frameHeight: number;
     frameCount: number;
     intervalMs: number;
+    scaleMode?: MascotSpriteScaleMode;
   }): boolean;
   destroyOverlay(): void;
   setPosition(x: number, y: number): void;
@@ -35,6 +40,7 @@ interface OverlayAddon {
     frameCount: number;
     frameWidth: number;
     intervalMs: number;
+    scaleMode?: MascotSpriteScaleMode;
   }): void;
   setVisible(visible: boolean): void;
   isVisible(): boolean;
@@ -42,6 +48,7 @@ interface OverlayAddon {
   setSize(size: number): void;
   setCallback(callback: (event: string) => void): void;
   setPositionLocked(locked: boolean): void;
+  setAnimationEnabled(enabled: boolean): void;
 }
 
 let addon: OverlayAddon | null = null;
@@ -62,12 +69,6 @@ function loadAddon(): boolean {
     logger.error('Failed to load desktop overlay addon:', error);
     return false;
   }
-}
-
-function getResourcesPath(): string {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, 'mascot')
-    : path.join(__dirname, '../../resources/mascot');
 }
 
 function registerWin32PositionCallbacks(): void {
@@ -96,8 +97,11 @@ export function createWin32Overlay(
 ): boolean {
   if (!loadAddon()) return false;
 
-  const resourcesPath = getResourcesPath();
-  const spritePath = path.join(resourcesPath, 'chibi_base.png');
+  // Resolve the sprite the user has chosen — either a custom file in
+  // userData/mascot-sprites/ or the bundled chibi base. `getActiveSpritePath`
+  // self-heals when the persisted file has been deleted out-of-band.
+  const spritePath = getActiveSpritePath();
+  const scaleMode = getActiveSpriteScaleMode();
   const iconPath = path.join(
     app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../resources'),
     'icon.ico'
@@ -144,11 +148,18 @@ export function createWin32Overlay(
       frameHeight: size,
       frameCount: MASCOT_FRAME_COUNT,
       intervalMs: MASCOT_ANIM_INTERVAL,
+      scaleMode,
     });
 
     if (result) {
       const locked = store.get('settings.mascotPositionLocked') === true;
       if (locked) addon!.setPositionLocked(true);
+
+      // Native default is animation-on; only push when the user has opted out
+      // so we don't churn the timer + force a paint on every launch.
+      if (!isMascotAnimationEnabled()) {
+        addon!.setAnimationEnabled(false);
+      }
 
       const mode = getMascotVisibilityMode();
       if (mode === 'tray-only' && (!mainWindow || !mainWindow.isMinimized())) {
@@ -200,10 +211,11 @@ export function setWin32Animation(
   sheetPath: string,
   frameCount: number,
   frameWidth: number,
-  intervalMs: number
+  intervalMs: number,
+  scaleMode?: MascotSpriteScaleMode
 ): void {
   if (addon) {
-    addon.setAnimation({ sheetPath, frameCount, frameWidth, intervalMs });
+    addon.setAnimation({ sheetPath, frameCount, frameWidth, intervalMs, scaleMode });
   }
 }
 
@@ -214,6 +226,10 @@ export function saveWin32Position(): void {
       savePosition(pos);
     }
   }
+}
+
+export function setWin32AnimationEnabled(enabled: boolean): void {
+  if (addon) addon.setAnimationEnabled(enabled);
 }
 
 export function hasWin32Addon(): boolean {

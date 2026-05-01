@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import type { ElectronAPI } from '@shiroani/shared';
+import type { ElectronAPI, MascotSpriteScaleMode } from '@shiroani/shared';
 import { createIpcListener } from './_shared';
 
 export const overlayApi: ElectronAPI['overlay'] = {
@@ -22,5 +22,24 @@ export const overlayApi: ElectronAPI['overlay'] = {
   setPositionLocked: (locked: boolean) => ipcRenderer.invoke('overlay:set-position-locked', locked),
   isPositionLocked: () => ipcRenderer.invoke('overlay:get-position-locked') as Promise<boolean>,
   resetPosition: () => ipcRenderer.invoke('overlay:reset-position'),
+  setAnimationEnabled: (enabled: boolean) =>
+    ipcRenderer.invoke('overlay:set-animation-enabled', enabled),
+  isAnimationEnabled: () => ipcRenderer.invoke('overlay:get-animation-enabled') as Promise<boolean>,
+  pickSprite: () =>
+    ipcRenderer.invoke('overlay:pick-sprite') as Promise<{
+      fileName: string;
+      url: string;
+    } | null>,
+  removeSprite: (fileName: string) =>
+    ipcRenderer.invoke('overlay:remove-sprite', fileName) as Promise<void>,
+  getSpriteUrl: (fileName: string) =>
+    ipcRenderer.invoke('overlay:get-sprite-url', fileName) as Promise<string | null>,
+  setSpriteScale: (mode: MascotSpriteScaleMode) =>
+    ipcRenderer.invoke('overlay:set-sprite-scale', mode) as Promise<{
+      success: boolean;
+      mode: MascotSpriteScaleMode;
+    }>,
+  getSpriteScale: () =>
+    ipcRenderer.invoke('overlay:get-sprite-scale') as Promise<MascotSpriteScaleMode>,
   onNavigate: createIpcListener<string>('navigate'),
 };
