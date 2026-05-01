@@ -186,6 +186,20 @@ export const backgroundRemoveSchema = z.tuple([z.string().min(1)]);
 export const backgroundGetUrlSchema = z.tuple([z.string().min(1)]);
 
 // ============================================================================
+// Sprite channels (custom mascot sprite)
+// ============================================================================
+
+export const spritePickSchema = z.tuple([]);
+export const spriteRemoveSchema = z.tuple([z.string().min(1)]);
+export const spriteGetUrlSchema = z.tuple([z.string().min(1)]);
+/**
+ * Permissive on the IPC boundary; the handler validates the literal value
+ * and throws BAD_REQUEST when it's not one of `contain | cover | stretch`.
+ * Mirrors the visibility-mode pattern in {@link overlaySetVisibilityModeSchema}.
+ */
+export const spriteSetScaleModeSchema = z.tuple([z.unknown()]);
+
+// ============================================================================
 // Notifications channels
 // ============================================================================
 
@@ -222,6 +236,8 @@ export const overlaySetEnabledSchema = z.tuple([z.boolean()]);
 export const overlaySetSizeSchema = z.tuple([z.number().finite()]);
 export const overlaySetVisibilityModeSchema = z.tuple([z.enum(['always', 'tray-only'])]);
 export const overlaySetPositionLockedSchema = z.tuple([z.boolean()]);
+export const overlaySetAnimationEnabledSchema = z.tuple([z.boolean()]);
+export const overlayGetAnimationEnabledSchema = z.tuple([]);
 
 // ============================================================================
 // Discord RPC channels

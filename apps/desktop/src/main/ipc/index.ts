@@ -26,6 +26,13 @@ export {
   registerBackgroundProtocol,
 } from './background';
 
+// Sprite handlers (custom mascot sprite)
+export {
+  registerSpriteHandlers,
+  cleanupSpriteHandlers,
+  registerMascotSpriteProtocol,
+} from './sprite';
+
 // Notification handlers
 export { registerNotificationHandlers, cleanupNotificationHandlers } from './notifications';
 

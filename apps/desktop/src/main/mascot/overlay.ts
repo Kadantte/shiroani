@@ -8,8 +8,13 @@ import {
   getMascotSize,
   getMascotVisibilityMode,
   setMascotVisibilityMode,
+  isMascotAnimationEnabled,
+  setMascotAnimationEnabledStored,
   getDefaultPosition,
   deletePosition,
+  getActiveSpritePath,
+  getActiveSpriteScaleMode,
+  type MascotSpriteScaleMode,
 } from './overlay-state';
 import {
   createWin32Overlay,
@@ -20,6 +25,7 @@ import {
   getWin32Position,
   setWin32Size,
   setWin32Animation,
+  setWin32AnimationEnabled,
   saveWin32Position,
   hasWin32Addon,
 } from './overlay-windows';
@@ -136,9 +142,24 @@ export function setMascotAnimation(
   sheetPath: string,
   frameCount: number,
   frameWidth: number,
-  intervalMs: number
+  intervalMs: number,
+  scaleMode?: MascotSpriteScaleMode
 ): void {
-  setWin32Animation(sheetPath, frameCount, frameWidth, intervalMs);
+  setWin32Animation(sheetPath, frameCount, frameWidth, intervalMs, scaleMode);
+}
+
+/**
+ * Push the active sprite (custom or default) and the persisted scale mode
+ * to the live overlay. No-op when the overlay isn't running — callers
+ * (sprite IPC) invoke this on every pick / remove / scale-change so the
+ * bookkeeping is correct on next overlay start either way.
+ */
+export function applyActiveSprite(): void {
+  if (!hasWin32Addon()) return;
+  const spritePath = getActiveSpritePath();
+  const size = getMascotSize();
+  const scaleMode = getActiveSpriteScaleMode();
+  setMascotAnimation(spritePath, 1, size, 16, scaleMode);
 }
 
 /**
@@ -175,8 +196,25 @@ export function applyMascotVisibilityMode(mode: 'always' | 'tray-only'): void {
   }
 }
 
+/**
+ * Persist + apply the mascot animation toggle. When disabled the native
+ * overlay kills its 60fps timer and renders the sprite at its resting
+ * position; when enabled it restarts the bob from phase 0 for a smooth
+ * resume rather than a jump.
+ */
+export function setMascotAnimationEnabled(enabled: boolean): void {
+  setMascotAnimationEnabledStored(enabled);
+  setWin32AnimationEnabled(enabled);
+}
+
 // Re-export from overlay-state
-export { isMascotEnabled, getMascotSize, getMascotVisibilityMode, setMascotVisibilityMode };
+export {
+  isMascotEnabled,
+  getMascotSize,
+  getMascotVisibilityMode,
+  setMascotVisibilityMode,
+  isMascotAnimationEnabled,
+};
 
 // Position lock (re-exported from mascot-position for centralized imports)
 export { isMascotPositionLocked, setMascotPositionLocked } from './mascot-position';

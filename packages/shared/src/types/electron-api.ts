@@ -28,6 +28,15 @@ export interface RendererLogWriteEntry {
 }
 
 /**
+ * Scale mode for the user-supplied mascot sprite. Mirrors CSS `object-fit`
+ * so the Settings preview and the native overlay agree on intent:
+ *   - `contain`: preserve aspect ratio, letterbox transparently to fit.
+ *   - `cover`:   preserve aspect ratio, crop to fill the square.
+ *   - `stretch`: ignore aspect ratio (fastest path; legacy behaviour).
+ */
+export type MascotSpriteScaleMode = 'contain' | 'cover' | 'stretch';
+
+/**
  * Snapshot of host/runtime info gathered by the main process for diagnostics.
  * `gpuFeatureStatus` may be an error wrapper if Chromium wasn't ready yet.
  */
@@ -171,6 +180,29 @@ export interface ElectronAPI {
     setPositionLocked: (locked: boolean) => Promise<{ success: boolean; locked: boolean }>;
     isPositionLocked: () => Promise<boolean>;
     resetPosition: () => Promise<{ success: boolean }>;
+    /** Persist + apply whether the mascot's bob animation is enabled. */
+    setAnimationEnabled: (
+      enabled: boolean
+    ) => Promise<{ success: boolean; enabled?: boolean; error?: string }>;
+    /** Read the persisted "is the bob animation enabled" toggle. */
+    isAnimationEnabled: () => Promise<boolean>;
+    /**
+     * Open a native dialog to pick a custom mascot sprite. Returns the
+     * persisted filename and `shiroani-mascot://` URL on success, or `null`
+     * when the user cancels. Validation, copy, and live overlay update all
+     * happen main-side before this resolves.
+     */
+    pickSprite: () => Promise<{ fileName: string; url: string } | null>;
+    /** Delete a custom sprite file and revert the overlay to the default. */
+    removeSprite: (fileName: string) => Promise<void>;
+    /** Resolve a persisted sprite filename to a `shiroani-mascot://` URL, or null when missing. */
+    getSpriteUrl: (fileName: string) => Promise<string | null>;
+    /** Persist + apply a scale mode for the active sprite. */
+    setSpriteScale: (
+      mode: MascotSpriteScaleMode
+    ) => Promise<{ success: boolean; mode: MascotSpriteScaleMode }>;
+    /** Read the persisted scale mode for the active sprite. */
+    getSpriteScale: () => Promise<MascotSpriteScaleMode>;
     onNavigate: (callback: (view: string) => void) => () => void;
   };
   ipc: {

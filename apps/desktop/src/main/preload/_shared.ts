@@ -84,6 +84,13 @@ export const ALLOWED_IPC_CHANNELS: ReadonlySet<string> = new Set([
   'overlay:set-position-locked',
   'overlay:get-position-locked',
   'overlay:reset-position',
+  'overlay:set-animation-enabled',
+  'overlay:get-animation-enabled',
+  'overlay:pick-sprite',
+  'overlay:remove-sprite',
+  'overlay:get-sprite-url',
+  'overlay:set-sprite-scale',
+  'overlay:get-sprite-scale',
 ]);
 
 export function assertAllowedChannel(channel: string): void {

@@ -28,6 +28,8 @@ const ALLOWED_STORE_KEYS = new Set([
   'preferences.updateChannel',
   // Custom backgrounds
   'custom-backgrounds',
+  // Custom mascot sprite
+  'custom-mascot-sprite',
   // Custom themes
   'custom-themes',
   // Browser settings (homepage, adblock)
@@ -43,6 +45,7 @@ const ALLOWED_STORE_KEYS = new Set([
   'settings.mascotVisibilityMode',
   'settings.mascotPositionLocked',
   'settings.mascotPosition',
+  'settings.mascotAnimationEnabled',
   // Discord RPC settings
   'discord-rpc-settings',
   // Browser tab persistence (renderer saves/loads tabs directly)

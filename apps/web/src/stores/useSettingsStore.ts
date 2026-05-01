@@ -22,6 +22,7 @@ import {
 } from '@/lib/ui-font-scale';
 import { useBackgroundStore } from '@/stores/useBackgroundStore';
 import { useCustomThemeStore } from '@/stores/useCustomThemeStore';
+import { useMascotSpriteStore } from '@/stores/useMascotSpriteStore';
 
 const logger = createLogger('Settings');
 
@@ -283,7 +284,10 @@ export const useSettingsStore = create<SettingsStore>()(
           const initialScale = get().uiFontScale;
           const initialName = get().displayName;
           settingsInitPromise = (async () => {
-            await useBackgroundStore.getState().restoreBackground();
+            await Promise.all([
+              useBackgroundStore.getState().restoreBackground(),
+              useMascotSpriteStore.getState().restoreSprite(),
+            ]);
 
             try {
               const persistedScale = await electronStoreGet<number>(UI_FONT_SCALE_SETTING_KEY);

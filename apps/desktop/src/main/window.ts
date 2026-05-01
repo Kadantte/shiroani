@@ -41,7 +41,7 @@ function setupContentSecurityPolicy(isDev: boolean, backendPort: number): void {
       // Allow images from any HTTPS source (favicons, anime covers, user-browsed sites).
       // Plain `http:` is intentionally omitted — AniList + Google favicon service
       // both use HTTPS, and webview content is served via its own session.
-      "img-src 'self' data: blob: shiroani-bg: https:",
+      "img-src 'self' data: blob: shiroani-bg: shiroani-mascot: https:",
       // Allow fonts from same origin
       "font-src 'self' data:",
       // Allow connections to localhost (WebSocket and API) and AniList GraphQL
