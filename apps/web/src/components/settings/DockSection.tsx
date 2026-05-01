@@ -9,6 +9,7 @@ import {
 } from '@/components/settings/SettingsCard';
 import { DockStage } from '@/components/shared/DockStage';
 import { cn } from '@/lib/utils';
+import { useDockPreviewItems } from '@/hooks/useDockPreviewItems';
 
 const DOCK_EDGES: ReadonlyArray<{ value: DockEdge; label: string }> = [
   { value: 'bottom', label: 'Dół' },
@@ -20,6 +21,7 @@ const DOCK_EDGES: ReadonlyArray<{ value: DockEdge; label: string }> = [
 export function DockSection() {
   const dockEdge = useDockStore(s => s.edge);
   const setDockEdge = useDockStore(s => s.setEdge);
+  const dockItems = useDockPreviewItems();
   const dockAutoHide = useDockStore(s => s.autoHide);
   const setDockAutoHide = useDockStore(s => s.setAutoHide);
   const dockShowLabels = useDockStore(s => s.showLabels);
@@ -35,7 +37,7 @@ export function DockSection() {
         title="Pozycja docka"
         subtitle="Wybierz krawędź ekranu. Podgląd po prawej reaguje na zmianę."
       >
-        <DockStage edge={dockEdge} height={160} />
+        <DockStage edge={dockEdge} items={dockItems} height={160} />
 
         <SettingsRow stacked>
           <SettingsRowLabel

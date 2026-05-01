@@ -4,6 +4,7 @@ import { SettingsToggleRow } from '@/components/settings/SettingsCard';
 import { cn } from '@/lib/utils';
 import { useDockStore, type DockEdge } from '@/stores/useDockStore';
 import { DockStage } from '@/components/shared/DockStage';
+import { useDockPreviewItems } from '@/hooks/useDockPreviewItems';
 
 /**
  * Step 04 · Navigation dock.
@@ -15,6 +16,7 @@ import { DockStage } from '@/components/shared/DockStage';
 export function DockStep() {
   const edge = useDockStore(s => s.edge);
   const setEdge = useDockStore(s => s.setEdge);
+  const dockItems = useDockPreviewItems();
   const autoHide = useDockStore(s => s.autoHide);
   const setAutoHide = useDockStore(s => s.setAutoHide);
   const showLabels = useDockStore(s => s.showLabels);
@@ -46,7 +48,7 @@ export function DockStep() {
       stepTitle="Dock"
     >
       <div className="space-y-3 rounded-2xl border border-border-glass bg-foreground/[0.02] p-4">
-        <DockStage edge={edge} />
+        <DockStage edge={edge} items={dockItems} />
         <div className="grid grid-cols-4 gap-1.5">
           <EdgePill edge="bottom" current={edge} onSelect={setEdge} label="Dół" />
           <EdgePill edge="top" current={edge} onSelect={setEdge} label="Góra" />
