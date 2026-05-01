@@ -195,15 +195,22 @@ static bool LoadBaseImage(const std::wstring& path) {
     // Multi-frame inputs (animated GIF, multi-page TIFF, animated WEBP) come
     // back with a frame dimension we can address. We deliberately render only
     // the first frame — animation playback is out of scope for the layered
-    // window's UpdateLayeredWindow loop. Failure here is non-fatal; an image
-    // with a single frame still renders correctly.
+    // window's UpdateLayeredWindow loop. Failure here is non-fatal: the image
+    // already has its first frame loaded by the Bitmap constructor, so we
+    // fall through silently and the static sprite still renders correctly.
     UINT frameDimCount = newImage->GetFrameDimensionsCount();
     if (frameDimCount > 0) {
         std::vector<GUID> dimensionIds(frameDimCount);
         if (newImage->GetFrameDimensionsList(dimensionIds.data(), frameDimCount) == Gdiplus::Ok) {
+            // GetFrameCount returns 0 on failure (per MSDN); treat that the
+            // same as a single-frame image and skip the SelectActiveFrame call.
             UINT frameCount = newImage->GetFrameCount(&dimensionIds[0]);
             if (frameCount > 1) {
-                newImage->SelectActiveFrame(&dimensionIds[0], 0);
+                Gdiplus::Status frameStatus =
+                    newImage->SelectActiveFrame(&dimensionIds[0], 0);
+                // Don't bail out on failure — the constructor's default frame
+                // is still valid. Just leave g_baseImage pointing at it.
+                (void)frameStatus;
             }
         }
     }
@@ -265,15 +272,19 @@ static void RebuildScaledImage() {
     } else if (g_scaleMode == ScaleMode::Cover) {
         // Crop the source so its scaled aspect matches the square. We solve for
         // the source rect that, scaled uniformly, exactly covers the square.
+        // The crop dimension is min(srcW, srcH) which is always >= 1 thanks to
+        // the (srcW == 0 || srcH == 0) guard above; the std::max(1, ...)
+        // clamps are belt-and-braces against pathological inputs (1x1, 1x2)
+        // so DrawImage never sees a degenerate source rect.
         const double srcAspect = static_cast<double>(srcW) / static_cast<double>(srcH);
         if (srcAspect > 1.0) {
             // Wider than tall — crop horizontally
-            const int cropW = (int)round(srcH); // square crop in source pixels
-            const int cropX = ((int)srcW - cropW) / 2;
+            const int cropW = std::max(1, (int)round(srcH));
+            const int cropX = std::max(0, ((int)srcW - cropW) / 2);
             srcRect = Gdiplus::Rect(cropX, 0, cropW, (INT)srcH);
         } else if (srcAspect < 1.0) {
-            const int cropH = (int)round(srcW);
-            const int cropY = ((int)srcH - cropH) / 2;
+            const int cropH = std::max(1, (int)round(srcW));
+            const int cropY = std::max(0, ((int)srcH - cropH) / 2);
             srcRect = Gdiplus::Rect(0, cropY, (INT)srcW, cropH);
         }
         // else: already square, leave srcRect as full image
